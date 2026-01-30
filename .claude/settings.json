@@ -28,13 +28,22 @@
       "Bash(git branch:*)",
       "Bash(dir:*)",
       "Bash(timeout:*)",
-      "Bash(git worktree move:*)"
+      "Bash(git worktree move:*)",
+      "Bash(start node:*)",
+      "Bash(python -c:*)",
+      "Bash(start /B npm start:*)",
+      "Bash(python:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm restart:*)",
+      "Bash(powershell:*)",
+      "Bash(ping:*)",
+      "Bash(wmic process where \"ProcessId=17800\" get CommandLine)",
+      "Bash(wmic process where \"ProcessId=15260\" get CommandLine)",
+      "Bash(wmic process where \"ProcessId=17800\" get CreationDate)",
+      "Bash(printenv:*)"
     ]
   },
-  "context_management": {
-    "enabled": true,
-    "script_path": ".claude/context_manager.js",
-    "mode": "automated",
-    "granularity": "operation"
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
   }
 }
