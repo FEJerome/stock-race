@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Bash(node:*)",
+      "Bash(npm create vite@latest:*)",
+      "Bash(npm init:*)",
+      "Bash(ls:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(npm start)",
+      "Bash(npm run dev:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(tree:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(wc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git worktree add:*)",
+      "Bash(git worktree list:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)",
+      "Bash(dir:*)",
+      "Bash(timeout:*)",
+      "Bash(git worktree move:*)"
+    ]
+  },
+  "context_management": {
+    "enabled": true,
+    "script_path": ".claude/context_manager.js",
+    "mode": "automated",
+    "granularity": "operation"
+  }
+}
