@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
+  },
   "permissions": {
     "allow": [
       "Read",
@@ -40,10 +43,8 @@
       "Bash(wmic process where \"ProcessId=17800\" get CommandLine)",
       "Bash(wmic process where \"ProcessId=15260\" get CommandLine)",
       "Bash(wmic process where \"ProcessId=17800\" get CreationDate)",
-      "Bash(printenv:*)"
+      "Bash(printenv:*)",
+      "Read(//tmp/claude/d--BaiduSyncdisk-MaHaoYuJavaLearning-littletry-claude-sample/tasks//**)"
     ]
-  },
-  "env": {
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "Bash(git worktree remove:*)"
+    ],
+    "additionalDirectories": [
+      "d:\\BaiduSyncdisk\\MaHaoYuJavaLearning\\littletry\\claude_sample",
+      "d:\\BaiduSyncdisk\\MaHaoYuJavaLearning\\littletry\\claude_sample\\server\\tests"
+    ]
+  }
+}
