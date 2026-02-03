@@ -1,0 +1,213 @@
+version: '3.8'
+
+services:
+  # 后端开发服务
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: stock-race-backend-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/stock_race
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: development-secret-key-change-in-production
+      ADMIN_PASSWORD: admin123
+      CORS_ORIGIN: http://localhost:3000
+      DEBUG: stock-race:*
+      LOG_LEVEL: debug
+    ports:
+      - "3001:3001"
+      - "9229:9229"  # Node.js调试端口
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL数据库（开发）
+  postgres:
+    image: postgres:15-alpine
+    container_name: stock-race-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_race
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/postgres/backups:/backups
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=200
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stock-race-network
+
+  # Redis缓存（开发）
+  redis:
+    image: redis:7-alpine
+    container_name: stock-race-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stock-race-network
+
+  # 数据库迁移服务
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: stock-race-migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/stock_race
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: >
+      sh -c "
+        echo '等待数据库准备就绪...' &&
+        sleep 5 &&
+        echo '运行数据库迁移...' &&
+        npm run prisma:migrate &&
+        echo '初始化种子数据...' &&
+        npm run prisma:seed &&
+        echo '数据库初始化完成！'
+      "
+    networks:
+      - stock-race-network
+
+  # 数据库管理工具（开发）
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: stock-race-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@stockrace.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data_dev:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+    networks:
+      - stock-race-network
+
+  # Redis管理工具（开发）
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: stock-race-redis-commander-dev
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    networks:
+      - stock-race-network
+
+  # 日志收集器（开发）
+  logspout:
+    image: gliderlabs/logspout:latest
+    container_name: stock-race-logspout
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      syslog://logs:5000
+    networks:
+      - stock-race-network
+
+  # 日志服务器（开发）
+  logs:
+    image: grafana/loki:latest
+    container_name: stock-race-logs
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: >
+      -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+    networks:
+      - stock-race-network
+
+  # 监控仪表板（开发）
+  grafana:
+    image: grafana/grafana:latest
+    container_name: stock-race-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - stock-race-network
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+  pgadmin_data_dev:
+    driver: local
+  loki_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  stock-race-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

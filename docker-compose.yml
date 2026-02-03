@@ -1,0 +1,223 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (for metadata)
+  postgres:
+    image: postgres:15-alpine
+    container_name: stock-race-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_race
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TimescaleDB (for time-series data)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: stock-race-timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_race_tsdb
+      POSTGRES_USER: timescale
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./docker/timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timescale"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: stock-race-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: stock-race-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=stock_race
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379
+      - FRONTEND_URL=http://localhost:3000
+      - AI_SERVICE_URL=http://ai-service:8000
+      - DATA_SERVICE_URL=http://data-service:8001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - stock-race-network
+    command: npm run dev
+
+  # AI Service
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile.dev
+    container_name: stock-race-ai-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=stock_race
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379
+      - BACKEND_URL=http://backend:3001
+      - DATA_SERVICE_URL=http://data-service:8001
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai-service:/app
+    networks:
+      - stock-race-network
+    command: python -m uvicorn ai_service.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Data Service
+  data-service:
+    build:
+      context: ./data-service
+      dockerfile: Dockerfile.dev
+    container_name: stock-race-data-service
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - DEBUG=True
+      - TSDB_HOST=timescaledb
+      - TSDB_PORT=5432
+      - TSDB_NAME=stock_race_tsdb
+      - TSDB_USER=timescale
+      - TSDB_PASSWORD=password
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=stock_race
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379
+      - BACKEND_URL=http://backend:3001
+      - AI_SERVICE_URL=http://ai-service:8000
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data-service:/app
+    networks:
+      - stock-race-network
+    command: python -m uvicorn data_service.main:app --host 0.0.0.0 --port 8001 --reload
+
+  # Frontend Development Server
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: stock-race-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - ai-service
+      - data-service
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - stock-race-network
+    command: npm run dev
+
+  # pgAdmin (Database Management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: stock-race-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@stock-race.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - stock-race-network
+
+  # Redis Commander (Redis Management)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: stock-race-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - stock-race-network
+
+networks:
+  stock-race-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  timescaledb_data:
+  redis_data:
+  pgadmin_data:

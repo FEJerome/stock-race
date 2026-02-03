@@ -1,0 +1,398 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id                      Int       @id @default(autoincrement())
+  username                String    @unique @db.VarChar(50)
+  email                   String    @unique @db.VarChar(100)
+  passwordHash            String    @db.VarChar(255)
+  salt                    String    @db.VarChar(50)
+  status                  UserStatus @default(active)
+  lastLoginAt             DateTime? @db.Timestamptz
+  failedLoginAttempts     Int       @default(0)
+  lockUntil               DateTime? @db.Timestamptz
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  aiAccounts              AIAccount[]
+  userSettings            UserSettings?
+  watchlist               Watchlist[]
+  systemLogs              SystemLog[]
+
+  @@index([username])
+  @@index([email])
+  @@index([status])
+}
+
+// AI账户表
+model AIAccount {
+  id                      Int       @id @default(autoincrement())
+  userId                  Int
+  name                    String    @db.VarChar(100)
+  description             String?
+  modelType               ModelType @default(openai_gpt4)
+  initialBalance          Decimal   @default(100000.00) @db.Decimal(15, 2)
+  currentBalance          Decimal   @default(100000.00) @db.Decimal(15, 2)
+  totalValue              Decimal   @default(100000.00) @db.Decimal(15, 2)
+  status                  AccountStatus @default(active)
+  tradingFrequency        TradingFrequency @default(daily)
+  riskLevel               RiskLevel @default(medium)
+  promptTemplate          String?
+  config                  Json      @default("{}")
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolios              Portfolio[]
+  trades                  Trade[]
+  decisionLogs            DecisionLog[]
+  rankings                Ranking[]
+  systemLogs              SystemLog[]
+
+  // 约束
+  @@map("ai_accounts")
+  @@index([userId])
+  @@index([status])
+  @@index([modelType])
+}
+
+// 股票表
+model Stock {
+  id                      Int       @id @default(autoincrement())
+  code                    String    @unique @db.VarChar(10)
+  name                    String    @db.VarChar(100)
+  fullName                String?   @db.VarChar(200)
+  market                  Market    @db.VarChar(10)
+  industry                String?   @db.VarChar(100)
+  subIndustry             String?   @db.VarChar(100)
+  listingDate             DateTime? @db.Date
+  totalShares             BigInt?
+  circulatingShares       BigInt?
+  status                  StockStatus @default(normal)
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  portfolios              Portfolio[]
+  trades                  Trade[]
+  decisionLogs            DecisionLog[]
+  watchlist               Watchlist[]
+
+  @@index([code])
+  @@index([market])
+  @@index([industry])
+  @@index([status])
+}
+
+// 持仓表
+model Portfolio {
+  id                      Int       @id @default(autoincrement())
+  accountId               Int
+  stockId                 Int
+  quantity                Int       @default(0)
+  avgCost                 Decimal   @db.Decimal(10, 4)
+  currentPrice            Decimal?  @db.Decimal(10, 4)
+  marketValue             Decimal?  @db.Decimal(15, 2)
+  profitLoss              Decimal?  @db.Decimal(15, 2)
+  profitLossRate          Decimal?  @db.Decimal(8, 4)
+  firstBoughtAt           DateTime? @db.Timestamptz
+  lastTradedAt            DateTime? @db.Timestamptz
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  account                 AIAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  stock                   Stock     @relation(fields: [stockId], references: [id])
+
+  // 约束
+  @@unique([accountId, stockId])
+  @@index([accountId])
+  @@index([stockId])
+  @@index([updatedAt])
+}
+
+// 交易表
+model Trade {
+  id                      Int       @id @default(autoincrement())
+  accountId               Int
+  stockId                 Int
+  tradeType               TradeType
+  orderType               OrderType @default(market)
+  quantity                Int
+  price                   Decimal   @db.Decimal(10, 4)
+  amount                  Decimal   @db.Decimal(15, 2)
+  fee                     Decimal   @default(0.00) @db.Decimal(10, 2)
+  netAmount               Decimal   @db.Decimal(15, 2)
+  status                  TradeStatus @default(pending)
+  reason                  String?   @db.VarChar(100)
+  executedAt              DateTime? @db.Timestamptz
+  cancelledAt             DateTime? @db.Timestamptz
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  account                 AIAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  stock                   Stock     @relation(fields: [stockId], references: [id])
+  decisionLogs            DecisionLog[]
+
+  // 索引
+  @@index([accountId])
+  @@index([stockId])
+  @@index([tradeType])
+  @@index([status])
+  @@index([executedAt])
+  @@index([createdAt])
+}
+
+// AI决策日志表
+model DecisionLog {
+  id                      Int       @id @default(autoincrement())
+  accountId               Int
+  tradeId                 Int?
+  decisionType            DecisionType
+  reasoning               String
+  confidence              Decimal?  @db.Decimal(5, 4)
+  riskLevel               RiskLevel?
+  marketAnalysis          Json?
+  technicalIndicators     Json?
+  fundamentalAnalysis     Json?
+  inputData               Json?
+  outputData              Json?
+  modelUsed               String?   @db.VarChar(50)
+  promptVersion           String?   @db.VarChar(50)
+  processingTimeMs        Int?
+  apiCost                 Decimal?  @db.Decimal(10, 6)
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  account                 AIAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  trade                   Trade?    @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+
+  // 索引
+  @@index([accountId])
+  @@index([tradeId])
+  @@index([decisionType])
+  @@index([createdAt])
+  @@index([riskLevel])
+  @@map("decision_logs")
+}
+
+// 排行榜表
+model Ranking {
+  id                      Int       @id @default(autoincrement())
+  accountId               Int
+  periodType              PeriodType
+  periodDate              DateTime  @db.Date
+  rank                    Int
+  totalReturn             Decimal   @db.Decimal(8, 4)
+  annualizedReturn        Decimal?  @db.Decimal(8, 4)
+  sharpeRatio             Decimal?  @db.Decimal(8, 4)
+  maxDrawdown             Decimal?  @db.Decimal(8, 4)
+  winRate                 Decimal?  @db.Decimal(8, 4)
+  profitFactor            Decimal?  @db.Decimal(8, 4)
+  totalTrades             Int?
+  totalVolume             Decimal?  @db.Decimal(15, 2)
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  account                 AIAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  // 约束
+  @@unique([accountId, periodType, periodDate])
+  @@index([periodType])
+  @@index([periodDate])
+  @@index([rank])
+  @@index([totalReturn])
+}
+
+// 用户配置表
+model UserSettings {
+  id                      Int       @id @default(autoincrement())
+  userId                  Int       @unique
+  theme                   Theme     @default(light)
+  language                Language  @default(zh_CN)
+  timezone                String    @default("Asia/Shanghai") @db.VarChar(50)
+  currency                String    @default("CNY") @db.VarChar(10)
+  numberFormat            String    @default("standard") @db.VarChar(20)
+  dateFormat              String    @default("YYYY-MM-DD") @db.VarChar(20)
+  notifications           Json      @default("{\"tradeExecuted\": true, \"aiDecision\": true, \"priceAlert\": false, \"systemMaintenance\": true, \"marketing\": false}")
+  chartSettings           Json      @default("{\"defaultPeriod\": \"1d\", \"showVolume\": true, \"showMA\": true, \"theme\": \"light\"}")
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+  @@index([userId])
+}
+
+// 关注股票表
+model Watchlist {
+  id                      Int       @id @default(autoincrement())
+  userId                  Int
+  stockId                 Int
+  customName              String?   @db.VarChar(100)
+  notes                   String?
+  alertPrice              Decimal?  @db.Decimal(10, 4)
+  alertType               AlertType?
+  sortOrder               Int       @default(0)
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+  updatedAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stock                   Stock     @relation(fields: [stockId], references: [id])
+
+  // 约束
+  @@unique([userId, stockId])
+  @@index([userId])
+  @@index([stockId])
+}
+
+// 系统日志表
+model SystemLog {
+  id                      Int       @id @default(autoincrement())
+  level                   LogLevel
+  module                  String    @db.VarChar(50)
+  action                  String    @db.VarChar(100)
+  userId                  Int?
+  accountId               Int?
+  message                 String
+  metadata                Json?
+  ipAddress               String?   @db.Inet
+  userAgent               String?
+  durationMs              Int?
+  createdAt               DateTime  @default(now()) @db.Timestamptz
+
+  // 关系
+  user                    User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  account                 AIAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  // 索引
+  @@index([level])
+  @@index([module])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([module, action])
+  @@map("system_logs")
+}
+
+// 枚举类型定义
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+enum ModelType {
+  openai_gpt4
+  openai_gpt35
+  claude
+  wenxin
+  qwen
+}
+
+enum AccountStatus {
+  active
+  paused
+  stopped
+}
+
+enum TradingFrequency {
+  minutely
+  hourly
+  daily
+  weekly
+}
+
+enum RiskLevel {
+  low
+  medium
+  high
+  critical
+}
+
+enum Market {
+  sh
+  sz
+  bj
+  hk
+}
+
+enum StockStatus {
+  normal
+  suspended
+  delisted
+}
+
+enum TradeType {
+  buy
+  sell
+}
+
+enum OrderType {
+  market
+  limit
+  stop
+}
+
+enum TradeStatus {
+  pending
+  executed
+  cancelled
+  rejected
+  expired
+}
+
+enum DecisionType {
+  buy
+  sell
+  hold
+  analyze
+}
+
+enum PeriodType {
+  daily
+  weekly
+  monthly
+  total
+}
+
+enum Theme {
+  light
+  dark
+  auto
+}
+
+enum Language {
+  zh_CN
+  en_US
+}
+
+enum AlertType {
+  above
+  below
+  both
+}
+
+enum LogLevel {
+  debug
+  info
+  warn
+  error
+  fatal
+}
