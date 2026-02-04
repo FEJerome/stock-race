@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   Typography,
@@ -10,8 +10,10 @@ import {
   Table,
   Tag,
   Button,
-  Tooltip,
   Grid,
+  Alert,
+  Spin,
+  message,
 } from 'antd';
 import {
   DollarOutlined,
@@ -21,7 +23,11 @@ import {
   EyeOutlined,
   StockOutlined,
   CalculatorOutlined,
+  ReloadOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
+import { useQuery } from 'react-query';
+import { tradingService } from '../../services/trading.service';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -42,32 +48,73 @@ interface Position {
 interface PortfolioSummaryProps {
   showDetails?: boolean;
   compact?: boolean;
+  accountId?: string;
 }
 
 const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
   showDetails = true,
   compact = false,
+  accountId,
 }) => {
-  const screens = useBreakpoint();
+  const [dataSource, setDataSource] = useState<'real' | 'fallback'>('fallback');
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
-  // 模拟持仓数据
-  const positions: Position[] = [
-    { symbol: 'AAPL', name: '苹果公司', quantity: 200, avgCost: 158.25, currentPrice: 162.50, marketValue: 32500, totalCost: 31650, unrealizedPnl: 850, unrealizedPnlPercent: 2.69, weight: 25.9 },
-    { symbol: 'MSFT', name: '微软公司', quantity: 70, avgCost: 410.50, currentPrice: 415.75, marketValue: 29102.5, totalCost: 28735, unrealizedPnl: 367.5, unrealizedPnlPercent: 1.28, weight: 23.2 },
-    { symbol: 'GOOGL', name: '谷歌', quantity: 150, avgCost: 142.00, currentPrice: 145.25, marketValue: 21787.5, totalCost: 21300, unrealizedPnl: 487.5, unrealizedPnlPercent: 2.29, weight: 17.4 },
-    { symbol: 'TSLA', name: '特斯拉', quantity: 100, avgCost: 200.75, currentPrice: 195.50, marketValue: 19550, totalCost: 20075, unrealizedPnl: -525, unrealizedPnlPercent: -2.61, weight: 15.6 },
-    { symbol: 'NVDA', name: '英伟达', quantity: 20, avgCost: 850.00, currentPrice: 950.25, marketValue: 19005, totalCost: 17000, unrealizedPnl: 2005, unrealizedPnlPercent: 11.79, weight: 15.1 },
-    { symbol: 'AMZN', name: '亚马逊', quantity: 30, avgCost: 175.00, currentPrice: 178.50, marketValue: 5355, totalCost: 5250, unrealizedPnl: 105, unrealizedPnlPercent: 2.00, weight: 4.3 },
-    { symbol: 'META', name: 'Meta', quantity: 25, avgCost: 480.00, currentPrice: 485.75, marketValue: 12143.75, totalCost: 12000, unrealizedPnl: 143.75, unrealizedPnlPercent: 1.20, weight: 9.7 },
+  // 使用React Query获取持仓数据
+  const { data: positionsData, isLoading, error, refetch } = useQuery(
+    ['portfolioPositions', accountId],
+    () => tradingService.getPositions(),
+    {
+      enabled: true,
+      refetchInterval: 30000, // 每30秒自动刷新
+      onSuccess: (data) => {
+        setLastUpdateTime(new Date());
+        setDataSource('real');
+      },
+      onError: (err) => {
+        console.error('获取持仓数据失败:', err);
+        setDataSource('fallback');
+        message.warning('使用模拟持仓数据');
+      }
+    }
+  );
+
+  // 使用React Query获取投资组合汇总数据
+  const { data: portfolioSummary } = useQuery(
+    ['portfolioSummaryForSummary', accountId],
+    () => tradingService.getPortfolioSummary(accountId),
+    {
+      enabled: true,
+    }
+  );
+
+  // 持仓数据（优先使用真实数据，降级时使用模拟数据）
+  const positions: Position[] = positionsData ? positionsData.map(pos => ({
+    symbol: pos.stockSymbol,
+    name: pos.stockName,
+    quantity: pos.quantity,
+    avgCost: pos.averageCost,
+    currentPrice: pos.currentPrice,
+    marketValue: pos.marketValue,
+    totalCost: pos.totalCost,
+    unrealizedPnl: pos.unrealizedPnl,
+    unrealizedPnlPercent: pos.unrealizedPnlPercent,
+    weight: portfolioSummary?.totalValue ? (pos.marketValue / portfolioSummary.totalValue) * 100 : 0,
+  })) : [
+    // 降级处理：模拟持仓数据
+    { symbol: '000001', name: '平安银行', quantity: 200, avgCost: 16.25, currentPrice: 16.50, marketValue: 3300, totalCost: 3250, unrealizedPnl: 50, unrealizedPnlPercent: 1.54, weight: 25.9 },
+    { symbol: '600000', name: '浦发银行', quantity: 70, avgCost: 8.15, currentPrice: 8.20, marketValue: 574, totalCost: 570.5, unrealizedPnl: 3.5, unrealizedPnlPercent: 0.61, weight: 23.2 },
+    { symbol: '000002', name: '万科A', quantity: 150, avgCost: 12.20, currentPrice: 12.35, marketValue: 1852.5, totalCost: 1830, unrealizedPnl: 22.5, unrealizedPnlPercent: 1.23, weight: 17.4 },
+    { symbol: '600036', name: '招商银行', quantity: 100, avgCost: 35.35, currentPrice: 35.80, marketValue: 3580, totalCost: 3535, unrealizedPnl: 45, unrealizedPnlPercent: 1.27, weight: 15.6 },
+    { symbol: '000858', name: '五粮液', quantity: 20, avgCost: 193.25, currentPrice: 195.50, marketValue: 3910, totalCost: 3865, unrealizedPnl: 45, unrealizedPnlPercent: 1.16, weight: 15.1 },
   ];
 
-  // 计算汇总数据
-  const totalMarketValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
-  const totalCost = positions.reduce((sum, p) => sum + p.totalCost, 0);
-  const totalPnl = positions.reduce((sum, p) => sum + p.unrealizedPnl, 0);
-  const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
-  const cashBalance = 25430.50;
-  const totalAssets = totalMarketValue + cashBalance;
+  // 计算汇总数据（优先使用真实数据）
+  const totalMarketValue = portfolioSummary ? portfolioSummary.totalValue - (portfolioSummary.cashBalance || 0) : positions.reduce((sum, p) => sum + p.marketValue, 0);
+  const totalCost = portfolioSummary ? portfolioSummary.totalCost : positions.reduce((sum, p) => sum + p.totalCost, 0);
+  const totalPnl = portfolioSummary ? portfolioSummary.totalPnl : positions.reduce((sum, p) => sum + p.unrealizedPnl, 0);
+  const totalPnlPercent = portfolioSummary ? portfolioSummary.totalPnlPercent : (totalCost > 0 ? (totalPnl / totalCost) * 100 : 0);
+  const cashBalance = portfolioSummary ? portfolioSummary.cashBalance : 25430.50;
+  const totalAssets = portfolioSummary ? portfolioSummary.totalValue : totalMarketValue + cashBalance;
 
   // 计算资产分布
   const assetDistribution = {
@@ -78,6 +125,13 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
 
   const stockPercentage = (assetDistribution.stocks / assetDistribution.total) * 100;
   const cashPercentage = (assetDistribution.cash / assetDistribution.total) * 100;
+
+  // 手动刷新数据
+  const handleRefresh = () => {
+    refetch();
+    setLastUpdateTime(new Date());
+    message.info('正在刷新持仓数据...');
+  };
 
   // 表格列定义
   const positionColumns = [
@@ -181,11 +235,25 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
           <Tag color={totalPnl >= 0 ? 'green' : 'red'} icon={totalPnl >= 0 ? <RiseOutlined /> : <FallOutlined />}>
             {totalPnl >= 0 ? '+' : ''}{totalPnlPercent.toFixed(2)}%
           </Tag>
+          <Tag color={dataSource === 'real' ? 'green' : 'orange'}>
+            {dataSource === 'real' ? '实时数据' : '模拟数据'}
+          </Tag>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            更新时间: {lastUpdateTime.toLocaleTimeString('zh-CN')}
+          </Text>
         </Space>
       }
       extra={
         !compact && (
           <Space>
+            <Button
+              type="text"
+              icon={<ReloadOutlined />}
+              size="small"
+              onClick={handleRefresh}
+              loading={isLoading}
+              title="刷新数据"
+            />
             <Button type="text" icon={<EyeOutlined />} size="small">
               详细视图
             </Button>
@@ -196,6 +264,29 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         )
       }
     >
+      {/* 加载状态 */}
+      {isLoading && (
+        <div style={{ textAlign: 'center', padding: '20px 0' }}>
+          <Spin size="large" tip="加载持仓数据中..." />
+        </div>
+      )}
+
+      {/* 错误状态 */}
+      {error && !isLoading && (
+        <Alert
+          message="数据加载失败"
+          description="无法获取实时持仓数据，使用模拟数据进行展示。"
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          action={
+            <Button size="small" onClick={handleRefresh}>
+              重试
+            </Button>
+          }
+        />
+      )}
+
       {/* 关键指标 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={compact ? 12 : 6}>
@@ -204,7 +295,6 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               title="总资产"
               value={totalAssets}
               precision={2}
-              prefix="¥"
               valueStyle={{ color: '#1890ff', fontSize: compact ? 16 : 20 }}
               prefix={<DollarOutlined />}
             />
@@ -217,7 +307,6 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               title="总盈亏"
               value={totalPnl}
               precision={2}
-              prefix="¥"
               valueStyle={{
                 color: totalPnl >= 0 ? '#52c41a' : '#ff4d4f',
                 fontSize: compact ? 16 : 20,
@@ -233,7 +322,6 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
               title="股票持仓"
               value={totalMarketValue}
               precision={2}
-              prefix="¥"
               valueStyle={{ color: '#722ed1', fontSize: compact ? 16 : 20 }}
               prefix={<StockOutlined />}
             />

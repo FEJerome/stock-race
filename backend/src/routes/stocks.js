@@ -50,7 +50,46 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/', optionalAuthenticate, stockController.getStocks.bind(stockController));
+router.get('/', optionalAuthenticate, (req, res) => stockController.getStocks(req, res));
+
+/**
+ * @swagger
+ * /stocks/search:
+ *   get:
+ *     tags: [股票]
+ *     summary: 搜索股票
+ *     description: 根据关键词搜索股票
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *         description: 搜索关键词
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 20
+ *         description: 结果数量限制
+ *     responses:
+ *       200:
+ *         description: 搜索股票成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: 搜索关键词太短
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/search', optionalAuthenticate, (req, res) => stockController.searchStocks(req, res));
 
 /**
  * @swagger
@@ -80,7 +119,7 @@ router.get('/', optionalAuthenticate, stockController.getStocks.bind(stockContro
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:stockCode', optionalAuthenticate, stockController.getStockDetail.bind(stockController));
+router.get('/:stockCode', optionalAuthenticate, (req, res) => stockController.getStockDetail(req, res));
 
 /**
  * @swagger
@@ -137,7 +176,7 @@ router.get('/:stockCode', optionalAuthenticate, stockController.getStockDetail.b
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:stockCode/kline', optionalAuthenticate, stockController.getKline.bind(stockController));
+router.get('/:stockCode/kline', optionalAuthenticate, (req, res) => stockController.getKline(req, res));
 
 /**
  * @swagger
@@ -167,46 +206,7 @@ router.get('/:stockCode/kline', optionalAuthenticate, stockController.getKline.b
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:stockCode/realtime', optionalAuthenticate, stockController.getRealtime.bind(stockController));
-
-/**
- * @swagger
- * /stocks/search:
- *   get:
- *     tags: [股票]
- *     summary: 搜索股票
- *     description: 根据关键词搜索股票
- *     parameters:
- *       - in: query
- *         name: q
- *         required: true
- *         schema:
- *           type: string
- *           minLength: 2
- *         description: 搜索关键词
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 50
- *           default: 20
- *         description: 结果数量限制
- *     responses:
- *       200:
- *         description: 搜索股票成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       400:
- *         description: 搜索关键词太短
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/search', optionalAuthenticate, stockController.searchStocks.bind(stockController));
+router.get('/:stockCode/realtime', optionalAuthenticate, (req, res) => stockController.getRealtime(req, res));
 
 /**
  * @swagger
@@ -229,7 +229,7 @@ router.get('/search', optionalAuthenticate, stockController.searchStocks.bind(st
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/market/stats', optionalAuthenticate, stockController.getMarketStats.bind(stockController));
+router.get('/market/stats', optionalAuthenticate, (req, res) => stockController.getMarketStats(req, res));
 
 /**
  * @swagger
@@ -273,7 +273,7 @@ router.get('/market/stats', optionalAuthenticate, stockController.getMarketStats
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/realtime/batch', optionalAuthenticate, stockController.batchGetRealtime.bind(stockController));
+router.post('/realtime/batch', optionalAuthenticate, (req, res) => stockController.batchGetRealtime(req, res));
 
 /**
  * @swagger
@@ -318,6 +318,6 @@ router.post('/realtime/batch', optionalAuthenticate, stockController.batchGetRea
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/rankings', optionalAuthenticate, stockController.getStockRankings.bind(stockController));
+router.get('/rankings', optionalAuthenticate, (req, res) => stockController.getStockRankings(req, res));
 
 export default router;

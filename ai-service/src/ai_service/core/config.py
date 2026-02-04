@@ -4,7 +4,7 @@ Configuration settings for AI Service.
 
 import os
 from typing import List, Optional
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 load_dotenv()

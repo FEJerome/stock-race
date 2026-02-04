@@ -2,7 +2,7 @@
 Database connection management for AI Service.
 """
 
-from typing import Optional
+from typing import Optional, Any
 import asyncpg
 from loguru import logger
 

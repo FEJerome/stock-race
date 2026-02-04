@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Tuple
 import logging
+import statistics
 
 from ..models.stock import StockData, StockQuote, TechnicalIndicator
 from ..core.config import settings
@@ -23,6 +24,10 @@ class DataProcessor:
             "volume_min": 0,  # Minimum volume
             "change_percent_max": 1000,  # Maximum change percentage
             "timestamp_max_diff": 3600,  # Maximum timestamp difference (1 hour)
+            "price_consistency_threshold": 0.05,  # 5% price difference threshold
+            "volume_consistency_threshold": 0.2,  # 20% volume difference threshold
+            "min_data_points_for_validation": 5,  # Minimum data points for statistical validation
+            "z_score_threshold": 3.0,  # Z-score threshold for outlier detection
         }
 
     def clean_stock_quote(self, raw_quote: Dict[str, Any]) -> StockQuote:
@@ -515,6 +520,282 @@ class DataProcessor:
                         anomalies.append(f"Price {quote.price} is {z_score:.1f}σ from recent average")
 
         return anomalies
+
+    def validate_quote_consistency(
+        self,
+        quote: StockQuote,
+        recent_quotes: List[StockQuote]
+    ) -> Dict[str, Any]:
+        """
+        Validate quote consistency with recent data.
+
+        Args:
+            quote: Current quote to validate
+            recent_quotes: List of recent quotes for comparison
+
+        Returns:
+            Dictionary with validation results
+        """
+        validation_results = {
+            "is_consistent": True,
+            "warnings": [],
+            "errors": [],
+            "metrics": {}
+        }
+
+        if not recent_quotes:
+            validation_results["warnings"].append("No recent data for comparison")
+            return validation_results
+
+        # Calculate statistics from recent quotes
+        recent_prices = [q.price for q in recent_quotes if q.price > 0]
+        recent_volumes = [q.volume for q in recent_quotes if q.volume > 0]
+
+        if not recent_prices:
+            validation_results["warnings"].append("No valid price data in recent quotes")
+            return validation_results
+
+        # Calculate price statistics
+        avg_price = statistics.mean(recent_prices)
+        price_std = statistics.stdev(recent_prices) if len(recent_prices) > 1 else 0
+        price_z_score = abs(quote.price - avg_price) / price_std if price_std > 0 else 0
+
+        # Calculate volume statistics
+        if recent_volumes:
+            avg_volume = statistics.mean(recent_volumes)
+            volume_std = statistics.stdev(recent_volumes) if len(recent_volumes) > 1 else 0
+            volume_z_score = abs(quote.volume - avg_volume) / volume_std if volume_std > 0 else 0
+        else:
+            avg_volume = 0
+            volume_z_score = 0
+
+        # Check price consistency
+        price_change_percent = abs((quote.price - avg_price) / avg_price * 100) if avg_price > 0 else 0
+        if price_change_percent > self.validation_rules["price_consistency_threshold"] * 100:
+            validation_results["warnings"].append(
+                f"Price change {price_change_percent:.2f}% exceeds threshold"
+            )
+
+        # Check volume consistency
+        if avg_volume > 0:
+            volume_change_percent = abs((quote.volume - avg_volume) / avg_volume * 100)
+            if volume_change_percent > self.validation_rules["volume_consistency_threshold"] * 100:
+                validation_results["warnings"].append(
+                    f"Volume change {volume_change_percent:.2f}% exceeds threshold"
+                )
+
+        # Check for outliers using z-score
+        if price_z_score > self.validation_rules["z_score_threshold"]:
+            validation_results["errors"].append(
+                f"Price z-score {price_z_score:.2f} exceeds threshold"
+            )
+            validation_results["is_consistent"] = False
+
+        if volume_z_score > self.validation_rules["z_score_threshold"] and avg_volume > 0:
+            validation_results["errors"].append(
+                f"Volume z-score {volume_z_score:.2f} exceeds threshold"
+            )
+            validation_results["is_consistent"] = False
+
+        # Store metrics
+        validation_results["metrics"] = {
+            "avg_price": avg_price,
+            "price_std": price_std,
+            "price_z_score": price_z_score,
+            "price_change_percent": price_change_percent,
+            "avg_volume": avg_volume,
+            "volume_z_score": volume_z_score,
+            "recent_data_points": len(recent_quotes)
+        }
+
+        return validation_results
+
+    def cross_validate_sources(
+        self,
+        quotes_by_source: Dict[str, Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Cross-validate data from multiple sources.
+
+        Args:
+            quotes_by_source: Dictionary mapping source name to quote data
+
+        Returns:
+            Dictionary with cross-validation results
+        """
+        validation_results = {
+            "is_consistent": True,
+            "source_agreement": 0.0,
+            "discrepancies": [],
+            "consensus_price": 0.0,
+            "consensus_volume": 0,
+            "source_details": {}
+        }
+
+        if len(quotes_by_source) < 2:
+            validation_results["warnings"] = ["Insufficient sources for cross-validation"]
+            return validation_results
+
+        # Extract prices and volumes from all sources
+        prices = []
+        volumes = []
+        source_details = {}
+
+        for source_name, quote in quotes_by_source.items():
+            try:
+                price = float(quote.get("price", 0))
+                volume = int(quote.get("volume", 0))
+
+                if price > 0:
+                    prices.append(price)
+                if volume > 0:
+                    volumes.append(volume)
+
+                source_details[source_name] = {
+                    "price": price,
+                    "volume": volume,
+                    "timestamp": quote.get("timestamp"),
+                    "is_valid": price > 0
+                }
+            except (ValueError, TypeError):
+                source_details[source_name] = {
+                    "price": 0,
+                    "volume": 0,
+                    "is_valid": False,
+                    "error": "Invalid data format"
+                }
+
+        # Calculate consensus values
+        if prices:
+            validation_results["consensus_price"] = statistics.median(prices)
+            price_std = statistics.stdev(prices) if len(prices) > 1 else 0
+            price_cv = (price_std / validation_results["consensus_price"] * 100) if validation_results["consensus_price"] > 0 else 0
+
+            # Check price consistency across sources
+            if price_cv > self.validation_rules["price_consistency_threshold"] * 100:
+                validation_results["discrepancies"].append(
+                    f"Price coefficient of variation {price_cv:.2f}% exceeds threshold"
+                )
+                validation_results["is_consistent"] = False
+
+        if volumes:
+            validation_results["consensus_volume"] = int(statistics.median(volumes))
+            volume_std = statistics.stdev(volumes) if len(volumes) > 1 else 0
+            volume_cv = (volume_std / validation_results["consensus_volume"] * 100) if validation_results["consensus_volume"] > 0 else 0
+
+            # Check volume consistency across sources
+            if volume_cv > self.validation_rules["volume_consistency_threshold"] * 100:
+                validation_results["discrepancies"].append(
+                    f"Volume coefficient of variation {volume_cv:.2f}% exceeds threshold"
+                )
+
+        # Calculate source agreement
+        valid_sources = sum(1 for details in source_details.values() if details["is_valid"])
+        if valid_sources > 0:
+            validation_results["source_agreement"] = valid_sources / len(quotes_by_source)
+
+        validation_results["source_details"] = source_details
+
+        return validation_results
+
+    def clean_and_validate_batch(
+        self,
+        batch_quotes: Dict[str, Dict[str, Any]],
+        recent_data_by_symbol: Optional[Dict[str, List[StockQuote]]] = None
+    ) -> Dict[str, StockQuote]:
+        """
+        Clean and validate a batch of quotes.
+
+        Args:
+            batch_quotes: Dictionary mapping symbol to raw quote data
+            recent_data_by_symbol: Optional dictionary mapping symbol to recent quotes
+
+        Returns:
+            Dictionary mapping symbol to cleaned StockQuote
+        """
+        cleaned_quotes = {}
+        validation_results = {}
+
+        for symbol, raw_quote in batch_quotes.items():
+            try:
+                # Clean individual quote
+                cleaned_quote = self.clean_stock_quote(raw_quote)
+
+                # Additional validation if recent data is available
+                if recent_data_by_symbol and symbol in recent_data_by_symbol:
+                    recent_quotes = recent_data_by_symbol[symbol]
+                    consistency_check = self.validate_quote_consistency(
+                        cleaned_quote, recent_quotes
+                    )
+
+                    if not consistency_check["is_consistent"]:
+                        logger.warning(
+                            f"Quote for {symbol} failed consistency check: "
+                            f"{consistency_check['errors']}"
+                        )
+                        # Mark as questionable but still include
+                        cleaned_quote.metadata = {
+                            "validation_warnings": consistency_check["warnings"],
+                            "validation_errors": consistency_check["errors"]
+                        }
+
+                cleaned_quotes[symbol] = cleaned_quote
+                validation_results[symbol] = {
+                    "success": True,
+                    "anomalies": self.detect_anomalies(
+                        cleaned_quote,
+                        recent_data_by_symbol.get(symbol, []) if recent_data_by_symbol else []
+                    )
+                }
+
+            except Exception as e:
+                logger.error(f"Failed to clean quote for {symbol}: {str(e)}")
+                validation_results[symbol] = {
+                    "success": False,
+                    "error": str(e)
+                }
+
+        # Batch-level validation
+        if len(cleaned_quotes) > 1:
+            self._validate_batch_relationships(cleaned_quotes, validation_results)
+
+        return cleaned_quotes
+
+    def _validate_batch_relationships(
+        self,
+        cleaned_quotes: Dict[str, StockQuote],
+        validation_results: Dict[str, Any]
+    ):
+        """
+        Validate relationships within a batch of quotes.
+
+        Args:
+            cleaned_quotes: Dictionary of cleaned quotes
+            validation_results: Validation results to update
+        """
+        # Check for correlated price movements
+        prices = [quote.price for quote in cleaned_quotes.values() if quote.price > 0]
+        if len(prices) >= 3:
+            try:
+                # Calculate correlation matrix (simplified)
+                price_changes = []
+                for quote in cleaned_quotes.values():
+                    if quote.prev_close and quote.prev_close > 0:
+                        change = (quote.price - quote.prev_close) / quote.prev_close
+                        price_changes.append(change)
+
+                if len(price_changes) >= 3:
+                    # Check for extreme dispersion
+                    change_std = statistics.stdev(price_changes) if len(price_changes) > 1 else 0
+                    if change_std > 0.1:  # 10% standard deviation
+                        for symbol, quote in cleaned_quotes.items():
+                            if symbol in validation_results:
+                                validation_results[symbol]["warnings"] = validation_results[symbol].get("warnings", [])
+                                validation_results[symbol]["warnings"].append(
+                                    "High dispersion in batch price changes"
+                                )
+            except Exception as e:
+                logger.debug(f"Failed to analyze batch relationships: {str(e)}")
 
     def _validate_quote(self, quote: StockQuote):
         """

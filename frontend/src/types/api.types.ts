@@ -47,26 +47,62 @@ export interface LoginResponse {
 
 // 股票相关类型
 export interface Stock {
-  symbol: string;
-  name: string;
-  currentPrice: number;
+  code: string;           // 股票代码，如 "000001"
+  name: string;           // 股票名称
+  market: string;         // 市场代码，如 "sh", "sz"
+  industry?: string;      // 行业
+  currentPrice: number;   // 当前价格
+  change: number;         // 涨跌额
+  changePercent: number;  // 涨跌幅
+  volume: number;         // 成交量
+  amount: number;         // 成交额
+  peRatio?: number;       // 市盈率
+  pbRatio?: number;       // 市净率
+  marketCap?: number;     // 总市值
+  circulatingMarketCap?: number; // 流通市值
+  timestamp: string;      // 数据时间戳
+  isFallback?: boolean;   // 是否为降级数据
+  // 兼容旧字段
+  symbol?: string;        // 兼容字段，等同于code
+  high?: number;          // 最高价
+  low?: number;           // 最低价
+  open?: number;          // 开盘价
+  previousClose?: number; // 前收盘价
+}
+
+// 实时行情数据
+export interface RealtimeStockData {
+  stockCode: string;
+  stockName: string;
+  price: number;
   change: number;
   changePercent: number;
   volume: number;
-  marketCap?: number;
-  peRatio?: number;
-  high: number;
-  low: number;
-  open: number;
-  previousClose: number;
+  amount: number;
   timestamp: string;
+  bidAsk?: {
+    bidPrice: number;
+    bidVolume: number;
+    askPrice: number;
+    askVolume: number;
+  };
+  open?: number;
+  high?: number;
+  low?: number;
+  prevClose?: number;
+  marketStatus?: string;
+  isFallback: boolean;
 }
 
 export interface StockSearchResult {
-  symbol: string;
-  name: string;
-  exchange?: string;
-  type?: string;
+  code: string;      // 股票代码
+  name: string;      // 股票名称
+  market?: string;   // 市场代码
+  industry?: string; // 行业
+  // 兼容旧字段
+  symbol?: string;   // 兼容字段，等同于code
+  exchange?: string; // 兼容字段，等同于market
+  type?: string;     // 兼容字段，等同于industry
 }
 
 // 交易相关类型

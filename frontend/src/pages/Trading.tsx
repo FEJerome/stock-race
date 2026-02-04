@@ -44,31 +44,37 @@ const { Option } = Select;
 const { useBreakpoint } = Grid;
 
 interface StockQuote {
-  symbol: string;
-  name: string;
-  currentPrice: number;
-  change: number;
-  changePercent: number;
+  code: string;           // 股票代码
+  name: string;           // 股票名称
+  currentPrice: number;   // 当前价格
+  change: number;         // 涨跌额
+  changePercent: number;  // 涨跌幅
+  market?: string;        // 市场代码
+  isFallback?: boolean;   // 是否为降级数据
+  // 兼容字段
+  symbol?: string;        // 兼容字段
 }
 
 interface Position {
   id: string;
-  stockSymbol: string;
-  stockName: string;
-  quantity: number;
-  averageCost: number;
-  currentPrice: number;
-  marketValue: number;
-  totalCost: number;
-  unrealizedPnl: number;
-  unrealizedPnlPercent: number;
+  stockSymbol: string;          // 股票代码
+  stockName: string;            // 股票名称
+  quantity: number;             // 持仓数量
+  averageCost: number;          // 平均成本
+  currentPrice: number;         // 当前价格
+  marketValue: number;          // 市值
+  totalCost: number;            // 总成本
+  unrealizedPnl: number;        // 未实现盈亏
+  unrealizedPnlPercent: number; // 未实现盈亏率
+  isFallback?: boolean;         // 是否为降级数据
 }
 
 interface OrderForm {
-  stockSymbol: string;
-  orderType: 'buy' | 'sell';
-  quantity: number;
-  limitPrice?: number;
+  stockSymbol: string;      // 股票代码
+  orderType: 'buy' | 'sell'; // 订单类型
+  quantity: number;         // 数量
+  limitPrice?: number;      // 限价（可选）
+  priceType?: 'market' | 'limit'; // 价格类型
 }
 
 const Trading: React.FC = () => {
@@ -83,7 +89,20 @@ const Trading: React.FC = () => {
   // 使用React Query获取数据
   const { data: stocks, isLoading: stocksLoading, refetch: refetchStocks } = useQuery(
     'tradingStocks',
-    () => marketService.getStockQuotes()
+    () => marketService.getStockQuotes(),
+    {
+      onSuccess: (data) => {
+        // 检查是否有降级数据
+        const hasFallback = data.some(stock => stock.isFallback);
+        if (hasFallback) {
+          message.warning('部分股票数据使用降级数据，交易功能可能受限');
+        }
+      },
+      onError: (error) => {
+        console.error('获取股票数据失败:', error);
+        message.error('获取股票数据失败，使用降级数据');
+      }
+    }
   );
 
   const { data: positions, isLoading: positionsLoading, refetch: refetchPositions } = useQuery(
@@ -99,7 +118,13 @@ const Trading: React.FC = () => {
   const { data: searchResults, isLoading: searchLoading, refetch: refetchSearch } = useQuery(
     ['stockSearch', searchQuery],
     () => searchQuery ? marketService.searchStocks(searchQuery) : Promise.resolve([]),
-    { enabled: !!searchQuery }
+    {
+      enabled: !!searchQuery,
+      onError: (error) => {
+        console.error('搜索股票失败:', error);
+        message.error('搜索股票失败，请稍后重试');
+      }
+    }
   );
 
   // 创建订单的mutation
@@ -122,18 +147,32 @@ const Trading: React.FC = () => {
   );
 
   // 过滤显示的股票
-  const filteredStocks = stocks?.filter(stock =>
-    stock.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    stock.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  const filteredStocks = stocks?.filter(stock => {
+    const code = stock.code || stock.symbol || '';
+    const name = stock.name || '';
+
+    return (
+      code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }) || [];
 
   // 处理股票选择
-  const handleStockSelect = (symbol: string) => {
-    const stock = stocks?.find(s => s.symbol === symbol);
+  const handleStockSelect = (code: string) => {
+    const stock = stocks?.find(s => (s.code || s.symbol) === code);
     if (stock) {
-      setSelectedStock(stock);
+      setSelectedStock({
+        code: stock.code || stock.symbol || '',
+        name: stock.name,
+        currentPrice: stock.currentPrice,
+        change: stock.change || 0,
+        changePercent: stock.changePercent || 0,
+        market: stock.market,
+        isFallback: stock.isFallback,
+        symbol: stock.code || stock.symbol
+      });
       form.setFieldsValue({
-        stockSymbol: stock.symbol,
+        stockSymbol: stock.code || stock.symbol,
         limitPrice: stock.currentPrice,
       });
     }
@@ -145,15 +184,24 @@ const Trading: React.FC = () => {
   };
 
   // 处理快速交易
-  const handleQuickTrade = (symbol: string, type: 'buy' | 'sell') => {
-    const stock = stocks?.find(s => s.symbol === symbol);
+  const handleQuickTrade = (code: string, type: 'buy' | 'sell') => {
+    const stock = stocks?.find(s => (s.code || s.symbol) === code);
     if (stock) {
-      setSelectedStock(stock);
+      setSelectedStock({
+        code: stock.code || stock.symbol || '',
+        name: stock.name,
+        currentPrice: stock.currentPrice,
+        change: stock.change || 0,
+        changePercent: stock.changePercent || 0,
+        market: stock.market,
+        isFallback: stock.isFallback,
+        symbol: stock.code || stock.symbol
+      });
       setOrderType(type);
       form.setFieldsValue({
-        stockSymbol: stock.symbol,
+        stockSymbol: stock.code || stock.symbol,
         orderType: type,
-        quantity: type === 'buy' ? 10 : 100,
+        quantity: type === 'buy' ? 100 : 100, // 默认100股
         limitPrice: stock.currentPrice,
       });
       setIsOrderModalVisible(true);
@@ -175,8 +223,8 @@ const Trading: React.FC = () => {
   };
 
   // 检查是否有足够的持仓用于卖出
-  const canSellStock = (symbol: string) => {
-    const position = positions?.find(p => p.stockSymbol === symbol);
+  const canSellStock = (code: string) => {
+    const position = positions?.find(p => p.stockSymbol === code);
     return position && position.quantity > 0;
   };
 
@@ -193,20 +241,28 @@ const Trading: React.FC = () => {
   const stockColumns = [
     {
       title: '股票',
-      dataIndex: 'symbol',
-      key: 'symbol',
-      render: (symbol: string, record: StockQuote) => (
-        <Space>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#1890ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
-            {symbol.substring(0, 2)}
-          </div>
-          <div>
-            <Text strong>{symbol}</Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: '12px' }}>{record.name}</Text>
-          </div>
-        </Space>
-      ),
+      dataIndex: 'code',
+      key: 'code',
+      render: (code: string, record: StockQuote) => {
+        const displayCode = code || record.symbol || '';
+        return (
+          <Space>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#1890ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold' }}>
+              {displayCode.substring(0, 2)}
+            </div>
+            <div>
+              <Text strong>{displayCode}</Text>
+              <br />
+              <Text type="secondary" style={{ fontSize: '12px' }}>{record.name}</Text>
+              {record.isFallback && (
+                <div>
+                  <Text type="warning" style={{ fontSize: '10px' }}>模拟数据</Text>
+                </div>
+              )}
+            </div>
+          </Space>
+        );
+      },
     },
     {
       title: '最新价',
@@ -239,27 +295,33 @@ const Trading: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: StockQuote) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={() => handleQuickTrade(record.symbol, 'buy')}
-          >
-            买入
-          </Button>
-          <Button
-            type="default"
-            size="small"
-            icon={<MinusOutlined />}
-            disabled={!canSellStock(record.symbol)}
-            onClick={() => handleQuickTrade(record.symbol, 'sell')}
-          >
-            卖出
-          </Button>
-        </Space>
-      ),
+      render: (_: any, record: StockQuote) => {
+        const code = record.code || record.symbol || '';
+        return (
+          <Space>
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() => handleQuickTrade(code, 'buy')}
+              disabled={record.isFallback}
+              title={record.isFallback ? '模拟数据不支持交易' : '买入'}
+            >
+              买入
+            </Button>
+            <Button
+              type="default"
+              size="small"
+              icon={<MinusOutlined />}
+              disabled={!canSellStock(code) || record.isFallback}
+              onClick={() => handleQuickTrade(code, 'sell')}
+              title={record.isFallback ? '模拟数据不支持交易' : '卖出'}
+            >
+              卖出
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -277,6 +339,11 @@ const Trading: React.FC = () => {
             <Text strong>{symbol}</Text>
             <br />
             <Text type="secondary" style={{ fontSize: '12px' }}>{record.stockName}</Text>
+            {record.isFallback && (
+              <div>
+                <Text type="warning" style={{ fontSize: '10px' }}>模拟数据</Text>
+              </div>
+            )}
           </div>
         </Space>
       ),
@@ -326,6 +393,8 @@ const Trading: React.FC = () => {
             size="small"
             icon={<PlusOutlined />}
             onClick={() => handleQuickTrade(record.stockSymbol, 'buy')}
+            disabled={record.isFallback}
+            title={record.isFallback ? '模拟数据不支持交易' : '加仓'}
           >
             加仓
           </Button>
@@ -334,6 +403,8 @@ const Trading: React.FC = () => {
             size="small"
             icon={<MinusOutlined />}
             onClick={() => handleQuickTrade(record.stockSymbol, 'sell')}
+            disabled={record.isFallback}
+            title={record.isFallback ? '模拟数据不支持交易' : '减仓'}
           >
             减仓
           </Button>
@@ -353,7 +424,9 @@ const Trading: React.FC = () => {
       title: '股票',
       dataIndex: 'stockSymbol',
       key: 'stockSymbol',
-      render: (symbol: string) => <Text strong>{symbol}</Text>,
+      render: (symbol: string) => (
+        <Text strong>{symbol}</Text>
+      ),
     },
     {
       title: '类型',
@@ -451,17 +524,28 @@ const Trading: React.FC = () => {
                       onSearch={setSearchQuery}
                       onChange={handleStockSelect}
                       loading={searchLoading}
+                      filterOption={false}
                     >
-                      {searchResults?.map(stock => (
-                        <Option key={stock.symbol} value={stock.symbol}>
-                          {stock.symbol} - {stock.name}
-                        </Option>
-                      ))}
-                      {filteredStocks.map(stock => (
-                        <Option key={stock.symbol} value={stock.symbol}>
-                          {stock.symbol} - {stock.name}
-                        </Option>
-                      ))}
+                      {searchResults?.map(stock => {
+                        const code = stock.code || stock.symbol || '';
+                        const name = stock.name || '';
+                        return (
+                          <Option key={code} value={code}>
+                            {code} - {name}
+                            {stock.isFallback && ' (模拟)'}
+                          </Option>
+                        );
+                      })}
+                      {filteredStocks.map(stock => {
+                        const code = stock.code || stock.symbol || '';
+                        const name = stock.name || '';
+                        return (
+                          <Option key={code} value={code}>
+                            {code} - {name}
+                            {stock.isFallback && ' (模拟)'}
+                          </Option>
+                        );
+                      })}
                     </Select>
                   </Form.Item>
                 </Col>
@@ -528,14 +612,17 @@ const Trading: React.FC = () => {
                 <Alert
                   message={
                     <Space>
-                      <Text strong>{selectedStock.symbol} - {selectedStock.name}</Text>
+                      <Text strong>{selectedStock.code || selectedStock.symbol} - {selectedStock.name}</Text>
                       <Text>当前价格: {formatCurrency(selectedStock.currentPrice)}</Text>
                       <Text type={selectedStock.change >= 0 ? 'success' : 'danger'}>
                         {formatChange(selectedStock.change)} ({formatChangePercent(selectedStock.changePercent)})
                       </Text>
+                      {selectedStock.isFallback && (
+                        <Tag color="warning" style={{ marginLeft: 8 }}>模拟数据</Tag>
+                      )}
                     </Space>
                   }
-                  type="info"
+                  type={selectedStock.isFallback ? 'warning' : 'info'}
                   showIcon
                   style={{ marginBottom: 16 }}
                 />
@@ -716,7 +803,14 @@ const Trading: React.FC = () => {
         {selectedStock && (
           <div>
             <Alert
-              message={`${orderType === 'buy' ? '买入' : '卖出'} ${selectedStock.symbol} - ${selectedStock.name}`}
+              message={
+                <Space>
+                  <Text>{`${orderType === 'buy' ? '买入' : '卖出'} ${selectedStock.code || selectedStock.symbol} - ${selectedStock.name}`}</Text>
+                  {selectedStock.isFallback && (
+                    <Tag color="warning">模拟数据交易</Tag>
+                  )}
+                </Space>
+              }
               type="info"
               showIcon
               style={{ marginBottom: 16 }}

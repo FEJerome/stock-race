@@ -336,18 +336,18 @@ async def decision_health_check():
 
 
 # Error handlers
-@router.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    """Handle HTTP exceptions."""
-    api_logger.warning(f"HTTP Exception: {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=ErrorResponse(
-            detail=exc.detail,
-            error_code=getattr(exc, 'error_code', None),
-        ).dict(),
-    )
-
+# @router.exception_handler(HTTPException)
+# async def http_exception_handler(request, exc):
+#     """Handle HTTP exceptions."""
+#     api_logger.warning(f"HTTP Exception: {exc.detail}")
+#     return JSONResponse(
+#         status_code=exc.status_code,
+#         content=ErrorResponse(
+#             detail=exc.detail,
+#             error_code=getattr(exc, 'error_code', None),
+#         ).dict(),
+#     )
+# 
 
 # Import settings after router definition
 from ...core.config import settings

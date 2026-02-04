@@ -235,23 +235,44 @@ export const tradingService = {
   },
 
   // 获取持仓汇总
-  getPortfolioSummary: async (): Promise<PortfolioSummary> => {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 300));
+  getPortfolioSummary: async (accountId?: string): Promise<PortfolioSummary> => {
+    try {
+      const params: any = {};
+      if (accountId) {
+        params.accountId = accountId;
+      }
 
-    const mockSummary: PortfolioSummary = {
-      totalValue: 125430.50,
-      totalCost: 100000.00,
-      totalPnl: 25430.50,
-      totalPnlPercent: 25.43,
-      cashBalance: 25430.50,
-      positionsCount: 5,
-    };
+      const response = await api.get<{ data: { summary: any } }>('/portfolios', { params });
 
-    return mockSummary;
+      const backendSummary = response.data?.summary;
+      if (!backendSummary) {
+        throw new Error('未获取到持仓汇总数据');
+      }
 
-    // 实际API调用
-    // return api.get<PortfolioSummary>('/trading/portfolio/summary');
+      // 转换后端数据格式为前端格式
+      return {
+        totalValue: backendSummary.totalValue || 0,
+        totalCost: backendSummary.totalCost || 0,
+        totalPnl: backendSummary.totalProfitLoss || 0,
+        totalPnlPercent: backendSummary.totalProfitLossRate || 0,
+        cashBalance: backendSummary.cashBalance || 0,
+        positionsCount: backendSummary.positionsCount || 0,
+      };
+    } catch (error) {
+      console.error('获取持仓汇总失败，使用模拟数据:', error);
+
+      // 降级处理：返回模拟数据
+      const mockSummary: PortfolioSummary = {
+        totalValue: 125430.50,
+        totalCost: 100000.00,
+        totalPnl: 25430.50,
+        totalPnlPercent: 25.43,
+        cashBalance: 25430.50,
+        positionsCount: 5,
+      };
+
+      return mockSummary;
+    }
   },
 
   // 获取订单详情

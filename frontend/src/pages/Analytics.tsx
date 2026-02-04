@@ -14,6 +14,7 @@ import {
   Table,
   Tag,
   Avatar,
+  Alert,
   Divider,
   Grid,
 } from 'antd';
@@ -164,7 +165,6 @@ const Analytics: React.FC = () => {
               title="总资产"
               value={totalValue}
               precision={2}
-              prefix="¥"
               valueStyle={{ color: '#1890ff' }}
               prefix={<DollarOutlined />}
             />
@@ -184,7 +184,6 @@ const Analytics: React.FC = () => {
               title="总收益"
               value={totalProfit}
               precision={2}
-              prefix="¥"
               valueStyle={{ color: profitPercentage >= 0 ? '#52c41a' : '#ff4d4f' }}
               prefix={profitPercentage >= 0 ? <RiseOutlined /> : <FallOutlined />}
             />
@@ -520,18 +519,5 @@ const Analytics: React.FC = () => {
   );
 };
 
-// 添加缺失的图标导入
-const LineChartOutlined = ({ style }: { style?: React.CSSProperties }) => (
-  <span style={style}>📈</span>
-);
-const BarChartOutlined = ({ style }: { style?: React.CSSProperties }) => (
-  <span style={style}>📊</span>
-);
-const PieChartOutlined = ({ style }: { style?: React.CSSProperties }) => (
-  <span style={style}>🥧</span>
-);
-const AreaChartOutlined = ({ style }: { style?: React.CSSProperties }) => (
-  <span style={style}>📉</span>
-);
 
 export default Analytics;

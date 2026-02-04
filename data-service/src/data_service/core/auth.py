@@ -2,12 +2,12 @@
 Authentication and authorization module.
 """
 
-import jwt
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
+from jose import jwt, JWTError
 
 from .config import settings
 
@@ -86,7 +86,7 @@ class AuthHandler:
                 is_admin=is_admin,
                 exp=exp
             )
-        except jwt.PyJWTError:
+        except JWTError:
             return None
 
     async def get_current_user(

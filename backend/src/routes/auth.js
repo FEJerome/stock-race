@@ -54,7 +54,7 @@ const router = express.Router();
  *       500:
  *         description: 服务器内部错误
  */
-router.post('/login', authController.login.bind(authController));
+router.post('/login', (req, res) => authController.login(req, res));
 
 /**
  * @swagger
@@ -89,7 +89,7 @@ router.post('/login', authController.login.bind(authController));
  *       500:
  *         description: 服务器内部错误
  */
-router.get('/validate', authController.validate.bind(authController));
+router.get('/validate', (req, res) => authController.validate(req, res));
 
 /**
  * @swagger
@@ -126,7 +126,7 @@ router.get('/validate', authController.validate.bind(authController));
  *       500:
  *         description: 服务器内部错误
  */
-router.post('/refresh', authController.refresh.bind(authController));
+router.post('/refresh', (req, res) => authController.refresh(req, res));
 
 /**
  * @swagger
@@ -166,7 +166,7 @@ router.post('/refresh', authController.refresh.bind(authController));
  *       500:
  *         description: 服务器内部错误
  */
-router.post('/logout', authController.logout.bind(authController));
+router.post('/logout', (req, res) => authController.logout(req, res));
 
 /**
  * @swagger
@@ -201,7 +201,7 @@ router.post('/logout', authController.logout.bind(authController));
  *       500:
  *         description: 服务器内部错误
  */
-router.get('/me', authController.getCurrentUser.bind(authController));
+router.get('/me', (req, res) => authController.getCurrentUser(req, res));
 
 /**
  * @swagger
@@ -253,7 +253,7 @@ router.get('/me', authController.getCurrentUser.bind(authController));
  *       500:
  *         description: 服务器内部错误
  */
-router.put('/settings', authController.updateUserSettings.bind(authController));
+router.put('/settings', (req, res) => authController.updateUserSettings(req, res));
 
 /**
  * @swagger
@@ -288,7 +288,7 @@ router.put('/settings', authController.updateUserSettings.bind(authController));
  *       500:
  *         description: 服务器内部错误
  */
-router.get('/sessions', authController.getUserSessions.bind(authController));
+router.get('/sessions', (req, res) => authController.getUserSessions(req, res));
 
 /**
  * @swagger
@@ -334,7 +334,7 @@ router.get('/sessions', authController.getUserSessions.bind(authController));
  *       500:
  *         description: 服务器内部错误
  */
-router.post('/sessions/force-logout', authController.forceLogoutOtherSessions.bind(authController));
+router.post('/sessions/force-logout', (req, res) => authController.forceLogoutOtherSessions(req, res));
 
 /**
  * @swagger
@@ -371,7 +371,7 @@ router.post('/sessions/force-logout', authController.forceLogoutOtherSessions.bi
  *       500:
  *         description: 服务器内部错误
  */
-router.get('/stats', authController.getAuthStats.bind(authController));
+router.get('/stats', (req, res) => authController.getAuthStats(req, res));
 
 /**
  * @swagger
@@ -406,6 +406,6 @@ router.get('/stats', authController.getAuthStats.bind(authController));
  *       503:
  *         description: 服务异常
  */
-router.get('/health', authController.healthCheck.bind(authController));
+router.get('/health', (req, res) => authController.healthCheck(req, res));
 
 export default router;

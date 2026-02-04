@@ -788,9 +788,5 @@ const Settings: React.FC = () => {
   );
 };
 
-// 添加缺失的图标导入
-const SettingOutlined = ({ style }: { style?: React.CSSProperties }) => (
-  <span style={style}>⚙️</span>
-);
 
 export default Settings;

@@ -25,9 +25,10 @@ jest.mock('../../src/models/index.js', () => ({
 jest.mock('../../src/services/AIService.js', () => ({
   aiService: {
     requestDecision: jest.fn(),
-    requestBatchDecisions: jest.fn(),
-    analyzeAccount: jest.fn(),
-    checkModelStatus: jest.fn()
+    batchRequestDecisions: jest.fn(),
+    getAccountAnalysis: jest.fn(),
+    getModelStatus: jest.fn(),
+    testConnection: jest.fn()
   }
 }));
 
@@ -371,7 +372,7 @@ describe('AIController', () => {
       });
 
       // 模拟批量AI决策
-      aiService.requestBatchDecisions.mockResolvedValue({
+      aiService.batchRequestDecisions.mockResolvedValue({
         success: true,
         decisions: [
           {
@@ -430,7 +431,7 @@ describe('AIController', () => {
       });
 
       // 模拟账户分析
-      aiService.analyzeAccount.mockResolvedValue({
+      aiService.getAccountAnalysis.mockResolvedValue({
         success: true,
         analysis: {
           accountId: 1,
@@ -475,7 +476,7 @@ describe('AIController', () => {
       const res = global.mockResponse();
 
       // 模拟模型状态检查
-      aiService.checkModelStatus.mockResolvedValue({
+      aiService.getModelStatus.mockResolvedValue({
         success: true,
         status: {
           available: true,

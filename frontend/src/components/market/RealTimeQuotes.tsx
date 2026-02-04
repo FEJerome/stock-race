@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from 'react-query';
+import { marketService } from '../../services/market.service';
+import { message } from 'antd';
 import {
   Card,
   Table,
@@ -12,6 +15,8 @@ import {
   Tooltip,
   Row,
   Col,
+  Spin,
+  Alert,
 } from 'antd';
 import {
   StockOutlined,
@@ -22,6 +27,7 @@ import {
   FallOutlined,
   FireOutlined,
   EyeOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
@@ -29,76 +35,101 @@ const { Option } = Select;
 const { Search } = Input;
 
 interface StockQuote {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  marketCap?: number;
-  peRatio?: number;
-  isFavorite: boolean;
+  code: string;           // 股票代码
+  name: string;           // 股票名称
+  price: number;          // 当前价格
+  change: number;         // 涨跌额
+  changePercent: number;  // 涨跌幅
+  volume: number;         // 成交量
+  amount?: number;        // 成交额
+  market?: string;        // 市场代码
+  industry?: string;      // 行业
+  marketCap?: number;     // 市值
+  peRatio?: number;       // 市盈率
+  isFavorite: boolean;    // 是否收藏
+  isFallback?: boolean;   // 是否为降级数据
+  timestamp?: string;     // 数据时间戳
+  // 兼容字段
+  symbol?: string;        // 兼容字段
 }
 
 const RealTimeQuotes: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedExchange, setSelectedExchange] = useState('all');
-  const [favorites, setFavorites] = useState<string[]>(['AAPL', 'MSFT', 'GOOGL']);
-  const [quotes, setQuotes] = useState<StockQuote[]>([
-    { symbol: 'AAPL', name: '苹果公司', price: 162.50, change: 1.25, changePercent: 0.78, volume: 45200000, marketCap: 2540000000000, peRatio: 28.5, isFavorite: true },
-    { symbol: 'MSFT', name: '微软公司', price: 415.75, change: -2.25, changePercent: -0.54, volume: 28500000, marketCap: 3090000000000, peRatio: 35.2, isFavorite: true },
-    { symbol: 'GOOGL', name: '谷歌', price: 145.25, change: 0.75, changePercent: 0.52, volume: 18500000, marketCap: 1820000000000, peRatio: 24.8, isFavorite: true },
-    { symbol: 'AMZN', name: '亚马逊', price: 178.50, change: 3.25, changePercent: 1.86, volume: 42500000, marketCap: 1840000000000, peRatio: 58.3, isFavorite: false },
-    { symbol: 'TSLA', name: '特斯拉', price: 195.50, change: -5.25, changePercent: -2.61, volume: 125000000, marketCap: 620000000000, peRatio: 65.8, isFavorite: false },
-    { symbol: 'NVDA', name: '英伟达', price: 950.25, change: 25.50, changePercent: 2.76, volume: 85000000, marketCap: 2370000000000, peRatio: 72.4, isFavorite: false },
-    { symbol: 'META', name: 'Meta', price: 485.75, change: 8.25, changePercent: 1.73, volume: 18500000, marketCap: 1240000000000, peRatio: 32.1, isFavorite: false },
-    { symbol: 'BABA', name: '阿里巴巴', price: 78.25, change: -0.75, changePercent: -0.95, volume: 28500000, marketCap: 198000000000, peRatio: 18.5, isFavorite: false },
-    { symbol: 'TSM', name: '台积电', price: 142.80, change: 2.30, changePercent: 1.64, volume: 12500000, marketCap: 740000000000, peRatio: 22.3, isFavorite: false },
-    { symbol: 'JPM', name: '摩根大通', price: 195.25, change: 1.75, changePercent: 0.90, volume: 8500000, marketCap: 570000000000, peRatio: 11.8, isFavorite: false },
-  ]);
+  const [favorites, setFavorites] = useState<string[]>(['000001', '600000', '000002']);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
+  const [dataSource, setDataSource] = useState<'real' | 'fallback'>('real');
 
-  // 模拟实时更新
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setQuotes(prevQuotes =>
-        prevQuotes.map(quote => ({
-          ...quote,
-          price: quote.price + (Math.random() - 0.5) * 0.5,
-          change: quote.change + (Math.random() - 0.5) * 0.1,
-          changePercent: ((quote.price + (Math.random() - 0.5) * 0.5) / (quote.price - quote.change) - 1) * 100,
-        }))
-      );
-    }, 5000); // 每5秒更新一次
+  // 使用React Query获取股票数据
+  const { data: stocksData, isLoading, error, refetch } = useQuery(
+    'realTimeQuotes',
+    () => marketService.getStockQuotes(),
+    {
+      refetchInterval: 10000, // 每10秒自动刷新
+      onSuccess: (data) => {
+        setLastUpdateTime(new Date());
+        // 检查是否有降级数据
+        const hasFallback = data.some(stock => stock.isFallback);
+        setDataSource(hasFallback ? 'fallback' : 'real');
 
-    return () => clearInterval(interval);
-  }, []);
+        if (hasFallback) {
+          message.warning('部分股票数据使用降级数据，请检查网络连接');
+        }
+      },
+      onError: (err) => {
+        console.error('获取股票数据失败:', err);
+        message.error('获取股票数据失败，使用降级数据');
+        setDataSource('fallback');
+      }
+    }
+  );
+
+  // 转换数据格式
+  const quotes: StockQuote[] = (stocksData || []).map(stock => ({
+    code: stock.code,
+    name: stock.name,
+    price: stock.currentPrice,
+    change: stock.change,
+    changePercent: stock.changePercent,
+    volume: stock.volume,
+    amount: stock.amount,
+    market: stock.market,
+    industry: stock.industry,
+    marketCap: stock.marketCap,
+    peRatio: stock.peRatio,
+    isFavorite: favorites.includes(stock.code),
+    isFallback: stock.isFallback,
+    timestamp: stock.timestamp,
+    // 兼容字段
+    symbol: stock.code
+  }));
+
+  // 手动刷新数据
+  const handleRefresh = () => {
+    refetch();
+    message.info('正在刷新数据...');
+  };
 
   // 切换收藏状态
-  const toggleFavorite = (symbol: string) => {
+  const toggleFavorite = (code: string) => {
     setFavorites(prev =>
-      prev.includes(symbol)
-        ? prev.filter(s => s !== symbol)
-        : [...prev, symbol]
-    );
-
-    setQuotes(prevQuotes =>
-      prevQuotes.map(quote =>
-        quote.symbol === symbol
-          ? { ...quote, isFavorite: !quote.isFavorite }
-          : quote
-      )
+      prev.includes(code)
+        ? prev.filter(s => s !== code)
+        : [...prev, code]
     );
   };
 
   // 过滤股票
   const filteredQuotes = quotes.filter(quote => {
     const matchesSearch =
-      quote.symbol.toLowerCase().includes(searchText.toLowerCase()) ||
-      quote.name.toLowerCase().includes(searchText.toLowerCase());
+      (quote.code && quote.code.toLowerCase().includes(searchText.toLowerCase())) ||
+      (quote.name && quote.name.toLowerCase().includes(searchText.toLowerCase()));
 
     const matchesExchange = selectedExchange === 'all' ||
-      (selectedExchange === 'nasdaq' && ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META'].includes(quote.symbol)) ||
-      (selectedExchange === 'nyse' && ['TSLA', 'JPM'].includes(quote.symbol));
+      (selectedExchange === 'sh' && quote.market === 'sh') ||
+      (selectedExchange === 'sz' && quote.market === 'sz') ||
+      (selectedExchange === 'nasdaq' && quote.market === 'nasdaq') ||
+      (selectedExchange === 'nyse' && quote.market === 'nyse');
 
     return matchesSearch && matchesExchange;
   });
@@ -107,26 +138,33 @@ const RealTimeQuotes: React.FC = () => {
   const columns = [
     {
       title: '股票',
-      dataIndex: 'symbol',
-      key: 'symbol',
+      dataIndex: 'code',
+      key: 'code',
       width: 120,
-      render: (symbol: string, record: StockQuote) => (
+      render: (code: string, record: StockQuote) => (
         <Space>
           <Tooltip title={record.isFavorite ? '取消收藏' : '加入收藏'}>
             <Button
               type="text"
               icon={record.isFavorite ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
               size="small"
-              onClick={() => toggleFavorite(symbol)}
+              onClick={() => toggleFavorite(code)}
             />
           </Tooltip>
           <div>
-            <Text strong>{symbol}</Text>
+            <Text strong>{code}</Text>
             <div>
               <Text type="secondary" style={{ fontSize: 12 }}>
                 {record.name}
               </Text>
             </div>
+            {record.isFallback && (
+              <div>
+                <Text type="warning" style={{ fontSize: 10 }}>
+                  模拟数据
+                </Text>
+              </div>
+            )}
           </div>
         </Space>
       ),
@@ -204,6 +242,10 @@ const RealTimeQuotes: React.FC = () => {
               type="text"
               icon={<EyeOutlined />}
               size="small"
+              onClick={() => {
+                // 这里可以跳转到股票详情页
+                console.log('查看详情:', record.code);
+              }}
             />
           </Tooltip>
           <Tooltip title="快速交易">
@@ -212,7 +254,7 @@ const RealTimeQuotes: React.FC = () => {
               size="small"
               onClick={() => {
                 // 这里可以触发交易操作
-                console.log('交易:', record.symbol);
+                console.log('交易:', record.code);
               }}
             >
               交易
@@ -229,11 +271,25 @@ const RealTimeQuotes: React.FC = () => {
         <Space>
           <StockOutlined />
           <Text strong>实时行情</Text>
-          <Badge count="实时" style={{ backgroundColor: '#52c41a' }} />
+          <Badge
+            count={dataSource === 'real' ? '实时' : '模拟'}
+            style={{ backgroundColor: dataSource === 'real' ? '#52c41a' : '#faad14' }}
+          />
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            最后更新: {lastUpdateTime.toLocaleTimeString('zh-CN')}
+          </Text>
         </Space>
       }
       extra={
         <Space>
+          <Button
+            type="text"
+            icon={<ReloadOutlined />}
+            size="small"
+            onClick={handleRefresh}
+            loading={isLoading}
+            title="刷新数据"
+          />
           <Select
             value={selectedExchange}
             onChange={setSelectedExchange}
@@ -241,10 +297,10 @@ const RealTimeQuotes: React.FC = () => {
             style={{ width: 120 }}
           >
             <Option value="all">全部市场</Option>
-            <Option value="nasdaq">纳斯达克</Option>
-            <Option value="nyse">纽约交易所</Option>
             <Option value="sh">上海交易所</Option>
             <Option value="sz">深圳交易所</Option>
+            <Option value="nasdaq">纳斯达克</Option>
+            <Option value="nyse">纽约交易所</Option>
           </Select>
           <Search
             placeholder="搜索股票代码或名称"
@@ -261,16 +317,16 @@ const RealTimeQuotes: React.FC = () => {
         <Space size="middle">
           <Text strong>热门股票：</Text>
           {quotes
-            .filter(q => ['AAPL', 'TSLA', 'NVDA'].includes(q.symbol))
+            .slice(0, 5) // 显示前5只股票作为热门
             .map(stock => (
               <Tag
-                key={stock.symbol}
+                key={stock.code}
                 color={stock.changePercent >= 0 ? 'green' : 'red'}
                 icon={stock.changePercent >= 0 ? <RiseOutlined /> : <FallOutlined />}
                 style={{ cursor: 'pointer' }}
-                onClick={() => setSearchText(stock.symbol)}
+                onClick={() => setSearchText(stock.code || '')}
               >
-                {stock.symbol} {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                {stock.code} {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
               </Tag>
             ))}
           <Button type="link" size="small" icon={<FireOutlined />}>
@@ -280,58 +336,81 @@ const RealTimeQuotes: React.FC = () => {
       </div>
 
       {/* 行情表格 */}
-      <Table
-        dataSource={filteredQuotes}
-        columns={columns}
-        rowKey="symbol"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total) => `共 ${total} 只股票`,
-        }}
-        size="small"
-        scroll={{ x: true }}
-        rowClassName={(record) => record.isFavorite ? 'favorite-row' : ''}
-      />
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <Spin size="large" tip="加载股票数据中..." />
+        </div>
+      ) : error ? (
+        <Alert
+          message="数据加载失败"
+          description="无法获取实时股票数据，请检查网络连接或稍后重试。"
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      ) : (
+        <Table
+          dataSource={filteredQuotes}
+          columns={columns}
+          rowKey="code"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total) => `共 ${total} 只股票`,
+          }}
+          size="small"
+          scroll={{ x: true }}
+          rowClassName={(record) => record.isFavorite ? 'favorite-row' : ''}
+        />
+      )}
 
       {/* 市场摘要 */}
-      <div style={{ marginTop: 16, padding: '12px 16px', background: '#fafafa', borderRadius: 8 }}>
-        <Row gutter={16}>
-          <Col xs={12} md={6}>
-            <div>
-              <Text type="secondary">上涨股票</Text>
-              <Title level={4} style={{ margin: '4px 0', color: '#52c41a' }}>
-                {quotes.filter(q => q.changePercent > 0).length}
-              </Title>
-            </div>
-          </Col>
-          <Col xs={12} md={6}>
-            <div>
-              <Text type="secondary">下跌股票</Text>
-              <Title level={4} style={{ margin: '4px 0', color: '#ff4d4f' }}>
-                {quotes.filter(q => q.changePercent < 0).length}
-              </Title>
-            </div>
-          </Col>
-          <Col xs={12} md={6}>
-            <div>
-              <Text type="secondary">平盘股票</Text>
-              <Title level={4} style={{ margin: '4px 0', color: '#999' }}>
-                {quotes.filter(q => q.changePercent === 0).length}
-              </Title>
-            </div>
-          </Col>
-          <Col xs={12} md={6}>
-            <div>
-              <Text type="secondary">平均涨跌幅</Text>
-              <Title level={4} style={{ margin: '4px 0' }}>
-                {(quotes.reduce((sum, q) => sum + q.changePercent, 0) / quotes.length).toFixed(2)}%
-              </Title>
-            </div>
-          </Col>
-        </Row>
-      </div>
+      {!isLoading && !error && (
+        <div style={{ marginTop: 16, padding: '12px 16px', background: '#fafafa', borderRadius: 8 }}>
+          <Row gutter={16}>
+            <Col xs={12} md={6}>
+              <div>
+                <Text type="secondary">上涨股票</Text>
+                <Title level={4} style={{ margin: '4px 0', color: '#52c41a' }}>
+                  {quotes.filter(q => q.changePercent > 0).length}
+                </Title>
+              </div>
+            </Col>
+            <Col xs={12} md={6}>
+              <div>
+                <Text type="secondary">下跌股票</Text>
+                <Title level={4} style={{ margin: '4px 0', color: '#ff4d4f' }}>
+                  {quotes.filter(q => q.changePercent < 0).length}
+                </Title>
+              </div>
+            </Col>
+            <Col xs={12} md={6}>
+              <div>
+                <Text type="secondary">平盘股票</Text>
+                <Title level={4} style={{ margin: '4px 0', color: '#999' }}>
+                  {quotes.filter(q => q.changePercent === 0).length}
+                </Title>
+              </div>
+            </Col>
+            <Col xs={12} md={6}>
+              <div>
+                <Text type="secondary">平均涨跌幅</Text>
+                <Title level={4} style={{ margin: '4px 0' }}>
+                  {(quotes.reduce((sum, q) => sum + q.changePercent, 0) / quotes.length).toFixed(2)}%
+                </Title>
+              </div>
+            </Col>
+          </Row>
+          <div style={{ marginTop: 8 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              数据来源: {dataSource === 'real' ? '真实市场数据' : '模拟数据'} •
+              更新时间: {lastUpdateTime.toLocaleString('zh-CN')} •
+              共 {quotes.length} 只股票
+            </Text>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .favorite-row {

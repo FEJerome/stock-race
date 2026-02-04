@@ -48,7 +48,7 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', authenticate, portfolioController.getPortfolios.bind(portfolioController));
+router.get('/', authenticate, (req, res) => portfolioController.getPortfolios(req, res));
 
 /**
  * @swagger
@@ -92,7 +92,7 @@ router.get('/', authenticate, portfolioController.getPortfolios.bind(portfolioCo
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:portfolioId', authenticate, portfolioController.getPortfolioDetail.bind(portfolioController));
+router.get('/:portfolioId', authenticate, (req, res) => portfolioController.getPortfolioDetail(req, res));
 
 /**
  * @swagger
@@ -129,7 +129,7 @@ router.get('/:portfolioId', authenticate, portfolioController.getPortfolioDetail
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/stats', authenticate, portfolioController.getPortfolioStats.bind(portfolioController));
+router.get('/stats', authenticate, (req, res) => portfolioController.getPortfolioStats(req, res));
 
 /**
  * @swagger
@@ -166,7 +166,7 @@ router.get('/stats', authenticate, portfolioController.getPortfolioStats.bind(po
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/risk-analysis', authenticate, portfolioController.getRiskAnalysis.bind(portfolioController));
+router.get('/risk-analysis', authenticate, (req, res) => portfolioController.getRiskAnalysis(req, res));
 
 /**
  * @swagger
@@ -235,7 +235,7 @@ router.get('/risk-analysis', authenticate, portfolioController.getRiskAnalysis.b
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/history', authenticate, portfolioController.getPortfolioHistory.bind(portfolioController));
+router.get('/history', authenticate, (req, res) => portfolioController.getPortfolioHistory(req, res));
 
 /**
  * @swagger
@@ -293,7 +293,7 @@ router.get('/history', authenticate, portfolioController.getPortfolioHistory.bin
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/rebalance', authenticate, portfolioController.rebalancePortfolio.bind(portfolioController));
+router.post('/rebalance', authenticate, (req, res) => portfolioController.rebalancePortfolio(req, res));
 
 /**
  * @swagger
@@ -334,6 +334,6 @@ router.post('/rebalance', authenticate, portfolioController.rebalancePortfolio.b
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/update-market-values', authenticate, portfolioController.updateMarketValues.bind(portfolioController));
+router.post('/update-market-values', authenticate, (req, res) => portfolioController.updateMarketValues(req, res));
 
 export default router;

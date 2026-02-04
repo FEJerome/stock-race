@@ -77,7 +77,7 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', authenticate, tradeController.getTrades.bind(tradeController));
+router.get('/', authenticate, (req, res) => tradeController.getTrades(req, res));
 
 /**
  * @swagger
@@ -159,7 +159,7 @@ router.get('/', authenticate, tradeController.getTrades.bind(tradeController));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/', authenticate, tradeController.createTrade.bind(tradeController));
+router.post('/', authenticate, (req, res) => tradeController.createTrade(req, res));
 
 /**
  * @swagger
@@ -203,7 +203,7 @@ router.post('/', authenticate, tradeController.createTrade.bind(tradeController)
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:tradeId', authenticate, tradeController.getTradeDetail.bind(tradeController));
+router.get('/:tradeId', authenticate, (req, res) => tradeController.getTradeDetail(req, res));
 
 /**
  * @swagger
@@ -262,7 +262,7 @@ router.get('/:tradeId', authenticate, tradeController.getTradeDetail.bind(tradeC
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/:tradeId/cancel', authenticate, tradeController.cancelTrade.bind(tradeController));
+router.post('/:tradeId/cancel', authenticate, (req, res) => tradeController.cancelTrade(req, res));
 
 /**
  * @swagger
@@ -311,7 +311,7 @@ router.post('/:tradeId/cancel', authenticate, tradeController.cancelTrade.bind(t
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/stats', authenticate, tradeController.getTradeStats.bind(tradeController));
+router.get('/stats', authenticate, (req, res) => tradeController.getTradeStats(req, res));
 
 /**
  * @swagger
@@ -353,6 +353,6 @@ router.get('/stats', authenticate, tradeController.getTradeStats.bind(tradeContr
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/hot', authenticate, tradeController.getHotTradingStocks.bind(tradeController));
+router.get('/hot', authenticate, (req, res) => tradeController.getHotTradingStocks(req, res));
 
 export default router;

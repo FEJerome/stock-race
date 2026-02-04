@@ -287,3 +287,6 @@ Thumbs.db
 
 # Project specific ignores
 # Add any project-specific files or directories here
+
+# Git worktrees for multi-agent development
+worktrees/

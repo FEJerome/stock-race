@@ -86,31 +86,13 @@ export class StockController {
       const stock = await stockRepository.findOne(
         { code: stockCode },
         {
-          include: {
-            portfolios: {
-              take: 10,
-              orderBy: { quantity: 'desc' },
-              include: {
-                account: {
-                  select: {
-                    id: true,
-                    name: true
-                  }
-                }
-              }
-            },
-            trades: {
-              take: 10,
-              orderBy: { executedAt: 'desc' },
-              include: {
-                account: {
-                  select: {
-                    id: true,
-                    name: true
-                  }
-                }
-              }
-            }
+          portfolios: {
+            take: 10,
+            orderBy: { quantity: 'desc' }
+          },
+          trades: {
+            take: 10,
+            orderBy: { executedAt: 'desc' }
           }
         }
       );
@@ -151,14 +133,12 @@ export class StockController {
         technicalIndicators,
         topHolders: stock.portfolios.map(p => ({
           accountId: p.accountId,
-          accountName: p.account.name,
           quantity: p.quantity,
           marketValue: parseFloat(p.marketValue)
         })),
         recentTrades: stock.trades.map(t => ({
           id: t.id,
           accountId: t.accountId,
-          accountName: t.account.name,
           tradeType: t.tradeType,
           quantity: t.quantity,
           price: parseFloat(t.price),
@@ -315,18 +295,19 @@ export class StockController {
         });
       }
 
-      const stocks = await stockRepository.searchStocks(q.trim(), {
-        take: parseInt(limit)
+      const result = await stockRepository.searchStocks(q.trim(), {}, {
+        limit: parseInt(limit)
       });
 
       // 获取实时行情数据
-      const stocksWithPrices = await this.enrichStocksWithPrices(stocks);
+      const stocksWithPrices = await this.enrichStocksWithPrices(result.data);
 
       res.json({
         success: true,
         data: {
           stocks: stocksWithPrices,
-          count: stocks.length,
+          count: result.data.length,
+          total: result.pagination.total,
           searchTerm: q.trim()
         },
         message: '搜索股票成功'

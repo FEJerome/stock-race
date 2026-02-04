@@ -20,6 +20,7 @@ import {
   Alert,
   Divider,
   Grid,
+  InputNumber,
 } from 'antd';
 import {
   RobotOutlined,
@@ -601,9 +602,5 @@ const AIAccounts: React.FC = () => {
   );
 };
 
-// 添加缺失的图标导入
-const RobotOutlined = ({ style }: { style?: React.CSSProperties }) => (
-  <span style={style}>🤖</span>
-);
 
 export default AIAccounts;

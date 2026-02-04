@@ -42,6 +42,7 @@
 - [注意事项模板](docs/usage/IMPORTANT_NOTES.md)
 - [功能验证记录模板](docs/testing/VALIDATION_HISTORY.md)
 - [**新手指南模板**](docs/usage/QUICK_START.md) - 环境搭建和快速上手
+- [**DataService集成指南**](backend/DATA_SERVICE_INTEGRATION.md) - 后端与数据服务集成配置
 
 ## 👨‍💼 项目角色
 **本项目的首席架构师**：负责项目整体架构设计、技术选型、开发规范制定和核心问题解决。作为项目的主要技术负责人，确保代码质量、架构可扩展性和开发效率。
@@ -119,21 +120,22 @@ npm run preview      # 预览构建结果
 
 #### AI服务（Python，端口8000）
 ```bash
-cd ai-service
+cd ai-service && source venv/bin/activate && 
 pip install -r requirements.txt  # 安装Python依赖
 python -m ai_service.main        # 启动服务
 
 # 或使用uvicorn（开发模式）
-uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000
+cd ai-service && source venv/bin/activate && uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 #### 数据服务（Python，端口8001）
 ```bash
-cd data-service
+cd data-service && source venv/bin/activate && 
 pip install -r requirements.txt  # 安装Python依赖
-uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001
-```
 
+# 启动服务
+cd data-service && source venv/bin/activate && uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001
+```
 ### 数据库管理
 ```bash
 # PostgreSQL数据库（端口5432）
@@ -190,7 +192,7 @@ cd frontend && npm install
 cd backend && npm install
 
 # 安装AI服务依赖（Python）
-cd ai-service && pip install -r requirements.txt
+cd ai-service && source venv/bin/activate && pip install -r requirements.txt
 
 # 安装数据服务依赖（Python）
 cd data-service && pip install -r requirements.txt
@@ -202,8 +204,8 @@ cd data-service && python -m venv venv && source venv/bin/activate && pip instal
 # 更新特定依赖
 cd frontend && npm update axios
 cd backend && npm update express
-cd ai-service && pip install --upgrade openai fastapi
-cd data-service && pip install --upgrade pandas fastapi
+cd ai-service && source venv/bin/activate && pip install --upgrade openai fastapi
+cd data-service && source venv/bin/activate && pip install --upgrade pandas fastapi
 ```
 
 
@@ -274,7 +276,7 @@ cd data-service && pip install --upgrade pandas fastapi
 通用多智能体协作方案已移至：[通用多智能体协作方案](docs/agents/GENERIC_COLLABORATION_PLAN.md)。另请参考相关文档：[通用角色定义](docs/agents/GENERIC_ROLES.md)、[任务分发指南](docs/agents/TASK_DISPATCH_GUIDE.md)、[项目模板配置](docs/agents/PROJECT_TEMPLATE.md)
 
 ## 📊 当前状态
-**MVP开发完成阶段**（2026-02-03）
+**真实数据集成完成阶段**（2026-02-03）
 - 已完成混合架构技术选型（Node.js后端 + React前端 + Python AI/数据服务）
 - 已完成项目脚手架和基础设施搭建
 - 已完成系统架构设计和数据库设计
@@ -283,21 +285,92 @@ cd data-service && pip install --upgrade pandas fastapi
 - 已完成Python AI集成服务开发（多模型适配、决策逻辑、提示工程）
 - 已完成Python数据服务开发（多数据源采集、实时推送、时序存储）
 - 已完成Docker Compose开发环境配置和CI/CD流水线
+- **已完成DataService集成**（API端点适配、数据格式转换、监控健康检查、智能降级策略）
+- **已完成前端真实数据集成**（市场服务、实时行情、交易页面、收益图表、持仓汇总）
+- **已完成多数据源路由器实现**（新浪、腾讯、东方财富数据源负载均衡）
 - 项目已具备演示功能，可进行集成测试和部署验证
 
-## 🔧 近期工作重点
-1. **集成测试验证**：验证前后端、AI服务、数据服务的完整集成
-2. **功能演示完善**：完善演示脚本、创建用户指南、准备演示数据
-3. **性能优化调整**：优化实时数据延迟、API响应时间、内存使用
-4. **部署环境配置**：配置生产环境部署、监控告警、日志收集
-5. **文档完善更新**：完善用户手册、部署指南、API文档
+**环境部署进展**（2026-02-04 更新）
+- ✅ **Docker安装成功**：使用中国镜像源优化版脚本`install_docker_china.sh`完成安装
+- ✅ **数据库安装成功**：使用优化版脚本`install_databases_china.sh`安装PostgreSQL、Redis
+- ✅ **项目结构探索完成**：已详细分析数据服务和多数据源架构
+- ✅ **数据获取方案完善**：已完成三大免费数据源分析和获取策略（见`docs/data_acquisition_plan.md`）
+- ✅ **安装脚本优化**：创建了中国镜像源优化版脚本解决网络问题
+- ✅ **后端依赖安装完成**：Node.js v18.19.1（要求≥20.0.0，有版本警告但不影响运行）
+- ✅ **前端依赖安装完成**：React应用依赖已就绪
+- 🔄 **Redis服务待启动**：Redis已安装但服务未运行，需启动服务
+- 🔄 **Python pip未安装**：AI和数据服务依赖需要pip包管理器
+- 🔄 **混合部署策略**：当前采用主机服务+容器化混合部署，便于调试验证
+- 🔄 **全容器化支持**：项目完全支持`docker-compose up`一键启动（需要docker组权限）
+- 📋 **环境检查脚本**：已创建`check_environment.sh`用于检查所有依赖和服务状态
+- 📋 **开发进度报告**：已创建详细的功能清单和验证步骤（见`docs/progress_report.md`）
 
-## 🎯 下一步工作
-1. **启动完整集成测试**：使用Docker Compose启动所有服务，验证端到端功能
-2. **运行演示脚本验证**：执行现有演示脚本，验证核心交易和AI决策功能
-3. **配置生产部署**：设置Kubernetes部署配置、负载均衡、监控告警
-4. **性能基准测试**：进行压力测试，优化高并发场景性能
-5. **用户反馈收集**：准备用户测试计划，收集功能改进建议
+**数据获取方案**
+- 已完成新浪、腾讯、东方财富三大免费数据源分析
+- 已制定多节点分段获取策略和负载均衡方案
+- 计划实施实时数据获取（高频）和历史数据获取（低频）分层策略
+- 设计了数据验证、缓存和故障转移机制
+
+**开发进度报告**
+详细的项目开发进度和已完成功能清单，请参考：[开发进度报告](docs/progress_report.md)
+- 包含所有已完成功能的详细清单
+- 功能验证步骤和检查清单
+- 立即需要执行的操作指南
+- 已知问题和下一步工作计划
+
+## 🔧 近期工作重点（2026-02-04 更新）
+1. **启动Redis服务**：安装并启动Redis缓存服务（当前未运行）
+2. **安装Python依赖**：安装pip包管理器，安装AI和数据服务的Python依赖
+3. **修复AI服务API集成**：根据分析报告修复后端AIService的API端点不匹配问题（`/api/ai/decision` vs `/api/v1/decision/generate`）
+4. **启动所有服务验证**：手动启动4个服务（后端、AI服务、数据服务、前端）进行端到端功能验证
+5. **验证真实数据流**：确认系统使用真实A股数据而非模拟数据，检查数据源指示器
+6. **环境一致性优化**：根据网络条件选择混合部署或全容器化（`docker-compose up`）
+
+## 🎯 下一步工作（立即执行步骤）
+1. **安装缺失组件**：
+   ```bash
+   # 安装Redis和Python pip（需要sudo权限）
+   sudo apt-get install -y redis-server python3-pip
+   sudo systemctl start redis-server
+   sudo systemctl enable redis-server
+   redis-cli ping  # 验证Redis
+   ```
+
+2. **安装Python服务依赖**：
+   ```bash
+   cd ai-service && source venv/bin/activate && pip install -r requirements.txt
+   cd data-service && source venv/bin/activate && pip install -r requirements.txt
+   ```
+
+3. **启动所有服务**（在4个终端分别执行）：
+   ```bash
+   # 终端1：后端服务（端口3001）
+   cd backend && npm run dev
+
+   # 终端2：AI服务（端口8000）
+   cd ai-service && source venv/bin/activate && python -m uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000
+
+   # 终端3：数据服务（端口8001）
+   cd data-service && source venv/bin/activate && python -m uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001
+
+   # 终端4：前端服务（端口3000）
+   cd frontend && npm run dev
+   ```
+
+4. **验证服务健康**：
+   ```bash
+   curl http://localhost:3001/api/health      # 后端
+   curl http://localhost:8000/api/v1/health/  # AI服务
+   curl http://localhost:8001/health          # 数据服务
+   curl http://localhost:3000                 # 前端
+   ```
+
+5. **全容器化选项**（可选）：
+   ```bash
+   # 确保有docker组权限，然后执行
+   docker-compose down && docker-compose up -d
+   docker-compose ps  # 查看状态
+   ```
 
 ## ⚠️ 注意事项
 
@@ -310,14 +383,39 @@ cd data-service && pip install --upgrade pandas fastapi
 ## 🆕 新会话快速上手
 
 ### 快速参考
-[请在此处填写stock-race项目的快速参考信息，例如：]
-- **环境搭建**：[填写前端/后端依赖安装命令]
-- **启动开发**：[填写开发服务器启动命令]
-- **核心功能**：[填写项目核心功能流程]
+- **环境搭建**：
+  ```bash
+  # 方案1：使用中国镜像源（推荐，解决网络问题）
+  # 1. 安装数据库（需要sudo）
+  sudo bash install_databases_china.sh
+
+  # 2. 尝试安装Docker（可选）
+  sudo bash install_docker_china.sh
+
+  # 方案2：如果网络正常使用原始脚本
+  # sudo bash install_databases.sh
+  # sudo bash install_docker.sh
+
+  # 3. 安装应用依赖
+  cd backend && npm install
+  cd frontend && npm install
+  cd ai-service && source venv/bin/activate && pip install -r requirements.txt
+  cd data-service && source venv/bin/activate && pip install -r requirements.txt
+  ```
+- **启动开发**：
+  ```bash
+  # 在4个终端分别启动
+  cd backend && npm run dev           # 端口3001
+  cd ai-service && source venv/bin/activate && python -m uvicorn ai_service.main:app --reload --port 8000
+  cd data-service && source venv/bin/activate && python -m uvicorn data_service.main:app --reload --port 8001
+  cd frontend && npm run dev          # 端口3000
+  ```
+- **核心功能**：用户登录 → 查看实时行情 → AI交易决策 → 查看持仓收益
 - **关键文件**：
-  - 后端：[填写关键后端文件路径]
-  - 前端：[填写关键前端文件路径]
-  - 工具：[填写关键工具文件路径]
+  - 后端：`backend/src/services/DataService.js` (数据服务集成)
+  - 前端：`frontend/src/services/market.service.ts` (市场数据服务)
+  - AI服务：`ai-service/src/ai_service/services/decision_service.py`
+  - 数据服务：`data-service/src/data_service/collectors/router.py` (多数据源路由器)
 
 ### 详细指南
 完整的新手指南请参考：[新手指南模板](docs/usage/QUICK_START.md)，包含：
@@ -340,5 +438,5 @@ cd data-service && pip install --upgrade pandas fastapi
 - 快速导航指南和新会话上手提示
 
 ---
-*本文档最后更新于：2026-02-02*
+*本文档最后更新于：2026-02-04*
 *文档维护者：本项目首席架构师*

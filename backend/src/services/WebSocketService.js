@@ -22,7 +22,21 @@ export class WebSocketService {
   initialize(httpServer) {
     this.io = new Server(httpServer, {
       cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        origin: function (origin, callback) {
+          // 允许所有局域网访问（开发环境）
+          const allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'http://192.168.110.147:3000'
+          ];
+
+          // 允许所有本地网络请求（开发环境）
+          if (!origin || allowedOrigins.includes(origin) || origin.includes('192.168.110.')) {
+            callback(null, true);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        },
         credentials: true,
         methods: ['GET', 'POST']
       },

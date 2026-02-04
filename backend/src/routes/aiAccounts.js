@@ -49,7 +49,7 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', authenticate, aiController.getAIAccounts.bind(aiController));
+router.get('/', authenticate, (req, res) => aiController.getAIAccounts(req, res));
 
 /**
  * @swagger
@@ -93,7 +93,7 @@ router.get('/', authenticate, aiController.getAIAccounts.bind(aiController));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:accountId', authenticate, aiController.getAIAccountDetail.bind(aiController));
+router.get('/:accountId', authenticate, (req, res) => aiController.getAIAccountDetail(req, res));
 
 /**
  * @swagger
@@ -160,7 +160,7 @@ router.get('/:accountId', authenticate, aiController.getAIAccountDetail.bind(aiC
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/', authenticate, aiController.createAIAccount.bind(aiController));
+router.post('/', authenticate, (req, res) => aiController.createAIAccount(req, res));
 
 /**
  * @swagger
@@ -240,7 +240,7 @@ router.post('/', authenticate, aiController.createAIAccount.bind(aiController));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.put('/:accountId', authenticate, aiController.updateAIAccount.bind(aiController));
+router.put('/:accountId', authenticate, (req, res) => aiController.updateAIAccount(req, res));
 
 /**
  * @swagger
@@ -284,7 +284,7 @@ router.put('/:accountId', authenticate, aiController.updateAIAccount.bind(aiCont
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete('/:accountId', authenticate, aiController.deleteAIAccount.bind(aiController));
+router.delete('/:accountId', authenticate, (req, res) => aiController.deleteAIAccount(req, res));
 
 /**
  * @swagger
@@ -335,7 +335,7 @@ router.delete('/:accountId', authenticate, aiController.deleteAIAccount.bind(aiC
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:accountId/performance', authenticate, aiController.getAccountPerformance.bind(aiController));
+router.get('/:accountId/performance', authenticate, (req, res) => aiController.getAccountPerformance(req, res));
 
 /**
  * @swagger
@@ -406,7 +406,7 @@ router.get('/:accountId/performance', authenticate, aiController.getAccountPerfo
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:accountId/decisions', authenticate, aiController.getDecisionHistory.bind(aiController));
+//router.get('/:accountId/decisions', authenticate, (req, res) => aiController.getDecisionHistory(req, res));
 
 /**
  * @swagger
@@ -472,7 +472,7 @@ router.get('/:accountId/decisions', authenticate, aiController.getDecisionHistor
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/:accountId/decisions/request', authenticate, aiController.requestAIDecision.bind(aiController));
+router.post('/:accountId/decisions/request', authenticate, (req, res) => aiController.requestAIDecision(req, res));
 
 /**
  * @swagger
@@ -516,7 +516,7 @@ router.post('/:accountId/decisions/request', authenticate, aiController.requestA
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:accountId/balance', authenticate, aiController.getAccountBalance.bind(aiController));
+//router.get('/:accountId/balance', authenticate, (req, res) => aiController.getAccountBalance(req, res));
 
 /**
  * @swagger
@@ -582,7 +582,7 @@ router.get('/:accountId/balance', authenticate, aiController.getAccountBalance.b
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/:accountId/balance/deposit', authenticate, aiController.depositBalance.bind(aiController));
+//router.post('/:accountId/balance/deposit', authenticate, (req, res) => aiController.depositBalance(req, res));
 
 /**
  * @swagger
@@ -648,7 +648,7 @@ router.post('/:accountId/balance/deposit', authenticate, aiController.depositBal
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/:accountId/balance/withdraw', authenticate, aiController.withdrawBalance.bind(aiController));
+//router.post('/:accountId/balance/withdraw', authenticate, (req, res) => aiController.withdrawBalance(req, res));
 
 /**
  * @swagger
@@ -673,6 +673,6 @@ router.post('/:accountId/balance/withdraw', authenticate, aiController.withdrawB
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/health', authenticate, aiController.checkAIServiceHealth.bind(aiController));
+router.get('/health', authenticate, (req, res) => aiController.checkAIServiceHealth(req, res));
 
 export default router;

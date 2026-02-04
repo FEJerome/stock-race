@@ -2,7 +2,7 @@
 Security utilities for AI Service.
 """
 
-import jwt
+from jose import jwt
 import time
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any

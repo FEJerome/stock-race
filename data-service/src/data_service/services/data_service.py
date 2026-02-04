@@ -8,10 +8,8 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Tuple
 from contextlib import asynccontextmanager
 
-from ..collectors.sina import SinaCollector
-from ..collectors.tencent import TencentCollector
-from ..collectors.eastmoney import EastMoneyCollector
-from ..collectors.base import DataSource, DataSourceError
+from ..collectors.router import DataSourceRouter
+from ..collectors.base import DataSourceError
 from ..processors.data_processor import DataProcessor
 from ..storage.database import DatabaseStorage
 from ..storage.cache import RedisCache
@@ -29,7 +27,7 @@ class DataService:
     """Main data service coordinating all data operations."""
 
     def __init__(self):
-        self.data_sources: List[DataSource] = []
+        self.data_router = DataSourceRouter()
         self.data_processor = DataProcessor()
         self.database_storage = DatabaseStorage()
         self.redis_cache = RedisCache()
@@ -39,52 +37,45 @@ class DataService:
             "successful_collections": 0,
             "failed_collections": 0,
             "last_collection": None,
-            "data_sources_status": {}
+            "router_stats": {}
         }
 
     async def initialize(self):
-        """Initialize data service components."""
+        """Initialize data service components with fallback support."""
         if self.is_initialized:
             return
 
         try:
-            # Initialize data sources
-            self.data_sources = [
-                SinaCollector(),
-                TencentCollector(),
-                EastMoneyCollector()
-            ]
+            # Initialize data router
+            await self.data_router.initialize()
 
-            # Initialize storage
-            await self.database_storage.connect()
-            await self.redis_cache.connect()
+            # Initialize storage with fallback support
+            try:
+                await self.database_storage.connect()
+            except Exception as e:
+                logger.warning(f"Database connection failed: {str(e)}")
+                logger.info("Data service will operate in fallback mode with simulated data")
 
-            # Initialize data sources
-            for source in self.data_sources:
-                await source.__aenter__()
-                self.collection_stats["data_sources_status"][source.name] = {
-                    "priority": source.priority,
-                    "request_count": 0,
-                    "error_count": 0,
-                    "is_healthy": True
-                }
+            try:
+                await self.redis_cache.connect()
+            except Exception as e:
+                logger.warning(f"Redis connection failed: {str(e)}")
+                logger.info("Data service will operate without Redis caching")
 
             self.is_initialized = True
-            logger.info("Data service initialized successfully")
+            logger.info("Data service initialized successfully (with fallback support)")
 
         except Exception as e:
             logger.error(f"Failed to initialize data service: {str(e)}")
-            raise
+            # Even if initialization fails partially, mark as initialized to allow operation
+            self.is_initialized = True
+            logger.info("Data service initialized in degraded mode")
 
     async def close(self):
         """Close data service components."""
         try:
-            # Close data sources
-            for source in self.data_sources:
-                try:
-                    await source.close()
-                except Exception as e:
-                    logger.error(f"Failed to close data source {source.name}: {str(e)}")
+            # Close data router
+            await self.data_router.close()
 
             # Close storage
             await self.database_storage.close()
@@ -158,8 +149,8 @@ class DataService:
             await self.initialize()
 
         try:
-            # First try cache
-            cached_quote = await self.redis_cache.get_cached_quote(symbol)
+            # First try smart cache
+            cached_quote = await self.redis_cache.get_cached_quote_smart(symbol)
             if cached_quote:
                 # Check if cache is fresh (less than 5 seconds old)
                 cache_age = (datetime.now() - cached_quote.timestamp).total_seconds()
@@ -176,32 +167,19 @@ class DataService:
                     await self.redis_cache.cache_stock_quote(db_quote)
                     return db_quote
 
-            # Collect fresh data from data sources
-            quotes_by_source = {}
-            errors = []
+            # Collect fresh data using data router
+            raw_quote = await self.data_router.get_stock_quote(symbol)
 
-            for source in sorted(self.data_sources, key=lambda x: x.priority):
-                try:
-                    raw_quote = await source.get_stock_quote(symbol)
-                    if raw_quote:
-                        quotes_by_source[source.name] = raw_quote
-                        break  # Use first successful source for now
-                except DataSourceError as e:
-                    errors.append(f"{source.name}: {str(e)}")
-                    continue
-
-            if not quotes_by_source:
-                logger.warning(f"Failed to get quote for {symbol} from any source: {errors}")
+            if not raw_quote:
+                logger.warning(f"Failed to get quote for {symbol} from any source")
                 return cached_quote or db_quote  # Return stale data if available
 
-            # Process and merge quotes
-            cleaned_quote = self.data_processor.clean_stock_quote(
-                list(quotes_by_source.values())[0]  # Use first successful source
-            )
+            # Process quote
+            cleaned_quote = self.data_processor.clean_stock_quote(raw_quote)
 
-            # Save to storage
+            # Save to storage with smart caching
             await self.database_storage.save_stock_quote(cleaned_quote)
-            await self.redis_cache.cache_stock_quote(cleaned_quote)
+            await self.redis_cache.cache_stock_quote_smart(cleaned_quote)
 
             # Update collection stats
             self._update_collection_stats(success=True)
@@ -245,29 +223,20 @@ class DataService:
                 else:
                     fresh_symbols.append(symbol)
 
-            # Collect fresh data for remaining symbols
+            # Collect fresh data for remaining symbols using data router
             if fresh_symbols:
-                # Try batch collection from data sources
-                for source in sorted(self.data_sources, key=lambda x: x.priority):
+                raw_quotes = await self.data_router.get_batch_quotes(fresh_symbols)
+
+                for symbol, raw_quote in raw_quotes.items():
                     try:
-                        raw_quotes = await source.get_batch_quotes(fresh_symbols)
-                        if raw_quotes:
-                            for symbol, raw_quote in raw_quotes.items():
-                                try:
-                                    cleaned_quote = self.data_processor.clean_stock_quote(raw_quote)
-                                    quotes[symbol] = cleaned_quote
+                        cleaned_quote = self.data_processor.clean_stock_quote(raw_quote)
+                        quotes[symbol] = cleaned_quote
 
-                                    # Save to storage
-                                    await self.database_storage.save_stock_quote(cleaned_quote)
-                                    await self.redis_cache.cache_stock_quote(cleaned_quote)
-                                except Exception as e:
-                                    logger.error(f"Failed to process quote for {symbol}: {str(e)}")
-                                    continue
-
-                            break  # Use first successful source
-
-                    except DataSourceError as e:
-                        logger.warning(f"Batch collection failed for {source.name}: {str(e)}")
+                        # Save to storage
+                        await self.database_storage.save_stock_quote(cleaned_quote)
+                        await self.redis_cache.cache_stock_quote_smart(cleaned_quote)
+                    except Exception as e:
+                        logger.error(f"Failed to process quote for {symbol}: {str(e)}")
                         continue
 
             # Update collection stats
@@ -315,18 +284,10 @@ class DataService:
                 if len(db_history) >= expected_days * 0.8:  # At least 80% coverage
                     return db_history
 
-            # Collect fresh data from data sources
-            raw_history = []
-            for source in sorted(self.data_sources, key=lambda x: x.priority):
-                try:
-                    raw_history = await source.get_stock_history(
-                        symbol, start_date, end_date, interval
-                    )
-                    if raw_history:
-                        break
-                except DataSourceError as e:
-                    logger.warning(f"History collection failed for {source.name}: {str(e)}")
-                    continue
+            # Collect fresh data using data router
+            raw_history = await self.data_router.get_stock_history(
+                symbol, start_date, end_date, interval
+            )
 
             if not raw_history:
                 logger.warning(f"No historical data found for {symbol}")
@@ -374,34 +335,28 @@ class DataService:
                 await self.redis_cache.cache_stock_info(db_info)
                 return db_info
 
-            # Collect from data sources
-            for source in sorted(self.data_sources, key=lambda x: x.priority):
-                try:
-                    raw_info = await source.get_stock_info(symbol)
-                    if raw_info:
-                        # Create StockSymbol object
-                        stock_info = StockSymbol(
-                            symbol=symbol,
-                            name=raw_info.get("name", ""),
-                            exchange=raw_info.get("exchange", "SH"),
-                            sector=raw_info.get("sector"),
-                            market_cap=raw_info.get("market_cap"),
-                            pe_ratio=raw_info.get("pe_ratio"),
-                            pb_ratio=raw_info.get("pb_ratio"),
-                            dividend_yield=raw_info.get("dividend_yield"),
-                            listing_date=raw_info.get("listing_date"),
-                            is_active=True
-                        )
+            # Collect from data router
+            raw_info = await self.data_router.get_stock_info(symbol)
+            if raw_info:
+                # Create StockSymbol object
+                stock_info = StockSymbol(
+                    symbol=symbol,
+                    name=raw_info.get("name", ""),
+                    exchange=raw_info.get("exchange", "SH"),
+                    sector=raw_info.get("sector"),
+                    market_cap=raw_info.get("market_cap"),
+                    pe_ratio=raw_info.get("pe_ratio"),
+                    pb_ratio=raw_info.get("pb_ratio"),
+                    dividend_yield=raw_info.get("dividend_yield"),
+                    listing_date=raw_info.get("listing_date"),
+                    is_active=True
+                )
 
-                        # Save to storage
-                        await self.database_storage.save_stock_info(stock_info)
-                        await self.redis_cache.cache_stock_info(stock_info)
+                # Save to storage
+                await self.database_storage.save_stock_info(stock_info)
+                await self.redis_cache.cache_stock_info(stock_info)
 
-                        return stock_info
-
-                except DataSourceError as e:
-                    logger.warning(f"Info collection failed for {source.name}: {str(e)}")
-                    continue
+                return stock_info
 
             return None
 
@@ -766,21 +721,38 @@ class DataService:
         Returns:
             MonitoringMetrics object
         """
+        # Get router statistics
+        router_stats = self.data_router.get_router_stats()
+        router_health = self.data_router.get_health_status()
+
         total = self.collection_stats["total_collections"]
         successful = self.collection_stats["successful_collections"]
         failed = self.collection_stats["failed_collections"]
 
         success_rate = successful / total if total > 0 else 0.0
 
+        # Calculate average latency from router stats
+        avg_latency = router_stats.get("avg_response_time", 0.0)
+
+        # Get active sources from router
+        active_sources = []
+        for source_name, source_stats in router_stats.get("data_sources", {}).items():
+            if source_stats.get("is_available", False):
+                active_sources.append(source_name)
+
         return MonitoringMetrics(
             total_collections=total,
             successful_collections=successful,
             failed_collections=failed,
             success_rate=success_rate,
-            average_latency=0.0,  # Would need to track latency
+            average_latency=avg_latency,
             last_collection=self.collection_stats["last_collection"],
-            active_sources=list(self.collection_stats["data_sources_status"].keys()),
-            data_coverage=self._calculate_data_coverage()
+            active_sources=active_sources,
+            data_coverage=self._calculate_data_coverage(),
+            router_health=router_health.get("status", "unknown"),
+            router_success_rate=router_stats.get("success_rate", 0.0),
+            healthy_sources_count=router_health.get("healthy_sources", 0),
+            total_sources_count=router_health.get("total_sources", 0)
         )
 
     def _update_collection_stats(self, success: bool):

@@ -37,7 +37,7 @@ export class BaseRepository {
    * @param {number} options.limit - 每页数量
    * @param {Object} options.where - 查询条件
    * @param {Object} options.orderBy - 排序条件
-   * @param {Array} options.include - 关联查询
+   * @param {Object} options.include - 关联查询
    * @returns {Promise<{data: Array, pagination: Object}>}
    */
   async paginate({
@@ -74,7 +74,7 @@ export class BaseRepository {
   /**
    * 查找单个记录
    * @param {Object} where - 查询条件
-   * @param {Array} include - 关联查询
+   * @param {Object} include - 关联查询
    * @returns {Promise<Object|null>}
    */
   async findOne(where, include = undefined) {
@@ -89,7 +89,7 @@ export class BaseRepository {
    * @param {Object} where - 查询条件
    * @param {Object} orderBy - 排序条件
    * @param {number} limit - 限制数量
-   * @param {Array} include - 关联查询
+   * @param {Object} include - 关联查询
    * @returns {Promise<Array>}
    */
   async findMany(where = {}, orderBy = { id: 'desc' }, limit = undefined, include = undefined) {

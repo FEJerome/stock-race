@@ -56,7 +56,7 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/rankings', optionalAuthenticate, marketController.getRankings.bind(marketController));
+router.get('/rankings', optionalAuthenticate, (req, res) => marketController.getRankings(req, res));
 
 /**
  * @swagger
@@ -107,7 +107,7 @@ router.get('/rankings', optionalAuthenticate, marketController.getRankings.bind(
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/rankings/:accountId', authenticate, marketController.getAccountRanking.bind(marketController));
+router.get('/rankings/:accountId', authenticate, (req, res) => marketController.getAccountRanking(req, res));
 
 /**
  * @swagger
@@ -130,7 +130,7 @@ router.get('/rankings/:accountId', authenticate, marketController.getAccountRank
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/data', optionalAuthenticate, marketController.getMarketData.bind(marketController));
+router.get('/data', optionalAuthenticate, (req, res) => marketController.getMarketData(req, res));
 
 /**
  * @swagger
@@ -169,7 +169,7 @@ router.get('/data', optionalAuthenticate, marketController.getMarketData.bind(ma
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/competitions', optionalAuthenticate, marketController.getCompetitions.bind(marketController));
+router.get('/competitions', optionalAuthenticate, (req, res) => marketController.getCompetitions(req, res));
 
 /**
  * @swagger
@@ -199,7 +199,7 @@ router.get('/competitions', optionalAuthenticate, marketController.getCompetitio
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/competitions/:competitionId', optionalAuthenticate, marketController.getCompetitionDetail.bind(marketController));
+router.get('/competitions/:competitionId', optionalAuthenticate, (req, res) => marketController.getCompetitionDetail(req, res));
 
 /**
  * @swagger
@@ -261,7 +261,7 @@ router.get('/competitions/:competitionId', optionalAuthenticate, marketControlle
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/competitions/:competitionId/join', authenticate, marketController.joinCompetition.bind(marketController));
+router.post('/competitions/:competitionId/join', authenticate, (req, res) => marketController.joinCompetition(req, res));
 
 /**
  * @swagger
@@ -323,7 +323,7 @@ router.post('/competitions/:competitionId/join', authenticate, marketController.
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/competitions/:competitionId/leave', authenticate, marketController.leaveCompetition.bind(marketController));
+router.post('/competitions/:competitionId/leave', authenticate, (req, res) => marketController.leaveCompetition(req, res));
 
 /**
  * @swagger
@@ -349,7 +349,7 @@ router.post('/competitions/:competitionId/leave', authenticate, marketController
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/trading-hall', optionalAuthenticate, marketController.getTradingHallData.bind(marketController));
+router.get('/trading-hall', optionalAuthenticate, (req, res) => marketController.getTradingHallData(req, res));
 
 /**
  * @swagger
@@ -382,7 +382,7 @@ router.get('/trading-hall', optionalAuthenticate, marketController.getTradingHal
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/trends', optionalAuthenticate, marketController.getMarketTrends.bind(marketController));
+router.get('/trends', optionalAuthenticate, (req, res) => marketController.getMarketTrends(req, res));
 
 /**
  * @swagger
@@ -407,6 +407,6 @@ router.get('/trends', optionalAuthenticate, marketController.getMarketTrends.bin
  *             schema:
  *               $ref: '#/components/schemas/SuccessResponse'
  */
-router.get('/indices', optionalAuthenticate, marketController.getIndices.bind(marketController));
+router.get('/indices', optionalAuthenticate, (req, res) => marketController.getIndices(req, res));
 
 export default router;

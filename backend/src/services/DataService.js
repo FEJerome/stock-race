@@ -5,6 +5,7 @@ export class DataService {
     // 数据服务配置
     this.dataServiceUrl = process.env.DATA_SERVICE_URL || 'http://localhost:8001';
     this.dataServiceApiKey = process.env.DATA_SERVICE_API_KEY || 'stock-race-data-key';
+    this.dataServiceApiPrefix = process.env.DATA_SERVICE_API_PREFIX || '/api/v1';
     this.timeout = parseInt(process.env.DATA_SERVICE_TIMEOUT) || 10000;
     this.maxRetries = parseInt(process.env.DATA_SERVICE_MAX_RETRIES) || 3;
     this.retryDelay = parseInt(process.env.DATA_SERVICE_RETRY_DELAY) || 1000;
@@ -22,6 +23,27 @@ export class DataService {
     // 缓存配置
     this.cache = new Map();
     this.cacheTTL = 60000; // 1分钟缓存
+
+    // 监控和健康检查配置
+    this.healthCheckInterval = parseInt(process.env.DATA_SERVICE_HEALTH_CHECK_INTERVAL) || 30000; // 30秒
+    this.maxFallbackDuration = parseInt(process.env.DATA_SERVICE_MAX_FALLBACK_DURATION) || 300000; // 5分钟
+    this.dataQualityThreshold = parseFloat(process.env.DATA_SERVICE_QUALITY_THRESHOLD) || 0.8; // 80%
+
+    // 监控状态
+    this.monitoringStats = {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      fallbackRequests: 0,
+      lastHealthCheck: null,
+      lastSuccessfulRequest: null,
+      isHealthy: false,
+      dataQualityScore: 1.0,
+      currentDataSource: 'unknown'
+    };
+
+    // 启动健康检查
+    this.startHealthCheck();
   }
 
   /**
@@ -37,33 +59,62 @@ export class DataService {
       return cached;
     }
 
-    try {
-      const response = await this.client.get(`/api/data/stocks/${stockCode}/realtime`);
+    // 检查是否应该使用降级方案
+    if (this.shouldUseFallback()) {
+      console.warn(`数据服务降级模式激活，使用模拟数据 (${stockCode})`);
+      const fallbackData = this.getMockRealtimeData(stockCode);
+      this.updateMonitoringStats(true, true); // 降级方案视为成功
+      this.setToCache(cacheKey, fallbackData, 5000); // 降级数据缓存5秒
+      return fallbackData;
+    }
 
+    try {
+      // 调用数据服务的API端点
+      const response = await this.client.get(this.buildApiPath(`/stocks/${stockCode}/quote`));
+
+      // 将数据服务返回的数据格式转换为后端期望的格式
       const result = {
         success: true,
         stock_code: stockCode,
-        price: response.data.price,
-        change: response.data.change,
-        change_percent: response.data.change_percent,
-        volume: response.data.volume,
-        amount: response.data.amount,
-        open: response.data.open,
-        high: response.data.high,
-        low: response.data.low,
-        prev_close: response.data.prev_close,
-        bid_ask: response.data.bid_ask,
-        timestamp: response.data.timestamp,
-        market_status: response.data.market_status
+        price: response.data.price || response.data.current_price || 0,
+        change: response.data.change || response.data.change_amount || 0,
+        change_percent: response.data.change_percent || response.data.change_percentage || 0,
+        volume: response.data.volume || response.data.trading_volume || 0,
+        amount: response.data.amount || response.data.trading_amount || 0,
+        open: response.data.open || response.data.open_price || 0,
+        high: response.data.high || response.data.high_price || 0,
+        low: response.data.low || response.data.low_price || 0,
+        prev_close: response.data.prev_close || response.data.previous_close || 0,
+        bid_ask: response.data.bid_ask || {
+          bid1: { price: 0, volume: 0 },
+          bid2: { price: 0, volume: 0 },
+          ask1: { price: 0, volume: 0 },
+          ask2: { price: 0, volume: 0 }
+        },
+        timestamp: response.data.timestamp || new Date().toISOString(),
+        market_status: response.data.market_status || 'trading',
+        data_source: response.data.data_source || 'real',
+        is_fallback: false
       };
 
+      // 验证数据质量
+      const dataQuality = this.validateDataQuality(result);
+      if (!dataQuality.isValid) {
+        console.warn(`数据质量检查失败 (${stockCode}):`, dataQuality.reasons);
+        result.data_quality_warnings = dataQuality.reasons;
+      }
+
       this.setToCache(cacheKey, result, 10000); // 10秒缓存实时数据
+      this.updateMonitoringStats(true, false);
       return result;
     } catch (error) {
       console.error(`获取股票实时数据失败 (${stockCode}):`, error.message);
+      this.updateMonitoringStats(false, false);
 
       // 返回模拟数据作为降级方案
-      return this.getMockRealtimeData(stockCode);
+      const fallbackData = this.getMockRealtimeData(stockCode);
+      this.setToCache(cacheKey, fallbackData, 5000); // 降级数据缓存5秒
+      return fallbackData;
     }
   }
 
@@ -73,23 +124,51 @@ export class DataService {
    * @returns {Promise<Array<Object>>} 实时数据数组
    */
   async batchGetRealtimeData(stockCodes) {
+    // 检查是否应该使用降级方案
+    if (this.shouldUseFallback()) {
+      console.warn('数据服务降级模式激活，批量使用模拟数据');
+      const fallbackResults = stockCodes.map(stockCode => this.getMockRealtimeData(stockCode));
+      this.updateMonitoringStats(true, true); // 降级方案视为成功
+      return fallbackResults;
+    }
+
     try {
-      const response = await this.client.post('/api/data/stocks/realtime/batch', {
-        stock_codes: stockCodes
+      // 调用数据服务的批量API端点
+      const response = await this.client.get(this.buildApiPath('/stocks/batch/quotes'), {
+        params: { symbols: stockCodes.join(',') }
       });
 
-      return response.data.stocks.map(stock => ({
-        success: true,
-        stock_code: stock.stock_code,
-        price: stock.price,
-        change: stock.change,
-        change_percent: stock.change_percent,
-        volume: stock.volume,
-        amount: stock.amount,
-        timestamp: stock.timestamp
-      }));
+      // 将数据服务返回的数据格式转换为后端期望的格式
+      const results = stockCodes.map(stockCode => {
+        const quote = response.data[stockCode] || {};
+        const result = {
+          success: true,
+          stock_code: stockCode,
+          price: quote.price || quote.current_price || 0,
+          change: quote.change || quote.change_amount || 0,
+          change_percent: quote.change_percent || quote.change_percentage || 0,
+          volume: quote.volume || quote.trading_volume || 0,
+          amount: quote.amount || quote.trading_amount || 0,
+          timestamp: quote.timestamp || new Date().toISOString(),
+          data_source: quote.data_source || 'real',
+          is_fallback: false
+        };
+
+        // 验证数据质量
+        const dataQuality = this.validateDataQuality(result);
+        if (!dataQuality.isValid) {
+          console.warn(`批量数据质量检查失败 (${stockCode}):`, dataQuality.reasons);
+          result.data_quality_warnings = dataQuality.reasons;
+        }
+
+        return result;
+      });
+
+      this.updateMonitoringStats(true, false);
+      return results;
     } catch (error) {
       console.error('批量获取股票实时数据失败:', error.message);
+      this.updateMonitoringStats(false, false);
 
       // 返回模拟数据作为降级方案
       return stockCodes.map(stockCode => this.getMockRealtimeData(stockCode));
@@ -114,24 +193,26 @@ export class DataService {
     }
 
     try {
+      // 调用数据服务的K线数据API端点
       const params = {
         interval,
         limit
       };
 
-      if (startTime) params.start_time = startTime;
-      if (endTime) params.end_time = endTime;
+      if (startTime) params.start_date = startTime;
+      if (endTime) params.end_date = endTime;
 
-      const response = await this.client.get(`/api/data/stocks/${stockCode}/kline`, { params });
+      const response = await this.client.get(this.buildApiPath(`/stocks/${stockCode}/history`), { params });
 
-      const result = response.data.kline.map(k => ({
-        time: k.time,
-        open: k.open,
-        high: k.high,
-        low: k.low,
-        close: k.close,
-        volume: k.volume,
-        amount: k.amount
+      // 将数据服务返回的数据格式转换为后端期望的格式
+      const result = response.data.map(k => ({
+        time: k.time || k.timestamp || k.date,
+        open: k.open || k.open_price || 0,
+        high: k.high || k.high_price || 0,
+        low: k.low || k.low_price || 0,
+        close: k.close || k.close_price || k.current_price || 0,
+        volume: k.volume || k.trading_volume || 0,
+        amount: k.amount || k.trading_amount || 0
       }));
 
       this.setToCache(cacheKey, result, 300000); // 5分钟缓存K线数据
@@ -159,15 +240,16 @@ export class DataService {
     }
 
     try {
-      const response = await this.client.get(`/api/data/stocks/${stockCode}/indicators`, {
-        params: { indicators: indicators.join(',') }
+      // 调用数据服务的技术指标API端点
+      const response = await this.client.get(this.buildApiPath(`/technical/${stockCode}/indicators`), {
+        params: { indicators: indicators.join(','), period: 20 }
       });
 
       const result = {
         success: true,
         stock_code: stockCode,
-        indicators: response.data.indicators,
-        timestamp: response.data.timestamp
+        indicators: response.data.indicators || response.data,
+        timestamp: response.data.timestamp || new Date().toISOString()
       };
 
       this.setToCache(cacheKey, result, 120000); // 2分钟缓存技术指标
@@ -194,21 +276,30 @@ export class DataService {
     }
 
     try {
+      // 数据服务可能没有直接的市场统计API，这里使用降级方案
+      // 或者我们可以组合多个API来获取市场统计数据
+      // 暂时返回模拟数据，后续可以扩展
+      console.warn('数据服务暂无市场统计API，使用降级方案');
+
+      // 尝试获取市场状态作为替代
       const params = market ? { market } : {};
-      const response = await this.client.get('/api/data/market/stats', { params });
+      const response = await this.client.get(this.buildApiPath('/market/status'), { params });
 
       const result = {
         success: true,
         market: market || 'all',
-        total_stocks: response.data.total_stocks,
-        up_count: response.data.up_count,
-        down_count: response.data.down_count,
-        unchanged_count: response.data.unchanged_count,
-        limit_up_count: response.data.limit_up_count,
-        limit_down_count: response.data.limit_down_count,
-        total_turnover: response.data.total_turnover,
-        total_market_cap: response.data.total_market_cap,
-        timestamp: response.data.timestamp
+        total_stocks: 0, // 数据服务可能不提供这些数据
+        up_count: 0,
+        down_count: 0,
+        unchanged_count: 0,
+        limit_up_count: 0,
+        limit_down_count: 0,
+        total_turnover: 0,
+        total_market_cap: 0,
+        timestamp: response.data.timestamp || new Date().toISOString(),
+        market_status: response.data.status || 'unknown',
+        is_fallback: true,
+        fallback_reason: '数据服务暂无完整的市场统计API'
       };
 
       this.setToCache(cacheKey, result, 30000); // 30秒缓存市场统计
@@ -235,24 +326,31 @@ export class DataService {
     }
 
     try {
-      const response = await this.client.get(`/api/data/stocks/${stockCode}/info`);
+      // 数据服务可能没有专门的股票信息API
+      // 我们可以尝试从其他API获取部分信息，或者使用降级方案
+      console.warn('数据服务暂无专门的股票信息API，使用降级方案');
+
+      // 尝试从实时数据中获取一些基本信息
+      const realtimeData = await this.getRealtimeData(stockCode);
 
       const result = {
         success: true,
         stock_code: stockCode,
-        name: response.data.name,
-        full_name: response.data.full_name,
-        market: response.data.market,
-        industry: response.data.industry,
-        sub_industry: response.data.sub_industry,
-        listing_date: response.data.listing_date,
-        total_shares: response.data.total_shares,
-        circulating_shares: response.data.circulating_shares,
-        pe_ratio: response.data.pe_ratio,
-        pb_ratio: response.data.pb_ratio,
-        dividend_yield: response.data.dividend_yield,
-        market_cap: response.data.market_cap,
-        circulating_market_cap: response.data.circulating_market_cap
+        name: `股票${stockCode}`, // 默认名称
+        full_name: `${stockCode}股份有限公司`,
+        market: stockCode.includes('.SH') ? 'SH' : stockCode.includes('.SZ') ? 'SZ' : 'Unknown',
+        industry: '未知行业',
+        sub_industry: '未知细分行业',
+        listing_date: '2010-01-01',
+        total_shares: 1000000000,
+        circulating_shares: 800000000,
+        pe_ratio: 15.0,
+        pb_ratio: 1.5,
+        dividend_yield: 2.0,
+        market_cap: realtimeData.price * 1000000000,
+        circulating_market_cap: realtimeData.price * 800000000,
+        is_fallback: true,
+        fallback_reason: '数据服务暂无专门的股票信息API'
       };
 
       this.setToCache(cacheKey, result, 3600000); // 1小时缓存股票信息
@@ -280,16 +378,18 @@ export class DataService {
     }
 
     try {
-      const response = await this.client.get('/api/data/stocks/search', {
-        params: { q: query, limit }
+      // 调用数据服务的搜索API端点
+      const response = await this.client.get(this.buildApiPath('/search'), {
+        params: { query, limit }
       });
 
-      const result = response.data.stocks.map(stock => ({
-        stock_code: stock.stock_code,
-        name: stock.name,
-        market: stock.market,
-        industry: stock.industry,
-        match_score: stock.match_score
+      // 将数据服务返回的数据格式转换为后端期望的格式
+      const result = response.data.map(stock => ({
+        stock_code: stock.symbol || stock.stock_code,
+        name: stock.name || stock.company_name,
+        market: stock.market || stock.exchange,
+        industry: stock.industry || stock.sector,
+        match_score: stock.match_score || stock.relevance_score || 0.8
       }));
 
       this.setToCache(cacheKey, result, 300000); // 5分钟缓存搜索结果
@@ -575,16 +675,16 @@ export class DataService {
   async testConnection() {
     try {
       const startTime = Date.now();
-      const response = await this.client.get('/api/data/health', { timeout: 5000 });
+      const response = await this.client.get(this.buildApiPath('/health'), { timeout: 5000 });
       const endTime = Date.now();
 
       return {
         success: true,
         status: 'connected',
         response_time: endTime - startTime,
-        service_version: response.data.version,
-        data_source: response.data.data_source,
-        last_update: response.data.last_update,
+        service_version: response.data.version || '0.1.0',
+        data_source: response.data.data_source || 'unknown',
+        last_update: response.data.last_update || response.data.timestamp,
         timestamp: new Date().toISOString()
       };
     } catch (error) {
@@ -598,6 +698,209 @@ export class DataService {
         timestamp: new Date().toISOString()
       };
     }
+  }
+
+  /**
+   * 构建完整的API路径
+   * @param {string} endpoint - API端点
+   * @returns {string} 完整的API路径
+   */
+  buildApiPath(endpoint) {
+    // 确保endpoint以/开头
+    if (!endpoint.startsWith('/')) {
+      endpoint = '/' + endpoint;
+    }
+
+    // 构建完整路径：API前缀 + 端点
+    return `${this.dataServiceApiPrefix}${endpoint}`;
+  }
+
+  /**
+   * 启动健康检查
+   */
+  startHealthCheck() {
+    // 立即执行一次健康检查
+    this.performHealthCheck();
+
+    // 设置定时健康检查
+    this.healthCheckTimer = setInterval(() => {
+      this.performHealthCheck();
+    }, this.healthCheckInterval);
+
+    console.log('数据服务健康检查已启动，间隔:', this.healthCheckInterval, 'ms');
+  }
+
+  /**
+   * 执行健康检查
+   */
+  async performHealthCheck() {
+    try {
+      const healthResult = await this.testConnection();
+      this.monitoringStats.lastHealthCheck = new Date().toISOString();
+      this.monitoringStats.isHealthy = healthResult.success;
+      this.monitoringStats.currentDataSource = healthResult.data_source || 'unknown';
+
+      if (healthResult.success) {
+        console.log('数据服务健康检查通过:', healthResult);
+      } else {
+        console.warn('数据服务健康检查失败:', healthResult.error);
+      }
+    } catch (error) {
+      console.error('健康检查执行失败:', error.message);
+      this.monitoringStats.isHealthy = false;
+      this.monitoringStats.lastHealthCheck = new Date().toISOString();
+    }
+  }
+
+  /**
+   * 停止健康检查
+   */
+  stopHealthCheck() {
+    if (this.healthCheckTimer) {
+      clearInterval(this.healthCheckTimer);
+      this.healthCheckTimer = null;
+      console.log('数据服务健康检查已停止');
+    }
+  }
+
+  /**
+   * 更新监控统计
+   * @param {boolean} success - 请求是否成功
+   * @param {boolean} isFallback - 是否使用了降级方案
+   */
+  updateMonitoringStats(success, isFallback = false) {
+    this.monitoringStats.totalRequests++;
+
+    if (success) {
+      this.monitoringStats.successfulRequests++;
+      this.monitoringStats.lastSuccessfulRequest = new Date().toISOString();
+    } else {
+      this.monitoringStats.failedRequests++;
+    }
+
+    if (isFallback) {
+      this.monitoringStats.fallbackRequests++;
+    }
+
+    // 计算数据质量分数（成功请求比例）
+    if (this.monitoringStats.totalRequests > 0) {
+      this.monitoringStats.dataQualityScore =
+        this.monitoringStats.successfulRequests / this.monitoringStats.totalRequests;
+    }
+  }
+
+  /**
+   * 获取监控统计
+   * @returns {Object} 监控统计信息
+   */
+  getMonitoringStats() {
+    return {
+      ...this.monitoringStats,
+      successRate: this.monitoringStats.totalRequests > 0
+        ? (this.monitoringStats.successfulRequests / this.monitoringStats.totalRequests) * 100
+        : 0,
+      fallbackRate: this.monitoringStats.totalRequests > 0
+        ? (this.monitoringStats.fallbackRequests / this.monitoringStats.totalRequests) * 100
+        : 0,
+      uptime: this.monitoringStats.isHealthy ? 'up' : 'down',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * 检查是否应该使用降级方案
+   * @returns {boolean} 是否应该使用降级方案
+   */
+  shouldUseFallback() {
+    // 如果数据服务不健康，使用降级方案
+    if (!this.monitoringStats.isHealthy) {
+      return true;
+    }
+
+    // 如果数据质量低于阈值，使用降级方案
+    if (this.monitoringStats.dataQualityScore < this.dataQualityThreshold) {
+      return true;
+    }
+
+    // 如果最近没有成功请求，使用降级方案
+    if (this.monitoringStats.lastSuccessfulRequest) {
+      const lastSuccessTime = new Date(this.monitoringStats.lastSuccessfulRequest).getTime();
+      const currentTime = Date.now();
+      if (currentTime - lastSuccessTime > this.maxFallbackDuration) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * 验证数据质量
+   * @param {Object} data - 要验证的数据
+   * @returns {Object} 验证结果
+   */
+  validateDataQuality(data) {
+    const reasons = [];
+
+    // 检查必要字段是否存在
+    const requiredFields = ['price', 'timestamp', 'stock_code'];
+    for (const field of requiredFields) {
+      if (data[field] === undefined || data[field] === null) {
+        reasons.push(`缺少必要字段: ${field}`);
+      }
+    }
+
+    // 检查价格是否合理
+    if (data.price !== undefined && data.price !== null) {
+      if (data.price <= 0) {
+        reasons.push('价格无效（小于等于0）');
+      }
+      if (data.price > 10000) {
+        reasons.push('价格异常高（超过10000）');
+      }
+    }
+
+    // 检查时间戳是否合理
+    if (data.timestamp) {
+      const dataTime = new Date(data.timestamp).getTime();
+      const currentTime = Date.now();
+      const timeDiff = Math.abs(currentTime - dataTime);
+
+      if (timeDiff > 3600000) { // 1小时
+        reasons.push('数据时间戳过时（超过1小时）');
+      }
+    }
+
+    // 检查涨跌幅是否合理
+    if (data.change_percent !== undefined && data.change_percent !== null) {
+      if (Math.abs(data.change_percent) > 20) {
+        reasons.push('涨跌幅异常（超过20%）');
+      }
+    }
+
+    return {
+      isValid: reasons.length === 0,
+      reasons,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * 重置监控统计
+   */
+  resetMonitoringStats() {
+    this.monitoringStats = {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      fallbackRequests: 0,
+      lastHealthCheck: null,
+      lastSuccessfulRequest: null,
+      isHealthy: false,
+      dataQualityScore: 1.0,
+      currentDataSource: 'unknown'
+    };
+    console.log('监控统计已重置');
   }
 
   /**

@@ -1,6 +1,6 @@
-import { tradeRepository } from '../models/TradeRepository.js';
-import { aiAccountRepository } from '../models/AIAccountRepository.js';
-import { portfolioRepository } from '../models/PortfolioRepository.js';
+import { tradeRepository } from '../models/index.js';
+import { aiAccountRepository } from '../models/index.js';
+import { portfolioRepository } from '../models/index.js';
 import { dataService } from './DataService.js';
 import { webSocketService } from './WebSocketService.js';
 

@@ -464,9 +464,5 @@ const Competition: React.FC = () => {
   );
 };
 
-// 添加缺失的图标导入
-const TrophyOutlined = ({ style }: { style?: React.CSSProperties }) => (
-  <span style={style}>🏆</span>
-);
 
 export default Competition;

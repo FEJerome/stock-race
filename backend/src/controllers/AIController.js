@@ -1128,6 +1128,46 @@ export class AIController {
    * 检查AI服务健康状态
    * @returns {Promise<Object>} 健康状态
    */
+  /**
+   * 获取账户绩效
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getAccountPerformance(req, res) {
+    try {
+      const { accountId } = req.params;
+      const userId = req.user.id;
+
+      // 验证账户所有权
+      const account = await aiAccountRepository.findOne({
+        id: parseInt(accountId),
+        userId
+      });
+
+      if (!account) {
+        return res.status(404).json({
+          success: false,
+          error: '账户不存在或无权访问'
+        });
+      }
+
+      // 获取账户绩效
+      const performance = await aiAccountRepository.getAccountPerformance(parseInt(accountId));
+
+      return res.json({
+        success: true,
+        data: performance
+      });
+    } catch (error) {
+      console.error('获取账户绩效错误:', error);
+      return res.status(500).json({
+        success: false,
+        error: '获取账户绩效失败',
+        details: error.message
+      });
+    }
+  }
+
   async checkAIServiceHealth() {
     try {
       const connectionTest = await aiService.testConnection();

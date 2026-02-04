@@ -2,9 +2,12 @@
 API routes for Data Service.
 """
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 from ..core.auth import get_current_user
 from ..models.stock import StockSymbol, StockData, StockQuote, StockHistory
@@ -74,7 +77,7 @@ async def get_stock_history(
     symbol: str,
     start_date: datetime = Query(datetime.now() - timedelta(days=30)),
     end_date: datetime = Query(datetime.now()),
-    interval: str = Query("1d", regex="^(1m|5m|15m|30m|1h|1d|1w|1M)$"),
+    interval: str = Query("1d", pattern="^(1m|5m|15m|30m|1h|1d|1w|1M)$"),
     data_service: DataService = Depends()
 ):
     """
@@ -193,23 +196,23 @@ async def get_data_quality(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.websocket("/ws/realtime")
-async def websocket_realtime(
-    websocket: WebSocket,
-    realtime_service: RealtimeService = Depends()
-):
-    """
-    WebSocket endpoint for real-time data.
-    """
-    await realtime_service.connect(websocket)
-    try:
-        while True:
-            data = await websocket.receive_json()
-            await realtime_service.handle_message(websocket, data)
-    except WebSocketDisconnect:
-        await realtime_service.disconnect(websocket)
-    except Exception as e:
-        await websocket.close(code=1011, reason=str(e))
+# @router.websocket("/ws/realtime")
+# async def websocket_realtime(
+#     websocket: WebSocket,
+#     realtime_service: RealtimeService = Depends()
+# ):
+#     """
+#     WebSocket endpoint for real-time data.
+#     """
+#     await realtime_service.connect(websocket)
+#     try:
+#         while True:
+#             data = await websocket.receive_json()
+#             await realtime_service.handle_message(websocket, data)
+#     except WebSocketDisconnect:
+#         await realtime_service.disconnect(websocket)
+#     except Exception as e:
+#         await websocket.close(code=1011, reason=str(e))
 
 
 @router.post("/collect/manual")
@@ -248,6 +251,93 @@ async def get_monitoring_metrics(
 
         metrics = await data_service.get_monitoring_metrics()
         return metrics
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/monitoring/data-sources")
+async def get_data_sources_monitoring(
+    data_service: DataService = Depends(),
+    current_user: Dict = Depends(get_current_user)
+):
+    """
+    Get detailed data sources monitoring information (requires authentication).
+    """
+    try:
+        if not current_user.get("is_admin", False):
+            raise HTTPException(status_code=403, detail="Admin access required")
+
+        # Get router statistics
+        router_stats = data_service.data_router.get_router_stats()
+        router_health = data_service.data_router.get_health_status()
+
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "router_health": router_health,
+            "router_stats": router_stats,
+            "collection_stats": data_service.collection_stats
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/monitoring/reset-stats")
+async def reset_monitoring_stats(
+    data_service: DataService = Depends(),
+    current_user: Dict = Depends(get_current_user)
+):
+    """
+    Reset monitoring statistics (requires authentication).
+    """
+    try:
+        if not current_user.get("is_admin", False):
+            raise HTTPException(status_code=403, detail="Admin access required")
+
+        # Reset router statistics
+        data_service.data_router.reset_stats()
+
+        # Reset collection stats
+        data_service.collection_stats = {
+            "total_collections": 0,
+            "successful_collections": 0,
+            "failed_collections": 0,
+            "last_collection": None,
+            "router_stats": {}
+        }
+
+        return {"message": "Monitoring statistics reset successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/monitoring/clear-cache")
+async def clear_data_cache(
+    data_service: DataService = Depends(),
+    current_user: Dict = Depends(get_current_user)
+):
+    """
+    Clear data cache (requires authentication).
+    """
+    try:
+        if not current_user.get("is_admin", False):
+            raise HTTPException(status_code=403, detail="Admin access required")
+
+        # Clear router cache
+        data_service.data_router.clear_cache()
+
+        # Clear Redis cache (if available)
+        try:
+            await data_service.redis_cache.clear_all()
+        except Exception as e:
+            logger.warning(f"Failed to clear Redis cache: {str(e)}")
+
+        return {"message": "Data cache cleared successfully"}
     except HTTPException:
         raise
     except Exception as e:
