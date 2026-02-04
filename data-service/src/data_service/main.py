@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 
 from .api.routes import router as api_router
+from .api.enhanced_routes import router as enhanced_router
 from .core.config import settings
 from .core.database import init_db
 from .core.redis import init_redis
@@ -104,6 +105,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(enhanced_router)
 
 
 def main():
