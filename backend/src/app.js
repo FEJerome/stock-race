@@ -7,9 +7,15 @@ import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import routes from './routes/index.js';
-import { requestLogger, errorHandler } from './middleware/auth.js';
+import { requestLogger } from './middleware/auth.js';
 import { sessionService } from './services/SessionService.js';
 import { webSocketService } from './services/WebSocketService.js';
+import { responseFormatterMiddleware } from './utils/responseFormatter.js';
+import {
+  globalErrorHandler,
+  notFoundHandler,
+  handleUncaughtExceptions
+} from './middleware/errorHandler.js';
 
 // 创建Express应用
 const app = express();
@@ -129,6 +135,9 @@ if (NODE_ENV === 'development') {
 // 自定义请求日志
 app.use(requestLogger);
 
+// 响应格式化中间件
+app.use(responseFormatterMiddleware);
+
 // 压缩中间件
 app.use(compression());
 
@@ -149,19 +158,14 @@ app.use(`${API_PREFIX}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 // API路由
 app.use(API_PREFIX, routes);
 
-// 错误处理中间件
-app.use(errorHandler);
+// 404处理
+app.use(notFoundHandler);
 
-// 未捕获的异常处理
-process.on('uncaughtException', (error) => {
-  console.error('未捕获的异常:', error);
-  // 在实际应用中，这里应该记录到日志系统
-});
+// 全局错误处理中间件
+app.use(globalErrorHandler);
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('未处理的Promise拒绝:', reason);
-  // 在实际应用中，这里应该记录到日志系统
-});
+// 处理未捕获的异常
+handleUncaughtExceptions();
 
 // 启动服务器
 const startServer = async () => {
