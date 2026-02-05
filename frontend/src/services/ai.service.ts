@@ -53,8 +53,8 @@ export const aiService = {
 
     return mockAccounts;
 
-    // 实际API调用
-    // return api.get<AIAccount[]>('/ai/accounts');
+    // 实际API调用 - 后端路由是 /ai-accounts 而非 /ai/accounts
+    // return api.get<AIAccount[]>('/ai-accounts');
   },
 
   // 创建AI账户
@@ -72,8 +72,8 @@ export const aiService = {
 
     return mockAccount;
 
-    // 实际API调用
-    // return api.post<AIAccount>('/ai/accounts', account);
+    // 实际API调用 - 后端路由是 /ai-accounts 而非 /ai/accounts
+    // return api.post<AIAccount>('/ai-accounts', account);
   },
 
   // 更新AI账户
@@ -93,8 +93,8 @@ export const aiService = {
 
     return mockAccount;
 
-    // 实际API调用
-    // return api.put<AIAccount>(`/ai/accounts/${id}`, updates);
+    // 实际API调用 - 后端路由是 /ai-accounts/:id 而非 /ai/accounts/:id
+    // return api.put<AIAccount>(`/ai-accounts/${id}`, updates);
   },
 
   // 删除AI账户
@@ -102,12 +102,12 @@ export const aiService = {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // 实际API调用
-    // return api.delete(`/ai/accounts/${id}`);
+    // 实际API调用 - 后端路由是 /ai-accounts/:id 而非 /ai/accounts/:id
+    // return api.delete(`/ai-accounts/${id}`);
   },
 
-  // 获取AI决策记录
-  getAIDecisions: async (params?: PaginationParams): Promise<PaginatedResponse<AIDecision>> => {
+  // 获取AI决策记录 - 需要accountId参数
+  getAIDecisions: async (accountId: string, params?: PaginationParams): Promise<PaginatedResponse<AIDecision>> => {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -181,11 +181,12 @@ export const aiService = {
       totalPages: Math.ceil(mockDecisions.length / pageSize),
     };
 
-    // 实际API调用
-    // return api.get<PaginatedResponse<AIDecision>>('/ai/decisions', { params });
+    // 实际API调用 - 后端路由是 /ai-accounts/:accountId/decisions
+    // const queryParams = params ? { params } : {};
+    // return api.get<PaginatedResponse<AIDecision>>(`/ai-accounts/${accountId}/decisions`, queryParams);
   },
 
-  // 触发AI分析
+  // 触发AI分析 - 需要aiAccountId参数
   triggerAIAnalysis: async (symbol: string, aiAccountId?: string): Promise<AIDecision> => {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -204,8 +205,11 @@ export const aiService = {
 
     return mockDecision;
 
-    // 实际API调用
-    // return api.post<AIDecision>('/ai/analyze', { symbol, aiAccountId });
+    // 实际API调用 - 后端路由是 /ai-accounts/:accountId/decisions/request
+    // if (!aiAccountId) {
+    //   throw new Error('AI账户ID不能为空');
+    // }
+    // return api.post<AIDecision>(`/ai-accounts/${aiAccountId}/decisions/request`, { action: 'trade', data: { stockCode: symbol } });
   },
 
   // 获取AI账户详情
@@ -225,8 +229,8 @@ export const aiService = {
 
     return mockAccount;
 
-    // 实际API调用
-    // return api.get<AIAccount>(`/ai/accounts/${id}`);
+    // 实际API调用 - 后端路由是 /ai-accounts/:id 而非 /ai/accounts/:id
+    // return api.get<AIAccount>(`/ai-accounts/${id}`);
   },
 
   // 获取AI决策详情
@@ -248,11 +252,11 @@ export const aiService = {
 
     return mockDecision;
 
-    // 实际API调用
-    // return api.get<AIDecision>(`/ai/decisions/${id}`);
+    // 实际API调用 - AI决策详情需要通过决策历史API获取
+    // return api.get<AIDecision>(`/ai-accounts/${accountId}/decisions/${id}`);
   },
 
-  // 获取AI性能统计
+  // 获取AI性能统计 - 使用后端 /ai-accounts/:accountId/performance 路由
   getAIPerformance: async (aiAccountId?: string): Promise<any> => {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 400));
@@ -270,13 +274,13 @@ export const aiService = {
 
     return mockPerformance;
 
-    // 实际API调用
-    // const url = aiAccountId ? `/ai/performance/${aiAccountId}` : '/ai/performance';
+    // 实际API调用 - 后端路由是 /ai-accounts/:accountId/performance
+    // const url = aiAccountId ? `/ai-accounts/${aiAccountId}/performance` : '/ai-accounts/stats';
     // return api.get<any>(url);
   },
 
   // 批量触发AI分析
-  batchAIAnalysis: async (symbols: string[]): Promise<AIDecision[]> => {
+  batchAIAnalysis: async (aiAccountId: string, symbols: string[]): Promise<AIDecision[]> => {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 3000));
 
@@ -294,11 +298,11 @@ export const aiService = {
 
     return mockDecisions;
 
-    // 实际API调用
-    // return api.post<AIDecision[]>('/ai/analyze/batch', { symbols });
+    // 实际API调用 - 后端路由是 /ai-accounts/:accountId/decisions/request
+    // return api.post<AIDecision[]>(`/ai-accounts/${aiAccountId}/decisions/request`, { action: 'analyze', data: { symbols } });
   },
 
-  // 测试AI账户连接
+  // 测试AI账户连接 - 使用后端 /ai-accounts/health 路由
   testAIConnection: async (aiAccountId: string): Promise<{ success: boolean; message: string }> => {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -312,8 +316,8 @@ export const aiService = {
         : 'AI账户连接测试失败，请检查API密钥和网络连接',
     };
 
-    // 实际API调用
-    // return api.post<{ success: boolean; message: string }>(`/ai/accounts/${aiAccountId}/test`);
+    // 实际API调用 - 后端路由是 /ai-accounts/health 而非 /ai/accounts/:id/test
+    // return api.post<{ success: boolean; message: string }>(`/ai-accounts/health`);
   },
 };
 

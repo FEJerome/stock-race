@@ -1,0 +1,59 @@
+# Frontend Production Dockerfile
+# 多阶段构建：构建阶段 + Nginx服务阶段
+
+# 构建阶段
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# 复制依赖文件
+COPY package*.json ./
+
+# 安装所有依赖
+RUN npm ci
+
+# 复制源代码
+COPY . .
+
+# 构建生产版本
+RUN npm run build
+
+# 生产阶段 - 使用Nginx提供静态文件服务
+FROM nginx:1.25-alpine AS production
+
+# 安装curl（用于健康检查）
+RUN apk add --no-cache curl
+
+# 删除默认Nginx配置和静态文件
+RUN rm -rf /etc/nginx/conf.d/default.conf && \
+    rm -rf /usr/share/nginx/html/*
+
+# 从构建阶段复制构建产物
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 复制Nginx配置
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# 创建非root用户
+RUN addgroup -g 1001 -S nginx && \
+    adduser -S nginx -u 1001 -G nginx
+
+# 设置权限
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid
+
+# 切换到非root用户
+USER nginx
+
+# 暴露端口
+EXPOSE 80
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:80/ || exit 1
+
+# 启动Nginx
+CMD ["nginx", "-g", "daemon off;"]

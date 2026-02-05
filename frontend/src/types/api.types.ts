@@ -68,6 +68,11 @@ export interface Stock {
   low?: number;           // 最低价
   open?: number;          // 开盘价
   previousClose?: number; // 前收盘价
+  // 后端API返回字段兼容
+  stockCode?: string;     // 兼容后端stockCode字段
+  stockName?: string;     // 兼容后端stockName字段
+  price?: number;         // 兼容后端price字段
+  prevClose?: number;     // 兼容后端prevClose字段
 }
 
 // 实时行情数据

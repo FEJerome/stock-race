@@ -406,7 +406,7 @@ router.get('/:accountId/performance', authenticate, (req, res) => aiController.g
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.get('/:accountId/decisions', authenticate, (req, res) => aiController.getDecisionHistory(req, res));
+router.get('/:accountId/decisions', authenticate, (req, res) => aiController.getAIDecisionHistory(req, res));
 
 /**
  * @swagger
@@ -516,7 +516,7 @@ router.post('/:accountId/decisions/request', authenticate, (req, res) => aiContr
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.get('/:accountId/balance', authenticate, (req, res) => aiController.getAccountBalance(req, res));
+router.get('/:accountId/balance', authenticate, (req, res) => aiController.getAccountBalance(req, res));
 
 /**
  * @swagger
@@ -582,7 +582,7 @@ router.post('/:accountId/decisions/request', authenticate, (req, res) => aiContr
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.post('/:accountId/balance/deposit', authenticate, (req, res) => aiController.depositBalance(req, res));
+router.post('/:accountId/balance/deposit', authenticate, (req, res) => aiController.depositBalance(req, res));
 
 /**
  * @swagger
@@ -648,7 +648,7 @@ router.post('/:accountId/decisions/request', authenticate, (req, res) => aiContr
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.post('/:accountId/balance/withdraw', authenticate, (req, res) => aiController.withdrawBalance(req, res));
+router.post('/:accountId/balance/withdraw', authenticate, (req, res) => aiController.withdrawBalance(req, res));
 
 /**
  * @swagger

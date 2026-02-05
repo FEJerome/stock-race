@@ -1,4 +1,5 @@
-请始终使用简体中文与我沟通
+请始终使用简体中文与我沟通。
+请使用最小必要文字输出，只写重点和关键代码，避免冗长解释。
 
 # stock-race项目 - 项目指南
 
@@ -277,15 +278,17 @@ cd data-service && source venv/bin/activate && pip install --upgrade pandas fast
 通用多智能体协作方案已移至：[通用多智能体协作方案](docs/agents/GENERIC_COLLABORATION_PLAN.md)。另请参考相关文档：[通用角色定义](docs/agents/GENERIC_ROLES.md)、[任务分发指南](docs/agents/TASK_DISPATCH_GUIDE.md)、[项目模板配置](docs/agents/PROJECT_TEMPLATE.md)
 
 ## 📊 当前状态
-**集成测试完成，进入部署验证阶段**（2026-02-04）
+**功能完善和部署文档完成**（2026-02-05）
 - ✅ **TypeScript迁移完成**：前端所有核心代码转换为TypeScript，修复88个编译错误，编译无错误
 - ✅ **真实数据获取方案实施**：实现多数据源路由器，4种智能选择策略，分段获取规避API限制
 - ✅ **后端模块优化完成**：统一API响应格式，完善错误处理，TypeScript基础设施就绪
 - ✅ **AI服务优化完成**：支持延迟数据决策，增强风险评估，添加性能监控
 - ✅ **多智能体协调架构建立**：4个模块worktree配置完成，协调主文档和进度跟踪机制建立
 - ✅ **系统集成测试完成**：所有服务运行正常，核心API功能验证通过，前端界面正常显示
-- ⚠️ **已知问题**：东方财富数据源API解析错误，导致股票价格数据为空（降级模式返回模拟数据）
-- 🔄 **部署验证准备**：开始生产环境部署配置和文档完善工作
+- ✅ **数据源API修复完成**：修复东方财富数据源批量查询解析错误
+- ✅ **AI账户API激活完成**：激活决策历史、余额管理API端点
+- ✅ **API路由命名统一完成**：前后端路由命名规范统一（kebab-case）
+- ✅ **生产部署文档创建完成**：完整的生产环境部署指南（见docs/deployment/DEPLOYMENT_GUIDE.md）
 
 **真实数据集成完成阶段**（2026-02-03）
 - 已完成混合架构技术选型（Node.js后端 + React前端 + Python AI/数据服务）
@@ -349,49 +352,49 @@ cd data-service && source venv/bin/activate && pip install --upgrade pandas fast
 7. 🔄 **生产部署准备**：配置生产环境部署，优化Docker Compose配置，修复数据获取API问题
 8. 🔄 **性能基准测试**：建立性能基线，优化关键路径性能（优先级降低）
 
-## 🎯 下一步工作（部署验证阶段）
-1. **修复数据获取API问题**：
+## 🎯 下一步工作（准备生产部署）
+1. **环境变量配置**：
    ```bash
-   # 1. 检查数据服务东方财富数据源解析错误
-   cd data-service && source venv/bin/activate && python -c "from data_service.collectors.router import DataSourceRouter; router = DataSourceRouter(); print(router.data_sources)"
-
-   # 2. 修复东方财富API解析问题（"too many values to unpack"错误）
-   # 查看文件：data-service/src/data_service/collectors/eastmoney.py
-   ```
-
-2. **生产环境配置优化**：
-   ```bash
-   # 1. 检查Docker Compose生产配置
-   docker-compose -f docker-compose.prod.yml config
-
-   # 2. 优化环境变量配置
+   # 创建生产环境变量文件
    cp backend/.env.example backend/.env.production
    cp ai-service/.env.example ai-service/.env.production
    cp data-service/.env.example data-service/.env.production
+   cp frontend/.env.example frontend/.env.production
+
+   # 编辑配置文件，修改数据库密码、API密钥等敏感信息
    ```
 
-3. **文档完善和验证**：
+2. **Nginx反向代理配置**：
    ```bash
-   # 1. 更新部署文档
-   cp docs/deployment/DEPLOYMENT_GUIDE.md.example docs/deployment/DEPLOYMENT_GUIDE.md
+   # 配置SSL证书
+   mkdir -p nginx/ssl
+   # 放置证书文件 cert.pem 和 key.pem
 
-   # 2. 验证所有服务健康
-   curl http://localhost:3001/api/health      # 后端
-   curl http://localhost:8000/api/v1/health/  # AI服务
-   curl http://localhost:8001/health          # 数据服务
-   curl http://localhost:3000                 # 前端
+   # 配置反向代理
+   nano nginx/nginx.conf
    ```
 
-4. **全容器化部署测试**：
+3. **监控配置**：
    ```bash
-   # 1. 停止所有服务
-   pkill -f "node.*backend" && pkill -f "uvicorn.*ai_service" && pkill -f "uvicorn.*data_service" && pkill -f "vite"
-
-   # 2. 使用Docker Compose启动所有服务
-   docker-compose down && docker-compose up -d
-   docker-compose ps  # 查看状态
-   docker-compose logs -f  # 查看日志
+   # 配置Prometheus监控
+   mkdir -p monitoring/grafana/{dashboards,datasources}
+   nano monitoring/prometheus.yml
    ```
+
+4. **部署上线**：
+   ```bash
+   # 构建并启动生产环境
+   docker-compose -f docker-compose.prod.yml up -d --build
+
+   # 验证服务健康
+   curl https://api.your-domain.com/api/health
+   ```
+
+5. **后续功能开发**（按优先级）：
+   - 完整用户系统（多用户注册、登录）
+   - 高级交易功能（条件单、定时交易）
+   - 实时监控告警
+   - 性能优化和压力测试
 
 ## ⚠️ 注意事项
 
@@ -447,6 +450,25 @@ cd data-service && source venv/bin/activate && pip install --upgrade pandas fast
 - 常见问题与解决方案
 - 开发最佳实践
 
+### 生产环境部署
+- **生产环境快速部署指南**：[docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md](docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md)
+- **完整部署文档**：[docs/deployment/DEPLOYMENT_GUIDE.md](docs/deployment/DEPLOYMENT_GUIDE.md)
+
+快速部署命令：
+```bash
+# 1. 生成安全密钥
+./scripts/deploy-production.sh --generate-secrets
+
+# 2. 配置环境变量
+nano backend/.env.production
+nano ai-service/.env.production
+nano data-service/.env.production
+nano frontend/.env.production
+
+# 3. 一键部署
+./scripts/deploy-production.sh
+```
+
 ## 🗺️ 代码结构地图
 
 详细的代码结构地图已移至：[代码结构地图模板](docs/architecture/CODE_MAP.md)
@@ -459,5 +481,5 @@ cd data-service && source venv/bin/activate && pip install --upgrade pandas fast
 - 快速导航指南和新会话上手提示
 
 ---
-*本文档最后更新于：2026-02-04*
+*本文档最后更新于：2026-02-05*
 *文档维护者：本项目首席架构师*

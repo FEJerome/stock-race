@@ -37,6 +37,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { tradingService } from '../services/trading.service';
 import { marketService } from '../services/market.service';
 import { formatCurrency, formatPercent, formatChange, formatChangePercent } from '../utils/formatters';
+import { CreateOrderRequest } from '../types/api.types';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -129,7 +130,14 @@ const Trading: React.FC = () => {
 
   // 创建订单的mutation
   const createOrderMutation = useMutation(
-    (orderData: OrderForm) => tradingService.createOrder(orderData),
+    (orderData: OrderForm) => {
+      // 确保priceType有默认值（市价或限价）
+      const requestData: CreateOrderRequest = {
+        ...orderData,
+        priceType: orderData.priceType || (orderData.limitPrice ? 'limit' : 'market'),
+      };
+      return tradingService.createOrder(requestData);
+    },
     {
       onSuccess: () => {
         message.success('订单创建成功！');
