@@ -10,28 +10,19 @@
 
 **目标**：帮助新会话快速理解项目结构，减少上下文开销，提高开发效率。
 
-## 🚀 架构设计文档快速导航
+## 🚀 快速导航
 
-### 核心架构文档
-- **系统架构设计**：`/docs/architecture/SYSTEM_ARCHITECTURE.md`
-  - 混合架构设计（Node.js + React + Python）
-  - 各服务模块划分和通信机制
+### 架构文档
+- [**系统架构设计**](SYSTEM_ARCHITECTURE.md) - 混合架构设计
+- [**数据库设计**](DATABASE_DESIGN.md) - 数据库ER图和表结构
+- [**API接口规范**](API_SPECIFICATION.md) - RESTful API和WebSocket设计
+- [**数据流架构**](DATA_FLOW_ARCHITECTURE.md) - 数据采集和处理流程
+- [**技术架构**](TECH_STACK.md) - 技术栈版本和选型理由
 
-- **数据库设计**：`/docs/architecture/DATABASE_DESIGN.md`
-  - 数据库ER图和表结构设计
-  - PostgreSQL + Redis + TimescaleDB组合
-
-- **API接口规范**：`/docs/architecture/API_SPECIFICATION.md`
-  - RESTful API和WebSocket接口设计
-  - 服务间API通信协议
-
-- **数据流架构**：`/docs/architecture/DATA_FLOW_ARCHITECTURE.md`
-  - 股票数据采集和处理流程
-  - AI决策和实时监控流程
-
-- **技术架构**：`/docs/architecture/TECH_STACK.md`
-  - 具体技术栈版本和选型理由
-  - 部署架构和扩展方案
+### 其他核心文档
+- [**项目主文档**](../../CLAUDE.md) - 项目文档导航中心
+- [**新手指南**](../../docs/usage/QUICK_START.md) - 环境搭建和快速上手
+- [**开发规范**](../../docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
 
 ## 🗺️ 核心模块代码映射
 
@@ -399,57 +390,29 @@ data-service/src/data_service/
 - `/demo_stock_race.py` - 核心功能演示脚本
 - `/demo_enhanced.py` - 增强演示脚本（展示完整交易流程）
 
-## 🚀 快速导航指南
+## 🚀 开发环境快速参考
 
-### 新会话快速上手
+### 服务访问地址
+- **前端**: http://localhost:3000
+- **后端API**: http://localhost:3001
+- **API文档**: http://localhost:3001/api-docs
+- **AI服务**: http://localhost:8000
+- **数据服务**: http://localhost:8001
 
-1. **环境检查**:
-   ```bash
-   # 检查项目结构
-   ls -la /home/fe-jerome/projects/stock-race/
+### 启动命令
+```bash
+# 一键启动所有服务
+docker-compose up -d
 
-   # 查看各服务配置
-   cat frontend/package.json
-   cat backend/package.json
-   ```
+# 单独启动服务
+cd frontend && npm run dev          # 前端开发
+cd backend && npm run dev           # 后端开发
+cd ai-service && uvicorn ai_service.main:app --reload  # AI服务
+cd data-service && uvicorn data_service.main:app --reload  # 数据服务
+```
 
-2. **启动开发环境**:
-   ```bash
-   # 使用Docker Compose启动所有服务
-   docker-compose up -d
-
-   # 查看服务状态
-   docker-compose ps
-   ```
-
-3. **访问服务**:
-   - 前端: http://localhost:3000
-   - 后端API: http://localhost:3001
-   - API文档: http://localhost:3001/api-docs
-   - AI服务: http://localhost:8000
-   - 数据服务: http://localhost:8001
-
-4. **开发命令**:
-   ```bash
-   # 前端开发
-   cd frontend && npm run dev
-
-   # 后端开发
-   cd backend && npm run dev
-
-   # AI服务开发
-   cd ai-service && uvicorn ai_service.main:app --reload
-
-   # 数据服务开发
-   cd data-service && uvicorn data_service.main:app --reload
-   ```
-
-### 关键文件位置
-- **项目主文档**: `/home/fe-jerome/projects/stock-race/CLAUDE.md`
-- **开发规范**: `/home/fe-jerome/projects/stock-race/docs/development/CODING_STANDARDS.md`
-- **技术架构**: `/home/fe-jerome/projects/stock-race/docs/architecture/TECH_STACK.md`
-- **项目结构**: `/home/fe-jerome/projects/stock-race/docs/architecture/PROJECT_STRUCTURE.md`
-- **代码地图**: `/home/fe-jerome/projects/stock-race/docs/architecture/CODE_MAP.md`
+### 更多信息
+详细的环境搭建和开发指南请参考 [新手指南](../../docs/usage/QUICK_START.md)
 
 ## 📌 重要说明
 

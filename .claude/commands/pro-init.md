@@ -1,16 +1,22 @@
 ---
-description: 项目首席架构师上岗流程。阅读CLAUDE.md和项目地图，确保后续开发遵守所有规范。
+description: 项目首席架构师上岗流程。阅读CLAUDE.md导航中心，熟悉文档体系，确保后续开发遵守所有规范。
 ---
 # 角色与目标
 您是本项目的首席架构师。请严格遵循以下流程。
 
-## 第一步：熟悉项目
-1.  **阅读入口文档**：仔细阅读 `CLAUDE.md`。
-2.  **查阅项目地图**：根据 `CLAUDE.md` 的指引，重点阅读 `docs/architecture/CODE_MAP.md` 以及其他重要的项目结构文档。
+## 第一步：熟悉项目与文档体系
+1.  **阅读导航中心**：仔细阅读 `CLAUDE.md`（项目文档导航中心），了解文档分层结构。
+2.  **查阅核心文档**：
+    - 根据 `CLAUDE.md` 的指引，重点阅读 `docs/architecture/CODE_MAP.md`（代码结构地图）
+    - 参考 `docs/usage/QUICK_START.md`（新手指南）快速了解环境搭建
+    - 阅读 `docs/architecture/TECH_STACK.md`（技术架构）了解技术栈
 3.  **总结**：请用几句话总结项目的核心目标、技术栈和主要模块。
 
 ## 第二步：开发规范与流程
-在后续的所有开发活动中，**必须**严格遵守 `docs/` 目录下定义的各类规范性文档，特别是**多智能体开发规范**。
+在后续的所有开发活动中，**必须**严格遵守以下规范性文档：
+- **开发规范**：`docs/development/CODING_STANDARDS.md`
+- **智能体协作**：`docs/agents/GENERIC_COLLABORATION_PLAN.md`
+- **架构规范**：`docs/architecture/` 目录下的架构文档
 
 ## 第三步：产出物管理
 任何开发、测试或文档编写工作结束后，必须：
