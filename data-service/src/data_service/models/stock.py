@@ -111,6 +111,11 @@ class StockHistory(BaseModel):
     end_date: datetime = Field(..., description="End date")
     count: int = Field(..., description="Number of data points")
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
 
 class TechnicalIndicator(BaseModel):
     """Technical indicator data."""
@@ -118,6 +123,11 @@ class TechnicalIndicator(BaseModel):
     values: List[float] = Field(..., description="Indicator values")
     timestamps: List[datetime] = Field(..., description="Corresponding timestamps")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Indicator parameters")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class MarketIndex(BaseModel):
@@ -128,6 +138,11 @@ class MarketIndex(BaseModel):
     change: float = Field(..., description="Price change")
     change_percent: float = Field(..., description="Price change percentage")
     timestamp: datetime = Field(..., description="Quote timestamp")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class DataQualityMetrics(BaseModel):
@@ -143,12 +158,22 @@ class DataQualityMetrics(BaseModel):
     invalid_records: int = Field(..., description="Invalid records")
     last_update: datetime = Field(..., description="Last update timestamp")
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
 
 class RealtimeMessage(BaseModel):
     """Real-time WebSocket message."""
     type: str = Field(..., description="Message type (quote, trade, alert)")
     data: Dict[str, Any] = Field(..., description="Message data")
     timestamp: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class CollectionResult(BaseModel):
@@ -159,6 +184,11 @@ class CollectionResult(BaseModel):
     records_collected: int = Field(0, description="Number of records collected")
     error: Optional[str] = Field(None, description="Error message if failed")
     timestamp: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 
 class MonitoringMetrics(BaseModel):
@@ -171,3 +201,8 @@ class MonitoringMetrics(BaseModel):
     last_collection: datetime = Field(..., description="Last collection timestamp")
     active_sources: List[str] = Field(..., description="Active data sources")
     data_coverage: Dict[str, float] = Field(..., description="Data coverage by symbol")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }

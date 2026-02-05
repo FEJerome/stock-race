@@ -11,6 +11,12 @@ import statistics
 
 from ..models.stock import StockData, StockQuote, TechnicalIndicator
 from ..core.config import settings
+from ..utils.data_quality import (
+    DataQualityScore,
+    DataQualityLevel,
+    get_quality_scorer,
+    get_fallback_strategy
+)
 
 logger = logging.getLogger(__name__)
 
@@ -832,3 +838,173 @@ class DataProcessor:
         time_diff = (datetime.now() - quote.timestamp).total_seconds()
         if time_diff > self.validation_rules["timestamp_max_diff"]:
             raise ValueError(f"Data timestamp is {time_diff:.0f} seconds old")
+
+    # ============ 数据质量评分方法 ============
+
+    def assess_data_quality(
+        self,
+        quote: Dict[str, Any],
+        source: str,
+        historical_data: Optional[List[Dict[str, Any]]] = None
+    ) -> DataQualityScore:
+        """
+        评估数据质量
+
+        Args:
+            quote: 股票报价数据
+            source: 数据源名称
+            historical_data: 历史数据
+
+        Returns:
+            数据质量评分结果
+        """
+        scorer = get_quality_scorer()
+        return scorer.score_quote(quote, source, historical_data)
+
+    def apply_data_fallback(
+        self,
+        quotes_by_source: Dict[str, Dict[str, Any]],
+        historical_data: Optional[Dict[str, List[Dict[str, Any]]] ] = None
+    ) -> Dict[str, Any]:
+        """
+        应用数据降级策略
+
+        Args:
+            quotes_by_source: 各数据源的报价数据
+            historical_data: 按股票代码分组的历史数据
+
+        Returns:
+            {
+                "quote": 选择的报价数据,
+                "quality": 质量评分结果,
+                "source": 选择的数据源,
+                "warnings": 警告列表,
+                "fallback_used": 是否使用了降级策略
+            }
+        """
+        fallback_strategy = get_fallback_strategy()
+        return fallback_strategy.evaluate_and_fallback(quotes_by_source, historical_data)
+
+    def generate_fallback_data(
+        self,
+        symbol: str,
+        historical_data: Optional[List[Dict[str, Any]]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        生成备份数据（所有数据源失败时使用）
+
+        Args:
+            symbol: 股票代码
+            historical_data: 历史数据
+
+        Returns:
+            备份数据
+        """
+        fallback_strategy = get_fallback_strategy()
+        return fallback_strategy.generate_fallback_data(symbol, historical_data)
+
+    def clean_and_score_quote(
+        self,
+        raw_quote: Dict[str, Any],
+        source: str,
+        historical_data: Optional[List[Dict[str, Any]]] = None
+    ) -> tuple[StockQuote, DataQualityScore]:
+        """
+        清理并评分股票报价
+
+        Args:
+            raw_quote: 原始报价数据
+            source: 数据源名称
+            historical_data: 历史数据
+
+        Returns:
+            (StockQuote, DataQualityScore)
+        """
+        # 清理数据
+        cleaned_quote = self.clean_stock_quote(raw_quote)
+
+        # 评分质量
+        quality_score = self.assess_data_quality(
+            raw_quote, source, historical_data
+        )
+
+        # 添加质量标记到metadata
+        if hasattr(cleaned_quote, 'metadata'):
+            if cleaned_quote.metadata is None:
+                cleaned_quote.metadata = {}
+            cleaned_quote.metadata.update({
+                "quality_score": quality_score.score,
+                "quality_level": quality_score.level.value,
+                "data_source": source,
+                "quality_warnings": quality_score.warnings,
+                "quality_errors": quality_score.errors,
+                "anomalies": quality_score.anomalies,
+                "anomaly_details": quality_score.anomaly_details,
+                "has_anomalies": quality_score.has_anomalies,
+                "has_critical_anomalies": quality_score.has_critical_anomalies
+            })
+
+        return cleaned_quote, quality_score
+
+    def batch_apply_fallback(
+        self,
+        quotes_by_source: Dict[str, Dict[str, Dict[str, Any]]],
+        historical_data: Optional[Dict[str, List[Dict[str, Any]]] ] = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        批量应用数据降级策略
+
+        Args:
+            quotes_by_source: 按数据源分组的报价数据
+                格式: {source: {symbol: quote_data}}
+            historical_data: 按股票代码分组的历史数据
+
+        Returns:
+            按股票代码分组的结果
+        """
+        results = {}
+
+        # 获取所有股票代码
+        all_symbols = set()
+        for source_quotes in quotes_by_source.values():
+            all_symbols.update(source_quotes.keys())
+
+        # 为每个股票应用降级策略
+        for symbol in all_symbols:
+            # 收集各数据源的数据
+            symbol_quotes = {}
+            for source, source_quotes in quotes_by_source.items():
+                if symbol in source_quotes:
+                    symbol_quotes[source] = source_quotes[symbol]
+
+            # 获取该股票的历史数据
+            symbol_history = historical_data.get(symbol) if historical_data else None
+
+            # 应用降级策略
+            result = self.apply_data_fallback(symbol_quotes, symbol_history)
+            results[symbol] = result
+
+            # 记录质量信息
+            if result["quality"]:
+                quality = result["quality"]
+                if quality.level == DataQualityLevel.POOR:
+                    logger.warning(
+                        f"[{symbol}] 数据质量低: {result['source']} "
+                        f"(得分: {quality.score:.2f}, "
+                        f"警告: {len(quality.warnings)}, "
+                        f"错误: {len(quality.errors)})"
+                    )
+                elif quality.level == DataQualityLevel.INVALID:
+                    logger.error(
+                        f"[{symbol}] 数据质量无效: {result['source']} "
+                        f"(得分: {quality.score:.2f}, "
+                        f"错误: {quality.errors})"
+                    )
+                elif quality.level in [DataQualityLevel.FAIR] and quality.warnings:
+                    logger.info(
+                        f"[{symbol}] 数据质量一般: {result['source']} "
+                        f"(得分: {quality.score:.2f}, "
+                        f"警告: {quality.warnings})"
+                    )
+
+        return results

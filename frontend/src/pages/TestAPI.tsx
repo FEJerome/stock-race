@@ -44,11 +44,11 @@ const TestAPI: React.FC = () => {
       run: async () => {
         const startTime = Date.now();
         try {
-          const result = await authService.login('demo@example.com', 'demo123');
+          const result = await authService.login({ username: 'admin', password: 'admin123' });
           const time = Date.now() - startTime;
           return {
             status: 'success' as const,
-            message: `登录成功，用户: ${result.user.name}`,
+            message: `登录成功，用户: ${result.user.username}`,
             data: result,
             time
           };
@@ -239,6 +239,7 @@ const TestAPI: React.FC = () => {
           const order = {
             stockSymbol: 'AAPL',
             orderType: 'buy' as const,
+            priceType: 'limit' as const,
             quantity: 10,
             limitPrice: 162.50
           };

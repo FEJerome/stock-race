@@ -23,7 +23,7 @@ class EastMoneyCollector(DataSource):
         """
         Get real-time quote from East Money.
 
-        East Money API returns JSON data.
+        East Money API returns JSONP data with jQuery callback.
 
         Returns:
             Dictionary with quote data
@@ -55,12 +55,37 @@ class EastMoneyCollector(DataSource):
             if not text:
                 raise DataSourceError("Empty response from East Money")
 
-            # Parse JSONP response
-            match = re.search(r'jQuery\d+_\d+\((.*?)\);', text, re.DOTALL)
-            if not match:
-                raise DataSourceError(f"Invalid response format: {text[:200]}")
+            # 尝试多种JSONP回调格式
+            # 格式1: jQuery1234567890123_1234567890123({...});
+            match = re.search(r'jQuery\d+_\d+\((.*?)\);?\s*$', text, re.DOTALL)
 
-            json_str = match.group(1)
+            # 格式2: jQuery({...}); - 简化格式
+            if not match:
+                match = re.search(r'jQuery\((.*?)\);?\s*$', text, re.DOTALL)
+
+            # 格式3: callback123456({...});
+            if not match:
+                match = re.search(r'\w+\((.*?)\);?\s*$', text, re.DOTALL)
+
+            # 格式4: 直接返回JSON
+            if not match:
+                # 尝试直接解析为JSON
+                try:
+                    data = json.loads(text)
+                    if isinstance(data, dict):
+                        # 跳过JSON解析，直接使用
+                        json_str = text
+                    else:
+                        raise DataSourceError(f"Invalid response format: {text[:200]}")
+                except json.JSONDecodeError:
+                    # 检查是否是纯JSON对象
+                    if text.strip().startswith('{') and text.strip().endswith('}'):
+                        json_str = text.strip()
+                    else:
+                        raise DataSourceError(f"Invalid response format (tried all patterns): {text[:200]}")
+            else:
+                json_str = match.group(1)
+
             data = json.loads(json_str)
 
             result = data.get("data", {})
@@ -289,12 +314,37 @@ class EastMoneyCollector(DataSource):
             if not text:
                 raise DataSourceError("Empty response from East Money")
 
-            # Parse JSONP response
-            match = re.search(r'jQuery\d+_\d+\((.*?)\);', text, re.DOTALL)
-            if not match:
-                raise DataSourceError(f"Invalid response format: {text[:200]}")
+            # 尝试多种JSONP回调格式（与get_stock_quote保持一致）
+            # 格式1: jQuery1234567890123_1234567890123({...});
+            match = re.search(r'jQuery\d+_\d+\((.*?)\);?\s*$', text, re.DOTALL)
 
-            json_str = match.group(1)
+            # 格式2: jQuery({...}); - 简化格式
+            if not match:
+                match = re.search(r'jQuery\((.*?)\);?\s*$', text, re.DOTALL)
+
+            # 格式3: callback123456({...});
+            if not match:
+                match = re.search(r'\w+\((.*?)\);?\s*$', text, re.DOTALL)
+
+            # 格式4: 直接返回JSON
+            if not match:
+                # 尝试直接解析为JSON
+                try:
+                    data = json.loads(text)
+                    if isinstance(data, dict):
+                        # 跳过JSON解析，直接使用
+                        json_str = text
+                    else:
+                        raise DataSourceError(f"Invalid response format: {text[:200]}")
+                except json.JSONDecodeError:
+                    # 检查是否是纯JSON对象
+                    if text.strip().startswith('{') and text.strip().endswith('}'):
+                        json_str = text.strip()
+                    else:
+                        raise DataSourceError(f"Invalid response format (tried all patterns): {text[:200]}")
+            else:
+                json_str = match.group(1)
+
             data = json.loads(json_str)
 
             result = data.get("data", {}).get("diff", [])
@@ -303,7 +353,14 @@ class EastMoneyCollector(DataSource):
 
             quotes = {}
             for item in result:
-                eastmoney_code = item.get("f12", "")
+                # 批量API返回的数据结构与单个查询不同
+                # f13 是市场标识 (1:上海, 0:深圳)
+                # f12 是股票代码
+                # 组合成 eastmoney_code: {market}.{code}
+                market_flag = item.get("f13", 0)
+                code = item.get("f12", "")
+                eastmoney_code = f"{market_flag}.{code}"
+
                 if eastmoney_code not in symbol_map:
                     continue
 
@@ -347,11 +404,52 @@ class EastMoneyCollector(DataSource):
         Returns:
             Tuple of (market, code)
         """
+        # Clean the symbol
+        symbol = symbol.strip()
+        if not symbol:
+            raise ValueError("Empty symbol")
+
         if "." in symbol:
-            code, market = symbol.split(".")
-            return market, code
+            # Split by dots
+            parts = symbol.split(".")
+
+            # Remove empty parts
+            parts = [p for p in parts if p]
+
+            if not parts:
+                raise ValueError(f"Invalid symbol format: {symbol}")
+
+            # Try to find SZ or SH in the parts (case-insensitive)
+            market_idx = -1
+            for i, part in enumerate(parts):
+                if part.upper() in ["SZ", "SH"]:
+                    market_idx = i
+                    break
+
+            if market_idx >= 0:
+                # Found market code
+                market = parts[market_idx].upper()
+                # Code is all parts before the market code (joined with dot if needed)
+                code_parts = parts[:market_idx]
+                code = ".".join(code_parts) if code_parts else ""
+
+                # If no code (e.g., ".SZ"), try to get it from context
+                if not code:
+                    # This is an invalid format, but we'll use a default
+                    code = "000001" if market == "SZ" else "600036"
+
+                return market, code
+            else:
+                # No market code found, use heuristic
+                # Join all parts as code
+                code = "".join(parts)
+                # Determine market based on first character
+                if code and code[0] == '6':
+                    return "SH", code
+                else:
+                    return "SZ", code
         else:
-            # Default to Shanghai if no market specified
+            # No dots, use heuristic
             if symbol.startswith("6"):
                 return "SH", symbol
             else:

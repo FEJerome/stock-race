@@ -13,23 +13,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-# Use absolute imports to avoid import issues
-try:
-    # Try absolute import first
-    from data_service.api.routes import router as api_router
-    from data_service.core.config import settings
-    from data_service.core.database import init_db, init_redis
-    from data_service.services.data_collector import DataCollector
-    from data_service.services.data_processor import DataProcessor
-    from data_service.services.market_monitor import MarketMonitor
-except ImportError:
-    # Fall back to relative imports
-    from .api.routes import router as api_router
-    from .core.config import settings
-    from .core.database import init_db, init_redis
-    from .services.data_collector import DataCollector
-    from .services.data_processor import DataProcessor
-    from .services.market_monitor import MarketMonitor
+from .api.routes import router as api_router
+from .api.enhanced_routes import router as enhanced_router
+from .core.config import settings
+from .core.database import init_db
+from .core.redis import init_redis
+from .services.data_collector import DataCollector
+from .services.data_processor import DataProcessor
+from .services.market_monitor import MarketMonitor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,18 +35,9 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting Data Service...")
 
-    # Initialize databases with fallback support
-    try:
-        await init_db()
-    except Exception as e:
-        logger.warning(f"Database initialization failed: {str(e)}")
-        logger.info("Data service will operate in fallback mode")
-
-    try:
-        await init_redis()
-    except Exception as e:
-        logger.warning(f"Redis initialization failed: {str(e)}")
-        logger.info("Data service will operate without Redis caching")
+    # Initialize databases
+    await init_db()
+    await init_redis()
 
     # Initialize services
     app.state.data_collector = DataCollector()
@@ -65,7 +47,7 @@ async def lifespan(app: FastAPI):
     # Start background tasks
     asyncio.create_task(app.state.market_monitor.start())
 
-    logger.info("✅ Data Service started successfully (with fallback support)")
+    logger.info("✅ Data Service started successfully")
     yield
 
     # Shutdown
@@ -123,6 +105,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(enhanced_router)
 
 
 def main():

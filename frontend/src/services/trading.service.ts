@@ -103,8 +103,8 @@ export const tradingService = {
       totalPages: Math.ceil(mockOrders.length / pageSize),
     };
 
-    // 实际API调用
-    // return api.get<PaginatedResponse<TradeOrder>>('/trading/orders', { params });
+    // 实际API调用 - 后端路由是 /trades 而非 /trading/orders
+    // return api.get<PaginatedResponse<TradeOrder>>('/trades', { params });
   },
 
   // 创建交易订单
@@ -132,8 +132,8 @@ export const tradingService = {
 
     return mockOrder;
 
-    // 实际API调用
-    // return api.post<TradeOrder>('/trading/orders', order);
+    // 实际API调用 - 后端路由是 /trades 而非 /trading/orders
+    // return api.post<TradeOrder>('/trades', order);
   },
 
   // 取消订单
@@ -141,11 +141,11 @@ export const tradingService = {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // 实际API调用
-    // return api.delete(`/trading/orders/${orderId}`);
+    // 实际API调用 - 后端使用 POST /trades/:tradeId/cancel
+    // return api.post(`/trades/${orderId}/cancel`);
   },
 
-  // 获取持仓列表
+  // 获取持仓列表 - 映射到 /portfolios 路由
   getPositions: async (): Promise<Position[]> => {
     // 模拟API调用
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -230,8 +230,8 @@ export const tradingService = {
 
     return mockPositions;
 
-    // 实际API调用
-    // return api.get<Position[]>('/trading/positions');
+    // 实际API调用 - 后端使用 /portfolios 路由
+    // return api.get<Position[]>('/portfolios');
   },
 
   // 获取持仓汇总
@@ -298,8 +298,8 @@ export const tradingService = {
 
     return mockOrder;
 
-    // 实际API调用
-    // return api.get<TradeOrder>(`/trading/orders/${orderId}`);
+    // 实际API调用 - 后端路由是 /trades 而非 /trading/orders
+    // return api.get<TradeOrder>(`/trades/${orderId}`);
   },
 
   // 获取交易历史
@@ -398,8 +398,8 @@ export const tradingService = {
       totalPages: Math.ceil(mockHistory.length / pageSize),
     };
 
-    // 实际API调用
-    // return api.get<PaginatedResponse<TradeOrder>>('/trading/history', { params });
+    // 实际API调用 - 后端路由是 /trades 而非 /trading/history
+    // return api.get<PaginatedResponse<TradeOrder>>('/trades', { params });
   },
 };
 

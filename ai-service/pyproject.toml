@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stock-race-ai-service"
-version = "0.1.0"
+version = "1.0.0"
 description = "AI Service for Stock Race Platform"
 authors = [
     {name = "Stock Race Team", email = "team@stock-race.com"}

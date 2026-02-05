@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
     # CORS
-    CORS_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000")
 
     # Database
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     # Backend service URLs
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:3001")
     DATA_SERVICE_URL: str = os.getenv("DATA_SERVICE_URL", "http://localhost:8001")
+
+    # Service communication API keys
+    BACKEND_API_KEY: Optional[str] = os.getenv("BACKEND_API_KEY")
 
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

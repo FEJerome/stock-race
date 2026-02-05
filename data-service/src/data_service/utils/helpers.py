@@ -443,6 +443,24 @@ def safe_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def format_number(value: float, decimals: int = 2) -> str:
+    """
+    Format number with specified decimal places.
+
+    Args:
+        value: Number to format
+        decimals: Number of decimal places
+
+    Returns:
+        Formatted number string
+    """
+    if value is None:
+        return "0.00"
+
+    format_str = f"{{:,.{decimals}f}}"
+    return format_str.format(value)
+
+
 def mask_sensitive_data(data: Dict[str, Any], fields: List[str] = None) -> Dict[str, Any]:
     """
     Mask sensitive data in dictionary.

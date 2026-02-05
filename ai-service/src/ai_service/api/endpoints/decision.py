@@ -3,12 +3,12 @@ Decision API endpoints for AI Service.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from fastapi.responses import JSONResponse
 
 from loguru import logger
 
-from ...core.security import get_current_account, RateLimiter
+from ...core.security import get_current_account, get_service_account, RateLimiter
 from ...core.exceptions import handle_ai_error
 from ...models.schemas import (
     DecisionRequest,
@@ -16,6 +16,10 @@ from ...models.schemas import (
     DecisionResult,
     HealthResponse,
     ErrorResponse,
+    ServiceDecisionRequest,
+    AccountInfo,
+    StockData,
+    AIProvider,
 )
 from ...services.decision_service import DecisionService
 from ...utils.cache import cache_manager
@@ -107,6 +111,126 @@ async def generate_decision(
 
 
 @router.post(
+    "/service-generate",
+    response_model=DecisionResponse,
+    summary="Generate trading decision for service-to-service communication",
+    description="Generate AI-powered trading decision for backend service calls using API key authentication.",
+)
+async def service_generate_decision(
+    request: ServiceDecisionRequest,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    use_cache: bool = Query(True, description="Use cached results if available"),
+    rate_limiter: RateLimiter = Depends(lambda: RateLimiter(cache_manager)),
+):
+    """Generate a trading decision for service-to-service communication."""
+    api_logger.info(f"Service decision request with API key")
+
+    # Authenticate using API key
+    service_account_id = await get_service_account(x_api_key)
+
+    # Use the account ID from the request
+    account_id = request.account_id
+
+    # Check rate limit using service account
+    rate_limit_key = f"service_decision:{service_account_id}"
+    if not await rate_limiter.check_rate_limit(
+        key=rate_limit_key,
+        limit=settings.RATE_LIMIT_REQUESTS * 10,  # Higher limit for services
+        period=settings.RATE_LIMIT_PERIOD,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Service rate limit exceeded",
+            headers={
+                "X-RateLimit-Limit": str(settings.RATE_LIMIT_REQUESTS * 10),
+                "X-RateLimit-Period": str(settings.RATE_LIMIT_PERIOD),
+                "X-RateLimit-Key": rate_limit_key,
+            },
+        )
+
+    try:
+        # Initialize decision service
+        decision_service = DecisionService(cache_manager)
+
+        # Convert ServiceDecisionRequest to DecisionRequest
+        # Extract data from the service request
+        market_data = request.market_data
+        portfolio_data = request.portfolio_data
+
+        # Create AccountInfo from portfolio data
+        balance = portfolio_data.get('balance', 100000)
+        account_info = AccountInfo(
+            account_id=request.account_id,
+            user_id=f"user-{request.account_id}",  # Default user ID
+            total_balance=balance,
+            available_cash=balance,
+            total_market_value=0,  # No positions initially
+            total_unrealized_pnl=0,
+            total_unrealized_pnl_percent=0,
+            risk_tolerance=portfolio_data.get('risk_level', 'medium'),
+            trading_strategy=request.strategy
+        )
+
+        # Create StockData from market data
+        stock_data = StockData(
+            symbol=request.stock_code,
+            current_price=market_data.get('current_price', 0),
+            volume=market_data.get('volume', 0),
+            change=market_data.get('change', 0),
+            change_percent=market_data.get('change_percent', 0)
+        )
+
+        # Create DecisionRequest
+        decision_request = DecisionRequest(
+            account_info=account_info,
+            stock_data=[stock_data],
+            market_conditions=market_data,
+            constraints=portfolio_data.get('constraints', {}),
+            ai_provider=AIProvider.OPENAI,  # Default to OpenAI
+            model_name="gpt-4-turbo-preview"  # Default model
+        )
+
+        # Validate request
+        warnings = await decision_service.validate_decision_request(decision_request)
+
+        # Generate decision
+        decision = await decision_service.generate_decision(
+            decision_request,
+            use_cache=use_cache,
+        )
+
+        # Prepare response
+        response = DecisionResponse(
+            success=True,
+            decision=decision,
+            warnings=warnings,
+            metadata={
+                "account_id": account_id,
+                "ai_provider": decision_request.ai_provider.value,
+                "model_name": decision_request.model_name or "default",
+                "use_cache": use_cache,
+                "authenticated_by": "service_api_key",
+                "service_account": service_account_id,
+            },
+        )
+
+        api_logger.info(f"Service decision generated successfully: {decision.decision_id}")
+        return response
+
+    except Exception as e:
+        api_logger.error(f"Failed to generate service decision: {e}", exc_info=True)
+        return DecisionResponse(
+            success=False,
+            error=str(e),
+            warnings=[],
+            metadata={
+                "account_id": account_id,
+                "authenticated_by": "service_api_key",
+            },
+        )
+
+
+@router.post(
     "/batch-generate",
     response_model=List[DecisionResponse],
     summary="Generate multiple trading decisions",
@@ -188,6 +312,99 @@ async def batch_generate_decisions(
         responses.append(response)
 
     api_logger.info(f"Batch decision generation completed: {len(responses)} responses")
+    return responses
+
+
+@router.post(
+    "/service-batch-generate",
+    response_model=List[DecisionResponse],
+    summary="Generate multiple trading decisions for service-to-service communication",
+    description="Generate AI-powered trading decisions for backend service calls using API key authentication.",
+)
+async def service_batch_generate_decisions(
+    requests: List[DecisionRequest],
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    use_cache: bool = Query(True, description="Use cached results if available"),
+    rate_limiter: RateLimiter = Depends(lambda: RateLimiter(cache_manager)),
+):
+    """Generate multiple trading decisions in batch for service-to-service communication."""
+    api_logger.info(f"Service batch decision request with API key")
+
+    # Authenticate using API key
+    service_account_id = await get_service_account(x_api_key)
+
+    # Verify all requests have account info
+    for request in requests:
+        if not request.account_info or not request.account_info.account_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing account info in request",
+            )
+
+    # Check rate limit using service account
+    rate_limit_key = f"service_batch_decision:{service_account_id}"
+    batch_limit = settings.RATE_LIMIT_REQUESTS * 30  # Much higher limit for service batch
+    if not await rate_limiter.check_rate_limit(
+        key=rate_limit_key,
+        limit=batch_limit,
+        period=settings.RATE_LIMIT_PERIOD,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Service batch rate limit exceeded",
+            headers={
+                "X-RateLimit-Limit": str(batch_limit),
+                "X-RateLimit-Period": str(settings.RATE_LIMIT_PERIOD),
+                "X-RateLimit-Key": rate_limit_key,
+            },
+        )
+
+    responses = []
+    decision_service = DecisionService(cache_manager)
+
+    for request in requests:
+        account_id = request.account_info.account_id
+
+        try:
+            # Validate request
+            warnings = await decision_service.validate_decision_request(request)
+
+            # Generate decision
+            decision = await decision_service.generate_decision(
+                request,
+                use_cache=use_cache,
+            )
+
+            response = DecisionResponse(
+                success=True,
+                decision=decision,
+                warnings=warnings,
+                metadata={
+                    "account_id": account_id,
+                    "ai_provider": request.ai_provider.value,
+                    "model_name": request.model_name or "default",
+                    "use_cache": use_cache,
+                    "authenticated_by": "service_api_key",
+                    "service_account": service_account_id,
+                },
+            )
+
+        except Exception as e:
+            api_logger.error(f"Failed to generate service decision in batch: {e}")
+            response = DecisionResponse(
+                success=False,
+                error=str(e),
+                warnings=[],
+                metadata={
+                    "account_id": account_id,
+                    "ai_provider": request.ai_provider.value,
+                    "authenticated_by": "service_api_key",
+                },
+            )
+
+        responses.append(response)
+
+    api_logger.info(f"Service batch decision generation completed: {len(responses)} responses")
     return responses
 
 

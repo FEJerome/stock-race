@@ -1,0 +1,42 @@
+[
+  {
+    "symbol": "000001.SH",
+    "name": "上证指数",
+    "price": 3203.76,
+    "change": 13.72,
+    "change_percent": 0.47,
+    "timestamp": "2026-02-05T17:24:36.939863"
+  },
+  {
+    "symbol": "399001.SZ",
+    "name": "深证成指",
+    "price": 10848.72,
+    "change": 43.28,
+    "change_percent": 0.39,
+    "timestamp": "2026-02-05T17:24:36.939869"
+  },
+  {
+    "symbol": "399006.SZ",
+    "name": "创业板指",
+    "price": 2147.67,
+    "change": 10.21,
+    "change_percent": 0.45,
+    "timestamp": "2026-02-05T17:24:36.939872"
+  },
+  {
+    "symbol": "000300.SH",
+    "name": "沪深300",
+    "price": 3799.64,
+    "change": 17.48,
+    "change_percent": 0.42,
+    "timestamp": "2026-02-05T17:24:36.939875"
+  },
+  {
+    "symbol": "000016.SH",
+    "name": "上证50",
+    "price": 2501.06,
+    "change": 10.62,
+    "change_percent": 0.46,
+    "timestamp": "2026-02-05T17:24:36.939877"
+  }
+]

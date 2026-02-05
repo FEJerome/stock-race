@@ -648,10 +648,11 @@ export class AIController {
   async requestAIDecision(req, res) {
     try {
       const {
-        accountId,
         action = 'analyze',
         data
       } = req.body;
+
+      const accountId = req.params.accountId;
 
       const userId = req.user?.id;
       if (!userId) {
@@ -1128,6 +1129,329 @@ export class AIController {
    * 检查AI服务健康状态
    * @returns {Promise<Object>} 健康状态
    */
+  /**
+   * 获取AI账户余额
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getAccountBalance(req, res) {
+    try {
+      const { accountId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'AUTH_001',
+            message: '用户未认证'
+          },
+          message: '请先登录'
+        });
+      }
+
+      // 验证账户存在性和权限
+      const account = await aiAccountRepository.findOne({ id: parseInt(accountId) });
+      if (!account) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND_001',
+            message: 'AI账户不存在'
+          },
+          message: 'AI账户不存在'
+        });
+      }
+
+      if (account.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTH_003',
+            message: '权限不足'
+          },
+          message: '无权访问该AI账户'
+        });
+      }
+
+      // 计算持仓市值
+      const portfolios = await aiAccountRepository.prisma.portfolio.findMany({
+        where: { accountId: parseInt(accountId) },
+        include: { stock: true }
+      });
+
+      let marketValue = 0;
+      for (const p of portfolios) {
+        marketValue += parseFloat(p.marketValue || 0);
+      }
+
+      // 计算总价值
+      const totalValue = parseFloat(account.currentBalance) + marketValue;
+      const totalReturn = totalValue - parseFloat(account.initialBalance);
+      const totalReturnRate = (totalReturn / parseFloat(account.initialBalance)) * 100;
+
+      res.json({
+        success: true,
+        data: {
+          accountId: parseInt(accountId),
+          accountName: account.name,
+          currentBalance: parseFloat(account.currentBalance),
+          initialBalance: parseFloat(account.initialBalance),
+          marketValue,
+          totalValue,
+          totalReturn,
+          totalReturnRate,
+          positionsCount: portfolios.length,
+          status: account.status,
+          updatedAt: account.updatedAt
+        },
+        message: '获取账户余额成功'
+      });
+    } catch (error) {
+      console.error('获取账户余额控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取账户余额失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 充值AI账户
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async depositBalance(req, res) {
+    try {
+      const { accountId } = req.params;
+      const { amount, reason = '用户充值' } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'AUTH_001',
+            message: '用户未认证'
+          },
+          message: '请先登录'
+        });
+      }
+
+      // 验证金额
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '充值金额必须大于0'
+          },
+          message: '请输入有效的充值金额'
+        });
+      }
+
+      // 验证账户存在性和权限
+      const account = await aiAccountRepository.findOne({ id: parseInt(accountId) });
+      if (!account) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND_001',
+            message: 'AI账户不存在'
+          },
+          message: 'AI账户不存在'
+        });
+      }
+
+      if (account.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTH_003',
+            message: '权限不足'
+          },
+          message: '无权操作该AI账户'
+        });
+      }
+
+      // 更新账户余额
+      const newBalance = parseFloat(account.currentBalance) + amountNum;
+      const totalValue = newBalance; // 充值时总价值等于新余额（持仓市值不变）
+
+      await aiAccountRepository.update(parseInt(accountId), {
+        currentBalance: newBalance,
+        totalValue
+      });
+
+      // 记录系统日志
+      await systemLogRepository.logUserActivity({
+        userId,
+        accountId: parseInt(accountId),
+        module: 'ai',
+        action: 'deposit',
+        message: `充值AI账户: ${account.name}，金额: ${amountNum}`,
+        metadata: {
+          amount: amountNum,
+          reason,
+          previousBalance: parseFloat(account.currentBalance),
+          newBalance
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          accountId: parseInt(accountId),
+          accountName: account.name,
+          amount: amountNum,
+          previousBalance: parseFloat(account.currentBalance),
+          newBalance,
+          totalValue,
+          reason,
+          timestamp: new Date().toISOString()
+        },
+        message: '充值成功'
+      });
+    } catch (error) {
+      console.error('充值账户控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '充值失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 提现AI账户
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async withdrawBalance(req, res) {
+    try {
+      const { accountId } = req.params;
+      const { amount, reason = '用户提现' } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'AUTH_001',
+            message: '用户未认证'
+          },
+          message: '请先登录'
+        });
+      }
+
+      // 验证金额
+      const amountNum = parseFloat(amount);
+      if (isNaN(amountNum) || amountNum <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '提现金额必须大于0'
+          },
+          message: '请输入有效的提现金额'
+        });
+      }
+
+      // 验证账户存在性和权限
+      const account = await aiAccountRepository.findOne({ id: parseInt(accountId) });
+      if (!account) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND_001',
+            message: 'AI账户不存在'
+          },
+          message: 'AI账户不存在'
+        });
+      }
+
+      if (account.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTH_003',
+            message: '权限不足'
+          },
+          message: '无权操作该AI账户'
+        });
+      }
+
+      // 验证余额
+      if (amountNum > parseFloat(account.currentBalance)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '余额不足'
+          },
+          message: `账户余额不足，当前可用余额: ${account.currentBalance}`
+        });
+      }
+
+      // 更新账户余额
+      const newBalance = parseFloat(account.currentBalance) - amountNum;
+      const totalValue = newBalance; // 提现时总价值等于新余额
+
+      await aiAccountRepository.update(parseInt(accountId), {
+        currentBalance: newBalance,
+        totalValue
+      });
+
+      // 记录系统日志
+      await systemLogRepository.logUserActivity({
+        userId,
+        accountId: parseInt(accountId),
+        module: 'ai',
+        action: 'withdraw',
+        message: `提现AI账户: ${account.name}，金额: ${amountNum}`,
+        metadata: {
+          amount: amountNum,
+          reason,
+          previousBalance: parseFloat(account.currentBalance),
+          newBalance
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          accountId: parseInt(accountId),
+          accountName: account.name,
+          amount: amountNum,
+          previousBalance: parseFloat(account.currentBalance),
+          newBalance,
+          totalValue,
+          reason,
+          timestamp: new Date().toISOString()
+        },
+        message: '提现成功'
+      });
+    } catch (error) {
+      console.error('提现账户控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '提现失败，请稍后重试'
+      });
+    }
+  }
+
   /**
    * 获取账户绩效
    * @param {Object} req - 请求对象

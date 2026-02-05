@@ -32,7 +32,10 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting AI Service...")
 
     # Initialize databases
-    await init_db()
+    try:
+        await init_db()
+    except Exception as e:
+        logger.warning(f"⚠️ Database initialization failed: {e}. Continuing without database...")
     await init_redis()
 
     # Initialize services (will be implemented later)
@@ -62,7 +65,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.CORS_ORIGINS.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,0 +1,107 @@
+# Prometheus Configuration
+# 抓取间隔和数据保留配置
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'stock-race-prod'
+    environment: 'production'
+
+# 告警规则文件
+rule_files:
+  - 'alerts/*.yml'
+
+# 抓取配置
+scrape_configs:
+  # Prometheus自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Backend API监控
+  - job_name: 'backend'
+    metrics_path: '/api/metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['backend:3001']
+        labels:
+          service: 'backend-api'
+          component: 'api-server'
+
+  # AI Service监控
+  - job_name: 'ai-service'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['ai-service:8000']
+        labels:
+          service: 'ai-service'
+          component: 'ai-inference'
+
+  # Data Service监控
+  - job_name: 'data-service'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['data-service:8001']
+        labels:
+          service: 'data-service'
+          component: 'data-collector'
+
+  # Frontend监控（如果暴露指标）
+  - job_name: 'frontend'
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    static_configs:
+      - targets: ['frontend:80']
+        labels:
+          service: 'frontend'
+          component: 'web-ui'
+
+  # Nginx监控
+  - job_name: 'nginx'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['nginx:80']
+        labels:
+          service: 'nginx'
+          component: 'reverse-proxy'
+
+  # PostgreSQL监控（需要postgres_exporter）
+  - job_name: 'postgres'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'postgres'
+          component: 'database'
+
+  # Redis监控（需要redis_exporter）
+  - job_name: 'redis'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'redis'
+          component: 'cache'
+
+  # TimescaleDB监控
+  - job_name: 'timescaledb'
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['timescaledb-exporter:9187']
+        labels:
+          service: 'timescaledb'
+          component: 'time-series-db'
+
+# 告警管理器配置（可选）
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#             - 'alertmanager:9093'

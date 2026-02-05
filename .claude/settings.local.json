@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(git push:*)",
-      "Bash(git worktree remove:*)"
+      "Bash(git worktree remove:*)",
+      "Bash(systemctl:*)",
+      "Bash(xargs:*)"
     ],
     "additionalDirectories": [
       "d:\\BaiduSyncdisk\\MaHaoYuJavaLearning\\littletry\\claude_sample",

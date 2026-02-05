@@ -18,6 +18,7 @@ import {
   InputNumber,
   Radio,
   Grid,
+  Statistic,
 } from 'antd';
 import {
   SettingOutlined,

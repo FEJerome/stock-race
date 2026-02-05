@@ -3,6 +3,7 @@ Configuration settings for Data Service.
 """
 
 import os
+import json
 from typing import List, Optional
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
@@ -20,7 +21,7 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
     # CORS
-    CORS_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    CORS_ORIGINS: List[str] = json.loads(os.getenv("CORS_ORIGINS", '["http://localhost:3000"]'))
 
     # TimescaleDB (for time-series data)
     TSDB_HOST: str = os.getenv("TSDB_HOST", "localhost")
@@ -43,6 +44,11 @@ class Settings(BaseSettings):
     ALPHA_VANTAGE_API_KEY: Optional[str] = os.getenv("ALPHA_VANTAGE_API_KEY")
     TIINGO_API_KEY: Optional[str] = os.getenv("TIINGO_API_KEY")
     YAHOO_FINANCE_ENABLED: bool = os.getenv("YAHOO_FINANCE_ENABLED", "True").lower() == "true"
+
+    # Chinese Stock Data APIs
+    TUSHARE_TOKEN: Optional[str] = os.getenv("TUSHARE_TOKEN")
+    AKSHARE_ENABLED: bool = os.getenv("AKSHARE_ENABLED", "True").lower() == "true"
+    BAOSTOCK_ENABLED: bool = os.getenv("BAOSTOCK_ENABLED", "True").lower() == "true"
 
     # Data Collection
     COLLECTION_INTERVAL: int = int(os.getenv("COLLECTION_INTERVAL", 60))  # seconds
@@ -72,10 +78,10 @@ class Settings(BaseSettings):
     LOG_FILE: str = os.getenv("LOG_FILE", "logs/data_service.log")
 
     # Stock Symbols (default Chinese A-share stocks)
-    DEFAULT_STOCK_SYMBOLS: List[str] = os.getenv(
+    DEFAULT_STOCK_SYMBOLS: List[str] = json.loads(os.getenv(
         "DEFAULT_STOCK_SYMBOLS",
-        "000001.SZ,000002.SZ,000858.SZ,600036.SH,600519.SH"
-    ).split(",")
+        '["000001.SZ","000002.SZ","000858.SZ","600036.SH","600519.SH"]'
+    ))
 
     class Config:
         env_file = ".env"
