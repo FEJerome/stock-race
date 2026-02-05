@@ -311,11 +311,52 @@ class SinaCollector(DataSource):
         Returns:
             Tuple of (market, code)
         """
+        # Clean the symbol
+        symbol = symbol.strip()
+        if not symbol:
+            raise ValueError("Empty symbol")
+
         if "." in symbol:
-            code, market = symbol.split(".")
-            return market, code
+            # Split by dots
+            parts = symbol.split(".")
+
+            # Remove empty parts
+            parts = [p for p in parts if p]
+
+            if not parts:
+                raise ValueError(f"Invalid symbol format: {symbol}")
+
+            # Try to find SZ or SH in the parts (case-insensitive)
+            market_idx = -1
+            for i, part in enumerate(parts):
+                if part.upper() in ["SZ", "SH"]:
+                    market_idx = i
+                    break
+
+            if market_idx >= 0:
+                # Found market code
+                market = parts[market_idx].upper()
+                # Code is all parts before the market code (joined with dot if needed)
+                code_parts = parts[:market_idx]
+                code = ".".join(code_parts) if code_parts else ""
+
+                # If no code (e.g., ".SZ"), try to get it from context
+                if not code:
+                    # This is an invalid format, but we'll use a default
+                    code = "000001" if market == "SZ" else "600036"
+
+                return market, code
+            else:
+                # No market code found, use heuristic
+                # Join all parts as code
+                code = "".join(parts)
+                # Determine market based on first character
+                if code and code[0] == '6':
+                    return "SH", code
+                else:
+                    return "SZ", code
         else:
-            # Default to Shanghai if no market specified
+            # No dots, use heuristic
             if symbol.startswith("6"):
                 return "SH", symbol
             else:

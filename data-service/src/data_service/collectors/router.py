@@ -1,245 +1,213 @@
 """
-DataSourceRouter - Multi-source load balancing and failover router.
+Data source router for load balancing and failover between multiple data sources.
 """
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional, Tuple, Callable
-from enum import Enum
 import random
-import statistics
+from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional, Tuple
+from dataclasses import dataclass, field
+from enum import Enum
 
 from .base import DataSource, DataSourceError, RateLimitError
+from .sina import SinaCollector
+from .tencent import TencentCollector
+from .eastmoney import EastMoneyCollector
+from .akshare import AkShareCollector
+from .baostock import BaostockCollector
+from .tushare import TushareCollector
+
 from ..core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-class DataSourceStatus(Enum):
-    """Data source status enumeration."""
-    HEALTHY = "healthy"
-    DEGRADED = "degraded"
-    UNHEALTHY = "unhealthy"
-    OFFLINE = "offline"
+class DataSourceStrategy(Enum):
+    """Data source selection strategies."""
+    PRIORITY = "priority"  # Use highest priority source
+    ROUND_ROBIN = "round_robin"  # Rotate between sources
+    LOAD_BALANCED = "load_balanced"  # Distribute based on load
+    ADAPTIVE = "adaptive"  # Adapt based on performance
 
 
-class DataSourceConfig:
-    """Configuration for a data source."""
-
-    def __init__(
-        self,
-        name: str,
-        collector_class: type,
-        weight: float = 1.0,
-        min_interval_ms: int = 100,
-        max_requests_per_minute: int = 600,
-        batch_size: int = 100,
-        timeout_seconds: int = 30,
-        retry_count: int = 3
-    ):
-        self.name = name
-        self.collector_class = collector_class
-        self.weight = weight
-        self.min_interval_ms = min_interval_ms
-        self.max_requests_per_minute = max_requests_per_minute
-        self.batch_size = batch_size
-        self.timeout_seconds = timeout_seconds
-        self.retry_count = retry_count
-
-        # Dynamic state
-        self.instance: Optional[DataSource] = None
-        self.status = DataSourceStatus.HEALTHY
-        self.last_request_time: Optional[datetime] = None
-        self.request_count = 0
-        self.error_count = 0
-        self.success_count = 0
-        self.response_times: List[float] = []
-        self.last_error: Optional[str] = None
-        self.last_success: Optional[datetime] = None
-        self.consecutive_errors = 0
-        self.consecutive_successes = 0
+@dataclass
+class DataSourceMetrics:
+    """Metrics for a data source."""
+    name: str
+    priority: int
+    request_count: int = 0
+    success_count: int = 0
+    error_count: int = 0
+    total_latency: float = 0.0
+    last_request_time: Optional[datetime] = None
+    last_error_time: Optional[datetime] = None
+    consecutive_errors: int = 0
+    rate_limit_hits: int = 0
+    is_active: bool = True
 
     @property
     def success_rate(self) -> float:
         """Calculate success rate."""
         total = self.request_count
-        if total == 0:
-            return 1.0
-        return self.success_count / total
+        return self.success_count / total if total > 0 else 0.0
+
+    @property
+    def average_latency(self) -> float:
+        """Calculate average latency."""
+        return self.total_latency / self.request_count if self.request_count > 0 else 0.0
 
     @property
     def error_rate(self) -> float:
         """Calculate error rate."""
         total = self.request_count
-        if total == 0:
-            return 0.0
-        return self.error_count / total
-
-    @property
-    def avg_response_time(self) -> float:
-        """Calculate average response time."""
-        if not self.response_times:
-            return 0.0
-        return statistics.mean(self.response_times)
-
-    @property
-    def is_available(self) -> bool:
-        """Check if data source is available."""
-        if self.status == DataSourceStatus.OFFLINE:
-            return False
-
-        # Check if we've exceeded rate limits
-        if self.last_request_time:
-            time_since_last = (datetime.now() - self.last_request_time).total_seconds()
-            if time_since_last < (self.min_interval_ms / 1000):
-                return False
-
-        return True
+        return self.error_count / total if total > 0 else 0.0
 
     @property
     def health_score(self) -> float:
-        """Calculate health score (0.0 to 1.0)."""
-        score = 0.0
+        """Calculate health score (0-100)."""
+        if not self.is_active:
+            return 0.0
 
-        # Success rate contributes 40%
-        score += self.success_rate * 0.4
+        # Base score from success rate
+        score = self.success_rate * 70
 
-        # Response time contributes 30% (faster is better)
-        if self.avg_response_time > 0:
-            # Normalize response time (0-5 seconds is good, >5 seconds is bad)
-            response_score = max(0, 1.0 - (self.avg_response_time / 5.0))
-            score += response_score * 0.3
+        # Penalty for recent errors
+        if self.consecutive_errors > 0:
+            score -= min(self.consecutive_errors * 10, 30)
 
-        # Consecutive successes contribute 20%
-        consecutive_success_score = min(1.0, self.consecutive_successes / 10.0)
-        score += consecutive_success_score * 0.2
+        # Penalty for rate limit hits
+        if self.rate_limit_hits > 0:
+            score -= min(self.rate_limit_hits * 5, 20)
 
-        # Recent activity contributes 10%
-        if self.last_success:
-            time_since_success = (datetime.now() - self.last_success).total_seconds()
-            if time_since_success < 300:  # 5 minutes
-                score += 0.1
+        # Bonus for low latency
+        if self.average_latency < 0.5:  # Less than 500ms
+            score += 10
+        elif self.average_latency > 2.0:  # More than 2 seconds
+            score -= 10
 
-        return min(1.0, max(0.0, score))
-
-    def update_request_stats(self, success: bool, response_time: float):
-        """Update request statistics."""
-        self.request_count += 1
-        self.last_request_time = datetime.now()
-
-        if success:
-            self.success_count += 1
-            self.consecutive_successes += 1
-            self.consecutive_errors = 0
-            self.last_success = datetime.now()
-            self.response_times.append(response_time)
-
-            # Keep only last 100 response times
-            if len(self.response_times) > 100:
-                self.response_times = self.response_times[-100:]
-        else:
-            self.error_count += 1
-            self.consecutive_errors += 1
-            self.consecutive_successes = 0
-
-        # Update status based on performance
-        self._update_status()
-
-    def _update_status(self):
-        """Update data source status based on performance."""
-        if self.consecutive_errors >= 10:
-            self.status = DataSourceStatus.OFFLINE
-        elif self.error_rate > 0.3:
-            self.status = DataSourceStatus.UNHEALTHY
-        elif self.error_rate > 0.1:
-            self.status = DataSourceStatus.DEGRADED
-        elif self.success_rate >= 0.9:
-            self.status = DataSourceStatus.HEALTHY
-        else:
-            self.status = DataSourceStatus.DEGRADED
+        return max(0.0, min(100.0, score))
 
 
 class DataSourceRouter:
-    """
-    Router for managing multiple data sources with load balancing and failover.
-    """
+    """Router for managing multiple data sources with load balancing and failover."""
 
-    def __init__(self):
-        self.data_sources: Dict[str, DataSourceConfig] = {}
-        self.initialized = False
-        self.default_configs = {
+    def __init__(self, strategy: DataSourceStrategy = DataSourceStrategy.ADAPTIVE):
+        self.strategy = strategy
+        self.data_sources: List[DataSource] = []
+        self.metrics: Dict[str, DataSourceMetrics] = {}
+        self.current_index = 0
+        self.last_rotation = datetime.now()
+        self.rotation_interval = timedelta(minutes=5)  # Rotate every 5 minutes
+        self.min_request_interval = 0.1  # 100ms minimum between requests
+
+        # Configuration for each data source
+        self.source_configs = {
             "sina": {
-                "weight": 1.0,
-                "min_interval_ms": 100,
+                "min_interval": 0.1,  # 100ms
                 "max_requests_per_minute": 600,
                 "batch_size": 100,
-                "timeout_seconds": 30,
-                "retry_count": 3
+                "weight": 1.0,
+                "enabled": True
             },
             "tencent": {
-                "weight": 0.8,
-                "min_interval_ms": 50,
+                "min_interval": 0.05,  # 50ms
                 "max_requests_per_minute": 1200,
                 "batch_size": 150,
-                "timeout_seconds": 30,
-                "retry_count": 3
+                "weight": 0.8,
+                "enabled": True
             },
             "eastmoney": {
-                "weight": 0.6,
-                "min_interval_ms": 200,
+                "min_interval": 0.2,  # 200ms
                 "max_requests_per_minute": 300,
                 "batch_size": 50,
-                "timeout_seconds": 30,
-                "retry_count": 3
+                "weight": 0.6,
+                "enabled": True
+            },
+            "akshare": {
+                "min_interval": 0.05,  # 50ms - fastest for real-time data
+                "max_requests_per_minute": 500,  # Conservative limit
+                "batch_size": 200,  # Larger batch size
+                "weight": 1.5,  # Higher weight for real-time data
+                "enabled": settings.AKSHARE_ENABLED
+            },
+            "baostock": {
+                "min_interval": 0.15,  # 150ms - historical data doesn't need to be as fast
+                "max_requests_per_minute": 300,  # Baostock has no strict limits but be respectful
+                "batch_size": 100,
+                "weight": 1.2,  # Good weight for historical data
+                "enabled": settings.BAOSTOCK_ENABLED
+            },
+            "tushare": {
+                "min_interval": 0.5,  # 500ms - Tushare has rate limits for free tier
+                "max_requests_per_minute": 200,  # Free tier limits
+                "batch_size": 50,  # Smaller batches due to rate limits
+                "weight": 1.8,  # Highest weight for data quality
+                "enabled": bool(settings.TUSHARE_TOKEN and settings.TUSHARE_TOKEN != "your-tushare-token-here")
             }
         }
 
-        # Statistics
-        self.total_requests = 0
-        self.successful_requests = 0
-        self.failed_requests = 0
-        self.total_response_time = 0.0
-        self.last_route_time: Optional[datetime] = None
-
-        # Cache for batch requests
-        self.batch_cache: Dict[str, Dict[str, Any]] = {}
-        self.cache_ttl = timedelta(seconds=5)
+        # Stock segmentation strategies
+        self.segmentation_strategies = {
+            "by_exchange": self._segment_by_exchange,
+            "by_first_letter": self._segment_by_first_letter,
+            "by_market_cap": self._segment_by_market_cap,
+            "round_robin": self._segment_round_robin
+        }
 
     async def initialize(self):
-        """Initialize the router and all data sources."""
-        if self.initialized:
-            return
-
+        """Initialize data sources and metrics."""
         try:
-            # Import collector classes
-            from .sina import SinaCollector
-            from .tencent import TencentCollector
-            from .eastmoney import EastMoneyCollector
+            # Create data sources based on enabled configuration
+            data_sources_to_create = []
 
-            collector_classes = {
+            # Define source mapping
+            source_mapping = {
                 "sina": SinaCollector,
                 "tencent": TencentCollector,
-                "eastmoney": EastMoneyCollector
+                "eastmoney": EastMoneyCollector,
+                "akshare": AkShareCollector,
+                "baostock": BaostockCollector,
+                "tushare": TushareCollector
             }
 
-            # Create data source configurations
-            for name, collector_class in collector_classes.items():
-                config_dict = self.default_configs.get(name, {})
-                config = DataSourceConfig(
-                    name=name,
-                    collector_class=collector_class,
-                    **config_dict
+            # Check each source and create if enabled
+            for source_name, collector_class in source_mapping.items():
+                if source_name in self.source_configs:
+                    config = self.source_configs[source_name]
+                    if config.get("enabled", True):
+                        try:
+                            collector = collector_class()
+                            data_sources_to_create.append((source_name, collector))
+                            logger.debug(f"Added data source: {source_name}")
+                        except Exception as e:
+                            logger.warning(f"Failed to create data source {source_name}: {str(e)}")
+                    else:
+                        logger.debug(f"Data source {source_name} is disabled")
+                else:
+                    logger.warning(f"No configuration found for data source: {source_name}")
+
+            # Create data sources
+            self.data_sources = [collector for _, collector in data_sources_to_create]
+
+            # Initialize metrics for each source
+            for source_name, collector in data_sources_to_create:
+                self.metrics[collector.name] = DataSourceMetrics(
+                    name=collector.name,
+                    priority=collector.priority
                 )
 
-                # Create collector instance
-                config.instance = collector_class()
-                await config.instance.__aenter__()
+                # Initialize source
+                try:
+                    await collector.__aenter__()
+                    logger.debug(f"Successfully initialized data source: {collector.name}")
+                except Exception as e:
+                    logger.error(f"Failed to initialize data source {collector.name}: {str(e)}")
+                    # Mark as inactive
+                    self.metrics[collector.name].is_active = False
 
-                self.data_sources[name] = config
-
-            self.initialized = True
-            logger.info(f"DataSourceRouter initialized with {len(self.data_sources)} data sources")
+            active_sources = [s for s in self.data_sources if self.metrics[s.name].is_active]
+            logger.info(f"DataSourceRouter initialized with {len(active_sources)} active sources out of {len(self.data_sources)} total")
 
         except Exception as e:
             logger.error(f"Failed to initialize DataSourceRouter: {str(e)}")
@@ -247,514 +215,376 @@ class DataSourceRouter:
 
     async def close(self):
         """Close all data sources."""
-        for config in self.data_sources.values():
-            if config.instance:
-                try:
-                    await config.instance.close()
-                except Exception as e:
-                    logger.error(f"Failed to close data source {config.name}: {str(e)}")
+        for source in self.data_sources:
+            try:
+                await source.close()
+            except Exception as e:
+                logger.error(f"Failed to close data source {source.name}: {str(e)}")
 
-        self.initialized = False
         logger.info("DataSourceRouter closed")
 
-    def select_data_source(
-        self,
-        operation: str = "quote",
-        symbols: Optional[List[str]] = None
-    ) -> Optional[DataSourceConfig]:
-        """
-        Select the best data source for the operation.
-
-        Args:
-            operation: Type of operation (quote, history, info, batch)
-            symbols: List of symbols (for batch operations)
-
-        Returns:
-            Selected DataSourceConfig or None if no source available
-        """
-        if not self.initialized:
-            logger.warning("DataSourceRouter not initialized")
-            return None
-
-        # Filter available sources
-        available_sources = [
-            config for config in self.data_sources.values()
-            if config.is_available
-        ]
+    def _select_source_by_strategy(self, symbol: Optional[str] = None) -> DataSource:
+        """Select data source based on strategy."""
+        available_sources = [s for s in self.data_sources if self.metrics[s.name].is_active]
 
         if not available_sources:
-            logger.warning("No data sources available")
-            return None
+            raise DataSourceError("No active data sources available")
 
-        # Calculate selection probabilities based on weights and health scores
-        total_score = sum(config.weight * config.health_score for config in available_sources)
+        if self.strategy == DataSourceStrategy.PRIORITY:
+            # Select highest priority source
+            return min(available_sources, key=lambda x: x.priority)
 
-        if total_score <= 0:
-            # Fallback to round-robin
-            return available_sources[self.total_requests % len(available_sources)]
+        elif self.strategy == DataSourceStrategy.ROUND_ROBIN:
+            # Rotate between sources
+            self.current_index = (self.current_index + 1) % len(available_sources)
+            return available_sources[self.current_index]
 
-        # Weighted random selection
-        selection_point = random.random() * total_score
-        cumulative_score = 0.0
+        elif self.strategy == DataSourceStrategy.LOAD_BALANCED:
+            # Distribute based on request count
+            return min(available_sources, key=lambda x: self.metrics[x.name].request_count)
 
-        for config in available_sources:
-            score = config.weight * config.health_score
-            cumulative_score += score
-            if cumulative_score >= selection_point:
-                return config
+        elif self.strategy == DataSourceStrategy.ADAPTIVE:
+            # Adaptive selection based on health score
+            scored_sources = []
+            for source in available_sources:
+                metrics = self.metrics[source.name]
+                score = metrics.health_score
 
-        # Fallback to first available
-        return available_sources[0]
+                # Adjust score based on priority
+                adjusted_score = score * (1.0 / source.priority)
 
-    async def get_stock_quote(
-        self,
-        symbol: str,
-        max_retries: int = 3
-    ) -> Optional[Dict[str, Any]]:
+                scored_sources.append((adjusted_score, source))
+
+            # Select source with highest adjusted score
+            return max(scored_sources, key=lambda x: x[0])[1]
+
+        else:
+            # Default to priority
+            return min(available_sources, key=lambda x: x.priority)
+
+    async def _update_metrics(self, source_name: str, success: bool, latency: float,
+                            is_rate_limit: bool = False):
+        """Update metrics for a data source."""
+        metrics = self.metrics[source_name]
+        metrics.request_count += 1
+        metrics.total_latency += latency
+        metrics.last_request_time = datetime.now()
+
+        if success:
+            metrics.success_count += 1
+            metrics.consecutive_errors = 0
+        else:
+            metrics.error_count += 1
+            metrics.consecutive_errors += 1
+            metrics.last_error_time = datetime.now()
+
+            # Deactivate source if too many consecutive errors
+            if metrics.consecutive_errors >= 10:
+                metrics.is_active = False
+                logger.warning(f"Deactivated data source {source_name} due to {metrics.consecutive_errors} consecutive errors")
+
+        if is_rate_limit:
+            metrics.rate_limit_hits += 1
+
+        # Reactivate source if it's been inactive for a while
+        if not metrics.is_active and metrics.last_error_time:
+            time_since_error = datetime.now() - metrics.last_error_time
+            if time_since_error > timedelta(minutes=5):
+                metrics.is_active = True
+                metrics.consecutive_errors = 0
+                logger.info(f"Reactivated data source {source_name}")
+
+    async def get_stock_quote(self, symbol: str, max_retries: int = 3) -> Dict[str, Any]:
         """
-        Get stock quote with automatic failover.
+        Get real-time quote with failover between sources.
 
         Args:
             symbol: Stock symbol
-            max_retries: Maximum number of retry attempts
+            max_retries: Maximum number of retries with different sources
 
         Returns:
-            Quote data or None if all attempts fail
+            Dictionary with quote data
         """
-        if not self.initialized:
-            await self.initialize()
+        start_time = datetime.now()
 
-        attempts = 0
-        errors = []
-
-        while attempts < max_retries:
-            attempts += 1
-
-            # Select data source
-            config = self.select_data_source(operation="quote")
-            if not config:
-                logger.error(f"No data source available for quote {symbol}")
-                break
-
+        for attempt in range(max_retries):
             try:
-                start_time = datetime.now()
+                # Select source based on strategy
+                source = self._select_source_by_strategy(symbol)
+
+                # Check rate limiting
+                await self._check_rate_limit(source.name)
 
                 # Make request
-                quote = await config.instance.get_stock_quote(symbol)
+                quote = await source.get_stock_quote(symbol)
 
-                # Calculate response time
-                response_time = (datetime.now() - start_time).total_seconds()
+                # Update metrics
+                latency = (datetime.now() - start_time).total_seconds()
+                await self._update_metrics(source.name, success=True, latency=latency)
 
-                # Update statistics
-                config.update_request_stats(success=True, response_time=response_time)
-                self._update_router_stats(success=True, response_time=response_time)
-
-                logger.debug(f"Got quote for {symbol} from {config.name} in {response_time:.2f}s")
                 return quote
 
-            except (DataSourceError, RateLimitError) as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
+            except RateLimitError as e:
+                logger.warning(f"Rate limit hit for {source.name}: {str(e)}")
+                latency = (datetime.now() - start_time).total_seconds()
+                await self._update_metrics(source.name, success=False, latency=latency, is_rate_limit=True)
 
-                errors.append(f"{config.name}: {str(e)}")
-                logger.warning(f"Failed to get quote for {symbol} from {config.name}: {str(e)}")
-
-                # If rate limited, wait before retrying
-                if isinstance(e, RateLimitError):
-                    await asyncio.sleep(1)
-
+                # Try next source
                 continue
-            except Exception as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
 
-                errors.append(f"{config.name}: {str(e)}")
-                logger.error(f"Unexpected error getting quote for {symbol} from {config.name}: {str(e)}")
-                break
+            except DataSourceError as e:
+                logger.warning(f"Data source {source.name} failed: {str(e)}")
+                latency = (datetime.now() - start_time).total_seconds()
+                await self._update_metrics(source.name, success=False, latency=latency)
 
-        if errors:
-            logger.error(f"Failed to get quote for {symbol} after {attempts} attempts: {errors}")
+                # Try next source
+                continue
 
-        return None
+        # All retries failed
+        raise DataSourceError(f"Failed to get quote for {symbol} after {max_retries} attempts")
 
-    async def get_batch_quotes(
-        self,
-        symbols: List[str],
-        max_batch_size: int = 100,
-        max_retries: int = 2
-    ) -> Dict[str, Dict[str, Any]]:
+    async def get_batch_quotes(self, symbols: List[str], segmentation_strategy: str = "by_exchange") -> Dict[str, Dict[str, Any]]:
         """
-        Get batch quotes with intelligent batching and load balancing.
+        Get real-time quotes for multiple stocks with segmentation.
 
         Args:
             symbols: List of stock symbols
-            max_batch_size: Maximum batch size per request
-            max_retries: Maximum number of retry attempts
+            segmentation_strategy: Strategy for segmenting symbols
 
         Returns:
             Dictionary mapping symbol to quote data
         """
-        if not self.initialized:
-            await self.initialize()
+        if not symbols:
+            return {}
 
-        # Check cache first
-        cached_results = {}
-        fresh_symbols = []
+        # Segment symbols for distributed collection
+        segments = self._segment_symbols(symbols, segmentation_strategy)
+
+        all_quotes = {}
+
+        # Collect from each segment in parallel
+        tasks = []
+        for segment_idx, segment_symbols in enumerate(segments):
+            task = self._collect_segment_quotes(segment_symbols, segment_idx)
+            tasks.append(task)
+
+        # Wait for all segments to complete
+        segment_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Combine results
+        for result in segment_results:
+            if isinstance(result, Exception):
+                logger.error(f"Segment collection failed: {str(result)}")
+                continue
+
+            if result:
+                all_quotes.update(result)
+
+        return all_quotes
+
+    async def _collect_segment_quotes(self, symbols: List[str], segment_idx: int) -> Dict[str, Dict[str, Any]]:
+        """Collect quotes for a segment of symbols."""
+        if not symbols:
+            return {}
+
+        # Select source for this segment
+        source = self._select_source_by_strategy()
+
+        try:
+            # Check rate limiting
+            await self._check_rate_limit(source.name)
+
+            # Get batch quotes
+            quotes = await source.get_batch_quotes(symbols)
+
+            # Update metrics
+            self.metrics[source.name].request_count += 1
+            self.metrics[source.name].success_count += 1
+
+            return quotes
+
+        except Exception as e:
+            logger.error(f"Failed to collect segment {segment_idx} from {source.name}: {str(e)}")
+            self.metrics[source.name].error_count += 1
+            return {}
+
+    def _segment_symbols(self, symbols: List[str], strategy: str) -> List[List[str]]:
+        """
+        Segment symbols for distributed collection.
+
+        Args:
+            symbols: List of stock symbols
+            strategy: Segmentation strategy
+
+        Returns:
+            List of symbol segments
+        """
+        if strategy not in self.segmentation_strategies:
+            strategy = "round_robin"
+
+        segment_func = self.segmentation_strategies[strategy]
+        return segment_func(symbols)
+
+    def _segment_by_exchange(self, symbols: List[str]) -> List[List[str]]:
+        """Segment symbols by exchange."""
+        sh_symbols = [s for s in symbols if s.endswith(".SH") or (not s.endswith(".SZ") and s.startswith("6"))]
+        sz_symbols = [s for s in symbols if s.endswith(".SZ") or (not s.endswith(".SH") and not s.startswith("6"))]
+
+        segments = []
+        if sh_symbols:
+            segments.append(sh_symbols)
+        if sz_symbols:
+            segments.append(sz_symbols)
+
+        return segments
+
+    def _segment_by_first_letter(self, symbols: List[str]) -> List[List[str]]:
+        """Segment symbols by first letter of code."""
+        segments_dict = {}
 
         for symbol in symbols:
-            cache_key = f"batch:{','.join(sorted(symbols))}"
-            if cache_key in self.batch_cache:
-                cached_data = self.batch_cache[cache_key]
-                if datetime.now() - cached_data.get("timestamp", datetime.min) < self.cache_ttl:
-                    if symbol in cached_data.get("quotes", {}):
-                        cached_results[symbol] = cached_data["quotes"][symbol]
-                        continue
+            # Extract code part
+            if "." in symbol:
+                code = symbol.split(".")[0]
+            else:
+                code = symbol
 
-            fresh_symbols.append(symbol)
+            first_letter = code[0] if code else "0"
 
-        if not fresh_symbols:
-            return cached_results
+            if first_letter not in segments_dict:
+                segments_dict[first_letter] = []
 
-        # Split symbols into batches
-        batches = []
-        for i in range(0, len(fresh_symbols), max_batch_size):
-            batch = fresh_symbols[i:i + max_batch_size]
-            batches.append(batch)
+            segments_dict[first_letter].append(symbol)
 
-        all_results = cached_results.copy()
+        # Convert to list of segments
+        segments = list(segments_dict.values())
 
-        # Process batches in parallel
-        batch_tasks = []
-        for batch in batches:
-            task = self._process_batch(batch, max_retries)
-            batch_tasks.append(task)
+        # Limit segment size
+        max_segment_size = 50
+        final_segments = []
 
-        # Wait for all batches to complete
-        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+        for segment in segments:
+            if len(segment) <= max_segment_size:
+                final_segments.append(segment)
+            else:
+                # Split large segments
+                for i in range(0, len(segment), max_segment_size):
+                    final_segments.append(segment[i:i + max_segment_size])
 
-        # Merge results
-        for result in batch_results:
-            if isinstance(result, Exception):
-                logger.error(f"Batch processing failed: {str(result)}")
-                continue
+        return final_segments
 
-            if isinstance(result, dict):
-                all_results.update(result)
+    def _segment_by_market_cap(self, symbols: List[str]) -> List[List[str]]:
+        """Segment symbols by market cap (placeholder - would need actual data)."""
+        # For now, just do round robin
+        return self._segment_round_robin(symbols)
 
-        # Update cache
-        if all_results:
-            cache_key = f"batch:{','.join(sorted(symbols))}"
-            self.batch_cache[cache_key] = {
-                "quotes": all_results,
-                "timestamp": datetime.now()
-            }
+    def _segment_round_robin(self, symbols: List[str]) -> List[List[str]]:
+        """Segment symbols using round robin."""
+        num_segments = min(len(self.data_sources), 3)  # Max 3 segments
+        segments = [[] for _ in range(num_segments)]
 
-        return all_results
+        for i, symbol in enumerate(symbols):
+            segment_idx = i % num_segments
+            segments[segment_idx].append(symbol)
 
-    async def _process_batch(
-        self,
-        symbols: List[str],
-        max_retries: int
-    ) -> Dict[str, Dict[str, Any]]:
-        """Process a single batch of symbols."""
-        attempts = 0
-        errors = []
+        return segments
 
-        while attempts < max_retries:
-            attempts += 1
+    async def _check_rate_limit(self, source_name: str):
+        """Check and enforce rate limiting for a data source."""
+        config = self.source_configs.get(source_name, {})
+        min_interval = config.get("min_interval", self.min_request_interval)
 
-            # Select data source for batch operation
-            config = self.select_data_source(operation="batch", symbols=symbols)
-            if not config:
-                logger.error(f"No data source available for batch operation")
-                break
+        metrics = self.metrics[source_name]
 
-            try:
-                start_time = datetime.now()
+        if metrics.last_request_time:
+            elapsed = (datetime.now() - metrics.last_request_time).total_seconds()
+            if elapsed < min_interval:
+                wait_time = min_interval - elapsed
+                await asyncio.sleep(wait_time)
 
-                # Make batch request
-                batch_size = min(len(symbols), config.batch_size)
-                batch_symbols = symbols[:batch_size]
-
-                quotes = await config.instance.get_batch_quotes(batch_symbols)
-
-                # Calculate response time
-                response_time = (datetime.now() - start_time).total_seconds()
-
-                # Update statistics
-                config.update_request_stats(success=True, response_time=response_time)
-                self._update_router_stats(success=True, response_time=response_time)
-
-                logger.debug(f"Got batch quotes for {len(quotes)} symbols from {config.name} in {response_time:.2f}s")
-                return quotes
-
-            except (DataSourceError, RateLimitError) as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
-
-                errors.append(f"{config.name}: {str(e)}")
-                logger.warning(f"Batch request failed from {config.name}: {str(e)}")
-
-                # If rate limited, wait before retrying
-                if isinstance(e, RateLimitError):
-                    await asyncio.sleep(2)
-
-                continue
-            except Exception as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
-
-                errors.append(f"{config.name}: {str(e)}")
-                logger.error(f"Unexpected error in batch request from {config.name}: {str(e)}")
-                break
-
-        if errors:
-            logger.error(f"Failed to process batch after {attempts} attempts: {errors}")
-
-        return {}
-
-    async def get_stock_history(
-        self,
-        symbol: str,
-        start_date: datetime,
-        end_date: datetime,
-        interval: str = "1d",
-        max_retries: int = 2
-    ) -> List[Dict[str, Any]]:
+    def get_source_health(self, source_name: Optional[str] = None) -> Dict[str, Any]:
         """
-        Get historical data with failover.
+        Get health status of data sources.
 
         Args:
-            symbol: Stock symbol
-            start_date: Start date
-            end_date: End date
-            interval: Data interval
-            max_retries: Maximum number of retry attempts
+            source_name: Optional specific source name
 
         Returns:
-            List of historical data points
+            Dictionary with health information
         """
-        if not self.initialized:
-            await self.initialize()
+        if source_name:
+            if source_name not in self.metrics:
+                return {"error": f"Unknown data source: {source_name}"}
 
-        attempts = 0
-        errors = []
-
-        while attempts < max_retries:
-            attempts += 1
-
-            # Select data source for history operation
-            config = self.select_data_source(operation="history")
-            if not config:
-                logger.error(f"No data source available for history {symbol}")
-                break
-
-            try:
-                start_time = datetime.now()
-
-                # Make request
-                history = await config.instance.get_stock_history(
-                    symbol, start_date, end_date, interval
-                )
-
-                # Calculate response time
-                response_time = (datetime.now() - start_time).total_seconds()
-
-                # Update statistics
-                config.update_request_stats(success=True, response_time=response_time)
-                self._update_router_stats(success=True, response_time=response_time)
-
-                logger.debug(f"Got history for {symbol} from {config.name} in {response_time:.2f}s")
-                return history
-
-            except (DataSourceError, RateLimitError) as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
-
-                errors.append(f"{config.name}: {str(e)}")
-                logger.warning(f"Failed to get history for {symbol} from {config.name}: {str(e)}")
-
-                continue
-            except Exception as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
-
-                errors.append(f"{config.name}: {str(e)}")
-                logger.error(f"Unexpected error getting history for {symbol} from {config.name}: {str(e)}")
-                break
-
-        if errors:
-            logger.error(f"Failed to get history for {symbol} after {attempts} attempts: {errors}")
-
-        return []
-
-    async def get_stock_info(
-        self,
-        symbol: str,
-        max_retries: int = 2
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Get stock information with failover.
-
-        Args:
-            symbol: Stock symbol
-            max_retries: Maximum number of retry attempts
-
-        Returns:
-            Stock information or None if all attempts fail
-        """
-        if not self.initialized:
-            await self.initialize()
-
-        attempts = 0
-        errors = []
-
-        while attempts < max_retries:
-            attempts += 1
-
-            # Select data source for info operation
-            config = self.select_data_source(operation="info")
-            if not config:
-                logger.error(f"No data source available for info {symbol}")
-                break
-
-            try:
-                start_time = datetime.now()
-
-                # Make request
-                info = await config.instance.get_stock_info(symbol)
-
-                # Calculate response time
-                response_time = (datetime.now() - start_time).total_seconds()
-
-                # Update statistics
-                config.update_request_stats(success=True, response_time=response_time)
-                self._update_router_stats(success=True, response_time=response_time)
-
-                logger.debug(f"Got info for {symbol} from {config.name} in {response_time:.2f}s")
-                return info
-
-            except (DataSourceError, RateLimitError) as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
-
-                errors.append(f"{config.name}: {str(e)}")
-                logger.warning(f"Failed to get info for {symbol} from {config.name}: {str(e)}")
-
-                continue
-            except Exception as e:
-                response_time = (datetime.now() - start_time).total_seconds()
-                config.update_request_stats(success=False, response_time=response_time)
-                self._update_router_stats(success=False, response_time=response_time)
-
-                errors.append(f"{config.name}: {str(e)}")
-                logger.error(f"Unexpected error getting info for {symbol} from {config.name}: {str(e)}")
-                break
-
-        if errors:
-            logger.error(f"Failed to get info for {symbol} after {attempts} attempts: {errors}")
-
-        return None
-
-    def get_router_stats(self) -> Dict[str, Any]:
-        """Get router statistics."""
-        avg_response_time = 0.0
-        if self.total_requests > 0:
-            avg_response_time = self.total_response_time / self.total_requests
-
-        success_rate = 0.0
-        if self.total_requests > 0:
-            success_rate = self.successful_requests / self.total_requests
-
-        # Get data source details
-        source_details = {}
-        for name, config in self.data_sources.items():
-            source_details[name] = {
-                "status": config.status.value,
-                "weight": config.weight,
-                "health_score": config.health_score,
-                "success_rate": config.success_rate,
-                "error_rate": config.error_rate,
-                "avg_response_time": config.avg_response_time,
-                "request_count": config.request_count,
-                "error_count": config.error_count,
-                "consecutive_errors": config.consecutive_errors,
-                "consecutive_successes": config.consecutive_successes,
-                "last_request": config.last_request_time.isoformat() if config.last_request_time else None,
-                "last_success": config.last_success.isoformat() if config.last_success else None,
-                "is_available": config.is_available
+            metrics = self.metrics[source_name]
+            return {
+                "name": metrics.name,
+                "is_active": metrics.is_active,
+                "health_score": metrics.health_score,
+                "success_rate": metrics.success_rate,
+                "error_rate": metrics.error_rate,
+                "average_latency": metrics.average_latency,
+                "request_count": metrics.request_count,
+                "consecutive_errors": metrics.consecutive_errors,
+                "rate_limit_hits": metrics.rate_limit_hits,
+                "last_request": metrics.last_request_time.isoformat() if metrics.last_request_time else None,
+                "last_error": metrics.last_error_time.isoformat() if metrics.last_error_time else None
             }
 
-        return {
-            "total_requests": self.total_requests,
-            "successful_requests": self.successful_requests,
-            "failed_requests": self.failed_requests,
-            "success_rate": success_rate,
-            "avg_response_time": avg_response_time,
-            "last_route_time": self.last_route_time.isoformat() if self.last_route_time else None,
-            "data_sources": source_details,
-            "cache_size": len(self.batch_cache),
-            "initialized": self.initialized
-        }
+        # Return all sources
+        health_info = {}
+        for name, metrics in self.metrics.items():
+            health_info[name] = {
+                "is_active": metrics.is_active,
+                "health_score": metrics.health_score,
+                "success_rate": metrics.success_rate,
+                "request_count": metrics.request_count,
+                "error_count": metrics.error_count,
+                "consecutive_errors": metrics.consecutive_errors
+            }
 
-    def get_health_status(self) -> Dict[str, Any]:
-        """Get overall health status."""
-        stats = self.get_router_stats()
+        return health_info
 
-        # Determine overall health
-        healthy_sources = sum(
-            1 for source in stats["data_sources"].values()
-            if source["status"] in ["healthy", "degraded"]
-        )
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """Get overall performance metrics."""
+        total_requests = sum(m.request_count for m in self.metrics.values())
+        total_success = sum(m.success_count for m in self.metrics.values())
+        total_errors = sum(m.error_count for m in self.metrics.values())
 
-        overall_health = "healthy" if healthy_sources > 0 else "unhealthy"
+        active_sources = [name for name, m in self.metrics.items() if m.is_active]
 
         return {
-            "status": overall_health,
-            "healthy_sources": healthy_sources,
-            "total_sources": len(stats["data_sources"]),
-            "success_rate": stats["success_rate"],
-            "timestamp": datetime.now().isoformat()
+            "total_requests": total_requests,
+            "total_success": total_success,
+            "total_errors": total_errors,
+            "overall_success_rate": total_success / total_requests if total_requests > 0 else 0.0,
+            "active_sources": active_sources,
+            "total_sources": len(self.data_sources),
+            "current_strategy": self.strategy.value,
+            "segmentation_strategies": list(self.segmentation_strategies.keys())
         }
 
-    def _update_router_stats(self, success: bool, response_time: float):
-        """Update router statistics."""
-        self.total_requests += 1
-        self.total_response_time += response_time
-        self.last_route_time = datetime.now()
+    async def rotate_strategy(self):
+        """Rotate to next strategy (for testing and optimization)."""
+        strategies = list(DataSourceStrategy)
+        current_idx = strategies.index(self.strategy)
+        next_idx = (current_idx + 1) % len(strategies)
 
-        if success:
-            self.successful_requests += 1
-        else:
-            self.failed_requests += 1
+        self.strategy = strategies[next_idx]
+        logger.info(f"Rotated data source strategy to: {self.strategy.value}")
 
-    def clear_cache(self):
-        """Clear the batch cache."""
-        self.batch_cache.clear()
-        logger.info("Batch cache cleared")
+        return {"new_strategy": self.strategy.value}
 
-    def reset_stats(self):
-        """Reset all statistics."""
-        self.total_requests = 0
-        self.successful_requests = 0
-        self.failed_requests = 0
-        self.total_response_time = 0.0
-        self.last_route_time = None
+    async def reset_source(self, source_name: str):
+        """Reset a data source (clear errors and reactivate)."""
+        if source_name not in self.metrics:
+            return {"error": f"Unknown data source: {source_name}"}
 
-        for config in self.data_sources.values():
-            config.request_count = 0
-            config.error_count = 0
-            config.success_count = 0
-            config.response_times = []
-            config.consecutive_errors = 0
-            config.consecutive_successes = 0
-            config.last_error = None
+        metrics = self.metrics[source_name]
+        metrics.consecutive_errors = 0
+        metrics.is_active = True
+        metrics.last_error_time = None
 
-        logger.info("Router statistics reset")
+        logger.info(f"Reset data source: {source_name}")
+
+        return {"success": True, "source": source_name, "is_active": True}
