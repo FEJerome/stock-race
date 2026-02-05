@@ -185,3 +185,13 @@ class ErrorResponse(BaseModel):
     detail: str = Field(..., description="Error detail")
     error_code: Optional[str] = Field(None, description="Error code")
     timestamp: datetime = Field(default_factory=datetime.now, description="Error timestamp")
+
+
+class ServiceDecisionRequest(BaseModel):
+    """Request for AI trading decision from backend service."""
+    account_id: str = Field(..., description="Account ID")
+    stock_code: str = Field(..., description="Stock code/symbol")
+    market_data: Dict[str, Any] = Field(default_factory=dict, description="Market data")
+    portfolio_data: Dict[str, Any] = Field(default_factory=dict, description="Portfolio data")
+    strategy: str = Field(default="default", description="Trading strategy")
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Request timestamp")

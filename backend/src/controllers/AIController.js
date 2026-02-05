@@ -648,10 +648,11 @@ export class AIController {
   async requestAIDecision(req, res) {
     try {
       const {
-        accountId,
         action = 'analyze',
         data
       } = req.body;
+
+      const accountId = req.params.accountId;
 
       const userId = req.user?.id;
       if (!userId) {

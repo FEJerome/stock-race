@@ -38,7 +38,7 @@ export class AIService {
         timestamp: new Date().toISOString()
       };
 
-      const response = await this.client.post('/api/v1/decision/generate', payload);
+      const response = await this.client.post('/api/v1/decision/service-generate', payload);
 
       return {
         success: true,
@@ -75,7 +75,7 @@ export class AIService {
         }))
       };
 
-      const response = await this.client.post('/api/v1/decision/batch-generate', payload);
+      const response = await this.client.post('/api/v1/decision/service-batch-generate', payload);
 
       return response.data.decisions.map((decision, index) => ({
         success: true,

@@ -131,7 +131,33 @@ def validate_api_key(api_key: str) -> bool:
     """Validate API key."""
     # In production, this should check against a database or key management service
     # For now, we'll use a simple check
-    valid_keys = ["stock-race-api-key-123", "test-api-key"]
+
+    # Valid keys - production API keys
+    valid_keys = [
+        "stock-race-ai-key-production",  # Production backend API key
+        "stock-race-api-key-production",  # Production backend API key alternative
+        "stock-race-data-key-production", # Data service API key
+        "stock-race-api-key-123",         # Development key
+        "test-api-key",                   # Test key
+        "stock-race-ai-key"               # Legacy key
+    ]
+
+    # Try to load from environment as fallback
+    try:
+        from .config import settings
+        if hasattr(settings, 'BACKEND_API_KEY') and settings.BACKEND_API_KEY:
+            if settings.BACKEND_API_KEY not in valid_keys:
+                valid_keys.append(settings.BACKEND_API_KEY)
+    except:
+        pass
+
+    # Also check environment variable directly
+    import os
+    backend_api_key = os.getenv("BACKEND_API_KEY")
+    if backend_api_key and backend_api_key not in valid_keys:
+        valid_keys.append(backend_api_key)
+
+    print(f"DEBUG: Validating API key. Valid keys: {valid_keys[:3]}...")  # Debug log
     return api_key in valid_keys
 
 
@@ -150,6 +176,30 @@ async def require_api_key(api_key: Optional[str] = None) -> bool:
         )
 
     return True
+
+
+async def get_service_account(
+    x_api_key: Optional[str] = None,
+) -> str:
+    """Get service account for service-to-service communication.
+
+    This function allows backend services to authenticate using API keys.
+    Returns a mock account ID for service-level operations.
+    """
+    if not x_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required for service authentication",
+        )
+
+    if not validate_api_key(x_api_key):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+
+    # Return a service account ID for backend service calls
+    return "service-account-backend"
 
 
 # Rate limiting utilities
