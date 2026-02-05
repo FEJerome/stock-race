@@ -8,18 +8,16 @@
 3. **实现高效协作**：通过标准化流程提升开发效率
 4. **确保项目质量**：通过代码审查和测试保证交付质量
 
-## 👥 智能体角色分配（stock-race项目专用）
-**7个功能型智能体，最多4个并行执行**：
+## 👥 智能体角色分配（stock-race项目模块化策略）
+**5个智能体，4个模块worktree，最多4个并行执行**：
 
-| 智能体 | 职责范围 | 工作目录 | 典型任务示例 | 优先级管理 |
-|--------|----------|----------|--------------|------------|
-| **架构设计智能体** | 混合架构设计、技术栈配置 | `docs/architecture/`, `backend/`, `frontend/` | 架构设计、技术选型、模块划分 | 🚨 高（基础依赖） |
-| **后端核心智能体** | Node.js后端开发、业务逻辑 | `backend/src/`, `backend/models/`, `backend/services/` | 用户系统、交易逻辑、数据存储 | ⚠️ 中（业务核心） |
-| **前端智能体** | React前端开发、用户界面 | `frontend/src/`, `frontend/components/` | 交易界面、数据可视化、用户交互 | ⚠️ 中（用户交互） |
-| **AI集成智能体** | Python AI服务、大模型集成 | `ai-service/`, `backend/ai/` | 大模型API集成、提示工程、决策逻辑 | ⚠️ 中（核心功能） |
-| **数据工程智能体** | 股票数据采集处理、实时数据 | `data-service/`, `backend/data/` | 数据采集、清洗、存储、实时推送 | 🔄 持续（支持性） |
-| **基础设施智能体** | 环境配置、工具链、DevOps | `scripts/`, `config/`, `docker/` | Docker配置、CI/CD、监控配置 | 🔄 持续（支持性） |
-| **协调管理智能体** | 进度跟踪、文档维护、代码审查 | `docs/coordination/`, `docs/agents/` | 进度汇总、依赖管理、文档同步 | 🔄 持续（协调性） |
+| 智能体 | 职责范围 | 工作目录 | Worktree | 典型任务示例 | 优先级管理 |
+|--------|----------|----------|----------|--------------|------------|
+| **前端模块智能体** | React前端开发、用户界面、组件库 | `frontend/` | `worktrees/worktree-frontend` | 交易界面、数据可视化、用户交互、TypeScript迁移 | ⚠️ 中（用户交互） |
+| **后端模块智能体** | Node.js后端开发、业务逻辑、API服务 | `backend/` | `worktrees/worktree-backend` | 用户系统、交易逻辑、数据存储、WebSocket实时推送 | 🚨 高（业务核心） |
+| **AI服务模块智能体** | Python AI服务、大模型集成、决策逻辑 | `ai-service/` | `worktrees/worktree-ai-service` | 大模型API集成、提示工程、决策逻辑、风险评估 | ⚠️ 中（核心功能） |
+| **数据服务模块智能体** | 股票数据采集处理、实时数据、多数据源 | `data-service/` | `worktrees/worktree-data-service` | 数据采集、清洗、存储、实时推送、分段获取策略 | 🔄 持续（支持性） |
+| **协调管理智能体** | 进度跟踪、文档维护、代码审查、合并协调 | `docs/`, 主工作区 | 无（主工作区） | 进度汇总、依赖管理、文档同步、分支合并、任务分配 | 🔄 持续（协调性） |
 
 ## ⚙️ 执行策略（并行限制：最多4个）
 **核心原则**：智能体并行执行数量不超过四个，其他智能体串行执行，等待运行的智能体结束。
@@ -95,13 +93,13 @@
 - 项目进度达100%
 
 ## 🔧 工作空间配置
-配置6个git-worktree支持并行开发：
-1. `worktree-architecture` - 架构设计智能体
-2. `worktree-core-logic` - 核心逻辑智能体
-3. `worktree-interface-service` - 接口服务智能体
-4. `worktree-user-interface` - 用户界面智能体
-5. `worktree-infrastructure` - 基础设施智能体
-6. `worktree-coordination` - 协调管理智能体
+配置4个模块git-worktree支持并行开发：
+1. `worktrees/worktree-frontend` - 前端模块智能体
+2. `worktrees/worktree-backend` - 后端模块智能体
+3. `worktrees/worktree-ai-service` - AI服务模块智能体
+4. `worktrees/worktree-data-service` - 数据服务模块智能体
+
+**协调管理智能体**在主工作区工作，不占用独立worktree。
 
 ## 📋 文档更新规范
 - **任务状态**：`pending` → `in_progress` → `completed` → `blocked`
@@ -132,7 +130,7 @@
 
 ---
 
-*最后更新：{更新日期}*
+*最后更新：2026-02-04*
 *维护者：协调智能体*
 *版本：1.0.0*
 *备注：此为通用协作方案模板，请根据具体项目需求进行调整*

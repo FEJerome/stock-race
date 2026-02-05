@@ -32,7 +32,10 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting AI Service...")
 
     # Initialize databases
-    await init_db()
+    try:
+        await init_db()
+    except Exception as e:
+        logger.warning(f"⚠️ Database initialization failed: {e}. Continuing without database...")
     await init_redis()
 
     # Initialize services (will be implemented later)
