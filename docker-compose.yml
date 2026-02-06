@@ -136,8 +136,6 @@ services:
     depends_on:
       timescaledb:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
@@ -149,11 +147,6 @@ services:
       - TSDB_NAME=stock_race_tsdb
       - TSDB_USER=timescale
       - TSDB_PASSWORD=password
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=stock_race
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379
       - BACKEND_URL=http://backend:3001
       - AI_SERVICE_URL=http://ai-service:8000

@@ -7,6 +7,26 @@ import { asyncHandler, predefinedErrors } from '../utils/responseFormatter.js';
 
 export class TradeController {
   /**
+   * 序列化BigInt数据
+   * @param {any} data - 要序列化的数据
+   * @returns {any} 序列化后的数据
+   */
+  serializeBigInt(data) {
+    if (typeof data === 'bigint') {
+      return data.toString();
+    } else if (Array.isArray(data)) {
+      return data.map(item => this.serializeBigInt(item));
+    } else if (data !== null && typeof data === 'object') {
+      const result = {};
+      for (const key in data) {
+        result[key] = this.serializeBigInt(data[key]);
+      }
+      return result;
+    }
+    return data;
+  }
+
+  /**
    * 获取交易记录
    * @param {Object} req - 请求对象
    * @param {Object} res - 响应对象
@@ -355,9 +375,10 @@ export class TradeController {
       });
 
       // 如果是市价单，立即执行
-      if (orderType === 'market') {
-        await this.executeTrade(trade.id);
-      }
+      // 暂时注释掉，先让交易创建成功
+      // if (orderType === 'market') {
+      //   await this.executeTrade(trade.id);
+      // }
 
       res.status(201).json({
         success: true,
@@ -407,10 +428,8 @@ export class TradeController {
       const trade = await tradeRepository.findOne(
         { id: tradeId },
         {
-          include: {
-            account: true,
-            stock: true
-          }
+          account: true,
+          stock: true
         }
       );
 
@@ -441,9 +460,7 @@ export class TradeController {
         const trade = await tradeRepository.findOne(
           { id: tradeId },
           {
-            include: {
-              account: true
-            }
+            account: true
           }
         );
 
@@ -489,25 +506,36 @@ export class TradeController {
         });
       }
 
+      // 验证tradeId是否为有效数字
+      const tradeIdNum = parseInt(tradeId);
+      if (isNaN(tradeIdNum) || tradeIdNum <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_001',
+            message: '交易ID无效'
+          },
+          message: '交易ID必须为有效的正整数'
+        });
+      }
+
       const trade = await tradeRepository.findOne(
-        { id: parseInt(tradeId) },
+        { id: tradeIdNum },
         {
-          include: {
-            stock: true,
-            account: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    username: true
-                  }
+          stock: true,
+          account: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true
                 }
               }
-            },
-            decisionLogs: {
-              take: 5,
-              orderBy: { createdAt: 'desc' }
             }
+          },
+          decisionLogs: {
+            take: 5,
+            orderBy: { createdAt: 'desc' }
           }
         }
       );
@@ -609,9 +637,7 @@ export class TradeController {
       const trade = await tradeRepository.findOne(
         { id: parseInt(tradeId) },
         {
-          include: {
-            account: true
-          }
+          account: true
         }
       );
 
@@ -685,6 +711,96 @@ export class TradeController {
   }
 
   /**
+   * 执行交易订单
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async executeTrade(req, res) {
+    try {
+      const { tradeId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: '用户未认证'
+          },
+          message: '请先登录'
+        });
+      }
+
+      // 检查交易是否存在且属于当前用户
+      const trade = await tradeRepository.findOne(
+        { id: parseInt(tradeId) },
+        {
+          account: true
+        }
+      );
+
+      if (!trade) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: '交易不存在'
+          },
+          message: '找不到指定的交易'
+        });
+      }
+
+      // 检查权限：交易必须属于当前用户
+      if (trade.account.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: '无权执行此交易'
+          },
+          message: '您无权执行此交易'
+        });
+      }
+
+      // 检查交易状态
+      if (trade.status !== 'pending') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_STATUS',
+            message: '交易状态不可执行'
+          },
+          message: `交易状态为${trade.status}，无法执行`
+        });
+      }
+
+      // 执行交易
+      const executionResult = await virtualTradingService.executeTradeOrder(parseInt(tradeId));
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          tradeId: parseInt(tradeId),
+          executionResult
+        },
+        message: '交易执行成功'
+      });
+    } catch (error) {
+      console.error('执行交易控制器错误:', error);
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '执行交易时发生错误'
+        },
+        message: error.message || '执行交易失败',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  }
+
+  /**
    * 获取交易统计
    * @param {Object} req - 请求对象
    * @param {Object} res - 响应对象
@@ -730,13 +846,13 @@ export class TradeController {
       if (endDate) options.endDate = new Date(endDate);
 
       const performance = await tradeRepository.getTradePerformance(
-        targetAccountId || userId,
+        targetAccountId,
         options
       );
 
       // 获取今日统计
       const todayStats = await tradeRepository.getTodayTradeStats(
-        targetAccountId || userId
+        targetAccountId
       );
 
       // 获取交易趋势
@@ -745,14 +861,17 @@ export class TradeController {
         accountId: targetAccountId
       });
 
+      // 序列化BigInt数据
+      const serializedData = {
+        performance: this.serializeBigInt(performance),
+        todayStats: this.serializeBigInt(todayStats),
+        trendStats: this.serializeBigInt(trendStats),
+        timestamp: new Date().toISOString()
+      };
+
       res.json({
         success: true,
-        data: {
-          performance,
-          todayStats,
-          trendStats,
-          timestamp: new Date().toISOString()
-        },
+        data: serializedData,
         message: '获取交易统计成功'
       });
     } catch (error) {

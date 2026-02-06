@@ -32,9 +32,7 @@ export class PortfolioRepository extends BaseRepository {
     return this.findOne(
       { accountId, stockId },
       {
-        include: {
-          stock: true
-        }
+        stock: true
       }
     );
   }

@@ -37,14 +37,15 @@ frontend/src/
 │   └── auth.store.ts          # Zustand认证状态管理（含持久化）
 ├── services/                   # API服务层
 │   ├── api.ts                 # Axios基础配置和拦截器
-│   ├── auth.service.ts        # 认证服务（模拟登录/注册）
-│   ├── trading.service.ts     # 交易服务（订单、持仓、组合）
-│   ├── market.service.ts      # 市场数据服务（行情、搜索、历史）
-│   └── ai.service.ts          # AI服务（账户、决策、分析）
+│   ├── auth.service.ts        # 认证服务（真实API + 降级机制）
+│   ├── trading.service.ts     # 交易服务（真实API + 缓存 + 降级机制）
+│   ├── market.service.ts      # 市场数据服务（真实API + 缓存 + 降级机制）
+│   └── ai.service.ts          # AI服务（真实API + 缓存 + 降级机制）
 ├── hooks/
 │   └── useWebSocket.ts        # WebSocket连接管理（含心跳、重连）
 ├── utils/
-│   └── formatters.ts          # 数据格式化工具（货币、百分比、日期等）
+│   ├── formatters.ts          # 数据格式化工具（货币、百分比、日期等）
+│   └── cache.ts               # 缓存工具（多级缓存，A股交易时间感知）
 ├── components/
 │   ├── common/
 │   │   └── ProtectedRoute.tsx # 路由保护组件（认证检查）
@@ -390,6 +391,36 @@ data-service/src/data_service/
 - `/demo_stock_race.py` - 核心功能演示脚本
 - `/demo_enhanced.py` - 增强演示脚本（展示完整交易流程）
 
+### 2026-02-05 ~ 2026-02-06: 前端模拟数据改造项目
+- **创建者**: 首席架构师
+- **变更内容**:
+  - 将前端所有模拟数据改为真实数据，共完成6个阶段
+  - 阶段一：认证系统连接 - 打通前后端认证，实现降级机制
+  - 阶段二：市场数据服务改造 - 创建缓存工具，实现A股交易时间感知的缓存策略
+  - 阶段三：交易系统改造 - 修改7个核心函数调用真实API
+  - 阶段四：AI系统改造 - 修改11个核心函数调用真实API
+  - 阶段五：组件层清理 - 移除所有组件中的模拟数据
+  - 阶段六：测试与优化 - 创建端到端测试脚本，验证所有功能
+  - 实现多级缓存机制（内存+本地存储），优化非交易时间数据获取
+  - 保留完整的降级机制，确保系统始终可用
+  - 创建完整文档体系，包括6个阶段文档和最终总结报告
+
+### 关键文件修改和创建:
+- `/frontend/src/utils/cache.ts` - 缓存工具（新创建）
+- `/frontend/src/services/auth.service.ts` - 认证服务（修改为真实API + 降级）
+- `/frontend/src/services/market.service.ts` - 市场数据服务（修改为真实API + 缓存）
+- `/frontend/src/services/trading.service.ts` - 交易服务（修改为真实API + 缓存）
+- `/frontend/src/services/ai.service.ts` - AI服务（修改为真实API + 缓存）
+- `/frontend/src/pages/Analytics.tsx` - 分析页面（移除模拟数据）
+- `/frontend/src/pages/Competition.tsx` - 竞赛页面（移除模拟数据）
+- `/frontend/src/pages/Settings.tsx` - 设置页面（移除模拟数据）
+- `/test_frontend_real_data.sh` - 前端真实数据验证脚本（新创建）
+- `/test_cache_mechanism.sh` - 缓存机制测试脚本（新创建）
+- `/test_login.sh` - 登录测试脚本（新创建）
+- `/docs/development/FRONTEND_DATA_MIGRATION_PHASE1-6.md` - 阶段文档（新创建）
+- `/docs/development/FRONTEND_DATA_MIGRATION_SUMMARY.md` - 项目总结报告（新创建）
+- `/backend/src/config.js` - 后端配置中心（新创建，解决JWT验证问题）
+
 ## 🚀 开发环境快速参考
 
 ### 服务访问地址
@@ -463,5 +494,5 @@ cd data-service && uvicorn data_service.main:app --reload  # 数据服务
 
 ---
 
-*本文档最后更新于: 2026-02-03*
-*文档维护者: 数据工程智能体*
+*本文档最后更新于: 2026-02-06*
+*文档维护者: 首席架构师 (前端模拟数据改造项目更新)*

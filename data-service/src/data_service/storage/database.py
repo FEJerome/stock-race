@@ -19,12 +19,11 @@ class DatabaseStorage:
 
     def __init__(self):
         self.timescale_pool: Optional[asyncpg.Pool] = None
-        self.postgres_pool: Optional[asyncpg.Pool] = None
 
     async def connect(self):
-        """Connect to databases with fallback to in-memory mode."""
+        """Connect to TimescaleDB with fallback to in-memory mode."""
         try:
-            # Connect to TimescaleDB for time-series data
+            # Connect to TimescaleDB for all data
             self.timescale_pool = await asyncpg.create_pool(
                 host=settings.TSDB_HOST,
                 port=settings.TSDB_PORT,
@@ -35,68 +34,28 @@ class DatabaseStorage:
                 max_size=10
             )
 
-            # Connect to PostgreSQL for metadata
-            self.postgres_pool = await asyncpg.create_pool(
-                host=settings.DB_HOST,
-                port=settings.DB_PORT,
-                database=settings.DB_NAME,
-                user=settings.DB_USER,
-                password=settings.DB_PASSWORD,
-                min_size=1,
-                max_size=10
-            )
-
-            logger.info("Connected to databases")
+            logger.info("Connected to TimescaleDB")
             await self._create_tables()
 
         except Exception as e:
-            logger.warning(f"Failed to connect to databases: {str(e)}")
+            logger.warning(f"Failed to connect to TimescaleDB: {str(e)}")
             logger.info("Falling back to in-memory mode (simulated data)")
             self.timescale_pool = None
-            self.postgres_pool = None
 
     async def close(self):
         """Close database connections."""
         if self.timescale_pool:
             await self.timescale_pool.close()
-        if self.postgres_pool:
-            await self.postgres_pool.close()
         logger.info("Closed database connections")
 
     async def _create_tables(self):
         """Create necessary tables if they don't exist."""
-        if not self.postgres_pool or not self.timescale_pool:
+        if not self.timescale_pool:
             logger.info("Skipping table creation (database not connected)")
             return
 
         try:
-            # Create stock metadata table in PostgreSQL
-            async with self.postgres_pool.acquire() as conn:
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS stocks (
-                        symbol VARCHAR(20) PRIMARY KEY,
-                        name VARCHAR(100) NOT NULL,
-                        exchange VARCHAR(10) NOT NULL,
-                        sector VARCHAR(50),
-                        market_cap DECIMAL(20, 2),
-                        pe_ratio DECIMAL(10, 2),
-                        pb_ratio DECIMAL(10, 2),
-                        dividend_yield DECIMAL(5, 2),
-                        listing_date TIMESTAMP,
-                        is_active BOOLEAN DEFAULT TRUE,
-                        created_at TIMESTAMP DEFAULT NOW(),
-                        updated_at TIMESTAMP DEFAULT NOW()
-                    )
-                """)
-
-                # Create index for faster searches
-                await conn.execute("""
-                    CREATE INDEX IF NOT EXISTS idx_stocks_name ON stocks(name);
-                    CREATE INDEX IF NOT EXISTS idx_stocks_exchange ON stocks(exchange);
-                    CREATE INDEX IF NOT EXISTS idx_stocks_sector ON stocks(sector);
-                """)
-
-            # Create time-series tables in TimescaleDB
+            # Create all tables in TimescaleDB
             async with self.timescale_pool.acquire() as conn:
                 # Create stock_quotes hypertable
                 await conn.execute("""
@@ -361,17 +320,17 @@ class DatabaseStorage:
 
     async def save_stock_info(self, stock_info: StockSymbol):
         """
-        Save stock information to PostgreSQL.
+        Save stock information to TimescaleDB.
 
         Args:
             stock_info: StockSymbol object
         """
-        if not self.postgres_pool:
+        if not self.timescale_pool:
             logger.debug(f"Database not connected, skipping save of stock info for {stock_info.symbol}")
             return
 
         try:
-            async with self.postgres_pool.acquire() as conn:
+            async with self.timescale_pool.acquire() as conn:
                 await conn.execute("""
                     INSERT INTO stocks (
                         symbol, name, exchange, sector, market_cap, pe_ratio,
@@ -402,7 +361,7 @@ class DatabaseStorage:
 
     async def get_stock_info(self, symbol: str) -> Optional[StockSymbol]:
         """
-        Get stock information from PostgreSQL.
+        Get stock information from TimescaleDB.
 
         Args:
             symbol: Stock symbol
@@ -410,13 +369,13 @@ class DatabaseStorage:
         Returns:
             StockSymbol object or None if not found
         """
-        if not self.postgres_pool:
+        if not self.timescale_pool:
             # Fallback: return simulated stock info
             logger.debug(f"Database not connected, returning simulated stock info for {symbol}")
             return self._generate_simulated_stock_info(symbol)
 
         try:
-            async with self.postgres_pool.acquire() as conn:
+            async with self.timescale_pool.acquire() as conn:
                 row = await conn.fetchrow("""
                     SELECT * FROM stocks WHERE symbol = $1
                 """, symbol)
@@ -461,13 +420,13 @@ class DatabaseStorage:
         Returns:
             List of StockSymbol objects
         """
-        if not self.postgres_pool:
+        if not self.timescale_pool:
             # Fallback: return simulated search results
             logger.debug(f"Database not connected, returning simulated search results for '{query}'")
             return self._generate_simulated_search_results(query, limit, skip)
 
         try:
-            async with self.postgres_pool.acquire() as conn:
+            async with self.timescale_pool.acquire() as conn:
                 search_pattern = f"%{query}%"
                 rows = await conn.fetch("""
                     SELECT * FROM stocks

@@ -6,6 +6,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import { config } from './config.js'; // 加载环境变量和配置
 import routes from './routes/index.js';
 import { requestLogger } from './middleware/auth.js';
 import { sessionService } from './services/SessionService.js';
@@ -21,9 +22,9 @@ import {
 const app = express();
 
 // 环境变量配置
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const PORT = process.env.PORT || 3001;
-const API_PREFIX = process.env.API_PREFIX || '/api';
+const NODE_ENV = config.nodeEnv;
+const PORT = config.port;
+const API_PREFIX = config.apiPrefix;
 
 // Swagger配置
 const swaggerOptions = {

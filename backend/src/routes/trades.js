@@ -163,6 +163,55 @@ router.post('/', authenticate, (req, res) => tradeController.createTrade(req, re
 
 /**
  * @swagger
+ * /trades/statistics:
+ *   get:
+ *     tags: [交易]
+ *     summary: 获取交易统计
+ *     description: 获取交易统计信息，包括绩效、今日统计、交易趋势等
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: accountId
+ *         schema:
+ *           type: integer
+ *         description: 账户ID过滤
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 开始日期
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: 结束日期
+ *     responses:
+ *       200:
+ *         description: 获取交易统计成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: 未认证
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: 权限不足
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/statistics', authenticate, (req, res) => tradeController.getTradeStats(req, res));
+
+/**
+ * @swagger
  * /trades/{tradeId}:
  *   get:
  *     tags: [交易]
@@ -266,55 +315,6 @@ router.post('/:tradeId/cancel', authenticate, (req, res) => tradeController.canc
 
 /**
  * @swagger
- * /trades/stats:
- *   get:
- *     tags: [交易]
- *     summary: 获取交易统计
- *     description: 获取交易统计信息，包括绩效、今日统计、交易趋势等
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: accountId
- *         schema:
- *           type: integer
- *         description: 账户ID过滤
- *       - in: query
- *         name: startDate
- *         schema:
- *           type: string
- *           format: date-time
- *         description: 开始日期
- *       - in: query
- *         name: endDate
- *         schema:
- *           type: string
- *           format: date-time
- *         description: 结束日期
- *     responses:
- *       200:
- *         description: 获取交易统计成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未认证
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       403:
- *         description: 权限不足
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/stats', authenticate, (req, res) => tradeController.getTradeStats(req, res));
-
-/**
- * @swagger
  * /trades/hot:
  *   get:
  *     tags: [交易]
@@ -354,5 +354,55 @@ router.get('/stats', authenticate, (req, res) => tradeController.getTradeStats(r
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/hot', authenticate, (req, res) => tradeController.getHotTradingStocks(req, res));
+
+/**
+ * @swagger
+ * /trades/{tradeId}/execute:
+ *   post:
+ *     tags: [交易]
+ *     summary: 执行交易订单
+ *     description: 执行指定的交易订单
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tradeId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 交易ID
+ *     responses:
+ *       200:
+ *         description: 执行交易订单成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: 交易状态不可执行
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: 未认证
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: 权限不足
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: 交易不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/:tradeId/execute', authenticate, (req, res) => tradeController.executeTrade(req, res));
 
 export default router;

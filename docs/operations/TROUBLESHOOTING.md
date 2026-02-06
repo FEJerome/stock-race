@@ -434,6 +434,394 @@ echo "4. 前端错误"
 docker-compose logs frontend --tail=200 | grep -i "error\|exception\|failed" | tail -20
 ```
 
+## 🛠️ 高级故障排除
+
+### 问题7: TimescaleDB时序数据问题
+
+#### 症状
+- 时序数据写入失败
+- 历史数据查询返回空
+- 数据服务日志显示TimescaleDB连接错误
+
+#### 诊断步骤
+```bash
+# 1. 检查TimescaleDB服务状态
+docker-compose ps timescaledb
+
+# 2. 测试TimescaleDB连接
+docker-compose exec timescaledb pg_isready -U tsdb_user
+
+# 3. 检查TimescaleDB扩展
+docker-compose exec timescaledb psql -U tsdb_user -d stock_race_tsdb_prod -c "\dx"
+
+# 4. 检查时序表状态
+docker-compose exec timescaledb psql -U tsdb_user -d stock_race_tsdb_prod -c "SELECT * FROM timescaledb_information.hypertables;"
+
+# 5. 查看数据服务TimescaleDB日志
+docker-compose logs data-service --tail=100 | grep -i "timescaledb\|tsdb"
+```
+
+#### 解决方案
+1. **TimescaleDB扩展未启用**
+   ```bash
+   # 启用TimescaleDB扩展
+   docker-compose exec timescaledb psql -U tsdb_user -d stock_race_tsdb_prod -c "CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;"
+   ```
+
+2. **时序表未创建**
+   ```bash
+   # 创建时序表（示例）
+   docker-compose exec timescaledb psql -U tsdb_user -d stock_race_tsdb_prod -c "
+   CREATE TABLE IF NOT EXISTS stock_prices (
+       time TIMESTAMPTZ NOT NULL,
+       symbol TEXT NOT NULL,
+       price DECIMAL(10,2),
+       volume BIGINT
+   );
+   SELECT create_hypertable('stock_prices', 'time');
+   "
+   ```
+
+3. **权限问题**
+   ```bash
+   # 检查用户权限
+   docker-compose exec timescaledb psql -U tsdb_user -d stock_race_tsdb_prod -c "\du"
+
+   # 授予必要权限
+   docker-compose exec timescaledb psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE stock_race_tsdb_prod TO tsdb_user;"
+   ```
+
+### 问题8: AI服务模型适配器问题
+
+#### 症状
+- AI决策返回模型不可用错误
+- 特定AI模型调用失败
+- API密钥验证失败
+
+#### 诊断步骤
+```bash
+# 1. 检查AI服务模型适配器状态
+curl http://localhost:8000/api/v1/health/ | jq '.model_adapters'
+
+# 2. 测试特定模型适配器
+curl -X POST http://localhost:8000/api/v1/decision/test-model \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: stock-race-ai-key-production" \
+  -d '{"model": "gpt-4"}'
+
+# 3. 检查API密钥配置
+docker-compose exec ai-service env | grep API_KEY
+
+# 4. 查看模型适配器日志
+docker-compose logs ai-service --tail=100 | grep -i "adapter\|model\|openai\|deepseek"
+```
+
+#### 解决方案
+1. **API密钥配置错误**
+   ```bash
+   # 检查环境变量文件
+   cat ai-service/.env.production | grep API_KEY
+
+   # 重新配置API密钥
+   export OPENAI_API_KEY="sk-your-actual-key"
+   docker-compose restart ai-service
+   ```
+
+2. **模型适配器未注册**
+   ```bash
+   # 检查适配器注册
+   docker-compose exec ai-service python -c "
+   from ai_service.core.model_registry import ModelRegistry
+   registry = ModelRegistry()
+   print('Registered adapters:', registry.list_adapters())
+   "
+   ```
+
+3. **网络连接问题**
+   ```bash
+   # 测试外部API连接
+   docker-compose exec ai-service curl -I https://api.openai.com
+
+   # 检查代理设置
+   docker-compose exec ai-service env | grep -i proxy
+   ```
+
+### 问题9: 服务间认证失败
+
+#### 症状
+- 服务间API调用返回403 Forbidden
+- API密钥认证失败
+- 跨服务通信中断
+
+#### 诊断步骤
+```bash
+# 1. 检查服务间API密钥配置
+echo "后端API_KEY: $(docker-compose exec backend env | grep API_KEY)"
+echo "AI服务期望的API_KEY: $(docker-compose exec ai-service env | grep BACKEND_API_KEY)"
+
+# 2. 测试服务间认证
+curl -H "X-API-Key: stock-race-ai-key-production" http://localhost:8000/api/v1/health/
+
+# 3. 检查认证中间件日志
+docker-compose logs backend --tail=50 | grep -i "auth\|api_key"
+docker-compose logs ai-service --tail=50 | grep -i "auth\|api_key"
+
+# 4. 验证密钥匹配
+docker-compose exec backend node -e "
+const crypto = require('crypto');
+const key = process.env.AI_SERVICE_API_KEY;
+console.log('Backend API Key hash:', crypto.createHash('sha256').update(key).digest('hex'));
+"
+```
+
+#### 解决方案
+1. **API密钥不匹配**
+   ```bash
+   # 统一API密钥配置
+   echo "AI_SERVICE_API_KEY=stock-race-ai-key-production" >> backend/.env.production
+   echo "BACKEND_API_KEY=stock-race-ai-key-production" >> ai-service/.env.production
+   docker-compose restart backend ai-service
+   ```
+
+2. **认证中间件配置错误**
+   ```bash
+   # 检查认证中间件配置
+   docker-compose exec backend cat src/middleware/auth.js | head -50
+   docker-compose exec ai-service cat src/ai_service/core/security.py | head -50
+   ```
+
+3. **密钥轮换问题**
+   ```bash
+   # 如果进行了密钥轮换，需要更新所有服务
+   ./scripts/rotate-api-keys.sh --service=all --new-key=new-secure-key
+   ```
+
+### 问题10: 监控数据缺失
+
+#### 症状
+- Prometheus监控目标显示为DOWN
+- Grafana仪表板显示"No Data"
+- 自定义指标不可见
+
+#### 诊断步骤
+```bash
+# 1. 检查Prometheus目标状态
+curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | select(.health=="down")'
+
+# 2. 检查服务metrics端点
+curl http://localhost:3001/metrics | head -20
+curl http://localhost:8000/metrics | head -20
+curl http://localhost:8001/metrics | head -20
+
+# 3. 检查Prometheus配置
+docker-compose exec prometheus cat /etc/prometheus/prometheus.yml
+
+# 4. 检查网络连通性
+docker-compose exec prometheus curl -f http://backend:3001/metrics
+```
+
+#### 解决方案
+1. **Metrics端点未暴露**
+   ```bash
+   # 检查服务是否启用了metrics端点
+   docker-compose exec backend cat src/app.js | grep -i "metrics\|prometheus"
+
+   # 启用metrics端点（Node.js示例）
+   const prometheus = require('prom-client');
+   app.get('/metrics', async (req, res) => {
+     res.set('Content-Type', prometheus.register.contentType);
+     res.end(await prometheus.register.metrics());
+   });
+   ```
+
+2. **Prometheus配置错误**
+   ```bash
+   # 更新Prometheus配置
+   cat > monitoring/prometheus.yml << EOF
+   global:
+     scrape_interval: 15s
+
+   scrape_configs:
+     - job_name: 'backend'
+       static_configs:
+         - targets: ['backend:3001']
+
+     - job_name: 'ai-service'
+       static_configs:
+         - targets: ['ai-service:8000']
+
+     - job_name: 'data-service'
+       static_configs:
+         - targets: ['data-service:8001']
+   EOF
+
+   docker-compose restart prometheus
+   ```
+
+3. **网络策略限制**
+   ```bash
+   # 检查Docker网络配置
+   docker network inspect stock-race-prod-network
+
+   # 确保所有服务在同一个网络
+   docker-compose config | grep -A5 "networks:"
+   ```
+
+## 🔧 维护工具集
+
+### 系统诊断工具
+```bash
+#!/bin/bash
+# scripts/full_diagnosis.sh
+
+echo "🔍 开始全面系统诊断..."
+
+# 1. 系统资源检查
+echo "=== 系统资源 ==="
+free -h
+df -h /
+docker system df
+
+# 2. 服务状态检查
+echo "=== 服务状态 ==="
+docker-compose ps
+docker-compose top
+
+# 3. 网络检查
+echo "=== 网络状态 ==="
+docker network inspect stock-race-prod-network | jq '.[].Containers[] | {Name, IPv4Address}'
+netstat -tlnp | grep -E ":3000|:3001|:8000|:8001|:9090|:3002"
+
+# 4. 健康检查
+echo "=== 健康检查 ==="
+services=("backend:3001" "ai-service:8000" "data-service:8001")
+for service in "${services[@]}"; do
+  if curl -f "http://${service}/health" 2>/dev/null; then
+    echo "✅ ${service%:*}: 健康"
+  else
+    echo "❌ ${service%:*}: 异常"
+  fi
+done
+
+# 5. 数据库检查
+echo "=== 数据库状态 ==="
+docker-compose exec postgres pg_isready -U prod_user && echo "✅ PostgreSQL: 正常" || echo "❌ PostgreSQL: 异常"
+docker-compose exec timescaledb pg_isready -U tsdb_user && echo "✅ TimescaleDB: 正常" || echo "❌ TimescaleDB: 异常"
+docker-compose exec redis redis-cli -a ${REDIS_PASSWORD} ping && echo "✅ Redis: 正常" || echo "❌ Redis: 异常"
+
+# 6. 日志摘要
+echo "=== 最近错误日志 ==="
+for service in backend ai-service data-service; do
+  echo "--- ${service} ---"
+  docker-compose logs ${service} --tail=50 | grep -E "error|exception|failed" | tail -5 || echo "无错误"
+done
+
+echo "📋 诊断完成"
+```
+
+### 性能分析工具
+```bash
+#!/bin/bash
+# scripts/performance_analysis.sh
+
+echo "📊 开始性能分析..."
+
+# 1. API性能测试
+echo "=== API性能 ==="
+wrk -t2 -c50 -d10s http://localhost:3001/api/health 2>/dev/null | grep -A5 "Thread Stats"
+
+# 2. 数据库性能
+echo "=== 数据库性能 ==="
+docker-compose exec postgres psql -U prod_user -d stock_race_prod -c "
+SELECT
+  query,
+  calls,
+  total_time,
+  mean_time,
+  rows
+FROM pg_stat_statements
+ORDER BY total_time DESC
+LIMIT 5;
+"
+
+# 3. Redis性能
+echo "=== Redis性能 ==="
+docker-compose exec redis redis-cli -a ${REDIS_PASSWORD} info stats | grep -E "(instantaneous_ops_per_sec|total_commands_processed|keyspace_hits|keyspace_misses)"
+
+# 4. 容器资源使用
+echo "=== 容器资源 ==="
+docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}"
+
+# 5. 系统负载
+echo "=== 系统负载 ==="
+uptime
+mpstat 1 1 | tail -2
+
+echo "📈 性能分析完成"
+```
+
+### 数据完整性检查工具
+```bash
+#!/bin/bash
+# scripts/data_integrity_check.sh
+
+echo "🔍 开始数据完整性检查..."
+
+# 1. 数据库表检查
+echo "=== 数据库表状态 ==="
+docker-compose exec postgres psql -U prod_user -d stock_race_prod -c "
+SELECT
+  schemaname,
+  tablename,
+  pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
+  n_live_tup as rows
+FROM pg_stat_user_tables
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+LIMIT 10;
+"
+
+# 2. 时序数据检查
+echo "=== 时序数据状态 ==="
+docker-compose exec timescaledb psql -U tsdb_user -d stock_race_tsdb_prod -c "
+SELECT
+  hypertable_name,
+  num_chunks,
+  total_size
+FROM timescaledb_information.hypertables;
+"
+
+# 3. Redis数据检查
+echo "=== Redis数据状态 ==="
+docker-compose exec redis redis-cli -a ${REDIS_PASSWORD} info keyspace
+
+# 4. 数据一致性检查
+echo "=== 数据一致性 ==="
+docker-compose exec backend node -e "
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function checkConsistency() {
+  // 检查用户账户一致性
+  const users = await prisma.user.findMany({
+    include: { accounts: true }
+  });
+
+  console.log(\`总用户数: \${users.length}\`);
+  console.log(\`总账户数: \${users.reduce((sum, user) => sum + user.accounts.length, 0)}\`);
+
+  // 检查交易数据一致性
+  const trades = await prisma.trade.findMany();
+  console.log(\`总交易数: \${trades.length}\`);
+
+  await prisma.\$disconnect();
+}
+
+checkConsistency().catch(console.error);
+"
+
+echo "✅ 数据完整性检查完成"
+```
+
 ## 📞 获取帮助
 
 ### 1. 内部资源
@@ -441,17 +829,29 @@ docker-compose logs frontend --tail=200 | grep -i "error\|exception\|failed" | t
 - **日志**: `logs/`目录（容器内）
 - **配置**: `.env.production`文件
 - **监控**: Prometheus (http://localhost:9090)
+- **仪表板**: Grafana (http://localhost:3002)
+- **修复记录**: `docs/deployment/`目录下的修复记录文档
 
 ### 2. 外部资源
 - **Docker文档**: https://docs.docker.com/
 - **PostgreSQL文档**: https://www.postgresql.org/docs/
+- **TimescaleDB文档**: https://docs.timescale.com/
 - **Redis文档**: https://redis.io/documentation
 - **FastAPI文档**: https://fastapi.tiangolo.com/
+- **Node.js文档**: https://nodejs.org/docs/
+- **Prisma文档**: https://www.prisma.io/docs/
 
 ### 3. 社区支持
 - **GitHub Issues**: 报告bug和功能请求
 - **Stack Overflow**: 技术问题讨论
-- **相关技术社区**: Docker、Python、Node.js社区
+- **相关技术社区**: Docker、Python、Node.js、PostgreSQL社区
+- **TimescaleDB社区**: https://www.timescale.com/community
+
+### 4. 紧急联系方式
+- **运维值班**: +86-xxx-xxxx-xxxx
+- **技术支持邮箱**: support@stock-race.com
+- **监控告警群**: 钉钉/企业微信运维群
+- **云服务商支持**: 根据实际云服务商确定
 
 ---
 

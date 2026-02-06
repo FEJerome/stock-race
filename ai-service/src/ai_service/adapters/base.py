@@ -206,6 +206,9 @@ class AdapterFactory:
         elif provider == AIProvider.WENXIN:
             from .wenxin_adapter import WenxinAdapter
             return WenxinAdapter()
+        elif provider == AIProvider.GLM:
+            from .glm_adapter import GLMAdapter
+            return GLMAdapter()
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 

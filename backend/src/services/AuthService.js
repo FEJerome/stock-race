@@ -2,12 +2,13 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { userRepository } from '../models/index.js';
 import { systemLogRepository } from '../models/index.js';
+import { config } from '../config.js';
 
 export class AuthService {
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || 'stock-race-secret-key';
-    this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '24h';
-    this.adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    this.jwtSecret = config.jwtSecret;
+    this.jwtExpiresIn = config.jwtExpiresIn;
+    this.adminPassword = config.adminPassword;
   }
 
   /**

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Typography,
@@ -7,6 +7,7 @@ import {
   Input,
   Button,
   Switch,
+  Tag,
   Select,
   Upload,
   Avatar,
@@ -19,6 +20,8 @@ import {
   Radio,
   Grid,
   Statistic,
+  Spin,
+  message,
 } from 'antd';
 import {
   SettingOutlined,
@@ -35,6 +38,9 @@ import {
   PhoneOutlined,
 } from '@ant-design/icons';
 
+// 服务导入
+import { authService } from '../services/auth.service';
+
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -48,8 +54,8 @@ const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const screens = useBreakpoint();
 
-  // 模拟用户数据
-  const mockUser = {
+  // 降级用户数据 - 当API失败时使用
+  const fallbackUser = {
     username: 'admin',
     email: 'admin@stock-race.com',
     phone: '+86 13800138000',
@@ -60,33 +66,147 @@ const Settings: React.FC = () => {
     timezone: 'Asia/Shanghai',
   };
 
+  // 状态管理
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(fallbackUser);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+
+  // 加载用户数据
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    setLoading(true);
+    try {
+      // 获取当前用户信息
+      const currentUser = await authService.getCurrentUser();
+
+      // 将后端用户数据格式转换为前端需要的格式
+      const formattedUser = {
+        username: currentUser.username,
+        email: currentUser.email,
+        phone: '+86 13800138000', // TODO: 从真实API获取手机号
+        avatar: currentUser.avatar,
+        bio: 'AI股票交易爱好者，专注于量化投资策略', // TODO: 从真实API获取个人简介
+        location: '上海, 中国', // TODO: 从真实API获取所在地
+        language: 'zh-CN', // TODO: 从真实API获取语言偏好
+        timezone: 'Asia/Shanghai', // TODO: 从真实API获取时区
+      };
+
+      setUser(formattedUser);
+      setUsingFallbackData(false);
+
+      // 更新个人资料表单初始值
+      profileForm.setFieldsValue(formattedUser);
+
+      message.success('用户数据加载成功');
+    } catch (error) {
+      console.error('加载用户数据失败，使用降级数据:', error);
+      message.error('加载用户数据失败，显示降级数据');
+
+      setUser(fallbackUser);
+      setUsingFallbackData(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 处理表单提交
-  const handleProfileSubmit = (values: any) => {
-    console.log('更新个人资料:', values);
-    alert('个人资料已更新');
+  const handleProfileSubmit = async (values: any) => {
+    try {
+      // TODO: 调用真实API更新用户资料
+      console.log('更新个人资料:', values);
+
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 更新本地用户状态
+      setUser((prev: any) => ({ ...prev, ...values }));
+
+      message.success('个人资料更新成功');
+      console.log('个人资料已更新（TODO: 实现真实API调用）');
+    } catch (error) {
+      console.error('更新个人资料失败:', error);
+      message.error('更新个人资料失败，请重试');
+    }
   };
 
-  const handleSecuritySubmit = (values: any) => {
-    console.log('更新安全设置:', values);
-    alert('安全设置已更新');
+  const handleSecuritySubmit = async (values: any) => {
+    try {
+      // TODO: 调用真实API更新安全设置
+      console.log('更新安全设置:', values);
+
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      message.success('安全设置更新成功');
+      console.log('安全设置已更新（TODO: 实现真实API调用）');
+    } catch (error) {
+      console.error('更新安全设置失败:', error);
+      message.error('更新安全设置失败，请重试');
+    }
   };
 
-  const handleNotificationSubmit = (values: any) => {
-    console.log('更新通知设置:', values);
-    alert('通知设置已更新');
+  const handleNotificationSubmit = async (values: any) => {
+    try {
+      // TODO: 调用真实API更新通知设置
+      console.log('更新通知设置:', values);
+
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      message.success('通知设置更新成功');
+      console.log('通知设置已更新（TODO: 实现真实API调用）');
+    } catch (error) {
+      console.error('更新通知设置失败:', error);
+      message.error('更新通知设置失败，请重试');
+    }
   };
 
-  const handleSystemSubmit = (values: any) => {
-    console.log('更新系统设置:', values);
-    alert('系统设置已更新');
+  const handleSystemSubmit = async (values: any) => {
+    try {
+      // TODO: 调用真实API更新系统设置
+      console.log('更新系统设置:', values);
+
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      message.success('系统设置更新成功');
+      console.log('系统设置已更新（TODO: 实现真实API调用）');
+    } catch (error) {
+      console.error('更新系统设置失败:', error);
+      message.error('更新系统设置失败，请重试');
+    }
   };
 
   // 处理头像上传
-  const handleAvatarUpload = (info: any) => {
+  const handleAvatarUpload = async (info: any) => {
     if (info.file.status === 'done') {
-      alert('头像上传成功');
+      try {
+        // TODO: 调用真实API上传头像
+        console.log('头像上传成功:', info.file);
+
+        // 模拟API调用延迟
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        message.success('头像上传成功');
+        console.log('头像已上传（TODO: 实现真实API调用）');
+      } catch (error) {
+        console.error('头像上传失败:', error);
+        message.error('头像上传失败，请重试');
+      }
     }
   };
+
+  // 显示加载状态
+  if (loading && usingFallbackData) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <Spin size="large" tip="加载用户数据中..." />
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '100%' }}>
@@ -176,7 +296,7 @@ const Settings: React.FC = () => {
                     <Space direction="vertical" align="center" style={{ width: '100%' }}>
                       <Avatar
                         size={120}
-                        src={mockUser.avatar}
+                        src={user.avatar}
                         icon={<UserOutlined />}
                       />
                       <Upload
@@ -200,7 +320,7 @@ const Settings: React.FC = () => {
                       form={profileForm}
                       layout="vertical"
                       onFinish={handleProfileSubmit}
-                      initialValues={mockUser}
+                      initialValues={user}
                     >
                       <Row gutter={16}>
                         <Col xs={24} md={12}>

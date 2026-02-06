@@ -5,11 +5,24 @@ import {
   PaginatedResponse,
   PaginationParams,
 } from '../types/api.types';
+import { cacheManager } from '../utils/cache';
 
 export const marketService = {
-  // 获取股票行情 - 使用真实API
+  // 获取股票行情 - 使用真实API，带缓存机制
   getStockQuotes: async (symbols?: string[]): Promise<Stock[]> => {
     try {
+      // 生成缓存键
+      const cacheKey = symbols
+        ? `stocks_quotes_${symbols.sort().join('_')}`
+        : 'stocks_quotes_default';
+
+      // 尝试从缓存获取（实时数据，考虑市场时间）
+      const cached = cacheManager.getWithMarketTime(cacheKey, true);
+      if (cached) {
+        console.log('使用缓存数据:', cacheKey);
+        return cached;
+      }
+
       // 如果有指定股票代码，使用批量查询
       if (symbols && symbols.length > 0) {
         // 批量获取实时数据
@@ -18,7 +31,7 @@ export const marketService = {
         });
 
         // 转换数据格式
-        return response.map(stock => ({
+        const stocks = response.map(stock => ({
           code: stock.stockCode || stock.code,
           name: stock.stockName || stock.name,
           market: stock.market || 'sh',
@@ -36,6 +49,12 @@ export const marketService = {
           open: stock.open || 0,
           previousClose: stock.prevClose || 0
         }));
+
+        // 缓存数据（根据市场时间设置不同的TTL）
+        const ttl = cacheManager.isTradingTime() ? 300000 : 1800000; // 5分钟或30分钟
+        cacheManager.set(cacheKey, stocks, ttl);
+
+        return stocks;
       }
 
       // 获取股票列表（默认获取前50只）
@@ -43,7 +62,7 @@ export const marketService = {
         params: { page: 1, limit: 50 }
       });
 
-      return response.stocks.map(stock => ({
+      const stocks = response.stocks.map(stock => ({
         ...stock,
         // 确保兼容字段
         symbol: stock.code,
@@ -52,25 +71,74 @@ export const marketService = {
         changePercent: stock.changePercent || 0,
         timestamp: stock.timestamp || new Date().toISOString()
       }));
+
+      // 缓存数据
+      cacheManager.set(cacheKey, stocks, 300000); // 5分钟
+
+      return stocks;
     } catch (error) {
       console.error('获取股票行情失败:', error);
-      // 降级处理：返回模拟数据
-      return getFallbackStocks(symbols);
+
+      // 检查错误类型
+      if (error.response?.status === 429) {
+        console.warn('API限流，使用缓存或降级数据');
+        // 尝试从缓存获取
+        const cacheKey = symbols
+          ? `stocks_quotes_${symbols.sort().join('_')}`
+          : 'stocks_quotes_default';
+        const cached = cacheManager.get(cacheKey);
+        if (cached) return cached;
+      } else if (error.response?.status >= 500) {
+        console.warn('服务器错误，使用缓存或降级数据');
+        const cacheKey = symbols
+          ? `stocks_quotes_${symbols.sort().join('_')}`
+          : 'stocks_quotes_default';
+        const cached = cacheManager.get(cacheKey);
+        if (cached) return cached;
+      } else if (error.code === 'ECONNABORTED') {
+        console.warn('请求超时，使用缓存数据');
+        const cacheKey = symbols
+          ? `stocks_quotes_${symbols.sort().join('_')}`
+          : 'stocks_quotes_default';
+        const cached = cacheManager.get(cacheKey);
+        if (cached) return cached;
+      }
+
+      // 缓存也未命中，返回模拟数据
+      const fallbackData = getFallbackStocks(symbols);
+
+      // 即使降级也缓存，避免频繁降级
+      const cacheKey = symbols
+        ? `stocks_quotes_${symbols.sort().join('_')}`
+        : 'stocks_quotes_default';
+      cacheManager.set(cacheKey, fallbackData, 60000); // 降级数据缓存1分钟
+
+      return fallbackData;
     }
   },
 
-  // 搜索股票 - 使用真实API
+  // 搜索股票 - 使用真实API，带缓存机制
   searchStocks: async (query: string): Promise<StockSearchResult[]> => {
     try {
       if (!query || query.trim().length < 2) {
         return [];
       }
 
+      const trimmedQuery = query.trim();
+      const cacheKey = `stocks_search_${trimmedQuery.toLowerCase()}`;
+
+      // 尝试从缓存获取（搜索数据缓存5分钟）
+      const cached = cacheManager.get(cacheKey);
+      if (cached) {
+        console.log('使用缓存搜索数据:', cacheKey);
+        return cached;
+      }
+
       const response = await api.get<{ stocks: StockSearchResult[]; count: number; searchTerm: string }>('/stocks/search', {
-        params: { q: query.trim(), limit: 10 }
+        params: { q: trimmedQuery, limit: 10 }
       });
 
-      return response.stocks.map(stock => ({
+      const results = response.stocks.map(stock => ({
         code: stock.code,
         name: stock.name,
         market: stock.market,
@@ -80,22 +148,59 @@ export const marketService = {
         exchange: stock.market,
         type: stock.industry
       }));
+
+      // 缓存搜索结果（5分钟）
+      cacheManager.set(cacheKey, results, 300000);
+
+      return results;
     } catch (error) {
       console.error('搜索股票失败:', error);
-      // 降级处理：返回模拟数据
-      return getFallbackSearchResults(query);
+
+      // 检查错误类型
+      if (error.response?.status === 429) {
+        console.warn('API限流，使用缓存或降级数据');
+        const trimmedQuery = query.trim();
+        const cacheKey = `stocks_search_${trimmedQuery.toLowerCase()}`;
+        const cached = cacheManager.get(cacheKey);
+        if (cached) return cached;
+      } else if (error.response?.status >= 500) {
+        console.warn('服务器错误，使用缓存或降级数据');
+        const trimmedQuery = query.trim();
+        const cacheKey = `stocks_search_${trimmedQuery.toLowerCase()}`;
+        const cached = cacheManager.get(cacheKey);
+        if (cached) return cached;
+      }
+
+      // 缓存也未命中，返回模拟数据
+      const fallbackData = getFallbackSearchResults(query);
+
+      // 即使降级也缓存，避免频繁降级
+      const trimmedQuery = query.trim();
+      const cacheKey = `stocks_search_${trimmedQuery.toLowerCase()}`;
+      cacheManager.set(cacheKey, fallbackData, 60000); // 降级数据缓存1分钟
+
+      return fallbackData;
     }
   },
 
-  // 获取股票详情 - 使用真实API
+  // 获取股票详情 - 使用真实API，带缓存机制
   getStockDetail: async (symbol: string): Promise<Stock> => {
     try {
+      const cacheKey = `stock_detail_${symbol}`;
+
+      // 尝试从缓存获取（实时数据，考虑市场时间）
+      const cached = cacheManager.getWithMarketTime(cacheKey, true);
+      if (cached) {
+        console.log('使用缓存股票详情:', cacheKey);
+        return cached;
+      }
+
       const response = await api.get<{ stock: any }>(`/stocks/${symbol}`);
 
       const stock = response.stock;
       const realtime = stock.realtime || {};
 
-      return {
+      const stockDetail = {
         code: stock.code,
         name: stock.name,
         market: stock.market,
@@ -118,16 +223,51 @@ export const marketService = {
         open: realtime.open || 0,
         previousClose: realtime.prevClose || 0
       };
+
+      // 缓存数据（根据市场时间设置不同的TTL）
+      const ttl = cacheManager.isTradingTime() ? 300000 : 1800000; // 5分钟或30分钟
+      cacheManager.set(cacheKey, stockDetail, ttl);
+
+      return stockDetail;
     } catch (error) {
       console.error('获取股票详情失败:', error);
-      // 降级处理：返回模拟数据
-      return getFallbackStockDetail(symbol);
+
+      // 检查错误类型
+      if (error.response?.status === 429) {
+        console.warn('API限流，使用缓存或降级数据');
+        const cacheKey = `stock_detail_${symbol}`;
+        const cached = cacheManager.get(cacheKey);
+        if (cached) return cached;
+      } else if (error.response?.status >= 500) {
+        console.warn('服务器错误，使用缓存或降级数据');
+        const cacheKey = `stock_detail_${symbol}`;
+        const cached = cacheManager.get(cacheKey);
+        if (cached) return cached;
+      }
+
+      // 缓存也未命中，返回模拟数据
+      const fallbackData = getFallbackStockDetail(symbol);
+
+      // 即使降级也缓存，避免频繁降级
+      const cacheKey = `stock_detail_${symbol}`;
+      cacheManager.set(cacheKey, fallbackData, 60000); // 降级数据缓存1分钟
+
+      return fallbackData;
     }
   },
 
-  // 获取热门股票 - 使用真实API（获取涨跌幅排行榜）
+  // 获取热门股票 - 使用真实API（获取涨跌幅排行榜），带缓存机制
   getHotStocks: async (): Promise<Stock[]> => {
     try {
+      const cacheKey = 'stocks_hot';
+
+      // 尝试从缓存获取（实时数据，考虑市场时间）
+      const cached = cacheManager.getWithMarketTime(cacheKey, true);
+      if (cached) {
+        console.log('使用缓存热门股票数据:', cacheKey);
+        return cached;
+      }
+
       const response = await api.get<{ rankings: Stock[] }>('/stocks/rankings', {
         params: {
           sortBy: 'changePercent',
@@ -136,7 +276,7 @@ export const marketService = {
         }
       });
 
-      return response.rankings.map(stock => ({
+      const hotStocks = response.rankings.map(stock => ({
         ...stock,
         // 确保兼容字段
         symbol: stock.code,
@@ -145,10 +285,33 @@ export const marketService = {
         changePercent: stock.changePercent || 0,
         timestamp: stock.timestamp || new Date().toISOString()
       }));
+
+      // 缓存数据（根据市场时间设置不同的TTL）
+      const ttl = cacheManager.isTradingTime() ? 300000 : 1800000; // 5分钟或30分钟
+      cacheManager.set(cacheKey, hotStocks, ttl);
+
+      return hotStocks;
     } catch (error) {
       console.error('获取热门股票失败:', error);
-      // 降级处理：返回模拟数据
-      return getFallbackHotStocks();
+
+      // 检查错误类型
+      if (error.response?.status === 429) {
+        console.warn('API限流，使用缓存或降级数据');
+        const cached = cacheManager.get('stocks_hot');
+        if (cached) return cached;
+      } else if (error.response?.status >= 500) {
+        console.warn('服务器错误，使用缓存或降级数据');
+        const cached = cacheManager.get('stocks_hot');
+        if (cached) return cached;
+      }
+
+      // 缓存也未命中，返回模拟数据
+      const fallbackData = getFallbackHotStocks();
+
+      // 即使降级也缓存，避免频繁降级
+      cacheManager.set('stocks_hot', fallbackData, 60000); // 降级数据缓存1分钟
+
+      return fallbackData;
     }
   },
 

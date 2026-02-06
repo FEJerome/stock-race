@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../types/api.types';
+import { authService } from '../services/auth.service';
 
 interface AuthState {
   user: User | null;
@@ -32,31 +33,16 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
 
         try {
-          // 模拟API调用 - 实际项目中替换为真实API
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // 调用真实API（通过authService，它包含降级机制）
+          const loginResponse = await authService.login({ username, password });
 
-          if (username === 'admin' && password === 'admin123') {
-            const mockUser: User = {
-              id: '1',
-              username: 'admin',
-              email: 'admin@stock-race.com',
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-
-            const mockToken = 'mock-jwt-token-1234567890';
-
-            set({
-              user: mockUser,
-              token: mockToken,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-            });
-          } else {
-            throw new Error('用户名或密码错误');
-          }
+          set({
+            user: loginResponse.user,
+            token: loginResponse.token,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
         } catch (error) {
           set({
             isLoading: false,
@@ -66,13 +52,22 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: () => {
-        set({
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          error: null,
-        });
+      logout: async () => {
+        try {
+          // 调用真实API登出（authService.logout包含降级机制）
+          await authService.logout();
+        } catch (error) {
+          console.error('登出过程中发生错误:', error);
+          // 即使API失败，也继续执行本地登出逻辑
+        } finally {
+          // 总是执行本地状态清理
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            error: null,
+          });
+        }
       },
 
       setUser: (user) => set({ user }),

@@ -90,11 +90,9 @@ export class AIAccountRepository extends BaseRepository {
     const account = await this.findOne(
       { id: accountId },
       {
-        include: {
-          portfolios: {
-            include: {
-              stock: true
-            }
+        portfolios: {
+          include: {
+            stock: true
           }
         }
       }

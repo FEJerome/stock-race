@@ -8,51 +8,55 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: stock-race-postgres-prod
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-stock_race_prod}
-      POSTGRES_USER: ${POSTGRES_USER:-prod_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_DB: stock_race
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_change_me_in_production}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - stock-race-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-prod_user}"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
       retries: 5
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 1G
         reservations:
           memory: 512M
 
   # TimescaleDB (时序数据)
   timescaledb:
-    image: timescale/timescaledb:2.11-pg15
+    image: timescale/timescaledb:latest-pg15
     container_name: stock-race-timescaledb-prod
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${TSDB_DB:-stock_race_tsdb_prod}
-      POSTGRES_USER: ${TSDB_USER:-tsdb_user}
-      POSTGRES_PASSWORD: ${TSDB_PASSWORD:-change_me_in_production}
+      POSTGRES_DB: stock_race_tsdb
+      POSTGRES_USER: timescale
+      POSTGRES_PASSWORD: ${TSDB_PASSWORD:-password_change_me_in_production}
+    ports:
+      - "${TSDB_PORT:-5433}:5432"
     volumes:
       - timescaledb_data_prod:/var/lib/postgresql/data
-      - ./docker/timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker/timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - stock-race-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${TSDB_USER:-tsdb_user}"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U timescale"]
+      interval: 10s
+      timeout: 5s
       retries: 5
     deploy:
       resources:
         limits:
-          memory: 4G
+          memory: 2G
         reservations:
           memory: 1G
 
@@ -60,28 +64,25 @@ services:
   redis:
     image: redis:7-alpine
     container_name: stock-race-redis-prod
-    restart: always
-    command: >
-      sh -c "redis-server
-      --requirepass ${REDIS_PASSWORD:-change_me_in_production}
-      --appendonly yes
-      --maxmemory ${REDIS_MAX_MEMORY:-256mb}
-      --maxmemory-policy allkeys-lru"
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_change_me_in_production}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data_prod:/data
     networks:
       - stock-race-prod-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-change_me_in_production}", "ping"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_change_me_in_production}", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 5
     deploy:
       resources:
         limits:
           memory: 512M
         reservations:
-          memory: 128M
+          memory: 256M
 
   # Backend API Service
   backend:
@@ -95,20 +96,28 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    env_file:
-      - backend/.env.production
     environment:
+      - NODE_ENV=production
+      - PORT=3001
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=${POSTGRES_DB:-stock_race_prod}
-      - DB_USER=${POSTGRES_USER:-prod_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-change_me_in_production}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-change_me_in_production}@redis:6379
-      - NODE_ENV=production
+      - DB_NAME=${POSTGRES_DB:-stock_race}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres_change_me_in_production}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_change_me_in_production}@redis:6379
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - AI_SERVICE_URL=http://ai-service:8000
       - DATA_SERVICE_URL=http://data-service:8001
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_change_me_in_production}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - API_KEY=${API_KEY:-stock-race-api-key-production}
+      - AI_SERVICE_API_KEY=${AI_SERVICE_API_KEY:-stock-race-ai-key-production}
+      - DATA_SERVICE_API_KEY=${DATA_SERVICE_API_KEY:-stock-race-data-key-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://frontend:3000}
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
     volumes:
-      - backend_logs_prod:/var/log/stock-race
+      - backend_logs_prod:/app/logs
     networks:
       - stock-race-prod-network
     healthcheck:
@@ -136,20 +145,28 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    env_file:
-      - ai-service/.env.production
     environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=False
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=${POSTGRES_DB:-stock_race_prod}
-      - DB_USER=${POSTGRES_USER:-prod_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-change_me_in_production}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-change_me_in_production}@redis:6379
-      - DEBUG=False
+      - DB_NAME=${POSTGRES_DB:-stock_race}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres_change_me_in_production}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_change_me_in_production}@redis:6379
       - BACKEND_URL=http://backend:3001
       - DATA_SERVICE_URL=http://data-service:8001
+      - API_KEY=${API_KEY:-stock-race-api-key-production}
+      - AI_SERVICE_API_KEY=${AI_SERVICE_API_KEY:-stock-race-ai-key-production}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - QWEN_API_KEY=${QWEN_API_KEY}
+    ports:
+      - "${AI_SERVICE_PORT:-8000}:8000"
     volumes:
-      - ai_service_logs_prod:/var/log/stock-race
+      - ai_service_logs_prod:/app/logs
     networks:
       - stock-race-prod-network
     healthcheck:
@@ -179,24 +196,29 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    env_file:
-      - data-service/.env.production
     environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - DEBUG=False
       - TSDB_HOST=timescaledb
       - TSDB_PORT=5432
-      - TSDB_NAME=${TSDB_DB:-stock_race_tsdb_prod}
-      - TSDB_USER=${TSDB_USER:-tsdb_user}
-      - TSDB_PASSWORD=${TSDB_PASSWORD:-change_me_in_production}
+      - TSDB_NAME=${TSDB_DB:-stock_race_tsdb}
+      - TSDB_USER=${TSDB_USER:-timescale}
+      - TSDB_PASSWORD=${TSDB_PASSWORD:-password_change_me_in_production}
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=${POSTGRES_DB:-stock_race_prod}
-      - DB_USER=${POSTGRES_USER:-prod_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-change_me_in_production}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-change_me_in_production}@redis:6379
-      - DEBUG=False
+      - DB_NAME=${POSTGRES_DB:-stock_race}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres_change_me_in_production}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_change_me_in_production}@redis:6379
       - BACKEND_URL=http://backend:3001
+      - AI_SERVICE_URL=http://ai-service:8000
+      - API_KEY=${API_KEY:-stock-race-api-key-production}
+      - DATA_SERVICE_API_KEY=${DATA_SERVICE_API_KEY:-stock-race-data-key-production}
+    ports:
+      - "${DATA_SERVICE_PORT:-8001}:8001"
     volumes:
-      - data_service_logs_prod:/var/log/stock-race
+      - data_service_logs_prod:/app/logs
     networks:
       - stock-race-prod-network
     healthcheck:
@@ -221,6 +243,20 @@ services:
     restart: always
     depends_on:
       - backend
+      - ai-service
+      - data-service
+    environment:
+      - VITE_API_BASE_URL=/api
+      - VITE_API_URL=http://backend:3001/api
+      - VITE_WS_URL=ws://backend:3001
+      - VITE_APP_NAME=Stock Race
+      - VITE_APP_VERSION=1.0.0
+      - VITE_DEBUG=false
+      - VITE_ENABLE_AI_ANALYSIS=true
+      - VITE_ENABLE_REALTIME_DATA=true
+      - VITE_ENABLE_COMPETITION=true
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
     networks:
       - stock-race-prod-network
     healthcheck:
@@ -235,86 +271,43 @@ services:
         reservations:
           memory: 64M
 
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: stock-race-nginx-prod
-    restart: always
-    depends_on:
-      - frontend
-      - backend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx_logs_prod:/var/log/nginx
-    networks:
-      - stock-race-prod-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-        reservations:
-          memory: 32M
-
-  # Prometheus Monitoring
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: stock-race-prometheus-prod
-    restart: always
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=15d'
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data_prod:/prometheus
-    networks:
-      - stock-race-prod-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 256M
-
-  # Grafana Dashboard
-  grafana:
-    image: grafana/grafana:latest
-    container_name: stock-race-grafana-prod
-    restart: always
+  # pgAdmin (Database Management - Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: stock-race-pgadmin-prod
+    restart: unless-stopped
     environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_SERVER_ROOT_URL=${GRAFANA_URL:-http://localhost:3002}
-      - GF_INSTALL_PLUGINS=
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@stock-race.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
     volumes:
-      - grafana_data_prod:/var/lib/grafana
+      - pgadmin_data_prod:/var/lib/pgadmin
     networks:
       - stock-race-prod-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     deploy:
       resources:
         limits:
           memory: 512M
+        reservations:
+          memory: 256M
+
+  # Redis Commander (Redis Management - Optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: stock-race-redis-commander-prod
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_change_me_in_production}
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    networks:
+      - stock-race-prod-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
         reservations:
           memory: 128M
 
@@ -327,20 +320,9 @@ networks:
 
 volumes:
   postgres_data_prod:
-    driver: local
   timescaledb_data_prod:
-    driver: local
   redis_data_prod:
-    driver: local
+  pgadmin_data_prod:
   backend_logs_prod:
-    driver: local
   ai_service_logs_prod:
-    driver: local
   data_service_logs_prod:
-    driver: local
-  nginx_logs_prod:
-    driver: local
-  prometheus_data_prod:
-    driver: local
-  grafana_data_prod:
-    driver: local

@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     DEEPSEEK_API_KEY: Optional[str] = os.getenv("DEEPSEEK_API_KEY")
     QWEN_API_KEY: Optional[str] = os.getenv("QWEN_API_KEY")
+    GLM_API_KEY: Optional[str] = os.getenv("GLM_API_KEY")  # 智谱AI API密钥
 
     # Rate limiting
     RATE_LIMIT_REQUESTS: int = int(os.getenv("RATE_LIMIT_REQUESTS", 100))

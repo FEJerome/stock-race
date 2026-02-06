@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -21,6 +21,7 @@ import {
   Divider,
   Grid,
   InputNumber,
+  message,
 } from 'antd';
 import {
   RobotOutlined,
@@ -40,57 +41,8 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-// 模拟AI账户数据
-const mockAIAccounts = [
-  {
-    id: '1',
-    name: '量化策略AI',
-    modelType: 'openai',
-    status: 'active',
-    apiKey: 'sk-...1234',
-    isActive: true,
-    performance: 85,
-    decisionsToday: 24,
-    successRate: 78.5,
-    createdAt: '2026-01-15',
-  },
-  {
-    id: '2',
-    name: '价值投资助手',
-    modelType: 'claude',
-    status: 'active',
-    apiKey: 'sk-ant-...5678',
-    isActive: true,
-    performance: 72,
-    decisionsToday: 18,
-    successRate: 65.2,
-    createdAt: '2026-01-20',
-  },
-  {
-    id: '3',
-    name: '技术分析大师',
-    modelType: 'wenxin',
-    status: 'inactive',
-    apiKey: 'sk-wenxin-...9012',
-    isActive: false,
-    performance: 68,
-    decisionsToday: 0,
-    successRate: 71.8,
-    createdAt: '2026-01-25',
-  },
-  {
-    id: '4',
-    name: '风险控制专家',
-    modelType: 'qwen',
-    status: 'error',
-    apiKey: 'sk-qwen-...3456',
-    isActive: false,
-    performance: 45,
-    decisionsToday: 5,
-    successRate: 52.3,
-    createdAt: '2026-02-01',
-  },
-];
+// AI服务导入
+import { aiService } from '../services/ai.service';
 
 // 模型类型配置
 const modelTypes = {
@@ -101,24 +53,117 @@ const modelTypes = {
 };
 
 const AIAccounts: React.FC = () => {
+  const [aiAccounts, setAiAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
   const screens = useBreakpoint();
 
-  // 处理添加/编辑AI账户
-  const handleSubmit = (values: any) => {
-    console.log('提交AI账户:', values);
-    if (editingAccount) {
-      // 更新现有账户
-      alert(`更新AI账户: ${values.name}`);
-    } else {
-      // 添加新账户
-      alert(`添加新AI账户: ${values.name}`);
+  // 加载AI账户数据
+  useEffect(() => {
+    loadAIAccounts();
+  }, []);
+
+  const loadAIAccounts = async () => {
+    setLoading(true);
+    try {
+      const accounts = await aiService.getAIAccounts();
+      // 转换数据格式以适应组件
+      const formattedAccounts = accounts.map(account => ({
+        id: account.id,
+        name: account.name,
+        modelType: account.modelType,
+        status: account.isActive ? 'active' : 'inactive',
+        apiKey: 'sk-...' + (account.id || '').slice(-4), // 模拟部分API密钥
+        isActive: account.isActive,
+        performance: Math.floor(Math.random() * 40) + 60, // 临时模拟性能数据
+        decisionsToday: Math.floor(Math.random() * 30), // 临时模拟今日决策数
+        successRate: 60 + Math.random() * 35, // 临时模拟成功率
+        createdAt: account.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+      }));
+      setAiAccounts(formattedAccounts);
+    } catch (error) {
+      console.error('加载AI账户失败:', error);
+      message.error('加载AI账户失败，使用模拟数据');
+      // 降级时使用模拟数据
+      const fallbackAccounts = [
+        {
+          id: '1',
+          name: '量化策略AI',
+          modelType: 'openai',
+          status: 'active',
+          apiKey: 'sk-...1234',
+          isActive: true,
+          performance: 85,
+          decisionsToday: 24,
+          successRate: 78.5,
+          createdAt: '2026-01-15',
+        },
+        {
+          id: '2',
+          name: '价值投资助手',
+          modelType: 'claude',
+          status: 'active',
+          apiKey: 'sk-ant-...5678',
+          isActive: true,
+          performance: 72,
+          decisionsToday: 18,
+          successRate: 65.2,
+          createdAt: '2026-01-20',
+        },
+        {
+          id: '3',
+          name: '技术分析大师',
+          modelType: 'wenxin',
+          status: 'inactive',
+          apiKey: 'sk-wenxin-...9012',
+          isActive: false,
+          performance: 68,
+          decisionsToday: 0,
+          successRate: 71.8,
+          createdAt: '2026-01-25',
+        },
+        {
+          id: '4',
+          name: '风险控制专家',
+          modelType: 'qwen',
+          status: 'error',
+          apiKey: 'sk-qwen-...3456',
+          isActive: false,
+          performance: 45,
+          decisionsToday: 5,
+          successRate: 52.3,
+          createdAt: '2026-02-01',
+        },
+      ];
+      setAiAccounts(fallbackAccounts);
+    } finally {
+      setLoading(false);
     }
-    setModalVisible(false);
-    form.resetFields();
-    setEditingAccount(null);
+  };
+
+  // 处理添加/编辑AI账户
+  const handleSubmit = async (values: any) => {
+    try {
+      if (editingAccount) {
+        // 更新现有账户
+        await aiService.updateAIAccount(editingAccount.id, values);
+        message.success(`AI账户 ${values.name} 更新成功`);
+      } else {
+        // 添加新账户
+        await aiService.createAIAccount(values);
+        message.success(`AI账户 ${values.name} 创建成功`);
+      }
+      setModalVisible(false);
+      form.resetFields();
+      setEditingAccount(null);
+      // 刷新AI账户列表
+      loadAIAccounts();
+    } catch (error) {
+      console.error('保存AI账户失败:', error);
+      message.error('保存AI账户失败，请重试');
+    }
   };
 
   // 处理删除AI账户
@@ -129,8 +174,16 @@ const AIAccounts: React.FC = () => {
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',
-      onOk: () => {
-        alert(`删除AI账户: ${account.name}`);
+      onOk: async () => {
+        try {
+          await aiService.deleteAIAccount(account.id);
+          message.success(`AI账户 ${account.name} 删除成功`);
+          // 刷新AI账户列表
+          loadAIAccounts();
+        } catch (error) {
+          console.error('删除AI账户失败:', error);
+          message.error('删除AI账户失败，请重试');
+        }
       },
     });
   };
@@ -290,8 +343,8 @@ const AIAccounts: React.FC = () => {
           <Card>
             <Statistic
               title="活跃AI账户"
-              value={mockAIAccounts.filter(a => a.isActive).length}
-              suffix={`/ ${mockAIAccounts.length}`}
+              value={aiAccounts.filter(a => a.isActive).length}
+              suffix={`/ ${aiAccounts.length}`}
               valueStyle={{ color: '#52c41a' }}
               prefix={<PlayCircleOutlined />}
             />
@@ -302,7 +355,7 @@ const AIAccounts: React.FC = () => {
           <Card>
             <Statistic
               title="今日总决策"
-              value={mockAIAccounts.reduce((sum, a) => sum + a.decisionsToday, 0)}
+              value={aiAccounts.reduce((sum, a) => sum + a.decisionsToday, 0)}
               valueStyle={{ color: '#1890ff' }}
               prefix={<ThunderboltOutlined />}
             />
@@ -314,7 +367,7 @@ const AIAccounts: React.FC = () => {
             <Statistic
               title="平均成功率"
               value={(
-                mockAIAccounts.reduce((sum, a) => sum + a.successRate, 0) / mockAIAccounts.length
+                aiAccounts.reduce((sum, a) => sum + a.successRate, 0) / aiAccounts.length
               ).toFixed(1)}
               suffix="%"
               valueStyle={{ color: '#722ed1' }}
@@ -328,7 +381,7 @@ const AIAccounts: React.FC = () => {
             <Statistic
               title="平均性能"
               value={(
-                mockAIAccounts.reduce((sum, a) => sum + a.performance, 0) / mockAIAccounts.length
+                aiAccounts.reduce((sum, a) => sum + a.performance, 0) / aiAccounts.length
               ).toFixed(0)}
               suffix="分"
               valueStyle={{ color: '#fa8c16' }}
@@ -363,11 +416,12 @@ const AIAccounts: React.FC = () => {
             }
           >
             <Table
-              dataSource={mockAIAccounts}
+              dataSource={aiAccounts}
               columns={accountColumns}
               rowKey="id"
               pagination={false}
               scroll={{ x: true }}
+              loading={loading}
             />
           </Card>
         </Col>

@@ -31,6 +31,7 @@ class AIProvider(str, Enum):
     DEEPSEEK = "deepseek"
     QWEN = "qwen"
     WENXIN = "wenxin"
+    GLM = "glm"  # 智谱AI
 
 
 class StockData(BaseModel):

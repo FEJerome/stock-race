@@ -21,21 +21,20 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
     # CORS
-    CORS_ORIGINS: List[str] = json.loads(os.getenv("CORS_ORIGINS", '["http://localhost:3000"]'))
+    CORS_ORIGINS: List[str] = []
+    _cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+    try:
+        CORS_ORIGINS = json.loads(_cors_origins)
+    except json.JSONDecodeError:
+        # Comma-separated format
+        CORS_ORIGINS = [origin.strip() for origin in _cors_origins.split(",") if origin.strip()]
 
-    # TimescaleDB (for time-series data)
+    # TimescaleDB (for all data)
     TSDB_HOST: str = os.getenv("TSDB_HOST", "localhost")
     TSDB_PORT: int = int(os.getenv("TSDB_PORT", 5433))
     TSDB_NAME: str = os.getenv("TSDB_NAME", "stock_race_tsdb")
     TSDB_USER: str = os.getenv("TSDB_USER", "timescale")
     TSDB_PASSWORD: str = os.getenv("TSDB_PASSWORD", "password")
-
-    # PostgreSQL (for metadata)
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")
-    DB_PORT: int = int(os.getenv("DB_PORT", 5432))
-    DB_NAME: str = os.getenv("DB_NAME", "stock_race")
-    DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
 
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")
@@ -78,10 +77,16 @@ class Settings(BaseSettings):
     LOG_FILE: str = os.getenv("LOG_FILE", "logs/data_service.log")
 
     # Stock Symbols (default Chinese A-share stocks)
-    DEFAULT_STOCK_SYMBOLS: List[str] = json.loads(os.getenv(
+    DEFAULT_STOCK_SYMBOLS: List[str] = []
+    _default_stock_symbols = os.getenv(
         "DEFAULT_STOCK_SYMBOLS",
-        '["000001.SZ","000002.SZ","000858.SZ","600036.SH","600519.SH"]'
-    ))
+        "000001.SZ,000002.SZ,000858.SZ,600036.SH,600519.SH"
+    )
+    try:
+        DEFAULT_STOCK_SYMBOLS = json.loads(_default_stock_symbols)
+    except json.JSONDecodeError:
+        # Comma-separated format
+        DEFAULT_STOCK_SYMBOLS = [symbol.strip() for symbol in _default_stock_symbols.split(",") if symbol.strip()]
 
     class Config:
         env_file = ".env"

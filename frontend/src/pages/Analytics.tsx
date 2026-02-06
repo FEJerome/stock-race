@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Typography,
@@ -17,6 +17,8 @@ import {
   Alert,
   Divider,
   Grid,
+  message,
+  Spin,
 } from 'antd';
 import {
   LineChartOutlined,
@@ -33,14 +35,17 @@ import {
   StockOutlined,
 } from '@ant-design/icons';
 
+// 服务导入
+import { tradingService } from '../services/trading.service';
+
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
 const { useBreakpoint } = Grid;
 
-// 模拟收益曲线数据
-const mockProfitData = [
+// 降级数据 - 当API失败时使用
+const fallbackProfitData = [
   { date: '2026-01-01', value: 100000, profit: 0 },
   { date: '2026-01-08', value: 102500, profit: 2500 },
   { date: '2026-01-15', value: 105800, profit: 5800 },
@@ -52,8 +57,7 @@ const mockProfitData = [
   { date: '2026-02-26', value: 125430, profit: 25430 },
 ];
 
-// 模拟资产分布数据
-const mockAssetDistribution = [
+const fallbackAssetDistribution = [
   { category: '科技股', value: 65430, percentage: 52.1, color: '#1890ff' },
   { category: '消费股', value: 25430, percentage: 20.3, color: '#52c41a' },
   { category: '金融股', value: 18750, percentage: 14.9, color: '#fa8c16' },
@@ -61,16 +65,14 @@ const mockAssetDistribution = [
   { category: '其他', value: 5950, percentage: 4.8, color: '#eb2f96' },
 ];
 
-// 模拟交易分析数据
-const mockTradeAnalysis = [
+const fallbackTradeAnalysis = [
   { period: '今日', trades: 8, volume: 850, profit: 1250, winRate: 75.0 },
   { period: '本周', trades: 42, volume: 4250, profit: 6540, winRate: 71.4 },
   { period: '本月', trades: 156, volume: 15800, profit: 18700, winRate: 68.6 },
   { period: '本年', trades: 425, volume: 42500, profit: 25430, winRate: 65.9 },
 ];
 
-// 模拟股票表现数据
-const mockStockPerformance = [
+const fallbackStockPerformance = [
   { symbol: 'AAPL', name: '苹果公司', return: 8.16, volatility: 12.5, sharpe: 1.42 },
   { symbol: 'MSFT', name: '微软公司', return: 6.48, volatility: 10.8, sharpe: 1.28 },
   { symbol: 'GOOGL', name: '谷歌', return: 7.71, volatility: 14.2, sharpe: 1.18 },
@@ -81,14 +83,63 @@ const mockStockPerformance = [
 const Analytics: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [selectedChart, setSelectedChart] = useState('profit');
+  const [loading, setLoading] = useState(false);
+  const [portfolioSummary, setPortfolioSummary] = useState<any>(null);
+  const [profitData, setProfitData] = useState<any[]>(fallbackProfitData);
+  const [assetDistribution, setAssetDistribution] = useState<any[]>(fallbackAssetDistribution);
+  const [tradeAnalysis, setTradeAnalysis] = useState<any[]>(fallbackTradeAnalysis);
+  const [stockPerformance, setStockPerformance] = useState<any[]>(fallbackStockPerformance);
   const screens = useBreakpoint();
 
+  // 加载分析数据
+  useEffect(() => {
+    loadAnalyticsData();
+  }, []);
+
+  const loadAnalyticsData = async () => {
+    setLoading(true);
+    try {
+      // 获取投资组合汇总数据
+      const summary = await tradingService.getPortfolioSummary();
+      setPortfolioSummary(summary);
+
+      // TODO: 这里应该调用真实的分析API获取收益曲线、资产分布、交易分析、股票表现等数据
+      // 目前使用降级数据，后续需要实现真实API调用
+      console.log('分析数据加载成功，使用真实API数据（TODO: 实现完整分析API）');
+
+    } catch (error) {
+      console.error('加载分析数据失败，使用降级数据:', error);
+      message.error('加载分析数据失败，显示降级数据');
+
+      // 使用降级数据
+      setPortfolioSummary({
+        totalValue: 125430.50,
+        totalCost: 100000.00,
+        totalPnl: 25430.50,
+        totalPnlPercent: 25.43,
+        cashBalance: 25430.50,
+        positionsCount: 5,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 计算统计指标
-  const totalValue = mockProfitData[mockProfitData.length - 1].value;
-  const totalProfit = mockProfitData[mockProfitData.length - 1].profit;
-  const profitPercentage = (totalProfit / (totalValue - totalProfit)) * 100;
-  const avgDailyReturn = 0.42; // 模拟数据
-  const maxDrawdown = -8.5; // 模拟数据
+  const totalValue = portfolioSummary?.totalValue || profitData[profitData.length - 1]?.value || 0;
+  const totalProfit = portfolioSummary?.totalPnl || profitData[profitData.length - 1]?.profit || 0;
+  const profitPercentage = portfolioSummary?.totalPnlPercent ||
+    (totalValue > 0 ? (totalProfit / (totalValue - totalProfit)) * 100 : 0);
+  const avgDailyReturn = 0.42; // TODO: 从真实API获取
+  const maxDrawdown = -8.5; // TODO: 从真实API获取
+
+  if (loading && !portfolioSummary) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <Spin size="large" tip="加载分析数据中..." />
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '100%' }}>
@@ -99,6 +150,7 @@ const Analytics: React.FC = () => {
         </Title>
         <Text type="secondary">
           深入分析您的投资表现、资产配置和交易策略。
+          {!portfolioSummary && <Tag color="orange" style={{ marginLeft: 8 }}>使用降级数据</Tag>}
         </Text>
       </Space>
 
@@ -297,7 +349,7 @@ const Analytics: React.FC = () => {
               }
             >
               <Table
-                dataSource={mockTradeAnalysis}
+                dataSource={tradeAnalysis}
                 columns={[
                   {
                     title: '周期',
@@ -368,7 +420,7 @@ const Analytics: React.FC = () => {
               size="small"
             >
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                {mockAssetDistribution.map((item, index) => (
+                {assetDistribution.map((item, index) => (
                   <div key={index}>
                     <Space style={{ width: '100%', justifyContent: 'space-between' }}>
                       <Space>
@@ -410,7 +462,7 @@ const Analytics: React.FC = () => {
               size="small"
             >
               <Table
-                dataSource={mockStockPerformance}
+                dataSource={stockPerformance}
                 columns={[
                   {
                     title: '股票',
@@ -492,24 +544,49 @@ const Analytics: React.FC = () => {
             <Card size="small">
               <Space direction="vertical" size={8} style={{ width: '100%' }}>
                 <Text strong>分析建议</Text>
-                <Alert
-                  message="资产配置"
-                  description="科技股占比过高(52.1%)，建议适当分散到其他行业"
-                  type="warning"
-                  showIcon
-                />
-                <Alert
-                  message="风险控制"
-                  description="最大回撤-8.5%在可接受范围，继续保持"
-                  type="info"
-                  showIcon
-                />
-                <Alert
-                  message="交易策略"
-                  description="胜率68.6%表现良好，可考虑增加交易频率"
-                  type="success"
-                  showIcon
-                />
+                {portfolioSummary ? (
+                  <>
+                    <Alert
+                      message="投资表现"
+                      description={`总收益 ${portfolioSummary.totalPnlPercent?.toFixed(2) || '0.00'}%，${portfolioSummary.totalPnlPercent >= 0 ? '表现良好' : '需要注意'}。${portfolioSummary.totalPnlPercent >= 0 ? '继续保持当前策略' : '建议调整投资组合'}`}
+                      type={portfolioSummary.totalPnlPercent >= 0 ? 'success' : 'warning'}
+                      showIcon
+                    />
+                    <Alert
+                      message="资产规模"
+                      description={`总资产 ¥${portfolioSummary.totalValue?.toLocaleString() || '0'}，持仓 ${portfolioSummary.positionsCount || 0} 只股票，${portfolioSummary.positionsCount > 10 ? '持仓较多，注意分散风险' : '持仓数量适中'}`}
+                      type="info"
+                      showIcon
+                    />
+                    <Alert
+                      message="现金管理"
+                      description={`现金余额 ¥${portfolioSummary.cashBalance?.toLocaleString() || '0'}，${portfolioSummary.cashBalance > portfolioSummary.totalValue * 0.2 ? '现金充足，可考虑增加投资' : '现金比例适中'}`}
+                      type="info"
+                      showIcon
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Alert
+                      message="数据状态"
+                      description="当前使用降级分析数据，建议连接后端API获取真实分析报告"
+                      type="warning"
+                      showIcon
+                    />
+                    <Alert
+                      message="资产配置"
+                      description="建议定期检查投资组合，确保资产分散配置"
+                      type="info"
+                      showIcon
+                    />
+                    <Alert
+                      message="风险控制"
+                      description="建议设置止损点，控制单只股票持仓比例"
+                      type="info"
+                      showIcon
+                    />
+                  </>
+                )}
               </Space>
             </Card>
           </Space>

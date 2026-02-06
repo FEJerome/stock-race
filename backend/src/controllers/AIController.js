@@ -275,23 +275,21 @@ export class AIController {
       const account = await aiAccountRepository.findOne(
         { id: parseInt(accountId) },
         {
-          include: {
-            portfolios: {
-              include: {
-                stock: true
-              }
-            },
-            trades: {
-              take: 10,
-              orderBy: { executedAt: 'desc' },
-              include: {
-                stock: true
-              }
-            },
-            decisionLogs: {
-              take: 10,
-              orderBy: { createdAt: 'desc' }
+          portfolios: {
+            include: {
+              stock: true
             }
+          },
+          trades: {
+            take: 10,
+            orderBy: { executedAt: 'desc' },
+            include: {
+              stock: true
+            }
+          },
+          decisionLogs: {
+            take: 10,
+            orderBy: { createdAt: 'desc' }
           }
         }
       );
