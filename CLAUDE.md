@@ -25,6 +25,8 @@
 
 ### 开发指南
 - [**开发规范**](docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
+- [**产出物管理规范**](docs/development/ARTIFACT_MANAGEMENT.md) - 产出物存储、日志与留痕管理
+- [**内存持久化优化产出物记录**](docs/development/MEMORY_PERSISTENCE_OPTIMIZATION_ARTIFACTS.md) - 优化功能产出物详细记录
 - [**新手指南**](docs/usage/QUICK_START.md) - 环境搭建与快速上手
 
 ### 智能体协作
@@ -64,6 +66,7 @@
 - **REQUIREMENTS.md** - 详细需求规格
 - **DEPLOYMENT_GUIDE.md** - 部署详细步骤
 - **CODING_STANDARDS.md** - 编码规范细节
+- **ARTIFACT_MANAGEMENT.md** - 产出物管理规范
 
 ## 🎯 核心模块导航
 
