@@ -4,7 +4,12 @@
       "Bash(git push:*)",
       "Bash(git worktree remove:*)",
       "Bash(systemctl:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(set CLAUDE_SESSION_JSON=true)",
+      "Bash(export:*)",
+      "Bash(unset:*)",
+      "Bash(git pull:*)",
+      "Read(//d/BaiduSyncdisk/MaHaoYuJavaLearning/learnCode/everything-claude-code/**)"
     ],
     "additionalDirectories": [
       "d:\\BaiduSyncdisk\\MaHaoYuJavaLearning\\littletry\\claude_sample",

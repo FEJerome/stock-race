@@ -21,7 +21,8 @@ const {
   replaceInFile,
   log,
   saveSessionAsJson,
-  readSessionFile
+  readSessionFile,
+  extractSessionFromTranscript
 } = require('../lib/utils');
 
 // Optional: Import cleanup utilities
@@ -77,19 +78,59 @@ async function main() {
         sessionData.updated = currentTime;
         sessionData.timestamp = new Date().toISOString();
 
+        // If session data is empty, try to extract from transcript
+        const transcriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
+        if (transcriptPath && fs.existsSync(transcriptPath)) {
+          if (!sessionData.context || sessionData.context === '' ||
+              (sessionData.tasks && sessionData.tasks.length === 0) ||
+              !sessionData.notes || sessionData.notes === '') {
+            try {
+              const extractedContent = extractSessionFromTranscript(transcriptPath);
+              // Only update empty fields
+              if (!sessionData.context || sessionData.context === '') {
+                sessionData.context = extractedContent.context || '';
+              }
+              if (!sessionData.tasks || sessionData.tasks.length === 0) {
+                sessionData.tasks = extractedContent.tasks || [];
+              }
+              if (!sessionData.notes || sessionData.notes === '') {
+                sessionData.notes = extractedContent.notes || '';
+              }
+              if (!sessionData.files || sessionData.files.length === 0) {
+                sessionData.files = extractedContent.files || [];
+              }
+              log(`[SessionEnd] Updated empty fields from transcript: ${transcriptPath}`);
+            } catch (err) {
+              log(`[SessionEnd] Failed to extract from transcript: ${err.message}`);
+            }
+          }
+        }
+
         if (saveSessionAsJson(sessionFile, sessionData)) {
           log(`[SessionEnd] Updated JSON session file: ${sessionFile}`);
         }
       } else {
         // Convert legacy format to JSON if needed
+        // Extract session content from transcript if available
+        let extractedContent = { context: '', tasks: [], notes: '', files: [] };
+        const transcriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
+        if (transcriptPath && fs.existsSync(transcriptPath)) {
+          try {
+            extractedContent = extractSessionFromTranscript(transcriptPath);
+            log(`[SessionEnd] Extracted session content from transcript: ${transcriptPath}`);
+          } catch (err) {
+            log(`[SessionEnd] Failed to extract from transcript: ${err.message}`);
+          }
+        }
+
         const sessionData = {
           date: today,
           started: currentTime,
           updated: currentTime,
-          context: 'Converted from legacy format',
-          tasks: [],
-          notes: '',
-          files: []
+          context: extractedContent.context || 'Converted from legacy format',
+          tasks: extractedContent.tasks || [],
+          notes: extractedContent.notes || '',
+          files: extractedContent.files || []
         };
 
         if (saveSessionAsJson(sessionFile, sessionData)) {
@@ -112,14 +153,26 @@ async function main() {
     // Create new session file
     if (useJsonFormat) {
       // JSON format
+      // Extract session content from transcript if available
+      let extractedContent = { context: '', tasks: [], notes: '', files: [] };
+      const transcriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
+      if (transcriptPath && fs.existsSync(transcriptPath)) {
+        try {
+          extractedContent = extractSessionFromTranscript(transcriptPath);
+          log(`[SessionEnd] Extracted session content from transcript: ${transcriptPath}`);
+        } catch (err) {
+          log(`[SessionEnd] Failed to extract from transcript: ${err.message}`);
+        }
+      }
+
       const sessionData = {
         date: today,
         started: currentTime,
         updated: currentTime,
-        context: '',
-        tasks: [],
-        notes: '',
-        files: []
+        context: extractedContent.context || '',
+        tasks: extractedContent.tasks || [],
+        notes: extractedContent.notes || '',
+        files: extractedContent.files || []
       };
 
       if (saveSessionAsJson(sessionFile, sessionData)) {

@@ -80,13 +80,34 @@ function getTimeString() {
 }
 
 /**
+ * Generate a short random string (6 characters)
+ */
+function generateShortId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
+/**
  * Get short session ID from CLAUDE_SESSION_ID environment variable
  * Returns the last 8 characters for uniqueness with brevity
+ * If no session ID is available, generates a unique ID with date and random string
  * @param {string} fallback - Fallback value if no session ID (default: 'default')
  */
 function getSessionIdShort(fallback = 'default') {
   const sessionId = process.env.CLAUDE_SESSION_ID;
   if (!sessionId || sessionId.length === 0) {
+    // If fallback is 'default' or not provided, generate a unique ID
+    // Otherwise use the provided fallback value (for backward compatibility)
+    if (fallback === 'default') {
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+      const randomStr = generateShortId();
+      return `${dateStr}-${randomStr}`;
+    }
     return fallback;
   }
   return sessionId.slice(-8);
@@ -486,6 +507,137 @@ function readSessionFile(filePath) {
 }
 
 /**
+ * Extract session information from Claude Code transcript file
+ * @param {string} transcriptPath - Path to transcript JSON file
+ * @returns {object} Extracted session data (context, tasks, notes, files)
+ */
+function extractSessionFromTranscript(transcriptPath) {
+  const result = {
+    context: '',
+    tasks: [],
+    notes: '',
+    files: []
+  };
+
+  try {
+    const content = readFile(transcriptPath);
+    if (!content) return result;
+
+    const transcript = JSON.parse(content);
+    const messages = transcript.messages || [];
+
+    // Extract the last 3 messages for context
+    const recentMessages = messages.slice(-6); // Last 3 exchanges (user+assistant pairs)
+    const contextParts = [];
+
+    for (const msg of recentMessages) {
+      if (msg.type === 'user' || msg.type === 'assistant') {
+        // Extract brief content (first 100 chars)
+        const text = msg.content || '';
+        const preview = text.length > 100 ? text.substring(0, 100) + '...' : text;
+        contextParts.push(`${msg.type}: ${preview}`);
+      }
+    }
+
+    if (contextParts.length > 0) {
+      result.context = contextParts.join(' | ');
+    }
+
+    // Extract tasks from assistant messages (looking for todo/task patterns)
+    const taskPatterns = [
+      /- \[ \]\s*(.+?)(?:\n|$)/g,  // - [ ] task
+      /- \[x\]\s*(.+?)(?:\n|$)/gi, // - [x] task (completed)
+      /TODO:\s*(.+?)(?:\n|$)/gi,   // TODO: task
+      /Task:\s*(.+?)(?:\n|$)/gi,   // Task: task
+      /1\.\s*(.+?)(?:\n|$)/g,      // 1. task
+      /2\.\s*(.+?)(?:\n|$)/g,      // 2. task
+      /\*\s*(.+?)(?:\n|$)/g        // * task
+    ];
+
+    const allTasks = new Set();
+    for (const msg of messages) {
+      if (msg.type === 'assistant') {
+        const text = msg.content || '';
+        for (const pattern of taskPatterns) {
+          const matches = text.matchAll(pattern);
+          for (const match of matches) {
+            if (match[1]) {
+              const task = match[1].trim();
+              if (task.length > 0 && task.length < 100) {
+                allTasks.add(task);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    result.tasks = Array.from(allTasks).slice(0, 10); // Limit to 10 tasks
+
+    // Extract notes (look for "note:", "notes:", "next session", etc.)
+    const notePatterns = [
+      /note:\s*(.+?)(?:\n|$)/gi,
+      /notes:\s*(.+?)(?:\n|$)/gi,
+      /next session:\s*(.+?)(?:\n|$)/gi,
+      /next:\s*(.+?)(?:\n|$)/gi,
+      /reminder:\s*(.+?)(?:\n|$)/gi
+    ];
+
+    for (const msg of messages.slice().reverse()) { // Search from most recent
+      const text = msg.content || '';
+      for (const pattern of notePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          result.notes = match[0].substring(match[0].indexOf(':') + 1).trim();
+          if (result.notes.length > 100) {
+            result.notes = result.notes.substring(0, 100) + '...';
+          }
+          break;
+        }
+      }
+      if (result.notes) break;
+    }
+
+    // Extract file paths from messages (simple pattern matching)
+    const filePatterns = [
+      /`([^`\n]+\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))`/g,
+      /"([^"\n]+\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))"/g,
+      /'([^'\n]+\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))'/g,
+      /([a-zA-Z]:\\[^:\n]*\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))/g,
+      /(\/[^:\n]*\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))/g
+    ];
+
+    const allFiles = new Set();
+    for (const msg of messages) {
+      const text = msg.content || '';
+      for (const pattern of filePatterns) {
+        const matches = text.matchAll(pattern);
+        for (const match of matches) {
+          const filePath = match[1] || match[0];
+          if (filePath && filePath.length > 0) {
+            // Normalize path and get relative path if possible
+            try {
+              const normalized = path.normalize(filePath);
+              allFiles.add(normalized);
+            } catch {
+              allFiles.add(filePath);
+            }
+          }
+        }
+      }
+    }
+
+    result.files = Array.from(allFiles).slice(0, 10); // Limit to 10 files
+
+  } catch (err) {
+    // If transcript parsing fails, return empty result
+    log(`[TranscriptParse] Error: ${err.message}`);
+  }
+
+  return result;
+}
+
+/**
  * Save session in JSON format
  * @param {string} filePath - Path to save session file
  * @param {object} sessionData - Session data object
@@ -534,6 +686,7 @@ module.exports = {
   getTimeString,
   getDateTimeString,
   getSessionIdShort,
+  generateShortId,
 
   // File operations
   findFiles,
@@ -546,6 +699,7 @@ module.exports = {
 
   // Session compression
   generateSessionSummary,
+  extractSessionFromTranscript,
 
   // Session format
   parseLegacySession,
