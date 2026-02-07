@@ -26,6 +26,7 @@
 ### 开发指南
 - [**开发规范**](docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
 - [**产出物管理规范**](docs/development/ARTIFACT_MANAGEMENT.md) - 产出物存储、日志与留痕管理
+- [**当前功能清单**](docs/development/CURRENT_FUNCTIONALITY_INVENTORY.md) - 系统当前业务功能详细清单
 - [**内存持久化优化产出物记录**](docs/development/MEMORY_PERSISTENCE_OPTIMIZATION_ARTIFACTS.md) - 优化功能产出物详细记录
 - [**新手指南**](docs/usage/QUICK_START.md) - 环境搭建与快速上手
 
@@ -382,5 +383,5 @@ cp .env.production.example .env.production
 - **可在今日收盘前**：100% 完成所有任务
 
 ---
-*本文档最后更新于：2026-02-06 12:15 CST*
+*本文档最后更新于：2026-02-06 (更新功能清单文档)*
 *文档维护者：项目团队 + 协调智能体*

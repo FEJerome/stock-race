@@ -61,41 +61,45 @@ export class AuthService {
   }
 
   /**
-   * 简化登录（单用户密码验证）
+   * 标准登录（用户名和密码验证）
+   * @param {string} username - 用户名
    * @param {string} password - 密码
    * @param {Object} clientInfo - 客户端信息
    * @returns {Promise<{success: boolean, token?: string, user?: Object, message: string}>}
    */
-  async simpleLogin(password, clientInfo = {}) {
+  async standardLogin(username, password, clientInfo = {}) {
     try {
-      // 验证密码
-      if (password !== this.adminPassword) {
+      // 查找用户
+      const user = await userRepository.findByUsername(username);
+
+      if (!user) {
         // 记录登录失败
-        await this.logLoginAttempt(null, false, '密码错误', clientInfo);
+        await this.logLoginAttempt(null, false, '用户不存在', clientInfo);
         return {
           success: false,
-          message: '密码错误'
+          message: '用户名或密码错误'
         };
       }
 
-      // 获取或创建管理员用户
-      let user = await userRepository.findByUsername('admin');
+      // 验证密码
+      const isValidPassword = await this.verifyPassword(password, user.passwordHash, user.salt);
 
-      if (!user) {
-        // 创建管理员用户（简化版）
-        const salt = await bcrypt.genSalt(10);
-        const passwordHash = await bcrypt.hash(this.adminPassword, salt);
+      if (!isValidPassword) {
+        // 记录登录失败
+        await this.logLoginAttempt(user.id, false, '密码错误', clientInfo);
+        return {
+          success: false,
+          message: '用户名或密码错误'
+        };
+      }
 
-        user = await userRepository.createUser({
-          username: 'admin',
-          email: 'admin@stockrace.com',
-          passwordHash,
-          salt,
-          status: 'active'
-        });
-
-        // 创建用户设置
-        await this.createDefaultUserSettings(user.id);
+      // 检查用户状态
+      if (user.status !== 'active') {
+        await this.logLoginAttempt(user.id, false, '用户状态异常', clientInfo);
+        return {
+          success: false,
+          message: '用户已被禁用'
+        };
       }
 
       // 更新最后登录时间
@@ -116,6 +120,75 @@ export class AuthService {
           email: user.email
         },
         message: '登录成功'
+      };
+    } catch (error) {
+      console.error('登录失败:', error);
+      return {
+        success: false,
+        message: '登录失败，请稍后重试'
+      };
+    }
+  }
+
+  /**
+   * 简化登录（兼容旧版本，只检查admin密码）
+   * @param {string} password - 密码
+   * @param {Object} clientInfo - 客户端信息
+   * @returns {Promise<{success: boolean, token?: string, user?: Object, message: string}>}
+   */
+  async simpleLogin(password, clientInfo = {}) {
+    try {
+      // 首先尝试使用admin密码登录
+      if (password === this.adminPassword) {
+        // 获取或创建管理员用户
+        let user = await userRepository.findByUsername('admin');
+
+        if (!user) {
+          // 创建管理员用户（简化版）
+          const salt = await bcrypt.genSalt(10);
+          const passwordHash = await bcrypt.hash(this.adminPassword, salt);
+
+          user = await userRepository.createUser({
+            username: 'admin',
+            email: 'admin@stockrace.com',
+            passwordHash,
+            salt,
+            status: 'active'
+          });
+
+          // 创建用户设置
+          await this.createDefaultUserSettings(user.id);
+        }
+
+        // 更新最后登录时间
+        await userRepository.updateLastLogin(user.id);
+
+        // 生成令牌
+        const token = this.generateToken(user);
+
+        // 记录登录成功
+        await this.logLoginAttempt(user.id, true, '登录成功', clientInfo);
+
+        return {
+          success: true,
+          token,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email
+          },
+          message: '登录成功'
+        };
+      }
+
+      // 如果不是admin密码，尝试查找其他用户
+      // 注意：这里简化处理，实际应该根据用户名查找
+      // 由于前端只传密码，我们暂时不支持普通用户通过simpleLogin登录
+      // 记录登录失败
+      await this.logLoginAttempt(null, false, '密码错误', clientInfo);
+      return {
+        success: false,
+        message: '密码错误'
       };
     } catch (error) {
       console.error('登录失败:', error);
@@ -443,6 +516,71 @@ export class AuthService {
         today: { total: 0, success: 0, failed: 0 },
         activeUsers: 0,
         totalUsers: 0
+      };
+    }
+  }
+
+  /**
+   * 用户注册
+   * @param {string} username - 用户名
+   * @param {string} password - 密码
+   * @param {Object} clientInfo - 客户端信息
+   * @returns {Promise<{success: boolean, user?: Object, token?: string, message: string}>}
+   */
+  async register(username, password, clientInfo = {}) {
+    try {
+      // 生成盐值和密码哈希
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      // 创建用户数据
+      const userData = {
+        username,
+        email: `${username}@example.com`, // 简化版，使用示例邮箱
+        passwordHash,
+        salt,
+        status: 'active'
+      };
+
+      // 创建用户
+      const user = await userRepository.createUser(userData);
+
+      if (!user) {
+        await this.logLoginAttempt(null, false, '用户创建失败', clientInfo);
+        return {
+          success: false,
+          message: '用户创建失败'
+        };
+      }
+
+      // 生成JWT令牌
+      const token = this.generateToken(user);
+
+      // 记录注册成功
+      await this.logLoginAttempt(user.id, true, '注册成功', clientInfo);
+
+      return {
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          status: user.status,
+          createdAt: user.createdAt
+        },
+        token,
+        message: '注册成功'
+      };
+
+    } catch (error) {
+      console.error('用户注册失败:', error);
+
+      // 记录注册失败
+      await this.logLoginAttempt(null, false, `注册失败: ${error.message}`, clientInfo);
+
+      return {
+        success: false,
+        message: '注册失败，请稍后重试'
       };
     }
   }

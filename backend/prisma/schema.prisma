@@ -34,7 +34,7 @@ model AIAccount {
   userId           Int
   name             String           @db.VarChar(100)
   description      String?
-  modelType        ModelType        @default(openai_gpt4)
+  modelType        ModelType        @default(deepseek)
   initialBalance   Decimal          @default(100000.00) @db.Decimal(15, 2)
   currentBalance   Decimal          @default(100000.00) @db.Decimal(15, 2)
   totalValue       Decimal          @default(100000.00) @db.Decimal(15, 2)
@@ -260,11 +260,8 @@ enum UserStatus {
 }
 
 enum ModelType {
-  openai_gpt4
-  openai_gpt35
-  claude
-  wenxin
-  qwen
+  deepseek
+  glm
 }
 
 enum AccountStatus {

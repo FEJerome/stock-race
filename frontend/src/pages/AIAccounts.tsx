@@ -44,12 +44,12 @@ const { useBreakpoint } = Grid;
 // AI服务导入
 import { aiService } from '../services/ai.service';
 
-// 模型类型配置
+// 模型类型配置（仅支持deepseek和GLM模型）
 const modelTypes = {
-  openai: { name: 'OpenAI GPT', color: 'green', icon: '🤖' },
-  claude: { name: 'Claude', color: 'blue', icon: '🧠' },
-  wenxin: { name: '文心一言', color: 'red', icon: '💬' },
-  qwen: { name: '通义千问', color: 'orange', icon: '⚡' },
+  deepseek: { name: 'DeepSeek', color: 'blue', icon: '🤖' },
+  'glm-4.5': { name: 'GLM-4.5', color: 'green', icon: '🧠' },
+  'glm-4.6': { name: 'GLM-4.6', color: 'purple', icon: '⚡' },
+  'glm-4.7': { name: 'GLM-4.7', color: 'orange', icon: '🔥' },
 };
 
 const AIAccounts: React.FC = () => {
@@ -91,7 +91,7 @@ const AIAccounts: React.FC = () => {
         {
           id: '1',
           name: '量化策略AI',
-          modelType: 'openai',
+          modelType: 'deepseek',
           status: 'active',
           apiKey: 'sk-...1234',
           isActive: true,
@@ -103,9 +103,9 @@ const AIAccounts: React.FC = () => {
         {
           id: '2',
           name: '价值投资助手',
-          modelType: 'claude',
+          modelType: 'glm-4.5',
           status: 'active',
-          apiKey: 'sk-ant-...5678',
+          apiKey: 'sk-...5678',
           isActive: true,
           performance: 72,
           decisionsToday: 18,
@@ -115,9 +115,9 @@ const AIAccounts: React.FC = () => {
         {
           id: '3',
           name: '技术分析大师',
-          modelType: 'wenxin',
+          modelType: 'glm-4.6',
           status: 'inactive',
-          apiKey: 'sk-wenxin-...9012',
+          apiKey: 'sk-...9012',
           isActive: false,
           performance: 68,
           decisionsToday: 0,
@@ -127,9 +127,9 @@ const AIAccounts: React.FC = () => {
         {
           id: '4',
           name: '风险控制专家',
-          modelType: 'qwen',
+          modelType: 'glm-4.7',
           status: 'error',
-          apiKey: 'sk-qwen-...3456',
+          apiKey: 'sk-...3456',
           isActive: false,
           performance: 45,
           decisionsToday: 5,
@@ -441,26 +441,26 @@ const AIAccounts: React.FC = () => {
             >
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
                 <Alert
-                  message="OpenAI配置"
-                  description="前往 OpenAI Platform 获取API密钥"
+                  message="DeepSeek配置"
+                  description="前往 DeepSeek Platform 获取API密钥"
                   type="info"
                   showIcon
                 />
                 <Alert
-                  message="Claude配置"
-                  description="前往 Anthropic Console 获取API密钥"
+                  message="GLM-4.5配置"
+                  description="前往智谱AI开放平台获取API密钥"
                   type="info"
                   showIcon
                 />
                 <Alert
-                  message="文心一言配置"
-                  description="前往百度AI开放平台获取API密钥"
+                  message="GLM-4.6配置"
+                  description="前往智谱AI开放平台获取API密钥"
                   type="info"
                   showIcon
                 />
                 <Alert
-                  message="通义千问配置"
-                  description="前往阿里云获取API密钥"
+                  message="GLM-4.7配置"
+                  description="前往智谱AI开放平台获取API密钥"
                   type="info"
                   showIcon
                 />
@@ -538,7 +538,7 @@ const AIAccounts: React.FC = () => {
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            modelType: 'openai',
+            modelType: 'deepseek',
             isActive: true,
           }}
         >
@@ -560,10 +560,10 @@ const AIAccounts: React.FC = () => {
                 rules={[{ required: true, message: '请选择AI模型' }]}
               >
                 <Select placeholder="选择AI模型">
-                  <Option value="openai">OpenAI GPT</Option>
-                  <Option value="claude">Claude</Option>
-                  <Option value="wenxin">文心一言</Option>
-                  <Option value="qwen">通义千问</Option>
+                  <Option value="deepseek">DeepSeek</Option>
+                  <Option value="glm-4.5">GLM-4.5</Option>
+                  <Option value="glm-4.6">GLM-4.6</Option>
+                  <Option value="glm-4.7">GLM-4.7</Option>
                 </Select>
               </Form.Item>
             </Col>

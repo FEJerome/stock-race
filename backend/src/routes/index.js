@@ -5,6 +5,7 @@ import stocksRoutes from './stocks.js';
 import tradesRoutes from './trades.js';
 import portfoliosRoutes from './portfolios.js';
 import marketRoutes from './market.js';
+import adminRoutes from './admin.js';
 import { authenticate, optionalAuthenticate, checkPermission, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -124,6 +125,9 @@ router.use('/portfolios', portfoliosRoutes);
 
 // 市场路由
 router.use('/market', marketRoutes);
+
+// 管理员路由（需要管理员权限）
+router.use('/admin', adminRoutes);
 
 // 受保护的路由示例（需要认证）
 router.get('/protected', authenticate, (req, res) => {

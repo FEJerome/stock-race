@@ -11,12 +11,13 @@ import { cacheManager } from '../utils/cache';
 
 export const tradingService = {
   // 获取交易订单列表 - 使用真实API，带缓存和降级机制
-  getOrders: async (params?: PaginationParams): Promise<PaginatedResponse<TradeOrder>> => {
+  getOrders: async (params?: PaginationParams & { accountId?: string }): Promise<PaginatedResponse<TradeOrder>> => {
     try {
-      // 生成缓存键（包含分页参数）
+      // 生成缓存键（包含分页参数和账户ID）
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 10;
-      const cacheKey = `trading_orders_page${page}_size${pageSize}`;
+      const accountId = params?.accountId || '';
+      const cacheKey = `trading_orders_page${page}_size${pageSize}_account${accountId || 'user1'}`;
 
       // 尝试从缓存获取（用户数据缓存15分钟）
       const cached = cacheManager.get(cacheKey);
@@ -75,7 +76,8 @@ export const tradingService = {
       if (error.response?.status === 429 || error.response?.status >= 500 || error.code === 'ECONNABORTED') {
         const page = params?.page || 1;
         const pageSize = params?.pageSize || 10;
-        const cacheKey = `trading_orders_page${page}_size${pageSize}`;
+        const accountId = params?.accountId || '';
+        const cacheKey = `trading_orders_page${page}_size${pageSize}_account${accountId || 'user1'}`;
         const cached = cacheManager.get(cacheKey);
         if (cached) {
           console.warn('API错误，使用缓存数据');
@@ -164,6 +166,7 @@ export const tradingService = {
 
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 10;
+      const accountId = params?.accountId || '';
       const start = (page - 1) * pageSize;
       const end = start + pageSize;
 
@@ -176,7 +179,7 @@ export const tradingService = {
       };
 
       // 缓存降级数据（1分钟，避免频繁降级）
-      const cacheKey = `trading_orders_page${page}_size${pageSize}`;
+      const cacheKey = `trading_orders_page${page}_size${pageSize}_account${accountId || 'user1'}`;
       cacheManager.set(cacheKey, fallbackResponse, 60000); // 1分钟
 
       return fallbackResponse;
@@ -273,9 +276,9 @@ export const tradingService = {
   },
 
   // 获取持仓列表 - 映射到 /portfolios 路由
-  getPositions: async (): Promise<Position[]> => {
+  getPositions: async (accountId?: string): Promise<Position[]> => {
     try {
-      const cacheKey = 'trading_positions_user1';
+      const cacheKey = `trading_positions_${accountId || 'user1'}`;
 
       // 尝试从缓存获取（用户数据缓存15分钟）
       const cached = cacheManager.get(cacheKey);
@@ -285,11 +288,15 @@ export const tradingService = {
       }
 
       // 调用真实API - 后端使用 /portfolios 路由
+      const params: any = {};
+      if (accountId) {
+        params.accountId = accountId;
+      }
       const response = await api.get<{
         success: boolean;
         data: any[];
         message: string;
-      }>('/portfolios');
+      }>('/portfolios', { params });
 
       if (response.success) {
         // 转换后端数据格式为前端Position类型
@@ -321,7 +328,8 @@ export const tradingService = {
 
       // 检查错误类型，尝试使用缓存
       if (error.response?.status === 429 || error.response?.status >= 500 || error.code === 'ECONNABORTED') {
-        const cached = cacheManager.get('trading_positions_user1');
+        const fallbackCacheKey = `trading_positions_${accountId || 'user1'}`;
+        const cached = cacheManager.get(fallbackCacheKey);
         if (cached) {
           console.warn('API错误，使用缓存持仓数据');
           return cached;
@@ -410,7 +418,8 @@ export const tradingService = {
       ];
 
       // 缓存降级数据（1分钟，避免频繁降级）
-      cacheManager.set('trading_positions_user1', mockPositions, 60000);
+      const fallbackCacheKey = `trading_positions_${accountId || 'user1'}`;
+      cacheManager.set(fallbackCacheKey, mockPositions, 60000);
 
       return mockPositions;
     }
@@ -543,10 +552,11 @@ export const tradingService = {
   // 获取交易历史
   getTradeHistory: async (params?: PaginationParams): Promise<PaginatedResponse<TradeOrder>> => {
     try {
-      // 生成缓存键（包含分页参数）
+      // 生成缓存键（包含分页参数和账户ID）
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 10;
-      const cacheKey = `trading_history_page${page}_size${pageSize}`;
+      const accountId = params?.accountId || '';
+      const cacheKey = `trading_history_page${page}_size${pageSize}_account${accountId || 'user1'}`;
 
       // 尝试从缓存获取（交易历史缓存30分钟）
       const cached = cacheManager.get(cacheKey);
@@ -605,7 +615,8 @@ export const tradingService = {
       if (error.response?.status === 429 || error.response?.status >= 500 || error.code === 'ECONNABORTED') {
         const page = params?.page || 1;
         const pageSize = params?.pageSize || 10;
-        const cacheKey = `trading_history_page${page}_size${pageSize}`;
+        const accountId = params?.accountId || '';
+        const cacheKey = `trading_history_page${page}_size${pageSize}_account${accountId || 'user1'}`;
         const cached = cacheManager.get(cacheKey);
         if (cached) {
           console.warn('API错误，使用缓存交易历史数据');
@@ -696,6 +707,7 @@ export const tradingService = {
 
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 10;
+      const accountId = params?.accountId || '';
       const start = (page - 1) * pageSize;
       const end = start + pageSize;
 
@@ -708,7 +720,7 @@ export const tradingService = {
       };
 
       // 缓存降级数据（1分钟，避免频繁降级）
-      const cacheKey = `trading_history_page${page}_size${pageSize}`;
+      const cacheKey = `trading_history_page${page}_size${pageSize}_account${accountId || 'user1'}`;
       cacheManager.set(cacheKey, fallbackResponse, 60000);
 
       return fallbackResponse;

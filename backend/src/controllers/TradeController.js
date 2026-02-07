@@ -194,9 +194,22 @@ export class TradeController {
    * 创建交易订单
    * @param {Object} req - 请求对象
    * @param {Object} res - 响应对象
+   *
+   * 注意：根据业务需求，用户不能直接创建交易订单，所有交易必须由AI账户自主执行。
+   * 此方法已禁用，如需启用需修改逻辑。
    */
   async createTrade(req, res) {
     try {
+      // 根据业务需求，用户不能直接创建交易订单，所有交易必须由AI账户自主执行
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'TRADE_DISABLED',
+          message: '交易功能已禁用'
+        },
+        message: '用户不能直接创建交易订单，所有交易必须由AI账户自主执行。请通过AI账户进行交易决策。'
+      });
+
       const {
         accountId,
         stockCode,
@@ -616,9 +629,22 @@ export class TradeController {
    * 取消交易订单
    * @param {Object} req - 请求对象
    * @param {Object} res - 响应对象
+   *
+   * 注意：根据业务需求，用户不能直接取消交易订单，所有交易操作必须由AI账户自主执行。
+   * 此方法已禁用，如需启用需修改逻辑。
    */
   async cancelTrade(req, res) {
     try {
+      // 根据业务需求，用户不能直接取消交易订单，所有交易操作必须由AI账户自主执行
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'TRADE_DISABLED',
+          message: '交易取消功能已禁用'
+        },
+        message: '用户不能直接取消交易订单，所有交易操作必须由AI账户自主执行。'
+      });
+
       const { tradeId } = req.params;
       const { reason = '用户取消' } = req.body;
       const userId = req.user?.id;
@@ -714,6 +740,9 @@ export class TradeController {
    * 执行交易订单
    * @param {Object} req - 请求对象
    * @param {Object} res - 响应对象
+   *
+   * 注意：根据业务需求，用户不能直接执行交易订单，所有交易必须由AI账户自主执行。
+   * 此方法主要供AI服务调用，用于执行AI决策产生的交易。
    */
   async executeTrade(req, res) {
     try {

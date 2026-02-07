@@ -105,7 +105,7 @@ export class AIController {
     try {
       const {
         name,
-        modelType = 'openai_gpt4',
+        modelType = 'deepseek',
         initialBalance = 100000.00,
         tradingFrequency = 'daily',
         riskLevel = 'medium',
@@ -150,8 +150,8 @@ export class AIController {
         });
       }
 
-      // 验证模型类型
-      const validModelTypes = ['openai_gpt4', 'openai_gpt35', 'claude', 'wenxin', 'qwen'];
+      // 验证模型类型 - 根据AI服务适配器更新为deepseek和glm
+      const validModelTypes = ['deepseek', 'glm'];
       if (!validModelTypes.includes(modelType)) {
         return res.status(400).json({
           success: false,

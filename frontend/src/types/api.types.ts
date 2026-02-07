@@ -13,6 +13,7 @@ export interface PaginationParams {
   pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  accountId?: string; // AI账户ID，用于过滤特定账户的数据
 }
 
 // 分页响应
@@ -42,6 +43,20 @@ export interface LoginRequest {
 export interface LoginResponse {
   user: User;
   token: string;
+  expiresIn: number;
+}
+
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface RegisterResponse {
+  user: User;
+  token: string;
+  sessionId: string;
+  expiresAt: string;
   expiresIn: number;
 }
 
@@ -166,7 +181,7 @@ export interface AIAccount {
   id: string;
   userId: string;
   name: string;
-  modelType: 'openai' | 'claude' | 'wenxin' | 'qwen';
+  modelType: 'deepseek' | 'glm-4.5' | 'glm-4.6' | 'glm-4.7';
   apiKey?: string;
   isActive: boolean;
   createdAt: string;
