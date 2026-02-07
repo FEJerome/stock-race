@@ -1,5 +1,20 @@
-import React from 'react';
-import { Card, Descriptions, Tag, Progress, Timeline, Space, Button, Tooltip } from 'antd';
+import React, { useState } from 'react';
+import {
+  Card,
+  Descriptions,
+  Tag,
+  Progress,
+  Timeline,
+  Space,
+  Button,
+  Tooltip,
+  Modal,
+  Input,
+  message,
+  Collapse,
+  Alert,
+  Typography
+} from 'antd';
 import {
   LineChartOutlined,
   DollarOutlined,
@@ -7,7 +22,12 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  CopyOutlined,
+  EyeOutlined,
+  CodeOutlined,
+  RobotOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 
 interface AIDecisionDetailProps {
@@ -30,11 +50,24 @@ interface AIDecisionDetailProps {
     executedAt?: string;
     createdAt: string;
     updatedAt: string;
+    // 新增字段：完整提示词相关
+    promptTemplate?: string;
+    fullPrompt?: string;
+    tokenCount?: number;
+    userPreferences?: Record<string, any>;
+    promptVariables?: Record<string, any>;
+    modelContext?: Record<string, any>;
   };
   onClose?: () => void;
 }
 
+const { TextArea } = Input;
+const { Panel } = Collapse;
+const { Text } = Typography;
+
 const AIDecisionDetail: React.FC<AIDecisionDetailProps> = ({ decision, onClose }) => {
+  const [promptModalVisible, setPromptModalVisible] = useState(false);
+  const [promptContent, setPromptContent] = useState(decision.fullPrompt || '');
   const getActionColor = (action: string) => {
     switch (action) {
       case 'buy': return 'green';
@@ -100,11 +133,22 @@ const AIDecisionDetail: React.FC<AIDecisionDetailProps> = ({ decision, onClose }
 
   const confidenceLevel = getConfidenceLevel(decision.confidence);
 
+  const handleCopyPrompt = () => {
+    if (decision.fullPrompt) {
+      navigator.clipboard.writeText(decision.fullPrompt);
+      message.success('提示词已复制到剪贴板');
+    }
+  };
+
+  const handleShowFullPrompt = () => {
+    setPromptModalVisible(true);
+  };
+
   return (
     <Card
       title={
         <Space>
-          <LineChartOutlined />
+          <RobotOutlined />
           <span>AI决策详情</span>
           <Tag color={getActionColor(decision.action)}>
             {getActionText(decision.action)}
@@ -114,12 +158,43 @@ const AIDecisionDetail: React.FC<AIDecisionDetailProps> = ({ decision, onClose }
           </Tag>
         </Space>
       }
-      extra={onClose && <Button type="link" onClick={onClose}>关闭</Button>}
+      extra={
+        <Space>
+          {decision.fullPrompt && (
+            <>
+              <Button
+                type="primary"
+                icon={<CopyOutlined />}
+                onClick={handleCopyPrompt}
+                size="small"
+              >
+                复制提示词
+              </Button>
+              <Button
+                icon={<EyeOutlined />}
+                onClick={handleShowFullPrompt}
+                size="small"
+              >
+                查看完整提示词
+              </Button>
+            </>
+          )}
+          {onClose && <Button type="link" onClick={onClose} size="small">关闭</Button>}
+        </Space>
+      }
       style={{ marginBottom: 16 }}
     >
       <Descriptions bordered column={2} size="small">
         <Descriptions.Item label="决策ID" span={2}>
           {decision.id}
+        </Descriptions.Item>
+
+        <Descriptions.Item label="提示词模板">
+          <Tag color="blue">{decision.promptTemplate || '未指定'}</Tag>
+        </Descriptions.Item>
+
+        <Descriptions.Item label="Token数量">
+          <Tag color="green">{decision.tokenCount || '未记录'}</Tag>
         </Descriptions.Item>
 
         <Descriptions.Item label="AI账户">
@@ -339,6 +414,99 @@ const AIDecisionDetail: React.FC<AIDecisionDetailProps> = ({ decision, onClose }
         </Space>
       </div>
 
+      {/* 完整提示词展示 */}
+      {(decision.fullPrompt || decision.promptTemplate) && (
+        <div style={{ marginTop: 24 }}>
+          <h4 style={{ marginBottom: 16 }}>
+            <CodeOutlined /> AI决策提示词详情
+          </h4>
+          <Collapse defaultActiveKey={['1', '2', '3', '4']}>
+            <Panel header="提示词信息概览" key="1">
+              <Descriptions bordered column={2} size="small">
+                <Descriptions.Item label="提示词模板">
+                  <Tag color="blue">{decision.promptTemplate || '未指定'}</Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Token数量">
+                  <Tag color="green">{decision.tokenCount || '未记录'}</Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="字符数" span={2}>
+                  <Text>{decision.fullPrompt?.length || 0} 字符</Text>
+                </Descriptions.Item>
+              </Descriptions>
+            </Panel>
+
+            {decision.promptVariables && Object.keys(decision.promptVariables).length > 0 && (
+              <Panel header="提示词变量" key="2">
+                <Card size="small">
+                  <pre style={{ margin: 0, fontSize: 12 }}>
+                    {JSON.stringify(decision.promptVariables, null, 2)}
+                  </pre>
+                </Card>
+              </Panel>
+            )}
+
+            {decision.userPreferences && Object.keys(decision.userPreferences).length > 0 && (
+              <Panel header="用户偏好配置" key="3">
+                <Card size="small">
+                  <pre style={{ margin: 0, fontSize: 12 }}>
+                    {JSON.stringify(decision.userPreferences, null, 2)}
+                  </pre>
+                </Card>
+              </Panel>
+            )}
+
+            {decision.modelContext && Object.keys(decision.modelContext).length > 0 && (
+              <Panel header="模型上下文" key="4">
+                <Card size="small">
+                  <pre style={{ margin: 0, fontSize: 12 }}>
+                    {JSON.stringify(decision.modelContext, null, 2)}
+                  </pre>
+                </Card>
+              </Panel>
+            )}
+
+            {decision.fullPrompt && (
+              <Panel header="完整提示词预览" key="5">
+                <Card size="small">
+                  <div style={{
+                    padding: 12,
+                    background: '#f0f5ff',
+                    borderRadius: 4,
+                    border: '1px solid #adc6ff',
+                    maxHeight: 300,
+                    overflow: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'monospace',
+                    fontSize: 12
+                  }}>
+                    {decision.fullPrompt}
+                  </div>
+                  <div style={{ marginTop: 16, textAlign: 'right' }}>
+                    <Space>
+                      <Button
+                        type="primary"
+                        icon={<CopyOutlined />}
+                        onClick={handleCopyPrompt}
+                        size="small"
+                      >
+                        复制提示词
+                      </Button>
+                      <Button
+                        icon={<EyeOutlined />}
+                        onClick={handleShowFullPrompt}
+                        size="small"
+                      >
+                        查看完整提示词
+                      </Button>
+                    </Space>
+                  </div>
+                </Card>
+              </Panel>
+            )}
+          </Collapse>
+        </div>
+      )}
+
       {/* 操作按钮 */}
       <div style={{ marginTop: 24, textAlign: 'right' }}>
         <Space>
@@ -371,6 +539,36 @@ const AIDecisionDetail: React.FC<AIDecisionDetailProps> = ({ decision, onClose }
           )}
         </Space>
       </div>
+
+      {/* 完整提示词模态框 */}
+      <Modal
+        title="完整提示词"
+        open={promptModalVisible}
+        onCancel={() => setPromptModalVisible(false)}
+        width={800}
+        footer={[
+          <Button key="copy" icon={<CopyOutlined />} onClick={handleCopyPrompt}>
+            复制
+          </Button>,
+          <Button key="close" onClick={() => setPromptModalVisible(false)}>
+            关闭
+          </Button>,
+        ]}
+      >
+        <Card>
+          <TextArea
+            value={promptContent}
+            readOnly
+            autoSize={{ minRows: 20, maxRows: 30 }}
+            style={{ fontFamily: 'monospace', fontSize: 12 }}
+          />
+          <div style={{ marginTop: 16, textAlign: 'right' }}>
+            <Text type="secondary">
+              字符数: {promptContent.length} | 预估Token数: {decision.tokenCount || '未知'}
+            </Text>
+          </div>
+        </Card>
+      </Modal>
     </Card>
   );
 };

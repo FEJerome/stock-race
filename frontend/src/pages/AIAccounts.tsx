@@ -43,6 +43,8 @@ const { useBreakpoint } = Grid;
 
 // AI服务导入
 import { aiService } from '../services/ai.service';
+// AI决策详情组件
+import AIDecisionDetail from '../components/ai/AIDecisionDetail';
 
 // 模型类型配置（仅支持deepseek和GLM模型）
 const modelTypes = {
@@ -58,6 +60,9 @@ const AIAccounts: React.FC = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
+  const [decisionDetailVisible, setDecisionDetailVisible] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [decisionDetail, setDecisionDetail] = useState<any>(null);
   const screens = useBreakpoint();
 
   // 加载AI账户数据
@@ -188,6 +193,96 @@ const AIAccounts: React.FC = () => {
     });
   };
 
+  const handleViewDecisionDetail = async (accountId: number) => {
+    try {
+      setSelectedAccountId(accountId);
+      setDecisionDetailVisible(true);
+
+      // 这里应该调用API获取账户的最新决策详情
+      // 暂时使用模拟数据
+      const mockDecision = {
+        id: '1',
+        aiAccountId: accountId,
+        aiAccountName: aiAccounts.find(a => a.id === accountId)?.name || 'AI账户',
+        symbol: '000001',
+        action: 'buy' as const,
+        quantity: 100,
+        price: 15.50,
+        amount: 1550,
+        reason: '技术面显示突破形态，基本面业绩超预期，建议买入',
+        confidence: 85,
+        modelType: 'deepseek',
+        riskLevel: 'high',
+        strategy: 'momentum',
+        status: 'executed' as const,
+        executedPrice: 15.45,
+        executedAt: '2026-02-07T10:30:25Z',
+        createdAt: '2026-02-07T10:30:00Z',
+        updatedAt: '2026-02-07T10:30:25Z',
+        // 新增字段：完整提示词相关
+        promptTemplate: 'aggressive_decision_v1',
+        fullPrompt: `你是一个专业的股票交易AI助手。请分析以下信息并给出交易建议：
+
+账户信息：测试AI账户 (ID: ${accountId})
+模型类型：deepseek
+风险等级：high
+用户偏好：风险偏好: 激进, 交易风格: 波段
+
+股票数据：
+- 代码：000001
+- 名称：平安银行
+- 当前价格：15.50
+- 涨跌幅：+1.64%
+- 成交量：1,000,000股
+
+市场环境：
+- 整体趋势：震荡上行
+- 行业表现：金融板块表现平稳
+- 技术指标：MACD金叉，RSI处于60
+
+持仓情况：
+- 现金余额：50,000
+- 总资产：150,000
+- 当前持仓：1000股@14.50
+
+交易约束：
+- 最大仓位比例：30%
+- 最小现金比例：5%
+- 最大单日亏损：-8%
+
+请基于以上信息，给出具体的交易建议（买入/卖出/持有），并说明理由。`,
+        tokenCount: 280,
+        userPreferences: {
+          riskTolerance: 'aggressive',
+          tradingStyle: 'swing',
+          preferredStrategies: ['momentum', 'technical'],
+          avoidStrategies: ['speculative'],
+          tradingLimits: {
+            maxPositionSize: 0.3,
+            minCashRatio: 0.05,
+            maxDailyLoss: -0.08,
+          },
+        },
+        promptVariables: {
+          account_info: `测试AI账户 (ID: ${accountId})`,
+          stock_data: '股票代码: 000001, 价格: 15.50',
+          market_conditions: '市场环境: 震荡上行',
+          user_preferences: '风险偏好: 激进, 交易风格: 波段',
+        },
+        modelContext: {
+          modelType: 'deepseek',
+          riskLevel: 'high',
+          tokenBudget: 2000,
+        },
+      };
+
+      setDecisionDetail(mockDecision);
+    } catch (error) {
+      console.error('加载决策详情失败:', error);
+      message.error('加载决策详情失败');
+    }
+  };
+
   // 处理激活/停用AI账户
   const handleToggleActive = (account: any) => {
     const action = account.isActive ? '停用' : '激活';
@@ -292,11 +387,12 @@ const AIAccounts: React.FC = () => {
       key: 'action',
       render: (_: any, record: any) => (
         <Space>
-          <Tooltip title="查看详情">
+          <Tooltip title="查看最新决策详情">
             <Button
               type="text"
               icon={<EyeOutlined />}
               size="small"
+              onClick={() => handleViewDecisionDetail(record.id)}
             />
           </Tooltip>
           <Tooltip title="编辑">
@@ -651,6 +747,41 @@ const AIAccounts: React.FC = () => {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* AI决策详情模态框 */}
+      <Modal
+        title="AI决策详情"
+        open={decisionDetailVisible}
+        onCancel={() => {
+          setDecisionDetailVisible(false);
+          setDecisionDetail(null);
+          setSelectedAccountId(null);
+        }}
+        width={900}
+        footer={[
+          <Button
+            key="close"
+            onClick={() => {
+              setDecisionDetailVisible(false);
+              setDecisionDetail(null);
+              setSelectedAccountId(null);
+            }}
+          >
+            关闭
+          </Button>,
+        ]}
+      >
+        {decisionDetail && (
+          <AIDecisionDetail
+            decision={decisionDetail}
+            onClose={() => {
+              setDecisionDetailVisible(false);
+              setDecisionDetail(null);
+              setSelectedAccountId(null);
+            }}
+          />
+        )}
       </Modal>
     </div>
   );

@@ -34,7 +34,7 @@
     "docs": "echo 'API文档: http://localhost:3001/api/docs'"
   },
   "dependencies": {
-    "@prisma/client": "^5.9.1",
+    "@prisma/client": "^5.22.0",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.11.5",

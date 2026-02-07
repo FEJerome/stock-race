@@ -487,6 +487,13 @@ export const aiService = {
           suggestedPrice: response.data.suggestedPrice || response.data.suggested_price || 163.00,
           suggestedQuantity: response.data.suggestedQuantity || response.data.suggested_quantity || 50,
           createdAt: response.data.createdAt || response.data.created_at || '2026-02-03T14:30:25Z',
+          // 新增字段：完整提示词相关
+          promptTemplate: response.data.promptTemplate || response.data.prompt_template,
+          fullPrompt: response.data.fullPrompt || response.data.full_prompt,
+          tokenCount: response.data.tokenCount || response.data.token_count,
+          userPreferences: response.data.userPreferences || response.data.user_preferences,
+          promptVariables: response.data.promptVariables || response.data.prompt_variables,
+          modelContext: response.data.modelContext || response.data.model_context,
         };
 
         // 缓存数据（30分钟）

@@ -198,6 +198,13 @@ export interface AIDecision {
   suggestedPrice?: number;
   suggestedQuantity?: number;
   createdAt: string;
+  // 新增字段：完整提示词相关
+  promptTemplate?: string;
+  fullPrompt?: string;
+  tokenCount?: number;
+  userPreferences?: Record<string, any>;
+  promptVariables?: Record<string, any>;
+  modelContext?: Record<string, any>;
 }
 
 // 排行榜相关类型
