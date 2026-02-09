@@ -1008,3 +1008,8 @@ class DataProcessor:
                     )
 
         return results
+
+    async def close(self):
+        """Close the data processor and cleanup resources."""
+        # No resources to cleanup currently
+        pass

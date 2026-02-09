@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 export class TradeRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'trade';
+    this.modelName = 'Trade';
   }
 
   /**

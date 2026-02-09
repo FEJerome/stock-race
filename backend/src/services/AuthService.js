@@ -15,13 +15,12 @@ export class AuthService {
    * 验证用户密码
    * @param {string} inputPassword - 输入的密码
    * @param {string} storedHash - 存储的哈希
-   * @param {string} salt - 盐值
+   * @param {string} salt - 盐值（保留参数以保持兼容性，实际不使用）
    * @returns {Promise<boolean>}
    */
   async verifyPassword(inputPassword, storedHash, salt) {
     try {
-      const hash = await bcrypt.hash(inputPassword, salt);
-      return hash === storedHash;
+      return await bcrypt.compare(inputPassword, storedHash);
     } catch (error) {
       console.error('密码验证失败:', error);
       return false;

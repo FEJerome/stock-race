@@ -77,11 +77,12 @@ export class BaseRepository {
    * @param {Object} include - 关联查询
    * @returns {Promise<Object|null>}
    */
-  async findOne(where, include = undefined) {
-    return this.prisma[this.modelName].findFirst({
-      where,
-      include
-    });
+  async findOne(where, options = undefined) {
+    const query = { where };
+    if (options?.include) {
+      query.include = options.include;
+    }
+    return this.prisma[this.modelName].findFirst(query);
   }
 
   /**

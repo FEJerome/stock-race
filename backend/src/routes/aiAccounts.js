@@ -53,6 +53,31 @@ router.get('/', authenticate, (req, res) => aiController.getAIAccounts(req, res)
 
 /**
  * @swagger
+ * /ai-accounts/health:
+ *   get:
+ *     tags: [AI账户]
+ *     summary: 检查AI服务健康状态
+ *     description: 检查AI服务的健康状态和连接状态
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 获取AI服务健康状态成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: 未认证
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/health', authenticate, (req, res) => aiController.checkAIServiceHealthEndpoint(req, res));
+
+/**
+ * @swagger
  * /ai-accounts/{accountId}:
  *   get:
  *     tags: [AI账户]
@@ -649,30 +674,5 @@ router.post('/:accountId/balance/deposit', authenticate, (req, res) => aiControl
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/:accountId/balance/withdraw', authenticate, (req, res) => aiController.withdrawBalance(req, res));
-
-/**
- * @swagger
- * /ai-accounts/health:
- *   get:
- *     tags: [AI账户]
- *     summary: 检查AI服务健康状态
- *     description: 检查AI服务的健康状态和连接状态
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 获取AI服务健康状态成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未认证
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/health', authenticate, (req, res) => aiController.checkAIServiceHealth(req, res));
 
 export default router;

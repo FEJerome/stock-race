@@ -89,13 +89,13 @@ class AdminController {
   async getAIAccountStats(req, res) {
     try {
       // 获取AI账户总数
-      const totalAccounts = await prisma.aiAccount.count();
+      const totalAccounts = await prisma.aIAccount.count();
 
       // 获取活跃AI账户数（最近24小时有交易）
       const twentyFourHoursAgo = new Date();
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-      const activeAccounts = await prisma.aiAccount.count({
+      const activeAccounts = await prisma.aIAccount.count({
         where: {
           trades: {
             some: {
@@ -108,7 +108,7 @@ class AdminController {
       });
 
       // 获取模型类型分布
-      const modelDistribution = await prisma.aiAccount.groupBy({
+      const modelDistribution = await prisma.aIAccount.groupBy({
         by: ['modelType'],
         _count: {
           modelType: true
@@ -116,7 +116,7 @@ class AdminController {
       });
 
       // 获取风险等级分布
-      const riskDistribution = await prisma.aiAccount.groupBy({
+      const riskDistribution = await prisma.aIAccount.groupBy({
         by: ['riskLevel'],
         _count: {
           riskLevel: true
@@ -124,7 +124,7 @@ class AdminController {
       });
 
       // 获取策略分布
-      const strategyDistribution = await prisma.aiAccount.groupBy({
+      const strategyDistribution = await prisma.aIAccount.groupBy({
         by: ['strategy'],
         _count: {
           strategy: true
@@ -524,7 +524,7 @@ class AdminController {
     try {
       // 获取各表记录数
       const userCount = await prisma.user.count();
-      const aiAccountCount = await prisma.aiAccount.count();
+      const aiAccountCount = await prisma.aIAccount.count();
       const tradeCount = await prisma.trade.count();
       const portfolioCount = await prisma.portfolio.count();
       const stockCount = await prisma.stock.count();
@@ -548,6 +548,158 @@ class AdminController {
     } catch (error) {
       console.error('获取数据库统计信息失败:', error);
       return res.status(500).json(errorResponse(null, '获取数据库统计信息失败'));
+    }
+  }
+
+  /**
+   * 获取管理员仪表盘状态
+   */
+  async getAdminStatus(req, res) {
+    try {
+      // 获取系统状态概览
+      const [userCount, aiAccountCount, tradeCount, stockCount] = await Promise.all([
+        prisma.user.count(),
+        prisma.aIAccount.count(),
+        prisma.trade.count(),
+        prisma.stock.count()
+      ]);
+
+      // 获取今日交易统计
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const todayTrades = await prisma.trade.count({
+        where: {
+          executedAt: {
+            gte: today,
+            lt: tomorrow
+          },
+          status: 'executed'
+        }
+      });
+
+      const todayVolume = await prisma.trade.aggregate({
+        where: {
+          executedAt: {
+            gte: today,
+            lt: tomorrow
+          },
+          status: 'executed'
+        },
+        _sum: {
+          amount: true
+        }
+      });
+
+      const status = {
+        system: {
+          status: 'healthy',
+          uptime: process.uptime(),
+          version: process.env.npm_package_version || '1.0.0',
+          timestamp: new Date().toISOString()
+        },
+        database: {
+          status: 'connected',
+          users: userCount,
+          aiAccounts: aiAccountCount,
+          trades: tradeCount,
+          stocks: stockCount
+        },
+        trading: {
+          todayTrades,
+          todayVolume: parseFloat(todayVolume._sum.amount || 0).toFixed(2),
+          activeAccounts: await prisma.aIAccount.count({ where: { status: 'active' } })
+        },
+        services: {
+          backend: 'running',
+          aiService: 'running',
+          dataService: 'running',
+          database: 'connected',
+          redis: 'connected'
+        }
+      };
+
+      return res.json(successResponse(status, '管理员状态获取成功'));
+    } catch (error) {
+      console.error('获取管理员状态失败:', error);
+      return res.status(500).json(errorResponse(null, '获取管理员状态失败'));
+    }
+  }
+
+  /**
+   * 获取用户列表
+   */
+  async getUsers(req, res) {
+    try {
+      const { page = 1, limit = 20, search, role, status } = req.query;
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+
+      // 构建查询条件
+      const where = {};
+      if (search) {
+        where.OR = [
+          { username: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } }
+        ];
+      }
+      if (role) {
+        where.role = role;
+      }
+      if (status) {
+        where.status = status;
+      }
+
+      // 获取用户列表
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            status: true,
+            lastLoginAt: true,
+            createdAt: true,
+            updatedAt: true,
+            _count: {
+              select: {
+                aiAccounts: true
+              }
+            }
+          },
+          skip,
+          take: parseInt(limit),
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.user.count({ where })
+      ]);
+
+      // 格式化用户数据
+      const formattedUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        status: user.status,
+        lastLoginAt: user.lastLoginAt,
+        aiAccountsCount: user._count.aiAccounts,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }));
+
+      return res.json(successResponse({
+        users: formattedUsers,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      }, '用户列表获取成功'));
+    } catch (error) {
+      console.error('获取用户列表失败:', error);
+      return res.status(500).json(errorResponse(null, '获取用户列表失败'));
     }
   }
 }

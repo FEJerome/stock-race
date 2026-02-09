@@ -665,4 +665,110 @@ router.post('/cache/clear', authenticate, checkRole('admin'), AdminController.cl
  */
 router.get('/stats/database', authenticate, checkRole('admin'), AdminController.getDatabaseStats);
 
+/**
+ * @swagger
+ * /api/admin/status:
+ *   get:
+ *     tags: [管理员]
+ *     summary: 获取管理员仪表盘状态
+ *     description: 获取系统状态概览，包括数据库统计、交易统计、服务状态等
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 管理员状态获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     system:
+ *                       type: object
+ *                     database:
+ *                       type: object
+ *                     trading:
+ *                       type: object
+ *                     services:
+ *                       type: object
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: 未授权
+ *       403:
+ *         description: 权限不足
+ *       500:
+ *         description: 服务器内部错误
+ */
+router.get('/status', authenticate, checkRole('admin'), AdminController.getAdminStatus);
+
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     tags: [管理员]
+ *     summary: 获取用户列表
+ *     description: 获取系统用户列表，支持分页、搜索和筛选
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 页码
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 每页数量
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: 搜索关键词（用户名或邮箱）
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: 角色筛选
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: 状态筛选
+ *     responses:
+ *       200:
+ *         description: 用户列表获取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     users:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: 未授权
+ *       403:
+ *         description: 权限不足
+ *       500:
+ *         description: 服务器内部错误
+ */
+router.get('/users', authenticate, checkRole('admin'), AdminController.getUsers);
+
 export default router;

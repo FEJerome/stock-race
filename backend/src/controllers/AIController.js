@@ -281,27 +281,46 @@ export class AIController {
         });
       }
 
-      const account = await aiAccountRepository.findOne(
-        { id: parseInt(accountId) },
-        {
-          portfolios: {
-            include: {
-              stock: true
-            }
-          },
-          trades: {
+      const account = await prisma.aIAccount.findFirst({
+        where: { id: parseInt(accountId) }
+      });
+
+      // 单独查询关联数据
+      let portfolios = [];
+      let trades = [];
+      let decisionLogs = [];
+
+      if (account) {
+        try {
+          portfolios = await prisma.portfolio.findMany({
+            where: { accountId: parseInt(accountId) },
+            include: { stock: true }
+          });
+        } catch (e) {
+          console.error('查询持仓失败:', e);
+        }
+
+        try {
+          trades = await prisma.trade.findMany({
+            where: { accountId: parseInt(accountId) },
             take: 10,
             orderBy: { executedAt: 'desc' },
-            include: {
-              stock: true
-            }
-          },
-          decisionLogs: {
+            include: { stock: true }
+          });
+        } catch (e) {
+          console.error('查询交易失败:', e);
+        }
+
+        try {
+          decisionLogs = await prisma.decisionLog.findMany({
+            where: { accountId: parseInt(accountId) },
             take: 10,
             orderBy: { createdAt: 'desc' }
-          }
+          });
+        } catch (e) {
+          console.error('查询决策日志失败:', e);
         }
-      );
+      }
 
       if (!account) {
         return res.status(404).json({
@@ -365,28 +384,28 @@ export class AIController {
         lastDecisionAt: account.lastDecisionAt,
         config,
         performance,
-        portfolios: account.portfolios.map(p => ({
-          stockCode: p.stock.code,
-          stockName: p.stock.name,
+        portfolios: portfolios.map(p => ({
+          stockCode: p.stock?.code,
+          stockName: p.stock?.name,
           quantity: p.quantity,
-          avgCost: parseFloat(p.avgCost),
-          currentPrice: parseFloat(p.currentPrice),
-          marketValue: parseFloat(p.marketValue),
-          profitLoss: parseFloat(p.profitLoss),
-          profitLossRate: parseFloat(p.profitLossRate)
+          avgCost: parseFloat(p.avgCost || 0),
+          currentPrice: parseFloat(p.currentPrice || 0),
+          marketValue: parseFloat(p.marketValue || 0),
+          profitLoss: parseFloat(p.profitLoss || 0),
+          profitLossRate: parseFloat(p.profitLossRate || 0)
         })),
-        recentTrades: account.trades.map(t => ({
+        recentTrades: trades.map(t => ({
           id: t.id,
-          stockCode: t.stock.code,
-          stockName: t.stock.name,
+          stockCode: t.stock?.code,
+          stockName: t.stock?.name,
           tradeType: t.tradeType,
           quantity: t.quantity,
-          price: parseFloat(t.price),
-          amount: parseFloat(t.amount),
+          price: parseFloat(t.price || 0),
+          amount: parseFloat(t.amount || 0),
           status: t.status,
           executedAt: t.executedAt
         })),
-        recentDecisions: account.decisionLogs.map(d => ({
+        recentDecisions: decisionLogs.map(d => ({
           id: d.id,
           decisionType: d.decisionType,
           reasoning: d.reasoning,
@@ -957,24 +976,7 @@ export class AIController {
       const result = await decisionLogRepository.paginate({
         ...pagination,
         where,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          account: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-          trade: {
-            select: {
-              id: true,
-              stockCode: true,
-              tradeType: true,
-              quantity: true,
-              price: true
-            }
-          }
-        }
+        orderBy: { createdAt: 'desc' }
       });
 
       // 格式化响应数据
@@ -992,21 +994,14 @@ export class AIController {
         return {
           id: decision.id,
           accountId: decision.accountId,
-          accountName: decision.account.name,
           decisionType: decision.decisionType,
           reasoning: decision.reasoning,
-          confidence: parseFloat(decision.confidence),
+          confidence: parseFloat(decision.confidence || 0),
           riskLevel: decision.riskLevel,
           tradeId: decision.tradeId,
-          tradeInfo: decision.trade ? {
-            stockCode: decision.trade.stockCode,
-            tradeType: decision.trade.tradeType,
-            quantity: decision.trade.quantity,
-            price: parseFloat(decision.trade.price)
-          } : null,
           modelUsed: decision.modelUsed,
           processingTimeMs: decision.processingTimeMs,
-          apiCost: parseFloat(decision.apiCost),
+          apiCost: parseFloat(decision.apiCost || 0),
           inputData,
           outputData,
           createdAt: decision.createdAt
@@ -1566,6 +1561,35 @@ export class AIController {
     }
   }
 
+  /**
+   * 检查AI服务健康状态（HTTP端点）
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async checkAIServiceHealthEndpoint(req, res) {
+    try {
+      const health = await this.checkAIServiceHealth();
+      res.json({
+        success: true,
+        data: health,
+        message: '获取AI服务健康状态成功'
+      });
+    } catch (error) {
+      console.error('获取AI服务健康状态错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取AI服务健康状态失败'
+      });
+    }
+  }
+
+  /**
+   * 检查AI服务健康状态（内部方法）
+   */
   async checkAIServiceHealth() {
     try {
       const connectionTest = await aiService.testConnection();

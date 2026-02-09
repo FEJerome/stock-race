@@ -48,6 +48,9 @@
 - [**TimescaleDB修复记录**](docs/deployment/TIMESCALEDB_FIX_RECORD.md) - 时序数据库问题修复
 - [**AI服务数据库修复记录**](docs/deployment/AI_SERVICE_DATABASE_FIX_RECORD.md) - AI服务数据库连接修复
 - [**生产检查清单**](docs/deployment/PRODUCTION_CHECKLIST.md) - 部署前检查项
+
+### 代码审查
+- [**数据服务代码审查报告**](docs/reviews/DATA_SERVICE_CODE_REVIEW_REPORT.md) - 数据服务功能审查与修复记录
 - [**故障排除指南**](docs/operations/TROUBLESHOOTING.md) - 系统故障处理手册
 - [**部署文档总结**](docs/deployment/PRODUCTION_DEPLOYMENT_DOCUMENTATION_SUMMARY.md) - 生产环境部署文档完整总结
 
@@ -631,7 +634,7 @@ stock-race/
 ---
 
 ### 微信小程序项目
-**项目状态**：📋 规划完成（2026-02-09）
+**项目状态**：🚀 P0核心功能开发完成（2026-02-09）
 
 **项目背景**：将Stock-Race平台扩展到微信小程序，提供移动端优化的用户体验
 
@@ -646,10 +649,20 @@ stock-race/
 - ✅ **技术成熟**：采用UniApp + Vue 3成熟技术栈
 - ✅ **快速迭代**：4-6周开发周期
 
-**已完成的文档**：
-- ✅ **需求规格说明书**：[docs/miniprogram/REQUIREMENTS.md](docs/miniprogram/REQUIREMENTS.md) - 详细功能需求、UI/UX设计规范、非功能性需求
-- ✅ **技术栈方案**：[docs/miniprogram/TECH_STACK.md](docs/miniprogram/TECH_STACK.md) - 技术选型、架构设计、开发规范
-- ✅ **可行性报告**：[docs/miniprogram/FEASIBILITY_REPORT.md](docs/miniprogram/FEASIBILITY_REPORT.md) - 技术/业务/法律/运营可行性分析、投资回报分析
+**已完成的工作**：
+- ✅ **需求规格说明书**：[docs/miniprogram/REQUIREMENTS.md](docs/miniprogram/REQUIREMENTS.md) - 详细功能需求、UI/UX设计规范
+- ✅ **技术栈方案**：[docs/miniprogram/TECH_STACK.md](docs/miniprogram/TECH_STACK.md) - 技术选型、架构设计
+- ✅ **可行性报告**：[docs/miniprogram/FEASIBILITY_REPORT.md](docs/miniprogram/FEASIBILITY_REPORT.md) - 可行性分析
+- ✅ **开发进度文档**：[docs/miniprogram/DEVELOPMENT_PROGRESS.md](docs/miniprogram/DEVELOPMENT_PROGRESS.md) - 开发进度跟踪
+
+**P0核心功能（已完成）**：
+- ✅ **基础架构**：UniApp + Vue 3 + TypeScript + Vite + Pinia + uView Plus
+- ✅ **认证模块**：登录页、表单验证、演示账户、降级机制
+- ✅ **仪表盘模块**：总资产卡片、董事长指令、AI经理概览、持仓概览、快捷操作
+- ✅ **AI基金经理模块**：列表页、创建页、立即决策功能
+
+**开发分支**：`miniprogram-development`
+**工作树位置**：`worktrees/worktree-miniprogram/miniprogram/`
 
 **技术选型**：
 - **开发框架**：UniApp 3.x + Vue 3 + TypeScript
@@ -681,10 +694,11 @@ stock-race/
 - 投资回报：⭐⭐⭐⭐⭐（回报率约500%）
 
 **下一步行动**：
-1. 📋 **确认开发团队**：确定前端开发人员配置
-2. 📋 **UI设计**：完成小程序UI设计稿
-3. 📋 **准备资质**：准备小程序审核所需的资质材料
-4. 📋 **环境搭建**：搭建UniApp开发环境
+1. 🔄 **补充图标资源**：添加TabBar图标和应用Logo
+2. 🔄 **开发P1功能**：市场行情、持仓总览、交易记录、竞赛排行
+3. 🔄 **开发P2功能**：设置页面、分析页面
+4. 🔄 **API联调**：与后端服务进行完整联调测试
+5. 🔄 **微信审核**：准备小程序审核材料
 
 ---
 

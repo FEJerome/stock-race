@@ -3,7 +3,7 @@ import { BaseRepository } from './BaseRepository.js';
 export class RankingRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'ranking';
+    this.modelName = 'Ranking';
   }
 
   /**

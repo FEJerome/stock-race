@@ -93,6 +93,118 @@ router.get('/search', optionalAuthenticate, (req, res) => stockController.search
 
 /**
  * @swagger
+ * /stocks/rankings:
+ *   get:
+ *     tags: [股票]
+ *     summary: 获取股票排行榜
+ *     description: 获取股票排行榜，支持按涨跌幅、成交量等排序
+ *     parameters:
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [changePercent, volume, amount, price]
+ *           default: 'changePercent'
+ *         description: 排序字段
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: 'desc'
+ *         description: 排序顺序
+ *       - in: query
+ *         name: market
+ *         schema:
+ *           type: string
+ *         description: 市场代码过滤
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: 结果数量限制
+ *     responses:
+ *       200:
+ *         description: 获取股票排行榜成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router.get('/rankings', optionalAuthenticate, (req, res) => stockController.getStockRankings(req, res));
+
+/**
+ * @swagger
+ * /stocks/market/stats:
+ *   get:
+ *     tags: [股票]
+ *     summary: 获取市场统计
+ *     description: 获取市场统计数据，包括股票数量、行业分布、涨跌统计等
+ *     parameters:
+ *       - in: query
+ *         name: market
+ *         schema:
+ *           type: string
+ *         description: 市场代码过滤
+ *     responses:
+ *       200:
+ *         description: 获取市场统计成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router.get('/market/stats', optionalAuthenticate, (req, res) => stockController.getMarketStats(req, res));
+
+/**
+ * @swagger
+ * /stocks/realtime/batch:
+ *   post:
+ *     tags: [股票]
+ *     summary: 批量获取股票实时数据
+ *     description: 批量获取多个股票的实时数据
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - stockCodes
+ *             properties:
+ *               stockCodes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 maxItems: 100
+ *                 description: 股票代码数组
+ *     responses:
+ *       200:
+ *         description: 批量获取股票实时数据成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: 请求参数错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: 部分股票不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/realtime/batch', optionalAuthenticate, (req, res) => stockController.batchGetRealtime(req, res));
+
+/**
+ * @swagger
  * /stocks/{stockCode}:
  *   get:
  *     tags: [股票]
@@ -207,117 +319,5 @@ router.get('/:stockCode/kline', optionalAuthenticate, (req, res) => stockControl
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/:stockCode/realtime', optionalAuthenticate, (req, res) => stockController.getRealtime(req, res));
-
-/**
- * @swagger
- * /stocks/market/stats:
- *   get:
- *     tags: [股票]
- *     summary: 获取市场统计
- *     description: 获取市场统计数据，包括股票数量、行业分布、涨跌统计等
- *     parameters:
- *       - in: query
- *         name: market
- *         schema:
- *           type: string
- *         description: 市场代码过滤
- *     responses:
- *       200:
- *         description: 获取市场统计成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- */
-router.get('/market/stats', optionalAuthenticate, (req, res) => stockController.getMarketStats(req, res));
-
-/**
- * @swagger
- * /stocks/realtime/batch:
- *   post:
- *     tags: [股票]
- *     summary: 批量获取股票实时数据
- *     description: 批量获取多个股票的实时数据
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - stockCodes
- *             properties:
- *               stockCodes:
- *                 type: array
- *                 items:
- *                   type: string
- *                 maxItems: 100
- *                 description: 股票代码数组
- *     responses:
- *       200:
- *         description: 批量获取股票实时数据成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       400:
- *         description: 请求参数错误
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       404:
- *         description: 部分股票不存在
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.post('/realtime/batch', optionalAuthenticate, (req, res) => stockController.batchGetRealtime(req, res));
-
-/**
- * @swagger
- * /stocks/rankings:
- *   get:
- *     tags: [股票]
- *     summary: 获取股票排行榜
- *     description: 获取股票排行榜，支持按涨跌幅、成交量等排序
- *     parameters:
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           enum: [changePercent, volume, amount, price]
- *           default: 'changePercent'
- *         description: 排序字段
- *       - in: query
- *         name: order
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: 'desc'
- *         description: 排序顺序
- *       - in: query
- *         name: market
- *         schema:
- *           type: string
- *         description: 市场代码过滤
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 20
- *         description: 结果数量限制
- *     responses:
- *       200:
- *         description: 获取股票排行榜成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- */
-router.get('/rankings', optionalAuthenticate, (req, res) => stockController.getStockRankings(req, res));
 
 export default router;

@@ -3,7 +3,7 @@ import { BaseRepository } from './BaseRepository.js';
 export class WatchlistRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'watchlist';
+    this.modelName = 'Watchlist';
   }
 
   /**

@@ -1,5 +1,6 @@
 import express from 'express';
 import { authController } from '../controllers/AuthController.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -201,7 +202,7 @@ router.post('/logout', (req, res) => authController.logout(req, res));
  *       500:
  *         description: 服务器内部错误
  */
-router.get('/me', (req, res) => authController.getCurrentUser(req, res));
+router.get('/me', authenticate, (req, res) => authController.getCurrentUser(req, res));
 
 /**
  * @swagger
@@ -253,7 +254,7 @@ router.get('/me', (req, res) => authController.getCurrentUser(req, res));
  *       500:
  *         description: 服务器内部错误
  */
-router.put('/settings', (req, res) => authController.updateUserSettings(req, res));
+router.put('/settings', authenticate, (req, res) => authController.updateUserSettings(req, res));
 
 /**
  * @swagger
@@ -288,7 +289,7 @@ router.put('/settings', (req, res) => authController.updateUserSettings(req, res
  *       500:
  *         description: 服务器内部错误
  */
-router.get('/sessions', (req, res) => authController.getUserSessions(req, res));
+router.get('/sessions', authenticate, (req, res) => authController.getUserSessions(req, res));
 
 /**
  * @swagger
@@ -334,7 +335,7 @@ router.get('/sessions', (req, res) => authController.getUserSessions(req, res));
  *       500:
  *         description: 服务器内部错误
  */
-router.post('/sessions/force-logout', (req, res) => authController.forceLogoutOtherSessions(req, res));
+router.post('/sessions/force-logout', authenticate, (req, res) => authController.forceLogoutOtherSessions(req, res));
 
 /**
  * @swagger
@@ -371,7 +372,7 @@ router.post('/sessions/force-logout', (req, res) => authController.forceLogoutOt
  *       500:
  *         description: 服务器内部错误
  */
-router.get('/stats', (req, res) => authController.getAuthStats(req, res));
+router.get('/stats', authenticate, (req, res) => authController.getAuthStats(req, res));
 
 /**
  * @swagger

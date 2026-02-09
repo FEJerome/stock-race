@@ -351,7 +351,7 @@ async def get_segmentation_strategies(
         return {
             "available_strategies": list(segmentation_stats.keys()),
             "statistics": segmentation_stats,
-            "recommendation": self._recommend_strategy(segmentation_stats)
+            "recommendation": _recommend_strategy(segmentation_stats)
         }
 
     except Exception as e:

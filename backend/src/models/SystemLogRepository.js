@@ -3,7 +3,7 @@ import { BaseRepository } from './BaseRepository.js';
 export class SystemLogRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'systemLog';
+    this.modelName = 'SystemLog';
   }
 
   /**

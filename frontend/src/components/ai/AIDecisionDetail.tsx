@@ -329,7 +329,7 @@ const AIDecisionDetail: React.FC<AIDecisionDetailProps> = ({ decision, onClose }
           {decision.status === 'executed' && decision.executedAt && (
             <Timeline.Item color="green">
               <p>交易执行</p>
-              <p style={{ fontSize 12, color: '#666' }}>
+              <p style={{ fontSize: 12, color: '#666' }}>
                 {new Date(decision.executedAt).toLocaleString()}
               </p>
               <p style={{ fontSize: 12, color: '#666' }}>

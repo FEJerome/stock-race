@@ -5,6 +5,7 @@ import stocksRoutes from './stocks.js';
 import tradesRoutes from './trades.js';
 import portfoliosRoutes from './portfolios.js';
 import marketRoutes from './market.js';
+import rankingsRoutes from './rankings.js';
 import adminRoutes from './admin.js';
 import { authenticate, optionalAuthenticate, checkPermission, checkRole } from '../middleware/auth.js';
 
@@ -125,6 +126,9 @@ router.use('/portfolios', portfoliosRoutes);
 
 // 市场路由
 router.use('/market', marketRoutes);
+
+// 排行榜路由
+router.use('/rankings', rankingsRoutes);
 
 // 管理员路由（需要管理员权限）
 router.use('/admin', adminRoutes);
