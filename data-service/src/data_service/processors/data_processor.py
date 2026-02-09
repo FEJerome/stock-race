@@ -551,3 +551,8 @@ class DataProcessor:
         time_diff = (datetime.now() - quote.timestamp).total_seconds()
         if time_diff > self.validation_rules["timestamp_max_diff"]:
             raise ValueError(f"Data timestamp is {time_diff:.0f} seconds old")
+
+    async def close(self):
+        """Close the data processor and cleanup resources."""
+        # No resources to cleanup currently
+        pass
