@@ -48,6 +48,9 @@
 - [**TimescaleDB修复记录**](docs/deployment/TIMESCALEDB_FIX_RECORD.md) - 时序数据库问题修复
 - [**AI服务数据库修复记录**](docs/deployment/AI_SERVICE_DATABASE_FIX_RECORD.md) - AI服务数据库连接修复
 - [**生产检查清单**](docs/deployment/PRODUCTION_CHECKLIST.md) - 部署前检查项
+
+### 代码审查
+- [**数据服务代码审查报告**](docs/reviews/DATA_SERVICE_CODE_REVIEW_REPORT.md) - 数据服务功能审查与修复记录
 - [**故障排除指南**](docs/operations/TROUBLESHOOTING.md) - 系统故障处理手册
 - [**部署文档总结**](docs/deployment/PRODUCTION_DEPLOYMENT_DOCUMENTATION_SUMMARY.md) - 生产环境部署文档完整总结
 
