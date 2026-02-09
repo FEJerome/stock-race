@@ -1,0 +1,48 @@
+{
+  "name": "stock-race-miniprogram",
+  "version": "1.0.0",
+  "description": "Stock-Race AI股票竞赛平台微信小程序",
+  "scripts": {
+    "dev": "uni",
+    "dev:mp-weixin": "uni --open mp-weixin",
+    "build": "uni build",
+    "build:mp-weixin": "uni build mp-weixin",
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint . --ext .vue,.ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{vue,ts,tsx,json,css,scss}\""
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-alpha-4010520240409001",
+    "@dcloudio/uni-app-plus": "3.0.0-alpha-4010520240409001",
+    "@dcloudio/uni-components": "3.0.0-alpha-4010520240409001",
+    "@dcloudio/uni-h5": "3.0.0-alpha-4010520240409001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-alpha-4010520240409001",
+    "luch-request": "^3.1.1",
+    "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^3.2.1",
+    "uview-plus": "^3.2.24",
+    "vue": "^3.4.21",
+    "vue-i18n": "^9.10.2"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/uni-automator": "3.0.0-alpha-4010520240409001",
+    "@dcloudio/uni-cli-shared": "3.0.0-alpha-4010520240409001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-4010520240409001",
+    "@rushstack/eslint-patch": "^1.8.0",
+    "@types/node": "^20.11.30",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/eslint-config-prettier": "^9.0.0",
+    "@vue/eslint-config-typescript": "^13.0.0",
+    "@vue/tsconfig": "^0.5.1",
+    "dayjs": "^1.11.10",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.24.0",
+    "prettier": "^3.2.5",
+    "sass": "^1.72.0",
+    "typescript": "^5.4.3",
+    "uni-app-types": "^0.0.1",
+    "vite": "^5.2.6",
+    "vue-tsc": "^2.0.7"
+  }
+}
