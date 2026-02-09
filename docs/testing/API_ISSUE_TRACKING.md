@@ -14,20 +14,26 @@
 |------|---------|----------|--------------|----------|--------|------|
 | 1 | `/stocks/realtime/batch` | POST | market.service.ts:46 | `res.validationError is not a function` | 🔴 紧急 | ✅ 已修复 |
 
-### 2. 端点不存在或路由冲突 (404 NOT_FOUND)
+### 2. 服务器错误 (500 INTERNAL_ERROR) - 新增
+
+| 序号 | API端点 | HTTP方法 | 前端调用位置 | 错误信息 | 优先级 | 状态 |
+|------|---------|----------|--------------|----------|--------|------|
+| 4 | `/stocks/{symbol}` | GET | E2E测试 | `Cannot read properties of undefined (reading 'map')` | 🔴 紧急 | ✅ 已修复 |
+
+### 3. 端点不存在或路由冲突 (404 NOT_FOUND)
 
 | 序号 | API端点 | HTTP方法 | 前端调用位置 | 错误信息 | 优先级 | 状态 |
 |------|---------|----------|--------------|----------|--------|------|
 | 2 | `/stocks/search` | GET | market.service.ts:79 | 参数名称不匹配（前端用`keyword`，后端用`q`） | 🟡 高 | ✅ 已修复 |
 | 3 | `/stocks/rankings` | GET | market.service.ts:92 | 路由顺序问题 | 🟡 高 | ✅ 已验证（路由顺序正确） |
-| 4 | `/stocks/{symbol}/kline` | GET | market.service.ts:105 | 端点不存在 | 🟡 中 | ⏳ 待实现 |
-| 5 | `/market/status` | GET | market-status.service.ts | 已存在，工作正常 | - | ✅ 正常 |
-| 6 | `/market/realtime` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
-| 7 | `/market/history` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
-| 8 | `/rankings/returns` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
-| 9 | `/rankings/comprehensive` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
-| 10 | `/admin/status` | GET | 测试中 | 端点不存在 | ⚪ 低 | ⏳ 待实现 |
-| 11 | `/admin/users` | GET | 测试中 | 端点不存在 | ⚪ 低 | ⏳ 待实现 |
+| 5 | `/stocks/{symbol}/kline` | GET | market.service.ts:105 | 端点不存在 | 🟡 中 | ⏳ 待实现 |
+| 6 | `/market/status` | GET | market-status.service.ts | 已存在，工作正常 | - | ✅ 正常 |
+| 7 | `/market/realtime` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
+| 8 | `/market/history` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
+| 9 | `/rankings/returns` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
+| 10 | `/rankings/comprehensive` | GET | 测试中 | 端点不存在 | 🟢 中 | ⏳ 待实现 |
+| 11 | `/admin/status` | GET | 测试中 | 端点不存在 | ⚪ 低 | ⏳ 待实现 |
+| 12 | `/admin/users` | GET | 测试中 | 端点不存在 | ⚪ 低 | ⏳ 待实现 |
 
 ### 2. 需要认证的API (401 - 工作正常)
 
@@ -344,7 +350,7 @@ curl "http://localhost:3001/api/stocks/000001/kline"
 
 ## 修复记录
 
-### 2026-02-09 修复记录
+### 2026-02-09 修复记录 (第一批)
 
 **修复者**: 首席架构师
 
@@ -379,6 +385,25 @@ curl "http://localhost:3001/api/stocks/000001/kline"
      ```
 
 **测试状态**: 所有修复的API均已验证通过
+
+### 2026-02-09 修复记录 (第二批 - 根据V2报告)
+
+**修复者**: 首席架构师
+
+**已修复问题**:
+
+4. **✅ GET /stocks/{symbol} 500错误**
+   - **问题**: `Cannot read properties of undefined (reading 'map')`
+   - **位置**: `backend/src/controllers/StockController.js:108`
+   - **修复文件**: `backend/src/controllers/StockController.js`
+   - **修复内容**: 在访问 `stock.portfolios` 和 `stock.trades` 时添加空值保护 `(stock.portfolios || [])`
+   - **验证命令**:
+     ```bash
+     curl "http://localhost:3001/api/stocks/000001"
+     ```
+   - **验证结果**: ✅ 返回200成功响应
+
+**测试状态**: 已验证通过
 
 ---
 

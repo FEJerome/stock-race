@@ -185,10 +185,17 @@ export const responseFormatterMiddleware = (req, res, next) => {
                         error.error.code === 'NOT_FOUND' ? 404 :
                         error.error.code === 'BAD_REQUEST' ? 400 :
                         error.error.code === 'UNAUTHORIZED' ? 401 :
-                        error.error.code === 'FORBIDDEN' ? 403 : 500;
+                        error.error.code === 'FORBIDDEN' ? 403 :
+                        error.error.code === 'VALIDATION_ERROR' ? 400 : 500;
       return res.status(httpStatus).json(error);
     };
   });
+
+  // 添加 validationError 方法（兼容旧代码）
+  res.validationError = (errors, details = null) => {
+    const error = predefinedErrors.VALIDATION_ERROR(errors, details);
+    return res.status(400).json(error);
+  };
 
   next();
 };

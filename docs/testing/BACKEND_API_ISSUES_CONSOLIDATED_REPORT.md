@@ -21,46 +21,43 @@
 
 ## 2. 问题汇总（按优先级排序）
 
-### 🔴 P0 - 严重问题（需立即修复）
+### ✅ 已修复问题
 
-#### 2.1 路由顺序问题（2处）
+| 序号 | 问题 | 修复文件 | 修复内容 |
+|------|------|----------|----------|
+| 1 | 路由顺序问题 - `/trades/hot` | `backend/src/routes/trades.js` | 将 `/hot` 路由移到 `/:tradeId` 之前 |
+| 2 | 路由顺序问题 - `/ai-accounts/health` | `backend/src/routes/aiAccounts.js` | 将 `/health` 路由移到 `/:accountId` 之前 |
+| 3 | AI决策历史查询 500错误 | `backend/src/controllers/AIController.js` | 移除复杂的include关联查询，简化查询逻辑 |
+| 4 | AI账户详情 500错误 | `backend/src/controllers/AIController.js` | 修复Prisma查询参数格式，使用直接查询代替Repository |
+| 5 | AI服务健康检查 500错误 | `backend/src/controllers/AIController.js` + `aiAccounts.js` | 创建HTTP端点包装方法，修复路由顺序 |
+
+### 🟡 P1 - 高优先级问题（部分已修复）
+
+#### 2.1 路由顺序问题（已修复）
 
 **问题描述**: 具体路由被参数路由拦截，导致API无法正确响应
 
 **受影响端点**:
-1. `GET /api/trades/hot` - 被 `/:tradeId` 拦截
-2. `GET /api/stocks/rankings` - 被 `/:stockCode` 拦截
-
-**错误表现**:
-```json
-{
-  "success": false,
-  "error": {
-    "code": "VALIDATION_001",
-    "message": "交易ID无效"
-  },
-  "message": "交易ID必须为有效的正整数"
-}
-```
-
-**修复方案**:
-```javascript
-// backend/src/routes/trades.js
-// 将具体路由放在参数路由之前
-router.get('/hot', authenticate, tradeController.getHotTradingStocks);
-router.get('/statistics', authenticate, tradeController.getTradeStats);
-router.get('/:tradeId', authenticate, tradeController.getTradeDetail);  // 参数路由放最后
-
-// backend/src/routes/stocks.js
-router.get('/search', optionalAuthenticate, stockController.searchStocks);
-router.get('/market/stats', optionalAuthenticate, stockController.getMarketStats);
-router.get('/rankings', optionalAuthenticate, stockController.getStockRankings);
-router.get('/:stockCode', optionalAuthenticate, stockController.getStockDetail);  // 参数路由放最后
-```
+1. ✅ `GET /api/trades/hot` - 已修复，将 `/hot` 路由移到 `/:tradeId` 之前
+2. ✅ `GET /api/ai-accounts/health` - 已修复，将 `/health` 路由移到 `/:accountId` 之前
+3. ⏳ `GET /api/stocks/rankings` - 路由顺序正确，但可能存在其他问题
 
 ---
 
-#### 2.2 MarketController 方法缺失（3处）
+#### 2.2 AI相关API 500错误（已修复）
+
+**已修复端点**:
+1. ✅ `GET /api/ai-accounts/{accountId}/decisions` - 已修复，移除复杂include查询
+2. ✅ `GET /api/ai-accounts/health` - 已修复，创建HTTP端点包装方法
+3. ✅ `GET /api/ai-accounts/{accountId}` - 已修复，修复Prisma查询参数
+
+**修复详情**:
+- 文件: `backend/src/controllers/AIController.js`
+- 主要修改: 简化Prisma查询，移除导致错误的关联查询include
+
+---
+
+#### 2.3 MarketController 方法缺失（待验证）
 
 **问题描述**: 路由配置了但控制器缺少对应方法实现
 
@@ -68,19 +65,6 @@ router.get('/:stockCode', optionalAuthenticate, stockController.getStockDetail);
 1. `MarketController.getAccountRanking` - 获取账户排名
 2. `MarketController.getCompetitions` - 获取竞赛列表
 3. `MarketController.getCompetitionDetail` - 获取竞赛详情
-
-**错误表现**:
-```json
-{
-  "success": false,
-  "error": {
-    "code": "INTERNAL_ERROR",
-    "message": "marketController.getAccountRanking is not a function"
-  }
-}
-```
-
-**修复方案**: 在 `backend/src/controllers/MarketController.js` 中添加以下方法：
 
 ```javascript
 /**

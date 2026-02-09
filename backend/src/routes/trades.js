@@ -212,6 +212,48 @@ router.get('/statistics', authenticate, (req, res) => tradeController.getTradeSt
 
 /**
  * @swagger
+ * /trades/hot:
+ *   get:
+ *     tags: [交易]
+ *     summary: 获取热门交易股票
+ *     description: 获取近期热门交易股票
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 30
+ *           default: 7
+ *         description: 统计天数
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *         description: 结果数量限制
+ *     responses:
+ *       200:
+ *         description: 获取热门交易股票成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: 未认证
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/hot', authenticate, (req, res) => tradeController.getHotTradingStocks(req, res));
+
+/**
+ * @swagger
  * /trades/{tradeId}:
  *   get:
  *     tags: [交易]
@@ -312,48 +354,6 @@ router.get('/:tradeId', authenticate, (req, res) => tradeController.getTradeDeta
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/:tradeId/cancel', authenticate, (req, res) => tradeController.cancelTrade(req, res));
-
-/**
- * @swagger
- * /trades/hot:
- *   get:
- *     tags: [交易]
- *     summary: 获取热门交易股票
- *     description: 获取近期热门交易股票
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: days
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 30
- *           default: 7
- *         description: 统计天数
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 50
- *           default: 10
- *         description: 结果数量限制
- *     responses:
- *       200:
- *         description: 获取热门交易股票成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未认证
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/hot', authenticate, (req, res) => tradeController.getHotTradingStocks(req, res));
 
 /**
  * @swagger
