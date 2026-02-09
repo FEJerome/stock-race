@@ -537,5 +537,72 @@ npm run build:mp-weixin
 
 ---
 
+## 10. 端到端测试总结
+
+### 10.1 测试概况
+
+**测试时间**: 2026-02-09
+**测试范围**: 微信小程序全功能端到端API测试
+**测试环境**: http://localhost:3001/api
+**测试方式**: 4个智能体并行测试
+
+| 测试模块 | 测试总数 | 通过 | 失败 | 成功率 |
+|----------|----------|------|------|--------|
+| 认证与仪表盘 | 15 | 15 | 0 | 100% |
+| AI基金经理 | 12 | 9 | 3 | 75% |
+| 市场数据与持仓 | 20 | 18 | 2 | 90% |
+| 交易记录与竞赛排行 | 12 | 3 | 9 | 25% |
+| **总计** | **59** | **45** | **14** | **76.3%** |
+
+### 10.2 测试期间修复的问题
+
+**后端代码修复**:
+1. Repository modelName大小写不匹配（所有Repository文件）
+2. BaseRepository findOne参数处理错误
+3. PortfolioController语法错误（第969行多余`}`）
+4. Auth路由缺少authenticate中间件
+5. AuthService密码验证方式错误（hash→compare）
+6. MarketController缺失方法（getIndices等）
+7. PortfolioController缺失方法（getRiskAnalysis等）
+8. 路由顺序问题（stocks.js, portfolios.js）
+
+**数据库修复**:
+- AIAccount表添加缺失字段（preference_config等）
+- DecisionLog表添加缺失字段（full_prompt等）
+
+### 10.3 遗留问题
+
+**P0严重问题**（需后端立即修复）:
+1. 路由顺序问题：`/trades/hot`和`/stocks/rankings`被参数路由拦截
+2. MarketController缺失3个方法：getAccountRanking、getCompetitions、getCompetitionDetail
+
+**P1高优先级问题**:
+3. 交易记录查询500错误
+4. 排行榜查询500错误
+5. AI决策历史查询500错误
+6. AI服务健康检查500错误
+
+**P2中优先级问题**:
+7. 更新AI账户字段限制（riskLevel/tradingFrequency）
+8. 股票搜索中文编码问题
+9. 全局决策记录端点缺失
+
+### 10.4 相关文档
+
+- [后端API问题汇总报告](../testing/BACKEND_API_ISSUES_CONSOLIDATED_REPORT.md) - 供后端智能体排查
+- [认证与仪表盘测试报告](../testing/E2E_TEST_RESULTS_AUTH_DASHBOARD.md)
+- [AI基金经理模块测试报告](../testing/AI_MANAGER_MODULE_API_TEST_REPORT.md)
+- [市场数据与持仓模块测试报告](../testing/MARKET_PORTFOLIO_API_TEST_REPORT.md)
+- [交易记录与竞赛排行模块测试报告](../testing/TRADE_COMPETITION_API_TEST_REPORT.md)
+
+### 10.5 下一步行动
+
+1. **后端修复**: 由后端负责智能体根据问题汇总报告进行修复
+2. **回归测试**: 后端修复完成后重新进行端到端测试
+3. **前端优化**: 根据API实际情况调整前端降级机制
+4. **图表集成**: 开始集成ucharts实现K线图和收益曲线
+
+---
+
 *本文档最后更新于：2026-02-09*
 *维护者：首席架构师*
