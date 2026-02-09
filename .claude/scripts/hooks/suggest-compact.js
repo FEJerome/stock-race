@@ -15,12 +15,22 @@
 
 const path = require('path');
 const fs = require('fs');
+
+// 尝试加载工具模块，失败时静默退出
+let utils;
+try {
+  utils = require('../lib/utils');
+} catch (error) {
+  // 模块加载失败时静默退出，避免控制台错误
+  process.exit(0);
+}
+
 const {
   getTempDir,
   readFile,
   writeFile,
   log
-} = require('../lib/utils');
+} = utils;
 
 async function main() {
   // 跟踪工具调用次数（在临时文件中递增）

@@ -9,6 +9,16 @@
  */
 
 const path = require('path');
+
+// 尝试加载工具模块，失败时静默退出
+let utils;
+try {
+    utils = require('../lib/utils');
+} catch (error) {
+    // 模块加载失败时静默退出，避免控制台错误
+    process.exit(0);
+}
+
 const {
   getSessionsDir,
   getDateTimeString,
@@ -17,7 +27,7 @@ const {
   ensureDir,
   appendFile,
   log
-} = require('../lib/utils');
+} = utils;
 
 async function main() {
   const sessionsDir = getSessionsDir();
