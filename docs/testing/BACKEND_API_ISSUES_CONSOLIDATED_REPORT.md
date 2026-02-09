@@ -35,6 +35,12 @@
 | 7 | 排行榜查询 500错误 | `backend/src/controllers/MarketController.js` | ✅ 通过 |
 | 8 | MarketController缺失方法 | `backend/src/controllers/MarketController.js` | ✅ 通过 |
 | 9 | 股票排行榜路由 | `backend/src/routes/stocks.js` | ✅ 通过 |
+| 10 | `/market/realtime` 端点缺失 | `backend/src/controllers/MarketController.js`<br>`backend/src/routes/market.js` | ✅ 通过 |
+| 11 | `/market/history` 端点缺失 | `backend/src/controllers/MarketController.js`<br>`backend/src/routes/market.js` | ✅ 通过 |
+| 12 | `/rankings/returns` 端点缺失 | `backend/src/controllers/MarketController.js`<br>`backend/src/routes/rankings.js` | ✅ 通过 |
+| 13 | `/rankings/comprehensive` 端点缺失 | `backend/src/controllers/MarketController.js`<br>`backend/src/routes/rankings.js` | ✅ 通过 |
+| 14 | `/admin/status` 端点缺失 | `backend/src/controllers/AdminController.js`<br>`backend/src/routes/admin.js` | ✅ 通过 |
+| 15 | `/admin/users` 端点缺失 | `backend/src/controllers/AdminController.js`<br>`backend/src/routes/admin.js` | ✅ 通过 |
 
 ### 🟡 待验证问题
 
