@@ -31,6 +31,11 @@ function getClaudeDir() {
  * Get the sessions directory
  */
 function getSessionsDir() {
+  // Allow override via environment variable
+  const envDir = process.env.CLAUDE_SESSIONS_DIR;
+  if (envDir && envDir.trim()) {
+    return envDir.trim();
+  }
   return path.join(getClaudeDir(), 'sessions');
 }
 
@@ -38,6 +43,11 @@ function getSessionsDir() {
  * Get the learned skills directory
  */
 function getLearnedSkillsDir() {
+  // Allow override via environment variable
+  const envDir = process.env.CLAUDE_LEARNED_SKILLS_DIR;
+  if (envDir && envDir.trim()) {
+    return envDir.trim();
+  }
   return path.join(getClaudeDir(), 'skills', 'learned');
 }
 
@@ -395,277 +405,361 @@ function generateSessionSummary(context, tasks, notes, files) {
 }
 
 /**
- * Parse legacy session format (text/markdown)
- * @param {string} content - Legacy session content
- * @returns {object} Parsed session data
+ * Load configuration from JSON file
+ * @param {string} configFile - Path to config file
+ * @returns {object} Configuration object with defaults
  */
-function parseLegacySession(content) {
-  const result = {
-    version: 'legacy',
-    date: null,
-    started: null,
-    updated: null,
-    context: '',
-    tasks: [],
-    notes: '',
-    files: []
+function loadConfig(configFile) {
+  // Default configuration
+  const defaultConfig = {
+    min_session_length: 10,
+    extraction_threshold: 'medium',
+    auto_approve: false,
+    learned_skills_path: '~/.claude/skills/learned/',
+    patterns_to_detect: [
+      'error_resolution',
+      'user_corrections',
+      'workarounds',
+      'debugging_techniques',
+      'project_specific'
+    ],
+    ignore_patterns: [
+      'simple_typos',
+      'one_time_fixes',
+      'external_api_issues'
+    ],
+    project_specific_patterns: {}
   };
+
+  const content = readFile(configFile);
+  if (!content) {
+    return defaultConfig;
+  }
 
   try {
-    const lines = content.split('\n');
-
-    // Parse basic info from compact format
-    if (content.includes('Started:')) {
-      const startedMatch = content.match(/Started:\s*(.+)/);
-      if (startedMatch) result.started = startedMatch[1].trim();
-
-      const updatedMatch = content.match(/Updated:\s*(.+)/);
-      if (updatedMatch) result.updated = updatedMatch[1].trim();
-
-      const stateMatch = content.match(/State:\s*(.+)/);
-      if (stateMatch) result.context = stateMatch[1].trim();
-
-      const tasksMatch = content.match(/Tasks:\s*(.+)/);
-      if (tasksMatch) {
-        const tasksStr = tasksMatch[1].trim();
-        if (tasksStr !== '[active tasks]') {
-          // Simple parsing for task list
-          result.tasks = tasksStr.split(',').map(t => t.trim()).filter(t => t);
-        }
-      }
-
-      const notesMatch = content.match(/Next:\s*(.+)/);
-      if (notesMatch) result.notes = notesMatch[1].trim();
-
-      const filesMatch = content.match(/Files:\s*(.+)/);
-      if (filesMatch) {
-        const filesStr = filesMatch[1].trim();
-        if (filesStr !== '[relevant files]') {
-          result.files = filesStr.split(',').map(f => f.trim()).filter(f => f);
-        }
-      }
-
-      // Try to extract date from filename or content
-      const dateMatch = content.match(/# (\d{4}-\d{2}-\d{2})/);
-      if (dateMatch) result.date = dateMatch[1];
-    }
+    const config = JSON.parse(content);
+    // Merge with defaults
+    return {
+      ...defaultConfig,
+      ...config,
+      // Ensure arrays exist
+      patterns_to_detect: config.patterns_to_detect || defaultConfig.patterns_to_detect,
+      ignore_patterns: config.ignore_patterns || defaultConfig.ignore_patterns,
+      project_specific_patterns: config.project_specific_patterns || defaultConfig.project_specific_patterns
+    };
   } catch (err) {
-    // Return minimal result on parse error
+    log(`[ConfigLoad] Error parsing config: ${err.message}`);
+    return defaultConfig;
   }
-
-  return result;
 }
 
 /**
- * Convert legacy session to JSON format
- * @param {string} legacyContent - Legacy session content
- * @returns {string} JSON formatted session
+ * Create a pattern matcher function for given patterns
+ * @param {Array<string>} patterns - List of pattern names to detect
+ * @returns {function} Function that matches content against patterns
  */
-function convertSessionToJson(legacyContent) {
-  const parsed = parseLegacySession(legacyContent);
-  const jsonData = {
-    version: '2.0',
-    format: 'json',
-    date: parsed.date || new Date().toISOString().split('T')[0],
-    started: parsed.started || new Date().toLocaleTimeString(),
-    updated: parsed.updated || new Date().toLocaleTimeString(),
-    context: parsed.context,
-    tasks: parsed.tasks,
-    notes: parsed.notes,
-    files: parsed.files,
-    compressed: true,
-    originalFormat: 'legacy'
+function getPatternMatcher(patterns) {
+  // Define pattern regexes for different pattern types
+  const patternRegexes = {
+    error_resolution: /(error|exception|fail|crash|bug).*(fix|resolve|solve|correct|patch)/i,
+    user_corrections: /(wrong|incorrect|mistake|oops).*(correct|fix|update|change)/i,
+    workarounds: /(workaround|temporary.*solution|bypass|alternative.*approach)/i,
+    debugging_techniques: /(debug|troubleshoot|investigate).*(issue|problem|error)/i,
+    project_specific: /(stock.*race|trading.*platform|ai.*decision|market.*data)/i,
+    architecture_decisions: /(architecture|design.*pattern|system.*structure|module.*design)/i,
+    tool_usage_patterns: /(claude.*code|hook|script|automation|configuration)/i,
+    code_review_patterns: /(review.*code|refactor|optimize|improve.*performance)/i
   };
 
-  return JSON.stringify(jsonData, null, 2);
+  return function(content) {
+    const matches = [];
+    for (const patternName of patterns) {
+      const regex = patternRegexes[patternName];
+      if (regex && regex.test(content)) {
+        matches.push(patternName);
+      }
+    }
+    return matches;
+  };
 }
 
 /**
- * Read session file with automatic format detection
- * @param {string} filePath - Path to session file
- * @returns {object} Session data object
+ * Detect patterns in content using provided pattern matcher
+ * @param {string} content - Content to analyze
+ * @param {Array<string>} patternsToDetect - List of pattern names to detect
+ * @returns {object} Detection results with matched patterns and count
  */
-function readSessionFile(filePath) {
-  const content = readFile(filePath);
-  if (!content) return null;
+function detectPatterns(content, patternsToDetect) {
+  const matcher = getPatternMatcher(patternsToDetect);
+  const matchedPatterns = matcher(content);
 
-  // Check if it's JSON format
-  if (content.trim().startsWith('{')) {
-    try {
-      const jsonData = JSON.parse(content);
-      // Ensure it has expected structure
-      if (jsonData.version && jsonData.format === 'json') {
-        return jsonData;
-      }
-    } catch (err) {
-      // Not valid JSON, fall back to legacy format
+  return {
+    matched_patterns: matchedPatterns,
+    pattern_count: matchedPatterns.length,
+    has_project_specific: matchedPatterns.includes('project_specific'),
+    has_error_resolution: matchedPatterns.includes('error_resolution')
+  };
+}
+
+/**
+ * Get model-aware configuration based on context size and model type
+ * @returns {object} Configuration object with cleanup and compact settings
+ */
+function getModelAwareConfig() {
+  // Parse context size from environment variable (e.g., 128 for 128k)
+  const contextSizeStr = process.env.CLAUDE_MODEL_CONTEXT_SIZE;
+  let contextSize = null;
+  if (contextSizeStr) {
+    const match = contextSizeStr.match(/(\d+)/);
+    if (match) {
+      contextSize = parseInt(match[1], 10);
     }
   }
 
-  // Parse as legacy format
-  return parseLegacySession(content);
-}
+  // Get model type (deepseek, glm, kimi, opus, etc.)
+  const modelType = process.env.CLAUDE_MODEL_TYPE ?
+    process.env.CLAUDE_MODEL_TYPE.toLowerCase() : null;
 
-/**
- * Extract session information from Claude Code transcript file
- * @param {string} transcriptPath - Path to transcript JSON file
- * @returns {object} Extracted session data (context, tasks, notes, files)
- */
-function extractSessionFromTranscript(transcriptPath) {
-  const result = {
-    context: '',
-    tasks: [],
-    notes: '',
-    files: []
+  // Get optimization profile (aggressive, balanced, relaxed)
+  const profile = process.env.CLAUDE_OPTIMIZATION_PROFILE || 'balanced';
+
+  // Default configuration (balanced profile)
+  let config = {
+    cleanup: {
+      maxAgeDays: 7,
+      maxSessions: 10,
+      maxSizeMB: 50,
+      verbose: false
+    },
+    compact: {
+      threshold: 50,
+      checkInterval: 25,
+      phaseAware: true,
+      verbose: false
+    },
+    model: {
+      contextSize,
+      modelType,
+      profile,
+      description: 'Balanced optimization for general use'
+    }
   };
 
-  try {
-    const content = readFile(transcriptPath);
-    if (!content) return result;
-
-    const transcript = JSON.parse(content);
-    const messages = transcript.messages || [];
-
-    // Extract the last 3 messages for context
-    const recentMessages = messages.slice(-6); // Last 3 exchanges (user+assistant pairs)
-    const contextParts = [];
-
-    for (const msg of recentMessages) {
-      if (msg.type === 'user' || msg.type === 'assistant') {
-        // Extract brief content (first 100 chars)
-        const text = msg.content || '';
-        const preview = text.length > 100 ? text.substring(0, 100) + '...' : text;
-        contextParts.push(`${msg.type}: ${preview}`);
-      }
-    }
-
-    if (contextParts.length > 0) {
-      result.context = contextParts.join(' | ');
-    }
-
-    // Extract tasks from assistant messages (looking for todo/task patterns)
-    const taskPatterns = [
-      /- \[ \]\s*(.+?)(?:\n|$)/g,  // - [ ] task
-      /- \[x\]\s*(.+?)(?:\n|$)/gi, // - [x] task (completed)
-      /TODO:\s*(.+?)(?:\n|$)/gi,   // TODO: task
-      /Task:\s*(.+?)(?:\n|$)/gi,   // Task: task
-      /1\.\s*(.+?)(?:\n|$)/g,      // 1. task
-      /2\.\s*(.+?)(?:\n|$)/g,      // 2. task
-      /\*\s*(.+?)(?:\n|$)/g        // * task
-    ];
-
-    const allTasks = new Set();
-    for (const msg of messages) {
-      if (msg.type === 'assistant') {
-        const text = msg.content || '';
-        for (const pattern of taskPatterns) {
-          const matches = text.matchAll(pattern);
-          for (const match of matches) {
-            if (match[1]) {
-              const task = match[1].trim();
-              if (task.length > 0 && task.length < 100) {
-                allTasks.add(task);
-              }
-            }
-          }
+  // Adjust based on context size if provided
+  if (contextSize) {
+    if (contextSize <= 128) {
+      // DeepSeek 128k or similar small context
+      config = {
+        cleanup: {
+          maxAgeDays: 3,
+          maxSessions: 5,
+          maxSizeMB: 20,
+          verbose: false
+        },
+        compact: {
+          threshold: 40,
+          checkInterval: 20,
+          phaseAware: true,
+          verbose: false
+        },
+        model: {
+          contextSize,
+          modelType: modelType || 'deepseek',
+          profile,
+          description: 'Aggressive optimization for small context models (128k or less)'
         }
-      }
-    }
-
-    result.tasks = Array.from(allTasks).slice(0, 10); // Limit to 10 tasks
-
-    // Extract notes (look for "note:", "notes:", "next session", etc.)
-    const notePatterns = [
-      /note:\s*(.+?)(?:\n|$)/gi,
-      /notes:\s*(.+?)(?:\n|$)/gi,
-      /next session:\s*(.+?)(?:\n|$)/gi,
-      /next:\s*(.+?)(?:\n|$)/gi,
-      /reminder:\s*(.+?)(?:\n|$)/gi
-    ];
-
-    for (const msg of messages.slice().reverse()) { // Search from most recent
-      const text = msg.content || '';
-      for (const pattern of notePatterns) {
-        const match = text.match(pattern);
-        if (match) {
-          result.notes = match[0].substring(match[0].indexOf(':') + 1).trim();
-          if (result.notes.length > 100) {
-            result.notes = result.notes.substring(0, 100) + '...';
-          }
-          break;
+      };
+    } else if (contextSize <= 160) {
+      // Medium context (e.g., 150k)
+      config = {
+        cleanup: {
+          maxAgeDays: 5,
+          maxSessions: 8,
+          maxSizeMB: 30,
+          verbose: false
+        },
+        compact: {
+          threshold: 45,
+          checkInterval: 23,
+          phaseAware: true,
+          verbose: false
+        },
+        model: {
+          contextSize,
+          modelType: modelType || 'medium',
+          profile,
+          description: 'Moderate optimization for medium context models (129k-160k)'
         }
-      }
-      if (result.notes) break;
-    }
-
-    // Extract file paths from messages (simple pattern matching)
-    const filePatterns = [
-      /`([^`\n]+\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))`/g,
-      /"([^"\n]+\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))"/g,
-      /'([^'\n]+\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))'/g,
-      /([a-zA-Z]:\\[^:\n]*\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))/g,
-      /(\/[^:\n]*\.(js|ts|jsx|tsx|py|md|json|txt|yml|yaml))/g
-    ];
-
-    const allFiles = new Set();
-    for (const msg of messages) {
-      const text = msg.content || '';
-      for (const pattern of filePatterns) {
-        const matches = text.matchAll(pattern);
-        for (const match of matches) {
-          const filePath = match[1] || match[0];
-          if (filePath && filePath.length > 0) {
-            // Normalize path and get relative path if possible
-            try {
-              const normalized = path.normalize(filePath);
-              allFiles.add(normalized);
-            } catch {
-              allFiles.add(filePath);
-            }
-          }
+      };
+    } else if (contextSize <= 200) {
+      // GLM 4.7 200k, Opus 4.5 200k
+      config = {
+        cleanup: {
+          maxAgeDays: 7,
+          maxSessions: 12,
+          maxSizeMB: 50,
+          verbose: false
+        },
+        compact: {
+          threshold: 50,
+          checkInterval: 25,
+          phaseAware: true,
+          verbose: false
+        },
+        model: {
+          contextSize,
+          modelType: modelType || 'glm',
+          profile,
+          description: 'Standard optimization for 200k context models'
         }
-      }
+      };
+    } else if (contextSize <= 256) {
+      // Kimi K2.5 256k or similar large context
+      config = {
+        cleanup: {
+          maxAgeDays: 10,
+          maxSessions: 15,
+          maxSizeMB: 80,
+          verbose: false
+        },
+        compact: {
+          threshold: 60,
+          checkInterval: 30,
+          phaseAware: true,
+          verbose: false
+        },
+        model: {
+          contextSize,
+          modelType: modelType || 'kimi',
+          profile,
+          description: 'Relaxed optimization for large context models (201k-256k)'
+        }
+      };
+    } else {
+      // Very large context (256k+)
+      config = {
+        cleanup: {
+          maxAgeDays: 14,
+          maxSessions: 20,
+          maxSizeMB: 100,
+          verbose: false
+        },
+        compact: {
+          threshold: 70,
+          checkInterval: 35,
+          phaseAware: true,
+          verbose: false
+        },
+        model: {
+          contextSize,
+          modelType: modelType || 'large',
+          profile,
+          description: 'Minimal optimization for very large context models (257k+)'
+        }
+      };
     }
-
-    result.files = Array.from(allFiles).slice(0, 10); // Limit to 10 files
-
-  } catch (err) {
-    // If transcript parsing fails, return empty result
-    log(`[TranscriptParse] Error: ${err.message}`);
   }
 
-  return result;
-}
+  // Override with specific model type if provided
+  if (modelType) {
+    const modelConfigs = {
+      deepseek: {
+        cleanup: { maxAgeDays: 3, maxSessions: 5, maxSizeMB: 20 },
+        compact: { threshold: 40, checkInterval: 20 },
+        description: 'Optimized for DeepSeek 128k context'
+      },
+      glm: {
+        cleanup: { maxAgeDays: 7, maxSessions: 12, maxSizeMB: 50 },
+        compact: { threshold: 50, checkInterval: 25 },
+        description: 'Optimized for GLM models (200k context)'
+      },
+      kimi: {
+        cleanup: { maxAgeDays: 10, maxSessions: 15, maxSizeMB: 80 },
+        compact: { threshold: 60, checkInterval: 30 },
+        description: 'Optimized for Kimi models (256k context)'
+      },
+      opus: {
+        cleanup: { maxAgeDays: 7, maxSessions: 12, maxSizeMB: 50 },
+        compact: { threshold: 50, checkInterval: 25 },
+        description: 'Optimized for Claude Opus models (200k context)'
+      },
+      sonnet: {
+        cleanup: { maxAgeDays: 7, maxSessions: 12, maxSizeMB: 50 },
+        compact: { threshold: 50, checkInterval: 25 },
+        description: 'Optimized for Claude Sonnet models'
+      }
+    };
 
-/**
- * Save session in JSON format
- * @param {string} filePath - Path to save session file
- * @param {object} sessionData - Session data object
- * @returns {boolean} Success status
- */
-function saveSessionAsJson(filePath, sessionData) {
-  const jsonData = {
-    version: '2.0',
-    format: 'json',
-    date: sessionData.date || new Date().toISOString().split('T')[0],
-    started: sessionData.started || new Date().toLocaleTimeString(),
-    updated: sessionData.updated || new Date().toLocaleTimeString(),
-    context: sessionData.context || '',
-    tasks: Array.isArray(sessionData.tasks) ? sessionData.tasks : [],
-    notes: sessionData.notes || '',
-    files: Array.isArray(sessionData.files) ? sessionData.files : [],
-    compressed: true,
-    timestamp: new Date().toISOString()
+    if (modelConfigs[modelType]) {
+      const modelConfig = modelConfigs[modelType];
+      config.cleanup = { ...config.cleanup, ...modelConfig.cleanup };
+      config.compact = { ...config.compact, ...modelConfig.compact };
+      config.model.description = modelConfig.description;
+      config.model.modelType = modelType;
+    }
+  }
+
+  // Apply optimization profile overrides
+  const profileOverrides = {
+    aggressive: {
+      cleanup: { maxAgeDays: Math.max(1, Math.floor(config.cleanup.maxAgeDays * 0.5)),
+                maxSessions: Math.max(3, Math.floor(config.cleanup.maxSessions * 0.5)),
+                maxSizeMB: Math.max(10, Math.floor(config.cleanup.maxSizeMB * 0.4)) },
+      compact: { threshold: Math.max(30, Math.floor(config.compact.threshold * 0.7)),
+                checkInterval: Math.max(15, Math.floor(config.compact.checkInterval * 0.7)) },
+      description: `${config.model.description} (aggressive profile)`
+    },
+    balanced: {
+      // Use current config as-is for balanced profile
+      description: config.model.description
+    },
+    relaxed: {
+      cleanup: { maxAgeDays: Math.min(30, Math.floor(config.cleanup.maxAgeDays * 1.5)),
+                maxSessions: Math.min(30, Math.floor(config.cleanup.maxSessions * 1.5)),
+                maxSizeMB: Math.min(200, Math.floor(config.cleanup.maxSizeMB * 1.5)) },
+      compact: { threshold: Math.min(100, Math.floor(config.compact.threshold * 1.3)),
+                checkInterval: Math.min(50, Math.floor(config.compact.checkInterval * 1.3)) },
+      description: `${config.model.description} (relaxed profile)`
+    }
   };
 
-  try {
-    const jsonContent = JSON.stringify(jsonData, null, 2);
-    writeFile(filePath, jsonContent);
-    return true;
-  } catch (err) {
-    return false;
+  if (profileOverrides[profile]) {
+    const profileConfig = profileOverrides[profile];
+    config.cleanup = { ...config.cleanup, ...profileConfig.cleanup };
+    config.compact = { ...config.compact, ...profileConfig.compact };
+    config.model.description = profileConfig.description;
+    config.model.profile = profile;
   }
+
+  // Apply individual environment variable overrides (highest priority)
+  if (process.env.CLAUDE_CLEANUP_MAX_AGE_DAYS) {
+    config.cleanup.maxAgeDays = parseInt(process.env.CLAUDE_CLEANUP_MAX_AGE_DAYS);
+  }
+  if (process.env.CLAUDE_CLEANUP_MAX_SESSIONS) {
+    config.cleanup.maxSessions = parseInt(process.env.CLAUDE_CLEANUP_MAX_SESSIONS);
+  }
+  if (process.env.CLAUDE_CLEANUP_MAX_SIZE_MB) {
+    config.cleanup.maxSizeMB = parseInt(process.env.CLAUDE_CLEANUP_MAX_SIZE_MB);
+  }
+  if (process.env.CLAUDE_CLEANUP_VERBOSE) {
+    config.cleanup.verbose = process.env.CLAUDE_CLEANUP_VERBOSE === 'true';
+  }
+  if (process.env.CLAUDE_COMPACT_THRESHOLD) {
+    config.compact.threshold = parseInt(process.env.CLAUDE_COMPACT_THRESHOLD);
+  }
+  if (process.env.CLAUDE_COMPACT_CHECK_INTERVAL) {
+    config.compact.checkInterval = parseInt(process.env.CLAUDE_COMPACT_CHECK_INTERVAL);
+  }
+  if (process.env.CLAUDE_COMPACT_PHASE_AWARE) {
+    config.compact.phaseAware = process.env.CLAUDE_COMPACT_PHASE_AWARE !== 'false';
+  }
+  if (process.env.CLAUDE_COMPACT_VERBOSE) {
+    config.compact.verbose = process.env.CLAUDE_COMPACT_VERBOSE === 'true';
+  }
+
+  return config;
 }
+
 
 module.exports = {
   // Platform info
@@ -699,13 +793,6 @@ module.exports = {
 
   // Session compression
   generateSessionSummary,
-  extractSessionFromTranscript,
-
-  // Session format
-  parseLegacySession,
-  convertSessionToJson,
-  readSessionFile,
-  saveSessionAsJson,
 
   // Hook I/O
   readStdinJson,
@@ -716,5 +803,11 @@ module.exports = {
   commandExists,
   runCommand,
   isGitRepo,
-  getGitModifiedFiles
+  getGitModifiedFiles,
+
+  // Configuration and pattern detection
+  loadConfig,
+  getPatternMatcher,
+  detectPatterns,
+  getModelAwareConfig
 };

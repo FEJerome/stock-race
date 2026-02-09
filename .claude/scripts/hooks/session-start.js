@@ -14,8 +14,7 @@ const {
   getLearnedSkillsDir,
   findFiles,
   ensureDir,
-  log,
-  readSessionFile
+  log
 } = require('../lib/utils');
 const { getPackageManager, getSelectionPrompt } = require('../lib/package-manager');
 
@@ -34,26 +33,7 @@ async function main() {
   if (recentSessions.length > 0) {
     const latest = recentSessions[0];
     log(`[SessionStart] Found ${recentSessions.length} recent session(s)`);
-
-    // Read session data to provide more informative log
-    try {
-      const sessionData = readSessionFile(latest.path);
-      if (sessionData) {
-        if (sessionData.format === 'json') {
-          log(`[SessionStart] Latest JSON session: ${sessionData.date} (${sessionData.context ? 'has context' : 'no context'})`);
-          if (sessionData.context && sessionData.context.length > 0) {
-            const preview = sessionData.context.length > 50 ? sessionData.context.substring(0, 50) + '...' : sessionData.context;
-            log(`[SessionStart] Context preview: "${preview}"`);
-          }
-        } else {
-          log(`[SessionStart] Latest legacy session: ${latest.path}`);
-        }
-      } else {
-        log(`[SessionStart] Latest: ${latest.path}`);
-      }
-    } catch (err) {
-      log(`[SessionStart] Latest: ${latest.path} (format detection failed)`);
-    }
+    log(`[SessionStart] Latest session: ${latest.path}`);
   }
 
   // Check for learned skills

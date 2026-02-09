@@ -1,0 +1,13 @@
+{
+  "min_session_length": 5,
+  "extraction_threshold": "medium",
+  "auto_approve": false,
+  "learned_skills_path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\test-claude-skills",
+  "patterns_to_detect": [
+    "error_resolution",
+    "project_specific"
+  ],
+  "ignore_patterns": [
+    "simple_typos"
+  ]
+}

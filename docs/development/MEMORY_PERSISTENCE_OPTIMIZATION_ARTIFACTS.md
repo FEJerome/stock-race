@@ -1,8 +1,9 @@
 # 内存持久化优化 - 产出物记录
 
 **创建时间**：2026-02-06 13:45
+**最后更新时间**：2026-02-07
 **创建者**：首席架构师（Claude Code）
-**版本**：1.0.0
+**版本**：1.1.0
 **关联任务**：内存持久化优化，针对DeepSeek 128k上下文的容量优化
 
 ## 📋 概述
@@ -13,7 +14,7 @@
 
 1. **减少会话存储大小**：针对DeepSeek 128k上下文（相比Opus 4.5的200k）的容量减少
 2. **实现自动清理机制**：防止旧会话文件积累占用空间
-3. **提高存储效率**：支持JSON格式存储，提高解析速度
+3. **提高内存安全性**：彻底禁用JSON格式，避免内存溢出问题
 4. **保持向后兼容**：支持读取旧格式会话文件
 
 ## 📁 产出物清单
@@ -23,8 +24,8 @@
 #### 1.1 核心钩子脚本
 | 文件路径 | 版本 | 功能描述 | 状态 |
 |----------|------|----------|------|
-| [.claude/scripts/hooks/session-end.js](../../.claude/scripts/hooks/session-end.js) | 2.0 | 会话结束钩子，支持紧凑模板和JSON格式 | ✅ 完成 |
-| [.claude/scripts/hooks/session-start.js](../../.claude/scripts/hooks/session-start.js) | 2.0 | 会话开始钩子，智能读取新旧格式 | ✅ 完成 |
+| [.claude/scripts/hooks/session-end.js](../../.claude/scripts/hooks/session-end.js) | 2.1 | 会话结束钩子，仅支持紧凑文本格式（JSON格式已禁用） | ✅ 完成 |
+| [.claude/scripts/hooks/session-start.js](../../.claude/scripts/hooks/session-start.js) | 2.1 | 会话开始钩子，简化版本，无JSON格式检测 | ✅ 完成 |
 | [.claude/scripts/hooks/session-cleanup.js](../../.claude/scripts/hooks/session-cleanup.js) | 1.0 | 独立清理钩子，基于时间/数量/大小清理 | ✅ 完成 |
 | [.claude/scripts/hooks/pre-compact.js](../../.claude/scripts/hooks/pre-compact.js) | 1.0 | 上下文压缩前钩子 | ✅ 完成 |
 | [.claude/scripts/hooks/evaluate-session.js](../../.claude/scripts/hooks/evaluate-session.js) | 1.0 | 会话评估钩子 | ✅ 完成 |
@@ -32,7 +33,7 @@
 #### 1.2 工具库文件
 | 文件路径 | 版本 | 功能描述 | 状态 |
 |----------|------|----------|------|
-| [.claude/scripts/lib/utils.js](../../.claude/scripts/lib/utils.js) | 2.0 | 跨平台工具函数库，含格式转换 | ✅ 完成 |
+| [.claude/scripts/lib/utils.js](../../.claude/scripts/lib/utils.js) | 2.1 | 跨平台工具函数库，已删除JSON格式处理函数 | ✅ 完成 |
 | [.claude/scripts/lib/cleanup-utils.js](../../.claude/scripts/lib/cleanup-utils.js) | 1.0 | 自动清理工具库 | ✅ 完成 |
 | [.claude/scripts/lib/package-manager.js](../../.claude/scripts/lib/package-manager.js) | 1.0 | 包管理器检测工具 | ✅ 完成 |
 
@@ -54,10 +55,10 @@
 #### 3.1 测试记录
 | 验证项目 | 测试结果 | 验证时间 | 状态 |
 |----------|----------|----------|------|
-| 会话创建测试 | 默认格式和JSON格式均正常工作 | 2026-02-06 | ✅ 通过 |
+| 会话创建测试 | 紧凑文本格式正常工作，JSON格式已禁用 | 2026-02-07 | ✅ 通过 |
 | 清理功能测试 | 基于时间、数量、大小的清理策略有效 | 2026-02-06 | ✅ 通过 |
-| 格式转换测试 | 旧格式到JSON格式转换成功 | 2026-02-06 | ✅ 通过 |
-| 混合环境测试 | 新旧格式文件共存读取正常 | 2026-02-06 | ✅ 通过 |
+| 内存溢出修复测试 | 禁用JSON格式后，内存使用正常 | 2026-02-07 | ✅ 通过 |
+| 会话文件命名测试 | 同一天内会话文件唯一性保证 | 2026-02-07 | ✅ 通过 |
 
 #### 3.2 性能数据
 | 指标 | 优化前 | 优化后 | 提升比例 |
@@ -69,12 +70,21 @@
 
 ## 🔄 版本变更记录
 
+### v1.1.0 (2026-02-07)
+- **紧急修复**：针对虚拟机内存溢出问题，彻底禁用JSON格式
+- **包含变更**：
+  - 完全移除JSON格式支持
+  - 删除所有JSON格式处理函数（saveSessionAsJson、readSessionFile、parseLegacySession、convertSessionToJson、extractSessionFromTranscript）
+  - 简化会话处理逻辑，只保留紧凑文本格式
+  - 更新配置文档，移除JSON格式相关说明
+  - 修复会话文件命名问题，确保同一天内会话唯一性
+
 ### v1.0.0 (2026-02-06)
 - **初始版本**：完成所有优化功能实现
 - **包含内容**：
   - 会话模板压缩（73行→15行）
   - 自动清理机制（时间/数量/大小三重策略）
-  - JSON格式存储支持
+  - JSON格式存储支持（已在v1.1.0移除）
   - 环境变量配置系统
   - 向后兼容性保证
 
@@ -86,7 +96,7 @@
 - **上下文引用开销**：显著降低模板文本占用
 
 ### 2. 性能提升效果
-- **加载速度**：JSON格式解析更快
+- **内存安全性**：禁用JSON格式避免内存溢出，适合虚拟机环境
 - **搜索效率**：更小的文件更易处理
 - **维护简化**：自动清理减少手动维护
 
@@ -97,13 +107,10 @@
 
 ## 🛠️ 环境变量配置
 
-### 会话格式控制
+### 会话格式说明
 ```bash
-# 启用JSON格式存储（推荐）
-export CLAUDE_SESSION_JSON=true
-
-# 使用紧凑文本格式（默认）
-export CLAUDE_SESSION_JSON=false
+# 当前只支持紧凑文本格式，JSON格式已禁用（避免内存溢出）
+# 无需配置格式切换，所有会话使用紧凑文本格式
 ```
 
 ### 清理配置
@@ -128,8 +135,7 @@ export CLAUDE_CLEANUP_ENABLED=false
 
 ### 启用完整优化配置
 ```bash
-# 启用JSON格式和详细清理日志
-export CLAUDE_SESSION_JSON=true
+# 启用详细清理日志
 export CLAUDE_CLEANUP_VERBOSE=true
 
 # 更严格的清理策略
@@ -140,10 +146,7 @@ export CLAUDE_CLEANUP_MAX_SIZE_MB=20
 
 ### 最小化存储占用
 ```bash
-# 启用JSON格式
-export CLAUDE_SESSION_JSON=true
-
-# 激进清理策略
+# 激进清理策略（适合DeepSeek 128k上下文）
 export CLAUDE_CLEANUP_MAX_AGE_DAYS=1
 export CLAUDE_CLEANUP_MAX_SESSIONS=3
 export CLAUDE_CLEANUP_MAX_SIZE_MB=10
@@ -166,15 +169,15 @@ export CLAUDE_CLEANUP_MAX_SIZE_MB=10
 ## 🎯 验收标准
 
 ### 功能验收
-- ✅ 会话创建功能正常（默认格式和JSON格式）
+- ✅ 会话创建功能正常（紧凑文本格式）
 - ✅ 自动清理机制有效（时间/数量/大小策略）
-- ✅ 格式转换功能正常（旧格式到JSON格式）
-- ✅ 混合环境读取正常（新旧格式共存）
+- ✅ 内存安全性保证（无内存溢出问题）
+- ✅ 会话文件命名唯一性保证（同一天内不覆盖）
 
 ### 性能验收
 - ✅ 会话文件大小减少75%以上
 - ✅ 自动清理减少目录空间占用50%以上
-- ✅ JSON格式解析速度优于文本格式
+- ✅ 内存使用安全，无溢出风险
 - ✅ 上下文引用开销显著降低
 
 ### 兼容性验收
@@ -216,6 +219,6 @@ export CLAUDE_CLEANUP_MAX_SIZE_MB=10
 
 ---
 
-*本产出物记录最后更新于：2026-02-06*
+*本产出物记录最后更新于：2026-02-07*
 *记录维护者：首席架构师*
 *验收状态：✅ 已完成并通过所有验证*

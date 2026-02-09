@@ -21,6 +21,16 @@
           }
         ],
         "description": "Reminder to use tmux for long-running commands"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"scripts/hooks/suggest-compact.js\""
+          }
+        ],
+        "description": "Suggest strategic compaction at logical intervals"
       }
     ],
     "PreCompact": [
