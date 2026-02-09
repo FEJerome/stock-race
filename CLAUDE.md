@@ -654,12 +654,34 @@ stock-race/
 - ✅ **技术栈方案**：[docs/miniprogram/TECH_STACK.md](docs/miniprogram/TECH_STACK.md) - 技术选型、架构设计
 - ✅ **可行性报告**：[docs/miniprogram/FEASIBILITY_REPORT.md](docs/miniprogram/FEASIBILITY_REPORT.md) - 可行性分析
 - ✅ **开发进度文档**：[docs/miniprogram/DEVELOPMENT_PROGRESS.md](docs/miniprogram/DEVELOPMENT_PROGRESS.md) - 开发进度跟踪
+- ✅ **审核准备材料**：
+  - [隐私保护指引](docs/miniprogram/PRIVACY.md) - 完整的隐私协议
+  - [用户服务协议](docs/miniprogram/TERMS.md) - 用户协议文档
+  - [审核指南](docs/miniprogram/WECHAT_AUDIT_GUIDE.md) - 微信审核完整指南
+  - 隐私协议页面（HTML）- `src/static/privacy.html`
+  - 用户协议页面（HTML）- `src/static/terms.html`
 
 **P0核心功能（已完成）**：
 - ✅ **基础架构**：UniApp + Vue 3 + TypeScript + Vite + Pinia + uView Plus
 - ✅ **认证模块**：登录页、表单验证、演示账户、降级机制
 - ✅ **仪表盘模块**：总资产卡片、董事长指令、AI经理概览、持仓概览、快捷操作
-- ✅ **AI基金经理模块**：列表页、创建页、立即决策功能
+- ✅ **AI基金经理模块**：列表页、创建页、详情页、编辑页、立即决策功能
+
+**P1功能（已完成）**：
+- ✅ **市场数据模块**：行情列表页、股票详情页
+- ✅ **持仓模块**：持仓总览、持仓明细
+- ✅ **交易记录模块**：交易列表页
+- ✅ **竞赛排行模块**：排行榜页面、个人排名
+
+**P2功能（已完成）**：
+- ✅ **分析模块**：基金分析页、经理对比页
+- ✅ **设置模块**：个人资料、安全设置、通知设置、隐私协议、用户协议
+
+**审核准备（已完成）**：
+- ✅ **基本资料配置**：manifest.json配置、版本号设置、权限配置
+- ✅ **审核材料**：隐私协议、用户协议、审核指南、HTML页面
+- ✅ **合规性检查**：敏感词检查、权限检查、授权流程检查
+- ✅ **生产构建配置**：生产环境配置、Vite优化配置、代码压缩
 
 **开发分支**：`miniprogram-development`
 **工作树位置**：`worktrees/worktree-miniprogram/miniprogram/`
@@ -693,14 +715,35 @@ stock-race/
 - 运营可行性：⭐⭐⭐⭐（成本可控）
 - 投资回报：⭐⭐⭐⭐⭐（回报率约500%）
 
-**下一步行动**：
-1. 🔄 **补充图标资源**：添加TabBar图标和应用Logo
-2. 🔄 **开发P1功能**：市场行情、持仓总览、交易记录、竞赛排行
-3. 🔄 **开发P2功能**：设置页面、分析页面
-4. 🔄 **API联调**：与后端服务进行完整联调测试
-5. 🔄 **微信审核**：准备小程序审核材料
+**审核前待完成任务**：
+1. 🔄 **补充图标资源**：
+   - 设计TabBar图标（10个：home/market/ai/portfolio/settings + active状态）
+   - 设计小程序图标（3个尺寸：144x144、288x288、432x432）
+   - 导出PNG格式并放入 `src/static/icons/`
+
+2. 🔄 **功能完善**：
+   - 完成搜索功能
+   - 完成交易详情页
+   - 完善错误处理
+
+3. 🔄 **测试验证**：
+   - 端到端测试
+   - 兼容性测试
+   - 性能测试
+
+4. 🔄 **审核提交**：
+   - 准备审核截图（5张）
+   - 准备测试账号
+   - 配置真实服务器域名
+   - 填写审核信息并提交
+
+**文档索引**：
+- 📋 [隐私保护指引](docs/miniprogram/PRIVACY.md)
+- 📋 [用户服务协议](docs/miniprogram/TERMS.md)
+- 📋 [审核指南](docs/miniprogram/WECHAT_AUDIT_GUIDE.md)
+- 📋 [开发进度](docs/miniprogram/DEVELOPMENT_PROGRESS.md)
 
 ---
 
 *本文档最后更新于：2026-02-09*
-*文档维护者：项目团队 + 协调智能体 + 内存持久化优化项目 + 首席架构师 + Docker网络问题解决项目 + 微信小程序规划项目 + MVP开发计划项目 + 模块化开发规范项目*
+*文档维护者：项目团队 + 协调智能体 + 内存持久化优化项目 + 首席架构师 + Docker网络问题解决项目 + 微信小程序规划项目 + MVP开发计划项目 + 模块化开发规范项目 + 小程序审核准备项目*
