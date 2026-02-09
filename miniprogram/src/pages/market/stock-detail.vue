@@ -56,7 +56,7 @@
       </view>
     </view>
 
-    <!-- K线图占位 -->
+    <!-- K线图 -->
     <view class="chart-section">
       <view class="section-header">
         <text class="section-title">走势图</text>
@@ -78,9 +78,19 @@
           >月K</text>
         </view>
       </view>
-      <view class="chart-placeholder">
-        <text class="placeholder-text">K线图区域</text>
-        <text class="placeholder-desc">后续集成ucharts图表组件</text>
+      <view class="chart-container">
+        <KLineChart
+          :data="kLineData"
+          :period="activePeriod"
+          :height="500"
+          canvasId="stock-kline-chart"
+          @complete="onChartComplete"
+          @error="onChartError"
+        />
+        <view class="chart-loading" v-if="chartLoading">
+          <u-loading-icon mode="circle" size="32"></u-loading-icon>
+          <text class="loading-text">加载中...</text>
+        </view>
       </view>
     </view>
 
@@ -135,10 +145,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { marketApi } from '@/api/market'
-import type { StockDetail } from '@/types/market'
+import type { StockDetail, KLineData } from '@/types/market'
 import { formatPrice, formatPercent, formatVolume, formatAmount } from '@/utils/formatter'
+import KLineChart from '@/components/charts/KLineChart.vue'
 
 // 页面参数
 const stockCode = ref('')
@@ -149,6 +160,10 @@ const loading = ref(false)
 const error = ref('')
 const isInWatchlist = ref(false)
 const activePeriod = ref<'1d' | '1w' | '1m'>('1d')
+
+// K线数据
+const kLineData = ref<KLineData[]>([])
+const chartLoading = ref(false)
 
 // 获取价格样式类
 function getPriceClass(change: number): string {
@@ -178,7 +193,66 @@ async function fetchStockDetail() {
 // 切换K线周期
 function switchPeriod(period: '1d' | '1w' | '1m') {
   activePeriod.value = period
-  // 这里可以加载对应周期的K线数据
+  // 加载对应周期的K线数据
+  fetchKLineData()
+}
+
+// 获取K线数据
+async function fetchKLineData() {
+  if (!stockCode.value) return
+
+  chartLoading.value = true
+  try {
+    const data = await marketApi.getKLineData(stockCode.value, activePeriod.value)
+    kLineData.value = data
+  } catch (err) {
+    console.error('Fetch K-line data error:', err)
+    // 使用模拟数据作为降级
+    kLineData.value = generateMockKLineData()
+  } finally {
+    chartLoading.value = false
+  }
+}
+
+// 生成模拟K线数据
+function generateMockKLineData(): KLineData[] {
+  const data: KLineData[] = []
+  const basePrice = stockDetail.value?.quote?.preClose || 100
+  const days = activePeriod.value === '1d' ? 60 : activePeriod.value === '1w' ? 30 : 12
+
+  let currentPrice = basePrice
+  const now = new Date()
+
+  for (let i = days; i >= 0; i--) {
+    const date = new Date(now)
+    if (activePeriod.value === '1d') {
+      date.setDate(date.getDate() - i)
+    } else if (activePeriod.value === '1w') {
+      date.setDate(date.getDate() - i * 7)
+    } else {
+      date.setMonth(date.getMonth() - i)
+    }
+
+    const volatility = 0.02
+    const change = (Math.random() - 0.5) * 2 * volatility
+    const open = currentPrice
+    const close = currentPrice * (1 + change)
+    const high = Math.max(open, close) * (1 + Math.random() * 0.01)
+    const low = Math.min(open, close) * (1 - Math.random() * 0.01)
+
+    data.push({
+      date: date.toISOString().split('T')[0],
+      open: parseFloat(open.toFixed(2)),
+      close: parseFloat(close.toFixed(2)),
+      high: parseFloat(high.toFixed(2)),
+      low: parseFloat(low.toFixed(2)),
+      volume: Math.floor(Math.random() * 1000000) + 500000
+    })
+
+    currentPrice = close
+  }
+
+  return data
 }
 
 // 切换自选状态
@@ -209,6 +283,16 @@ function goToTrade(type: 'buy' | 'sell') {
   })
 }
 
+// 图表完成回调
+function onChartComplete() {
+  console.log('K线图渲染完成')
+}
+
+// 图表错误回调
+function onChartError(err: any) {
+  console.error('K线图渲染错误:', err)
+}
+
 onMounted(() => {
   // 获取页面参数
   const pages = getCurrentPages()
@@ -216,9 +300,18 @@ onMounted(() => {
   stockCode.value = currentPage.options?.code || ''
 
   if (stockCode.value) {
-    fetchStockDetail()
+    fetchStockDetail().then(() => {
+      fetchKLineData()
+    })
   } else {
     error.value = '股票代码不能为空'
+  }
+})
+
+// 监听股票详情变化，更新K线数据
+watch(() => stockDetail.value?.quote?.preClose, () => {
+  if (kLineData.value.length === 0) {
+    fetchKLineData()
   }
 })
 </script>
@@ -355,6 +448,32 @@ onMounted(() => {
           color: #1890ff;
           background: rgba(24, 144, 255, 0.1);
         }
+      }
+    }
+  }
+
+  .chart-container {
+    position: relative;
+    height: 500rpx;
+    background: #ffffff;
+    border-radius: 12rpx;
+
+    .chart-loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.9);
+
+      .loading-text {
+        margin-top: 16rpx;
+        font-size: 24rpx;
+        color: #8c8c8c;
       }
     }
   }

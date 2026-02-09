@@ -16,6 +16,9 @@ onHide(() => {
 
 <style lang="scss">
 @import "uview-plus/index.scss";
+@import "@/styles/variables.scss";
+@import "@/styles/global.scss";
+@import "@/styles/animations.scss";
 
 page {
   background-color: #F5F5F5;

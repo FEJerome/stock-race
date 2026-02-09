@@ -95,9 +95,20 @@
           >1年</text>
         </view>
       </view>
-      <view class="chart-placeholder">
-        <text class="placeholder-text">总资产曲线</text>
-        <text class="placeholder-desc">后续集成ucharts图表组件</text>
+      <view class="chart-container">
+        <LineChart
+          :categories="assetCategories"
+          :series="assetSeries"
+          :height="400"
+          :showArea="true"
+          canvasId="asset-line-chart"
+          @complete="onChartComplete('asset')"
+          @error="onChartError('asset', $event)"
+        />
+        <view class="chart-loading" v-if="chartLoading.asset">
+          <u-loading-icon mode="circle" size="32"></u-loading-icon>
+          <text class="loading-text">加载中...</text>
+        </view>
       </view>
     </view>
 
@@ -128,9 +139,20 @@
           >1年</text>
         </view>
       </view>
-      <view class="chart-placeholder">
-        <text class="placeholder-text">收益率曲线</text>
-        <text class="placeholder-desc">后续集成ucharts图表组件</text>
+      <view class="chart-container">
+        <LineChart
+          :categories="returnCategories"
+          :series="returnSeries"
+          :height="400"
+          :showLegend="true"
+          canvasId="return-line-chart"
+          @complete="onChartComplete('return')"
+          @error="onChartError('return', $event)"
+        />
+        <view class="chart-loading" v-if="chartLoading.return">
+          <u-loading-icon mode="circle" size="32"></u-loading-icon>
+          <text class="loading-text">加载中...</text>
+        </view>
       </view>
     </view>
 
@@ -224,9 +246,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useTradingStore } from '@/stores/trading'
 import { formatChange, formatPercent } from '@/utils/formatter'
+import LineChart from '@/components/charts/LineChart.vue'
 
 const tradingStore = useTradingStore()
 
@@ -234,6 +257,16 @@ const tradingStore = useTradingStore()
 const loading = ref(false)
 const assetPeriod = ref<'1m' | '3m' | '6m' | '1y'>('1m')
 const returnPeriod = ref<'1m' | '3m' | '6m' | '1y'>('1m')
+
+// 图表数据
+const assetCategories = ref<string[]>([])
+const assetSeries = ref<{ name: string; data: number[]; color?: string }[]>([])
+const returnCategories = ref<string[]>([])
+const returnSeries = ref<{ name: string; data: number[]; color?: string }[]>([])
+const chartLoading = ref({
+  asset: false,
+  return: false
+})
 
 // 模拟数据 - 后续从API获取
 const todayProfit = computed(() => tradingStore.overview?.todayProfit ?? 0)
@@ -263,13 +296,121 @@ const hasData = computed(() => {
 // 切换资产周期
 function switchAssetPeriod(period: '1m' | '3m' | '6m' | '1y') {
   assetPeriod.value = period
-  // 这里可以触发数据重新加载
+  fetchAssetData()
 }
 
 // 切换收益率周期
 function switchReturnPeriod(period: '1m' | '3m' | '6m' | '1y') {
   returnPeriod.value = period
-  // 这里可以触发数据重新加载
+  fetchReturnData()
+}
+
+// 获取资产走势数据
+async function fetchAssetData() {
+  chartLoading.value.asset = true
+  try {
+    // 模拟API调用，实际项目中替换为真实API
+    const data = generateMockAssetData(assetPeriod.value)
+    assetCategories.value = data.categories
+    assetSeries.value = data.series
+  } finally {
+    chartLoading.value.asset = false
+  }
+}
+
+// 获取收益率走势数据
+async function fetchReturnData() {
+  chartLoading.value.return = true
+  try {
+    // 模拟API调用，实际项目中替换为真实API
+    const data = generateMockReturnData(returnPeriod.value)
+    returnCategories.value = data.categories
+    returnSeries.value = data.series
+  } finally {
+    chartLoading.value.return = false
+  }
+}
+
+// 生成模拟资产数据
+function generateMockAssetData(period: string) {
+  const days = period === '1m' ? 30 : period === '3m' ? 90 : period === '6m' ? 180 : 365
+  const categories: string[] = []
+  const data: number[] = []
+  const baseAsset = tradingStore.overview?.totalAssets || 1000000
+
+  let currentAsset = baseAsset * 0.9
+  const now = new Date()
+
+  for (let i = days; i >= 0; i -= Math.floor(days / 20)) {
+    const date = new Date(now)
+    date.setDate(date.getDate() - i)
+    categories.push(`${date.getMonth() + 1}/${date.getDate()}`)
+
+    const change = (Math.random() - 0.48) * 0.02
+    currentAsset = currentAsset * (1 + change)
+    data.push(parseFloat(currentAsset.toFixed(2)))
+  }
+
+  return {
+    categories,
+    series: [{
+      name: '总资产',
+      data,
+      color: '#1890ff'
+    }]
+  }
+}
+
+// 生成模拟收益率数据
+function generateMockReturnData(period: string) {
+  const days = period === '1m' ? 30 : period === '3m' ? 90 : period === '6m' ? 180 : 365
+  const categories: string[] = []
+  const data: number[] = []
+  const benchmark: number[] = []
+
+  let currentReturn = 0
+  let currentBenchmark = 0
+  const now = new Date()
+
+  for (let i = days; i >= 0; i -= Math.floor(days / 20)) {
+    const date = new Date(now)
+    date.setDate(date.getDate() - i)
+    categories.push(`${date.getMonth() + 1}/${date.getDate()}`)
+
+    const change = (Math.random() - 0.48) * 2
+    currentReturn += change
+    data.push(parseFloat(currentReturn.toFixed(2)))
+
+    const benchmarkChange = (Math.random() - 0.5) * 1.5
+    currentBenchmark += benchmarkChange
+    benchmark.push(parseFloat(currentBenchmark.toFixed(2)))
+  }
+
+  return {
+    categories,
+    series: [
+      {
+        name: '我的收益',
+        data,
+        color: '#1890ff'
+      },
+      {
+        name: '沪深300',
+        data: benchmark,
+        color: '#faad14'
+      }
+    ]
+  }
+}
+
+// 图表完成回调
+function onChartComplete(type: 'asset' | 'return') {
+  console.log(`${type}图表渲染完成`)
+}
+
+// 图表错误回调
+function onChartError(type: 'asset' | 'return', error: any) {
+  console.error(`${type}图表渲染错误:`, error)
 }
 
 // 加载分析数据
@@ -277,7 +418,11 @@ async function loadAnalyticsData() {
   loading.value = true
   try {
     await tradingStore.fetchOverview()
-    // 这里可以加载更多分析数据
+    // 加载图表数据
+    await Promise.all([
+      fetchAssetData(),
+      fetchReturnData()
+    ])
   } finally {
     loading.value = false
   }
@@ -392,6 +537,32 @@ onMounted(() => {
           color: #1890ff;
           background: rgba(24, 144, 255, 0.1);
         }
+      }
+    }
+  }
+
+  .chart-container {
+    position: relative;
+    height: 400rpx;
+    background: #ffffff;
+    border-radius: 12rpx;
+
+    .chart-loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.9);
+
+      .loading-text {
+        margin-top: 16rpx;
+        font-size: 24rpx;
+        color: #8c8c8c;
       }
     }
   }
