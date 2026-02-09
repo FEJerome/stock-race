@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from 'react-query'
 import MainLayout from './components/layout/MainLayout'
 import ProtectedRoute from './components/common/ProtectedRoute'
+import AdminRoute from './components/common/AdminRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Competition from './pages/Competition'
@@ -10,6 +11,7 @@ import Trading from './pages/Trading'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import TestAPI from './pages/TestAPI'
+import AdminDashboard from './pages/AdminDashboard'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +44,11 @@ function App() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/test-api" element={<TestAPI />} />
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
           </Route>
 
           {/* 404页面 */}

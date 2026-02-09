@@ -79,7 +79,7 @@ export class StockController {
     );
 
     if (!stock) {
-      return res.stockNotFound(stockCode);
+      return res.stock_not_found(stockCode);
     }
 
     // 获取实时行情数据
@@ -140,7 +140,7 @@ export class StockController {
     // 验证股票是否存在
     const stock = await stockRepository.findOne({ code: stockCode });
     if (!stock) {
-      return res.stockNotFound(stockCode);
+      return res.stock_not_found(stockCode);
     }
 
     // 获取K线数据
@@ -172,7 +172,7 @@ export class StockController {
     // 验证股票是否存在
     const stock = await stockRepository.findOne({ code: stockCode });
     if (!stock) {
-      return res.stockNotFound(stockCode);
+      return res.stock_not_found(stockCode);
     }
 
     // 获取实时行情数据
@@ -311,7 +311,7 @@ export class StockController {
     const missingCodes = stockCodes.filter(code => !existingCodes.includes(code));
 
     if (missingCodes.length > 0) {
-      return res.stockNotFound(`部分股票不存在: ${missingCodes.join(', ')}`, { missingCodes });
+      return res.stock_not_found(`部分股票不存在: ${missingCodes.join(', ')}`, { missingCodes });
     }
 
     // 批量获取实时数据

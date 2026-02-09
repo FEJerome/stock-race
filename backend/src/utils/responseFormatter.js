@@ -220,7 +220,7 @@ export const asyncHandler = (fn) => {
       }
 
       // 未知错误
-      return res.internalError(error.message, { stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
+      return res.internal_error(error.message, { stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
     }
   };
 };

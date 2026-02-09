@@ -26,6 +26,7 @@
 ### 开发指南
 - [**开发规范**](docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
 - [**产出物管理规范**](docs/development/ARTIFACT_MANAGEMENT.md) - 产出物存储、日志与留痕管理
+- [**当前功能清单**](docs/development/CURRENT_FUNCTIONALITY_INVENTORY.md) - 系统当前业务功能详细清单
 - [**内存持久化优化产出物记录**](docs/development/MEMORY_PERSISTENCE_OPTIMIZATION_ARTIFACTS.md) - 优化功能产出物详细记录
 - [**新手指南**](docs/usage/QUICK_START.md) - 环境搭建与快速上手
 
@@ -439,6 +440,36 @@ cp .env.production.example .env.production
 
 ---
 
+### AI决策功能优化项目
+**项目状态**：✅ 已完成（2026-02-07）
+
+**项目目标**：完善AI决策功能，实现用户偏好可靠生效、token效率平衡、完整提示词展示
+
+**主要成果**：
+- ✅ **数据库架构增强**：增强AIAccount和DecisionLog表，添加用户偏好配置和提示词存储字段
+- ✅ **后端服务增强**：创建EnhancedAIService、PromptTemplateService、UserPreferenceProcessor
+- ✅ **前端界面增强**：创建增强的AIDecisionDetail组件，支持完整提示词展示
+- ✅ **模板化提示词系统**：实现基于用户偏好的个性化提示词生成
+- ✅ **Token效率优化**：在决策匹配度和token成本间取得平衡
+- ✅ **决策透明度**：用户可以查看发送给AI大模型的完整提示词
+
+**技术特性**：
+- 🧠 **用户偏好集成**：AI决策时可靠应用用户偏好配置
+- 💰 **Token效率**：模板化提示词系统优化token使用
+- 🔍 **决策透明度**：完整提示词存储和展示
+- 🛡️ **降级机制**：AI服务不可用时仍包含提示词信息
+
+**详细报告**：
+- 📋 [AI决策功能优化完成报告](docs/development/AI_DECISION_OPTIMIZATION_COMPLETION_REPORT.md)
+- 🧪 测试脚本：`scripts/test_ai_decision_enhancement.sh`
+
+**项目完成度评估**：
+- **总体完成度**：100%
+- **核心功能**：100% 完成
+- **用户体验**：100% 完成
+- **文档完整性**：100% 完成
+
+---
 
 *本文档最后更新于：2026-02-08*
 *文档维护者：项目团队 + 协调智能体 + 内存持久化优化项目*

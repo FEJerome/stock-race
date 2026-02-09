@@ -5,7 +5,7 @@ export const authService = {
   // 登录
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     try {
-      // 后端API只需要password参数，不需要username
+      // 后端API需要username和password参数
       const response = await api.post<{
         success: boolean;
         data: {
@@ -21,6 +21,7 @@ export const authService = {
         };
         message: string;
       }>('/auth/login', {
+        username: credentials.username,
         password: credentials.password
       });
 
@@ -173,6 +174,59 @@ export const authService = {
       // 降级处理：检查是否为模拟token
       await new Promise(resolve => setTimeout(resolve, 300));
       return token.startsWith('mock-jwt-token');
+    }
+  },
+
+  // 用户注册
+  register: async (data: { username: string; password: string; confirmPassword: string }): Promise<RegisterResponse> => {
+    try {
+      const response = await api.post<{
+        success: boolean;
+        data: {
+          user: {
+            id: number;
+            username: string;
+            email: string;
+            status: string;
+            createdAt: string;
+          };
+          token: string;
+          sessionId: string;
+          expiresAt: string;
+          expiresIn: number;
+        };
+        message: string;
+      }>('/auth/register', {
+        username: data.username,
+        password: data.password,
+        confirmPassword: data.confirmPassword
+      });
+
+      if (response.success) {
+        // 转换后端返回的用户数据格式，匹配前端User类型
+        const backendUser = response.data.user;
+        const user: User = {
+          id: backendUser.id.toString(),
+          username: backendUser.username,
+          email: backendUser.email,
+          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + backendUser.username,
+          createdAt: backendUser.createdAt,
+          updatedAt: new Date().toISOString(),
+        };
+
+        return {
+          user,
+          token: response.data.token,
+          sessionId: response.data.sessionId,
+          expiresAt: response.data.expiresAt,
+          expiresIn: response.data.expiresIn,
+        };
+      } else {
+        throw new Error(response.message || '注册失败');
+      }
+    } catch (error) {
+      console.error('注册API调用失败:', error);
+      throw error;
     }
   },
 };

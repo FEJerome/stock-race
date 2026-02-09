@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Row,
   Col,
@@ -14,6 +14,7 @@ import {
   Grid,
   Spin,
   Alert,
+  Select,
 } from 'antd';
 import {
   ArrowUpOutlined,
@@ -27,6 +28,7 @@ import {
   FallOutlined,
   DashboardOutlined,
   ReloadOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { useQuery } from 'react-query';
 import ProfitChart from '../components/charts/ProfitChart';
@@ -37,32 +39,62 @@ import { tradingService } from '../services/trading.service';
 import { marketService } from '../services/market.service';
 import { aiService } from '../services/ai.service';
 import { formatCurrency, formatPercent } from '../utils/formatters';
+import { AIAccount } from '../types/api.types';
 
 const { Title, Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
+const { Option } = Select;
 
 const Dashboard: React.FC = () => {
   const screens = useBreakpoint();
+  const [selectedAIAccountId, setSelectedAIAccountId] = useState<string>('');
 
-  // 使用React Query获取数据
+  // 获取用户的所有AI账户
+  const { data: aiAccounts, isLoading: aiAccountsLoading } = useQuery(
+    'aiAccounts',
+    () => aiService.getAIAccounts(),
+    {
+      onSuccess: (accounts) => {
+        // 如果有AI账户但未选择，默认选择第一个活跃账户
+        if (accounts.length > 0 && !selectedAIAccountId) {
+          const activeAccount = accounts.find(account => account.isActive) || accounts[0];
+          setSelectedAIAccountId(activeAccount.id);
+        }
+      }
+    }
+  );
+
+  // 使用React Query获取数据，根据选中的AI账户
   const { data: portfolioSummary, isLoading: portfolioLoading, refetch: refetchPortfolio } = useQuery(
-    'portfolioSummary',
-    () => tradingService.getPortfolioSummary()
+    ['portfolioSummary', selectedAIAccountId],
+    () => tradingService.getPortfolioSummary(selectedAIAccountId),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: positions, isLoading: positionsLoading, refetch: refetchPositions } = useQuery(
-    'positions',
-    () => tradingService.getPositions()
+    ['positions', selectedAIAccountId],
+    () => tradingService.getPositions(selectedAIAccountId),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: recentOrders, isLoading: ordersLoading, refetch: refetchOrders } = useQuery(
-    'recentOrders',
-    () => tradingService.getOrders({ page: 1, pageSize: 5 })
+    ['recentOrders', selectedAIAccountId],
+    () => tradingService.getOrders({ page: 1, pageSize: 5, accountId: selectedAIAccountId }),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: aiDecisions, isLoading: aiDecisionsLoading, refetch: refetchAiDecisions } = useQuery(
-    'aiDecisions',
-    () => aiService.getAIDecisions({ page: 1, pageSize: 5 })
+    ['aiDecisions', selectedAIAccountId],
+    () => aiService.getAIDecisions(selectedAIAccountId, { page: 1, pageSize: 5 }),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: marketData, isLoading: marketLoading, refetch: refetchMarket } = useQuery(
@@ -106,7 +138,7 @@ const Dashboard: React.FC = () => {
     reason: decision.reason,
   })) || [];
 
-  const isLoading = portfolioLoading || positionsLoading || ordersLoading || aiDecisionsLoading || marketLoading;
+  const isLoading = portfolioLoading || positionsLoading || ordersLoading || aiDecisionsLoading || marketLoading || aiAccountsLoading;
 
   if (isLoading) {
     return (
@@ -139,7 +171,48 @@ const Dashboard: React.FC = () => {
             </Button>
           </Col>
         </Row>
+
+        {/* AI账户选择器 */}
+        <Row align="middle" gutter={[16, 0]}>
+          <Col>
+            <Text strong>
+              <RobotOutlined /> 选择AI账户:
+            </Text>
+          </Col>
+          <Col flex="auto">
+            <Select
+              style={{ width: '100%', maxWidth: 300 }}
+              placeholder="选择AI账户查看投资组合"
+              value={selectedAIAccountId || undefined}
+              onChange={setSelectedAIAccountId}
+              loading={aiAccountsLoading}
+              disabled={aiAccountsLoading}
+            >
+              {aiAccounts?.map((account: AIAccount) => (
+                <Option key={account.id} value={account.id}>
+                  {account.name} ({account.modelType}) {account.isActive ? '✅' : '⏸️'}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col>
+            <Text type="secondary">
+              {selectedAIAccountId ? `当前查看: ${aiAccounts?.find(a => a.id === selectedAIAccountId)?.name || '未知账户'}` : '请选择AI账户'}
+            </Text>
+          </Col>
+        </Row>
       </Space>
+
+      {/* 如果没有选择AI账户，显示提示 */}
+      {!selectedAIAccountId && (
+        <Alert
+          message="请选择AI账户"
+          description="请从上方选择器中选择一个AI账户，以查看该账户的投资组合数据和交易记录。"
+          type="info"
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      )}
 
       {/* 统计数据卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -244,7 +317,7 @@ const Dashboard: React.FC = () => {
             {/* 持仓汇总 */}
             <Col span={24}>
               <Card title="持仓汇总" extra={<WalletOutlined />}>
-                <PortfolioSummary />
+                <PortfolioSummary accountId={selectedAIAccountId} />
               </Card>
             </Col>
 

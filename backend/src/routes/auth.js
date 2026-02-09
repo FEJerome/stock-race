@@ -375,6 +375,76 @@ router.get('/stats', (req, res) => authController.getAuthStats(req, res));
 
 /**
  * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: 用户注册
+ *     description: 注册新用户账号
+ *     tags: [认证]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - password
+ *               - confirmPassword
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: 用户名（3-20个字符）
+ *               password:
+ *                 type: string
+ *                 description: 密码（至少6个字符）
+ *               confirmPassword:
+ *                 type: string
+ *                 description: 确认密码
+ *     responses:
+ *       201:
+ *         description: 注册成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                     token:
+ *                       type: string
+ *                     sessionId:
+ *                       type: string
+ *                     expiresAt:
+ *                       type: string
+ *                     expiresIn:
+ *                       type: number
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: 请求参数错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 error:
+ *                   type: object
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: 服务器内部错误
+ */
+router.post('/register', (req, res) => authController.register(req, res));
+
+/**
+ * @swagger
  * /api/auth/health:
  *   get:
  *     summary: 健康检查

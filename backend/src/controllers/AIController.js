@@ -2,6 +2,7 @@ import { aiAccountRepository } from '../models/index.js';
 import { decisionLogRepository } from '../models/index.js';
 import { systemLogRepository } from '../models/index.js';
 import { aiService } from '../services/AIService.js';
+import enhancedAIService from '../services/EnhancedAIService.js';
 import { dataService } from '../services/DataService.js';
 
 export class AIController {
@@ -105,12 +106,16 @@ export class AIController {
     try {
       const {
         name,
-        modelType = 'openai_gpt4',
+        modelType = 'deepseek',
         initialBalance = 100000.00,
         tradingFrequency = 'daily',
         riskLevel = 'medium',
         promptTemplate,
-        config = {}
+        config = {},
+        // 新增字段：用户偏好配置和提示词模板
+        preferenceConfig = {},
+        promptTemplateId = null,
+        tokenBudget = 1500
       } = req.body;
 
       const userId = req.user?.id;
@@ -150,8 +155,8 @@ export class AIController {
         });
       }
 
-      // 验证模型类型
-      const validModelTypes = ['openai_gpt4', 'openai_gpt35', 'claude', 'wenxin', 'qwen'];
+      // 验证模型类型 - 根据AI服务适配器更新为deepseek和glm
+      const validModelTypes = ['deepseek', 'glm'];
       if (!validModelTypes.includes(modelType)) {
         return res.status(400).json({
           success: false,
@@ -200,7 +205,11 @@ export class AIController {
         tradingFrequency,
         riskLevel,
         promptTemplate,
-        config: JSON.stringify(config)
+        config: JSON.stringify(config),
+        // 新增字段：用户偏好配置和提示词模板
+        preferenceConfig: preferenceConfig,
+        promptTemplateId,
+        tokenBudget
       };
 
       const account = await aiAccountRepository.createAccount(accountData);
@@ -322,10 +331,19 @@ export class AIController {
 
       // 解析配置
       let config = {};
+      let preferenceConfig = {};
       try {
         config = JSON.parse(account.config || '{}');
       } catch (error) {
         console.error('解析账户配置错误:', error);
+      }
+
+      try {
+        // preferenceConfig已经是JavaScript对象（来自Prisma的JSONB字段）
+        preferenceConfig = account.preferenceConfig || {};
+      } catch (error) {
+        console.error('解析用户偏好配置错误:', error);
+        preferenceConfig = {};
       }
 
       const formattedAccount = {
@@ -340,6 +358,11 @@ export class AIController {
         tradingFrequency: account.tradingFrequency,
         riskLevel: account.riskLevel,
         promptTemplate: account.promptTemplate,
+        // 新增字段
+        preferenceConfig,
+        promptTemplateId: account.promptTemplateId,
+        tokenBudget: account.tokenBudget || 1500,
+        lastDecisionAt: account.lastDecisionAt,
         config,
         performance,
         portfolios: account.portfolios.map(p => ({
@@ -442,7 +465,7 @@ export class AIController {
       }
 
       // 验证更新字段
-      const allowedUpdates = ['name', 'description', 'status', 'config'];
+      const allowedUpdates = ['name', 'description', 'status', 'config', 'preferenceConfig', 'promptTemplateId', 'tokenBudget'];
       const invalidUpdates = Object.keys(updates).filter(key => !allowedUpdates.includes(key));
 
       if (invalidUpdates.length > 0) {
@@ -493,6 +516,45 @@ export class AIController {
             message: '配置必须是有效的JSON格式'
           });
         }
+      }
+
+      // 处理用户偏好配置更新
+      if (updates.preferenceConfig) {
+        try {
+          // 合并现有偏好配置
+          const currentPrefConfig = JSON.parse(account.preferenceConfig || '{}');
+          const newPrefConfig = typeof updates.preferenceConfig === 'string'
+            ? JSON.parse(updates.preferenceConfig)
+            : updates.preferenceConfig;
+
+          const mergedPrefConfig = { ...currentPrefConfig, ...newPrefConfig };
+          updateData.preferenceConfig = JSON.stringify(mergedPrefConfig);
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: '用户偏好配置格式错误'
+            },
+            message: '用户偏好配置必须是有效的JSON格式'
+          });
+        }
+      }
+
+      // 验证tokenBudget
+      if (updates.tokenBudget) {
+        const tokenBudgetNum = parseInt(updates.tokenBudget);
+        if (isNaN(tokenBudgetNum) || tokenBudgetNum < 100 || tokenBudgetNum > 10000) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: '无效的token预算'
+            },
+            message: 'token预算必须是100-10000之间的整数'
+          });
+        }
+        updateData.tokenBudget = tokenBudgetNum;
       }
 
       // 更新账户
@@ -720,7 +782,7 @@ export class AIController {
       // 调用AI服务
       const decision = await this.callAIService(account, action, data);
 
-      // 记录决策日志
+      // 记录决策日志（包含提示词信息）
       const decisionLog = await decisionLogRepository.createDecisionLog({
         accountId: parseInt(accountId),
         decisionType: action,
@@ -732,7 +794,14 @@ export class AIController {
         modelUsed: account.modelType,
         promptVersion: account.promptTemplate,
         processingTimeMs: decision.processingTimeMs,
-        apiCost: decision.apiCost
+        apiCost: decision.apiCost,
+        // 新增字段：提示词相关
+        promptTemplate: decision.promptInfo?.template,
+        tokenCount: decision.promptInfo?.tokenCount,
+        userPreferences: decision.promptInfo?.userPreferences ?
+          JSON.stringify(decision.promptInfo.userPreferences) : null,
+        // 注意：fullPrompt和promptVariables由EnhancedAIService在创建决策日志时填充
+        decisionLogId: decision.decisionLogId
       });
 
       // 记录系统日志
@@ -1096,9 +1165,9 @@ export class AIController {
       // 准备投资组合数据
       const portfolioData = data?.portfolioData || {};
 
-      // 调用AI服务
-      const decisionResult = await aiService.requestDecision({
-        accountId: account.id.toString(),
+      // 调用增强的AI服务
+      const decisionResult = await enhancedAIService.requestEnhancedDecision({
+        accountId: account.id,
         stockCode,
         marketData,
         portfolioData,
@@ -1113,9 +1182,16 @@ export class AIController {
         analysis: decisionResult.reasoning, // 使用reasoning作为分析
         suggestedActions: decisionResult.decision === 'buy' ? ['买入'] :
                          decisionResult.decision === 'sell' ? ['卖出'] : ['持有'],
-        processingTimeMs: 500, // 模拟处理时间
-        apiCost: 0.01, // 模拟API成本
-        isFallback: decisionResult.is_fallback || false
+        processingTimeMs: decisionResult.metadata?.processing_time_ms || 500,
+        apiCost: decisionResult.metadata?.api_cost || 0.01,
+        isFallback: decisionResult.is_fallback || false,
+        // 新增字段：决策日志ID和提示词信息
+        decisionLogId: decisionResult.decision_log_id,
+        promptInfo: {
+          template: decisionResult.metadata?.prompt_template,
+          tokenCount: decisionResult.metadata?.token_count,
+          userPreferences: decisionResult.metadata?.user_preferences
+        }
       };
     } catch (error) {
       console.error('调用AI服务错误:', error);
