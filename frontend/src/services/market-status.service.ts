@@ -7,7 +7,7 @@ import { cacheManager } from '../utils/cache';
  */
 export class MarketStatusService {
   private apiClient;
-  private baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
   constructor() {
     this.apiClient = axios.create({
