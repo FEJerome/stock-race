@@ -38,6 +38,7 @@ import AIDecisionLog from '../components/ai/AIDecisionLog';
 import { tradingService } from '../services/trading.service';
 import { marketService } from '../services/market.service';
 import { aiService } from '../services/ai.service';
+import { marketStatusService } from '../services/market-status.service';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 import { AIAccount } from '../types/api.types';
 
@@ -61,6 +62,16 @@ const Dashboard: React.FC = () => {
           setSelectedAIAccountId(activeAccount.id);
         }
       }
+    }
+  );
+
+  // 获取市场状态
+  const { data: marketStatus, isLoading: marketStatusLoading } = useQuery(
+    'marketStatus',
+    () => marketStatusService.getMarketStatus(),
+    {
+      refetchInterval: 60000, // 每60秒刷新一次
+      staleTime: 30000, // 30秒内不使用网络请求
     }
   );
 
@@ -202,6 +213,39 @@ const Dashboard: React.FC = () => {
           </Col>
         </Row>
       </Space>
+
+      {/* 市场状态显示 */}
+      {marketStatus && !marketStatusLoading && (
+        <Alert
+          message={`市场状态: ${marketStatus.description}`}
+          description={
+            <div>
+              <div>当前状态: {marketStatus.status === 'open' ? '交易中' :
+                marketStatus.status === 'closed' ? '已收盘' :
+                marketStatus.status === 'pre_open' ? '开盘前' :
+                marketStatus.status === 'lunch_break' ? '午间休市' :
+                marketStatus.status === 'after_hours' ? '收盘后' :
+                marketStatus.status === 'weekend' ? '周末休市' : '未知状态'}</div>
+              {marketStatus.nextTradingTime && (
+                <div>下次交易时间: {new Date(marketStatus.nextTradingTime).toLocaleString('zh-CN')}</div>
+              )}
+              {marketStatus.dataServiceStatus !== 'healthy' && (
+                <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
+                  数据服务状态: {marketStatus.dataServiceStatus === 'degraded' ? '部分降级' : '不可用'}，
+                  数据状态: {marketStatus.dataStatus === 'realtime' ? '实时' : '历史'}数据
+                  {marketStatus.isFallback && '（降级数据）'}
+                </div>
+              )}
+            </div>
+          }
+          type={marketStatus.status === 'open' ? 'success' :
+                marketStatus.status === 'closed' || marketStatus.status === 'after_hours' ? 'info' :
+                marketStatus.status === 'pre_open' || marketStatus.status === 'lunch_break' ? 'warning' :
+                marketStatus.status === 'weekend' ? 'warning' : 'info'}
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      )}
 
       {/* 如果没有选择AI账户，显示提示 */}
       {!selectedAIAccountId && (

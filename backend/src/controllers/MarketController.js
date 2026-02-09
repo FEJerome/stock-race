@@ -1027,6 +1027,51 @@ export class MarketController {
       hotTopics: ['AI交易', '量化策略', '价值投资']
     };
   }
+
+  /**
+   * 获取市场状态
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getMarketStatus(req, res) {
+    try {
+      // 导入DataService
+      const { dataService } = await import('../services/DataService.js');
+
+      // 获取市场状态
+      const marketStatus = await dataService.getEnhancedMarketStatus();
+
+      res.json({
+        success: true,
+        data: {
+          is_trading: marketStatus.isTrading,
+          status: marketStatus.status,
+          description: marketStatus.description,
+          next_trading_time: marketStatus.nextTradingTime,
+          current_time: marketStatus.currentTime,
+          recommended_interval: marketStatus.recommendedInterval,
+          data_service_status: marketStatus.dataServiceStatus,
+          data_quality: marketStatus.dataQuality,
+          data_status: marketStatus.dataStatus,
+          active_sources: marketStatus.activeSources,
+          success_rate: marketStatus.successRate,
+          timestamp: marketStatus.timestamp
+        },
+        message: '市场状态获取成功',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('获取市场状态控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取市场状态失败，请稍后重试'
+      });
+    }
+  }
 }
 
 // 创建控制器实例

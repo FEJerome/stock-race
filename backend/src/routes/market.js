@@ -409,4 +409,21 @@ router.get('/trends', optionalAuthenticate, (req, res) => marketController.getMa
  */
 router.get('/indices', optionalAuthenticate, (req, res) => marketController.getIndices(req, res));
 
+/**
+ * @swagger
+ * /market/status:
+ *   get:
+ *     tags: [市场]
+ *     summary: 获取市场状态
+ *     description: 获取当前市场状态，包括交易时间、数据服务状态、下次交易时间等信息
+ *     responses:
+ *       200:
+ *         description: 获取市场状态成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router.get('/status', (req, res) => marketController.getMarketStatus(req, res));
+
 export default router;

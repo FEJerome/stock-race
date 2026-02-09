@@ -30,6 +30,7 @@
 
 ### 开发指南
 - [**开发规范**](docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
+- [**模块化分支开发规范**](docs/development/MODULE_DEVELOPMENT_WORKFLOW.md) - Git Worktree多模块并行开发规范
 - [**产出物管理规范**](docs/development/ARTIFACT_MANAGEMENT.md) - 产出物存储、日志与留痕管理
 - [**当前功能清单**](docs/development/CURRENT_FUNCTIONALITY_INVENTORY.md) - 系统当前业务功能详细清单
 - [**内存持久化优化产出物记录**](docs/development/MEMORY_PERSISTENCE_OPTIMIZATION_ARTIFACTS.md) - 优化功能产出物详细记录
@@ -528,6 +529,107 @@ cp .env.production.example .env.production
 
 ---
 
+### MVP 9天冲刺开发计划
+**项目状态**：📋 规划完成（2026-02-09）
+
+**项目目标**：以9天冲刺开发周期，在2026年2月24日马年第一个交易日震撼上线MVP版本
+
+**项目定位**：
+- **产品类型**：AI股票竞赛平台 RPG游戏
+- **核心价值**：用户扮演投资负责人，调度AI"基金经理"进行虚拟投资
+- **版本号**：6.78（MVP版本）
+- **目标用户**：微信生态用户，通过小程序触达
+
+**核心策略**：
+- 选择，比努力更重要
+- 做好规划，再行动
+- 时间精力宝贵，使在刀刃上
+
+**业务线规划**：
+1. **MVP原则**：优先保证提供最基本服务，后续不断打磨
+2. **核心功能**：AI决策是最核心，最需要打磨的部分
+3. **用户体验**：给予用户调度、操纵感，虚拟调度AI资源
+4. **前端重点**：全力攻克微信小程序，覆盖面最广
+
+**技术选型**：
+- **大模型**：GLM 4.7 和 KIMI K2.5 为首选
+- **稳定性测试**：重点测试与Claude Code的连接稳定性
+
+**推广机制**：
+- 通过微信转发分享项目
+- 多级分享机制，让转发者成为"七日股东"
+- 分享当日广告收入的分成
+- 初期提供纯免费使用
+
+**技术线**：
+- Claude Code作为高质量生产工具，不陷入细节钻研
+- 快速筛选，确定最佳大模型方案
+- 重点测试模型稳定性
+
+**开发周期**：
+| 周期 | 时间 | 阶段 | 目标 |
+|------|------|------|------|
+| 第一周期 | Day 1-3 | 基础架构搭建 | 小程序环境搭建、基础页面、认证系统 |
+| 第二周期 | Day 4-6 | 核心功能完善 | AI决策流程、游戏化体验、分享功能 |
+| 第三周期 | Day 7-9 | 测试优化上线 | 全面测试、性能优化、正式发布 |
+
+**详细计划**：
+- 📋 [MVP 9天冲刺开发计划](docs/development/MVP_DEV_PLAN_WEE_1_24.md) - 完整的9天冲刺计划表
+
+**下一步行动**：
+1. 🔄 搭建UniApp + Vue 3开发环境
+2. 🔄 创建项目骨架和路由配置
+3. 🔄 实现认证系统集成
+4. 🔄 开发AI账户管理模块
+
+---
+
+### 模块化分支开发规范
+**项目状态**：✅ 已制定（2026-02-09）
+
+**项目目标**：定义Stock-Race项目使用Git Worktree进行多模块并行开发的规范流程
+
+**核心原则**：
+- **工作隔离**：每个模块使用独立的Git工作树（Git Worktree）
+- **分支规范**：每个模块有独立的开发分支
+- **提交规范**：每个模块独立提交，不依赖其他模块状态
+
+**分支命名规范**：
+- 主分支：`main`（生产环境）、`develop`（开发主干）
+- 模块分支：`<module>-development`（每个模块的主开发分支）
+- 功能分支：`feature/<module>-<description>`
+- 修复分支：`fix/<module>-<issue>`
+- 紧急修复：`hotfix/<description>`
+
+**工作树结构**：
+```
+stock-race/
+├── worktrees/
+│   ├── worktree-ai-service/    # AI服务开发
+│   ├── worktree-backend/       # 后端API开发
+│   ├── worktree-data-service/  # 数据服务开发
+│   ├── worktree-frontend/      # 前端Web开发
+│   └── worktree-miniprogram/   # 微信小程序开发
+└── scripts/
+    └── worktree-manager.sh      # 工作树管理脚本
+```
+
+**核心功能**：
+- ✅ 创建模块工作树
+- ✅ 切换工作树
+- ✅ 列出所有工作树状态
+- ✅ 清理已完成的工作树
+- ✅ 完整的开发工作流程
+
+**管理工具**：
+- 🔧 工作树管理脚本：`scripts/worktree-manager.sh`
+- 🔧 支持命令：create-miniprogram, switch, list, cleanup
+
+**详细文档**：
+- 📋 [模块化分支开发规范](docs/development/MODULE_DEVELOPMENT_WORKFLOW.md) - 完整的Git Worktree开发规范
+
+---
+
 ### 微信小程序项目
 **项目状态**：📋 规划完成（2026-02-09）
 
@@ -587,4 +689,4 @@ cp .env.production.example .env.production
 ---
 
 *本文档最后更新于：2026-02-09*
-*文档维护者：项目团队 + 协调智能体 + 内存持久化优化项目 + 首席架构师 + Docker网络问题解决项目 + 微信小程序规划项目*
+*文档维护者：项目团队 + 协调智能体 + 内存持久化优化项目 + 首席架构师 + Docker网络问题解决项目 + 微信小程序规划项目 + MVP开发计划项目 + 模块化开发规范项目*
