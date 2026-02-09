@@ -42,7 +42,22 @@
       "Bash(wmic process where \"ProcessId=15260\" get CommandLine)",
       "Bash(wmic process where \"ProcessId=17800\" get CreationDate)",
       "Bash(printenv:*)",
-      "Read(//tmp/claude/d--BaiduSyncdisk-MaHaoYuJavaLearning-littletry-claude-sample/tasks//**)"
+      "Read(//tmp/claude/d--BaiduSyncdisk-MaHaoYuJavaLearning-littletry-claude-sample/tasks//**)",
+      "Bash(git push:*)",
+      "Bash(git worktree remove:*)",
+      "Bash(systemctl:*)",
+      "Bash(xargs:*)",
+      "Bash(set CLAUDE_SESSION_JSON=true)",
+      "Bash(export:*)",
+      "Bash(unset:*)",
+      "Bash(git pull:*)",
+      "Bash(CLAUDE_MODEL_TYPE=deepseek node:*)",
+      "Bash(CLAUDE_MODEL_TYPE=glm node:*)",
+      "Bash(CLAUDE_MODEL_TYPE=kimi node:*)",
+      "Bash(CLAUDE_MODEL_TYPE=deepseek CLAUDE_OPTIMIZATION_PROFILE=aggressive node:*)",
+      "Bash(CLAUDE_MODEL_TYPE=kimi CLAUDE_OPTIMIZATION_PROFILE=relaxed node:*)",
+      "Bash(CLAUDE_MODEL_CONTEXT_SIZE=200 node:*)",
+      "Bash(CLAUDE_MODEL_TYPE=deepseek CLAUDE_CLEANUP_MAX_SESSIONS=8 CLAUDE_COMPACT_THRESHOLD=45 node:*)"
     ]
   },
   "hooks": {
