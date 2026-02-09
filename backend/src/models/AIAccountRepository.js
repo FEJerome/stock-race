@@ -3,7 +3,7 @@ import { BaseRepository } from './BaseRepository.js';
 export class AIAccountRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'aIAccount';
+    this.modelName = 'AIAccount';
   }
 
   /**

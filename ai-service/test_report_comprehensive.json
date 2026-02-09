@@ -1,0 +1,201 @@
+{
+  "timestamp": "2026-02-09T18:10:18.558328",
+  "total_tests": 32,
+  "passed": 32,
+  "failed": 0,
+  "pass_rate": 100.0,
+  "results": [
+    {
+      "name": "DecisionAction枚举",
+      "passed": true,
+      "message": "所有枚举值正确",
+      "details": {}
+    },
+    {
+      "name": "RiskLevel枚举",
+      "passed": true,
+      "message": "所有枚举值正确",
+      "details": {}
+    },
+    {
+      "name": "AIProvider枚举",
+      "passed": true,
+      "message": "支持 6 个提供商",
+      "details": {}
+    },
+    {
+      "name": "StockData模型",
+      "passed": true,
+      "message": "基本字段验证通过",
+      "details": {}
+    },
+    {
+      "name": "StockData技术指标",
+      "passed": true,
+      "message": "技术指标字段正确",
+      "details": {}
+    },
+    {
+      "name": "Position模型",
+      "passed": true,
+      "message": "持仓数据验证通过",
+      "details": {}
+    },
+    {
+      "name": "AccountInfo模型",
+      "passed": true,
+      "message": "账户信息验证通过",
+      "details": {}
+    },
+    {
+      "name": "DecisionRequest模型",
+      "passed": true,
+      "message": "决策请求验证通过",
+      "details": {}
+    },
+    {
+      "name": "BasePrompts.format_stock_data",
+      "passed": true,
+      "message": "股票数据格式化正确",
+      "details": {}
+    },
+    {
+      "name": "BasePrompts.format_position",
+      "passed": true,
+      "message": "持仓数据格式化正确",
+      "details": {}
+    },
+    {
+      "name": "BasePrompts.format_account_info",
+      "passed": true,
+      "message": "账户信息格式化正确",
+      "details": {}
+    },
+    {
+      "name": "BasePrompts.get_system_prompt",
+      "passed": true,
+      "message": "系统提示词生成正确",
+      "details": {}
+    },
+    {
+      "name": "BasePrompts.get_trading_constraints_prompt",
+      "passed": true,
+      "message": "约束提示词生成正确",
+      "details": {}
+    },
+    {
+      "name": "TradingPrompts.create_decision_prompt",
+      "passed": true,
+      "message": "决策提示词生成正确",
+      "details": {}
+    },
+    {
+      "name": "TradingPrompts.create_analysis_prompt",
+      "passed": true,
+      "message": "分析提示词生成正确",
+      "details": {}
+    },
+    {
+      "name": "TradingPrompts.create_risk_assessment_prompt",
+      "passed": true,
+      "message": "风险评估提示词生成正确",
+      "details": {}
+    },
+    {
+      "name": "Settings基本配置",
+      "passed": true,
+      "message": "HOST=0.0.0.0, PORT=8000",
+      "details": {}
+    },
+    {
+      "name": "AI提供商配置",
+      "passed": true,
+      "message": "已配置: OpenAI, DeepSeek, Claude, GLM, Qwen",
+      "details": {}
+    },
+    {
+      "name": "交易参数配置",
+      "passed": true,
+      "message": "MAX_POSITION_SIZE=100000.0, MIN_TRADE_AMOUNT=1000.0",
+      "details": {}
+    },
+    {
+      "name": "AdapterFactory.get_adapter(OPENAI)",
+      "passed": true,
+      "message": "OpenAI适配器初始化成功",
+      "details": {}
+    },
+    {
+      "name": "AdapterFactory.get_adapter(DEEPSEEK)",
+      "passed": true,
+      "message": "DeepSeek适配器初始化成功",
+      "details": {}
+    },
+    {
+      "name": "AdapterFactory.get_adapter(CLAUDE)",
+      "passed": true,
+      "message": "Claude适配器初始化成功",
+      "details": {}
+    },
+    {
+      "name": "AdapterFactory.get_adapter(GLM)",
+      "passed": true,
+      "message": "GLM适配器初始化成功",
+      "details": {}
+    },
+    {
+      "name": "Adapter.get_model_info",
+      "passed": true,
+      "message": "模型信息获取正确",
+      "details": {}
+    },
+    {
+      "name": "Adapter.calculate_cost",
+      "passed": true,
+      "message": "成本计算正确: $0.030000",
+      "details": {}
+    },
+    {
+      "name": "AIError基础异常",
+      "passed": true,
+      "message": "异常创建正确",
+      "details": {}
+    },
+    {
+      "name": "ModelError",
+      "passed": true,
+      "message": "模型错误继承正确",
+      "details": {}
+    },
+    {
+      "name": "ValidationError",
+      "passed": true,
+      "message": "验证错误详情正确",
+      "details": {}
+    },
+    {
+      "name": "API /health",
+      "passed": true,
+      "message": "健康检查通过",
+      "details": {}
+    },
+    {
+      "name": "API /api/v1/",
+      "passed": true,
+      "message": "API根路径正常",
+      "details": {}
+    },
+    {
+      "name": "API /decision/providers",
+      "passed": true,
+      "message": "提供商列表正常，已启用: 4个",
+      "details": {}
+    },
+    {
+      "name": "API /decision/health",
+      "passed": true,
+      "message": "决策服务状态: healthy",
+      "details": {}
+    }
+  ]
+}

@@ -966,6 +966,170 @@ export class PortfolioController {
       return [];
     }
   }
+
+  /**
+   * 获取风险分析
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getRiskAnalysis(req, res) {
+    try {
+      const { accountId } = req.query;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'AUTH_001',
+            message: '用户未认证'
+          },
+          message: '请先登录'
+        });
+      }
+
+      let targetAccountId = null;
+      if (accountId) {
+        const account = await aiAccountRepository.findOne({
+          id: parseInt(accountId),
+          userId
+        });
+        if (!account) {
+          return res.status(403).json({
+            success: false,
+            error: {
+              code: 'AUTH_003',
+              message: '权限不足'
+            },
+            message: '无权访问该账户的风险分析'
+          });
+        }
+        targetAccountId = parseInt(accountId);
+      } else {
+        const accounts = await aiAccountRepository.getUserAccounts(userId);
+        if (accounts.length === 0) {
+          return res.json({
+            success: true,
+            data: {
+              riskLevel: 'low',
+              riskScore: 0,
+              warnings: [],
+              suggestions: [],
+              diversification: {
+                industry: { score: 100, status: 'good' },
+                market: { score: 100, status: 'good' }
+              }
+            },
+            message: '获取风险分析成功'
+          });
+        }
+        targetAccountId = accounts[0].id;
+      }
+
+      const riskAnalysis = await portfolioRepository.checkPortfolioRisk(targetAccountId);
+
+      res.json({
+        success: true,
+        data: {
+          ...riskAnalysis,
+          timestamp: new Date().toISOString()
+        },
+        message: '获取风险分析成功'
+      });
+    } catch (error) {
+      console.error('获取风险分析控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取风险分析失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 重新平衡持仓
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async rebalancePortfolio(req, res) {
+    try {
+      const { accountId, targetAllocation, rebalanceMethod = 'proportional' } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'AUTH_001',
+            message: '用户未认证'
+          },
+          message: '请先登录'
+        });
+      }
+
+      if (!accountId || !targetAllocation) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '缺少必要参数'
+          },
+          message: '请提供账户ID和目标配置'
+        });
+      }
+
+      const account = await aiAccountRepository.findOne({
+        id: parseInt(accountId),
+        userId
+      });
+
+      if (!account) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTH_003',
+            message: '权限不足'
+          },
+          message: '无权操作该账户'
+        });
+      }
+
+      // 模拟重新平衡逻辑
+      res.json({
+        success: true,
+        data: {
+          accountId: parseInt(accountId),
+          rebalanceMethod,
+          targetAllocation,
+          status: 'pending',
+          message: '重新平衡请求已提交'
+        },
+        message: '重新平衡请求已提交'
+      });
+    } catch (error) {
+      console.error('重新平衡持仓控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '重新平衡持仓失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 更新持仓市值（别名方法，兼容路由）
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async updateMarketValues(req, res) {
+    return this.updatePortfolioValues(req, res);
+  }
 }
 
 // 创建控制器实例
