@@ -274,16 +274,15 @@ export class HealthService {
   calculateOverallStatus(dependencies) {
     const statuses = Object.values(dependencies).map(d => d.status);
 
-    // 如果有任何关键服务 unhealthy，整体状态为 unhealthy
-    const criticalServices = ['trading-ai-service', 'market-data-service', 'postgresql'];
-    for (const service of criticalServices) {
-      if (dependencies[service]?.status === HealthStatus.UNHEALTHY) {
-        return HealthStatus.UNHEALTHY;
-      }
+    // 只有 postgresql 是关键服务，unhealthy 时整体 unhealthy
+    if (dependencies['postgresql']?.status === HealthStatus.UNHEALTHY) {
+      return HealthStatus.UNHEALTHY;
     }
 
-    // 如果有任何服务 degraded，整体状态为 degraded
-    if (statuses.includes(HealthStatus.DEGRADED)) {
+    // 如果有任何服务 degraded（包括外部服务不可用），整体状态为 degraded
+    if (statuses.includes(HealthStatus.DEGRADED) ||
+        dependencies['trading-ai-service']?.status === HealthStatus.UNHEALTHY ||
+        dependencies['market-data-service']?.status === HealthStatus.UNHEALTHY) {
       return HealthStatus.DEGRADED;
     }
 
