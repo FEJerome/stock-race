@@ -14,6 +14,8 @@
 
 ### 架构文档
 - [**系统架构设计**](SYSTEM_ARCHITECTURE.md) - 混合架构设计
+- [**服务通信架构**](SERVICE_COMMUNICATION_ARCHITECTURE.md) - 六服务间调用架构设计（待讨论优化）
+- [**详细服务架构**](DETAILED_SERVICE_ARCHITECTURE.md) - 完整六服务架构设计方案（含数据分层、AI唤醒、提示词生成）
 - [**数据库设计**](DATABASE_DESIGN.md) - 数据库ER图和表结构
 - [**API接口规范**](API_SPECIFICATION.md) - RESTful API和WebSocket设计
 - [**数据流架构**](DATA_FLOW_ARCHITECTURE.md) - 数据采集和处理流程
