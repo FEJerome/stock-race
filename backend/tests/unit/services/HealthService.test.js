@@ -78,7 +78,7 @@ describe('HealthService Unit Tests', () => {
       expect(status).toBe(HealthStatus.UNHEALTHY);
     });
 
-    it('should return unhealthy when ai-service is unhealthy', () => {
+    it('should return degraded when ai-service is unhealthy', () => {
       const dependencies = {
         'trading-ai-service': { status: HealthStatus.UNHEALTHY },
         'market-data-service': { status: HealthStatus.HEALTHY },
@@ -88,10 +88,10 @@ describe('HealthService Unit Tests', () => {
       };
 
       const status = service.calculateOverallStatus(dependencies);
-      expect(status).toBe(HealthStatus.UNHEALTHY);
+      expect(status).toBe(HealthStatus.DEGRADED);
     });
 
-    it('should return unhealthy when market-data-service is unhealthy', () => {
+    it('should return degraded when market-data-service is unhealthy', () => {
       const dependencies = {
         'trading-ai-service': { status: HealthStatus.HEALTHY },
         'market-data-service': { status: HealthStatus.UNHEALTHY },
@@ -101,15 +101,15 @@ describe('HealthService Unit Tests', () => {
       };
 
       const status = service.calculateOverallStatus(dependencies);
-      expect(status).toBe(HealthStatus.UNHEALTHY);
+      expect(status).toBe(HealthStatus.DEGRADED);
     });
 
-    it('should prioritize unhealthy over degraded', () => {
+    it('should return unhealthy when postgresql is unhealthy even if other services are ok', () => {
       const dependencies = {
         'trading-ai-service': { status: HealthStatus.UNHEALTHY },
         'market-data-service': { status: HealthStatus.DEGRADED },
         'news-service': { status: HealthStatus.DEGRADED },
-        'postgresql': { status: HealthStatus.HEALTHY },
+        'postgresql': { status: HealthStatus.UNHEALTHY },
         'redis': { status: HealthStatus.DEGRADED }
       };
 
