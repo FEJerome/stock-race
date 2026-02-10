@@ -15,6 +15,9 @@ onHide(() => {
 </script>
 
 <style lang="scss">
+// 先导入 uview-plus 主题变量
+@import "uview-plus/theme.scss";
+// 再导入 uview-plus 样式
 @import "uview-plus/index.scss";
 
 page {

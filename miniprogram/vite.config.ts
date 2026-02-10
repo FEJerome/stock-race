@@ -13,7 +13,10 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@import "@/styles/variables.scss";`,
+        additionalData: `
+          @import "uview-plus/theme.scss";
+          @import "@/styles/variables.scss";
+        `,
       },
     },
   },

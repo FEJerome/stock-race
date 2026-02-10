@@ -211,6 +211,7 @@ function goToManagerDetail(id: string) {
 }
 
 function goToCreateManager() {
+  if (!authStore.requireAuth('/pages/ai-managers/create')) return
   uni.navigateTo({ url: '/pages/ai-managers/create' })
 }
 
@@ -236,12 +237,11 @@ function goToSettings() {
 
 // 初始化
 onMounted(() => {
-  // 检查登录状态
-  if (!authStore.isLoggedIn) {
-    uni.redirectTo({ url: '/pages/login/login' })
-    return
+  // 如果没有token，启用游客模式
+  if (!authStore.token) {
+    authStore.enableGuestMode()
   }
-  // 加载数据
+  // 加载数据（游客和登录用户均可访问公开数据）
   refreshData()
 })
 </script>

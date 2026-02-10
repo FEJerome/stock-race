@@ -61,3 +61,16 @@ export interface UpdateUserRequest {
   email?: string
   phone?: string
 }
+
+// 微信登录请求
+export interface WechatLoginRequest {
+  code: string
+  userInfo?: {
+    nickName?: string
+    avatarUrl?: string
+    gender?: number
+    city?: string
+    province?: string
+    country?: string
+  }
+}

@@ -407,6 +407,391 @@ miniprogram/tests/
 | [T-009] 股票行情 | ✅ 已完成 | 2026-02-03 | 2026-02-03 | - |
 | [T-010] 个人中心 | ✅ 已完成 | 2026-02-05 | 2026-02-05 | - |
 
+### Phase 6: 游客模式改造（新增）
+
+#### [T-011] 游客模式功能设计与实现
+**功能**: 改造小程序支持游客模式，无需登录即可访问公开数据，主动点击登录时才触发微信授权
+
+**开发日期**: 2026-02-10
+
+---
+
+#### 需求分析
+
+**现状问题**:
+- 当前首页（`pages/index/index.vue`）在 `onMounted` 中强制检查登录状态
+- 未登录用户会被立即重定向到登录页，体验不佳
+- 用户无法先了解产品功能再决定是否登录
+
+**改造目标**:
+1. ✅ 游客可直接进入小程序首页，无需登录
+2. ✅ 游客可访问公开数据：排行榜、市场行情
+3. ✅ 涉及敏感操作（创建AI经理、查看持仓）时才提示登录
+4. ✅ 用户主动点击登录按钮时才触发微信授权
+5. ✅ 登录页支持微信一键登录和演示账户两种方式
+
+---
+
+#### 功能描述
+
+**1. 游客状态管理** (`src/stores/auth.ts` 增强)
+
+```typescript
+// 新增游客模式状态
+const isGuestMode = computed(() => !token.value || token.value === 'GUEST_TOKEN')
+
+// 新增方法：启用游客模式
+function enableGuestMode() {
+  token.value = 'GUEST_TOKEN'
+  userInfo.value = {
+    id: 'guest',
+    username: '游客',
+    nickname: '游客用户',
+    avatar: '/static/guest-avatar.png',
+  }
+}
+
+// 新增方法：检查是否需要登录
+function requireAuth(redirectUrl?: string): boolean {
+  if (isGuestMode.value) {
+    uni.navigateTo({ url: `/pages/login/login?redirect=${encodeURIComponent(redirectUrl || '')}` })
+    return false
+  }
+  return true
+}
+```
+
+**2. 首页改造** (`src/pages/index/index.vue`)
+
+- **移除**: `onMounted` 中的强制登录检查
+- **新增**: 游客模式UI标识（页面顶部显示"游客模式"标签）
+- **新增**: 游客模式下隐藏敏感操作按钮（"立即聘任"改为"登录后聘任"）
+- **新增**: 点击敏感区域时弹出登录引导
+
+```typescript
+// onMounted 改造
+onMounted(() => {
+  // 不再强制跳转登录页
+  // if (!authStore.isLoggedIn) { uni.redirectTo({ url: '/pages/login/login' }) }
+
+  // 如果没有token，自动启用游客模式
+  if (!authStore.token) {
+    authStore.enableGuestMode()
+  }
+
+  // 加载公开数据（游客和登录用户均可访问）
+  loadPublicData()
+})
+
+// 加载公开数据
+async function loadPublicData() {
+  // 排行榜数据（公开）
+  await aiStore.fetchAccounts()
+  // 行情数据（公开）
+  await marketStore.fetchQuotes()
+}
+
+// 敏感操作检查
+function goToCreateManager() {
+  if (!authStore.requireAuth('/pages/ai-managers/create')) return
+  uni.navigateTo({ url: '/pages/ai-managers/create' })
+}
+```
+
+**3. 登录页改造** (`src/pages/login/login.vue`)
+
+- **新增**: 微信一键登录按钮（大号按钮，醒目位置）
+- **保留**: 演示账户快速登录（用于测试）
+- **新增**: 返回游客模式入口（让用户可以返回游客浏览）
+- **新增**: 登录成功后跳转回原页面
+
+```vue
+<template>
+  <!-- 新增微信登录区域 -->
+  <view class="wechat-login-section">
+    <button class="wechat-login-btn" @click="handleWechatLogin">
+      <text class="wechat-icon">微信</text>
+      <text>微信一键登录</text>
+    </button>
+    <text class="hint-text">登录后可使用完整功能</text>
+  </view>
+
+  <!-- 演示账户区域（折叠） -->
+  <view class="demo-section">
+    <text class="section-toggle" @click="showDemo = !showDemo">开发者演示账户</text>
+    <view v-if="showDemo">
+      <!-- 原有的用户名密码表单 -->
+    </view>
+  </view>
+
+  <!-- 返回游客模式 -->
+  <view class="guest-option">
+    <text class="link" @click="backToGuestMode">暂不登录，继续浏览</text>
+  </view>
+</template>
+```
+
+**4. 微信登录实现** (`src/api/auth.ts` 新增)
+
+```typescript
+// 新增微信登录API
+wechatLogin(data: { code: string; userInfo?: any }): Promise<LoginResponse> {
+  return request.post<LoginResponse>('/auth/wechat-login', data)
+},
+```
+
+**5. 页面权限控制**（各敏感页面）
+
+需要添加登录检查的页面：
+- `pages/ai-managers/create.vue` - 创建AI经理
+- `pages/portfolio/holdings.vue` - 持仓明细
+- `pages/portfolio/overview.vue` - 持仓总览（可改为显示示例数据）
+- `pages/trades/list.vue` - 交易记录
+- `pages/settings/profile.vue` - 个人设置（显示游客简化版）
+
+---
+
+#### API需求（委托Backend服务开发）
+
+**委托服务**: `backend` (Node.js/Express)
+
+**开发优先级**: P0（阻塞小程序游客模式上线）
+
+---
+
+**新增API**:
+
+| 接口 | 方法 | 路径 | 说明 | 认证 | 开发状态 |
+|------|------|------|------|------|----------|
+| 微信登录 | POST | `/api/auth/wechat-login` | 微信code换token | 否 | 🔲 待Backend开发 |
+| 获取排行榜 | GET | `/api/ranking/:period` | 日/周/月榜 | 否（公开） | 🔲 待Backend开发 |
+| 获取行情 | GET | `/api/market/quotes` | 股票行情列表 | 否（公开） | 🔲 待Backend开发 |
+| 搜索股票 | GET | `/api/market/search` | 股票搜索 | 否（公开） | 🔲 待Backend开发 |
+
+**现有API改造**:
+
+| 接口 | 原认证 | 新认证 | 游客访问响应 | 开发状态 |
+|------|--------|--------|--------------|----------|
+| 获取AI账户列表 | 需登录 | 需登录 | 401 + "请先登录" | 🔲 待Backend改造 |
+| 获取持仓 | 需登录 | 需登录 | 401 + "请先登录" | 🔲 待Backend改造 |
+| 获取交易记录 | 需登录 | 需登录 | 401 + "请先登录" | 🔲 待Backend改造 |
+
+---
+
+**API详细规格**:
+
+**1. 微信登录接口** (`POST /api/auth/wechat-login`)
+
+**请求参数**:
+```typescript
+{
+  code: string;        // 微信登录凭证，必填
+  userInfo?: {         // 用户信息（可选）
+    nickName?: string;
+    avatarUrl?: string;
+    gender?: number;
+    city?: string;
+    province?: string;
+    country?: string;
+  }
+}
+```
+
+**响应数据**:
+```typescript
+{
+  code: 200;
+  data: {
+    token: string;     // JWT token
+    user: {
+      id: string;
+      username: string;
+      nickname: string;
+      avatar?: string;
+    }
+  }
+}
+```
+
+**实现说明**:
+- Backend需调用微信服务端API：`https://api.weixin.qq.com/sns/jscode2session`
+- 使用AppID和AppSecret换取openid和session_key
+- 根据openid查询或创建用户
+- 生成JWT token返回给小程序
+
+**微信接口调用**:
+```
+GET https://api.weixin.qq.com/sns/jscode2session
+  ?appid=wx7517e3f6b6cb4c99
+  &secret={APP_SECRET}
+  &js_code={CODE}
+  &grant_type=authorization_code
+```
+
+**2. 获取排行榜接口** (`GET /api/ranking/:period`)
+
+**路径参数**:
+- `period`: `daily` | `weekly` | `monthly`
+
+**查询参数**:
+- `page`: number (默认1)
+- `pageSize`: number (默认20)
+
+**响应数据**:
+```typescript
+{
+  code: 200;
+  data: {
+    list: [
+      {
+        id: string;
+        name: string;
+        returnRate: number;  // 收益率
+        userId: string;
+        avatar?: string;
+        rank: number;
+      }
+    ];
+    total: number;
+    page: number;
+    pageSize: number;
+  }
+}
+```
+
+**访问控制**: 公开接口，无需认证
+
+**3. 获取行情接口** (`GET /api/market/quotes`)
+
+**查询参数**:
+- `page`: number (默认1)
+- `pageSize`: number (默认50)
+
+**响应数据**:
+```typescript
+{
+  code: 200;
+  data: {
+    list: [
+      {
+        code: string;        // 股票代码
+        name: string;        // 股票名称
+        price: number;       // 当前价格
+        change: number;      // 涨跌额
+        changePercent: number; // 涨跌幅
+        volume: number;      // 成交量
+        marketCap: number;   // 市值
+      }
+    ];
+    total: number;
+    updateTime: string;     // 数据更新时间
+  }
+}
+```
+
+**访问控制**: 公开接口，无需认证
+
+**4. 搜索股票接口** (`GET /api/market/search`)
+
+**查询参数**:
+- `keyword`: string (股票代码或名称)
+- `limit`: number (默认10)
+
+**响应数据**:
+```typescript
+{
+  code: 200;
+  data: {
+    list: [
+      {
+        code: string;
+        name: string;
+        price: number;
+        changePercent: number;
+      }
+    ]
+  }
+}
+```
+
+**访问控制**: 公开接口，无需认证
+
+---
+
+**API改造详细规格**:
+
+**需要添加游客拦截的API**:
+
+1. `GET /api/ai-accounts` - 获取AI账户列表
+2. `GET /api/portfolio/holdings` - 获取持仓
+3. `GET /api/trades` - 获取交易记录
+4. `GET /api/user/profile` - 获取用户详情
+
+**拦截逻辑**:
+```javascript
+// middleware/auth.js
+const checkGuest = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token || token === 'GUEST_TOKEN') {
+    return res.status(401).json({
+      code: 401,
+      message: '请先登录',
+      data: null
+    });
+  }
+
+  next();
+};
+```
+
+---
+
+**委托开发交付物**:
+
+1. Backend服务代码更新
+2. API接口文档更新
+3. 微信登录配置说明（AppID/AppSecret配置位置）
+4. 单元测试用例
+
+**联系方式**:
+- 委托服务: `backend`
+- 接口人: Backend开发团队
+- 阻塞问题: 小程序游客模式功能依赖此API开发完成
+
+---
+
+#### 测试脚本
+
+**测试文件**: `miniprogram/tests/e2e/guest-mode.test.ts`
+
+**测试文档**: 详见同目录 [TEST_SCRIPTS.md](./TEST_SCRIPTS.md)
+
+**测试覆盖**:
+- TC-GUEST-001: 游客访问首页
+- TC-GUEST-002: 游客访问排行榜
+- TC-GUEST-003: 游客访问行情页
+- TC-GUEST-004: 游客访问受限功能
+- TC-GUEST-005: 用户主动登录流程
+- TC-GUEST-006: 游客模式状态管理
+- TC-GUEST-007: API权限控制测试
+
+---
+
+#### 开发进度
+
+| 条目 | 状态 | 开发日期 | 测试通过日期 | 合并提交 |
+|------|------|----------|--------------|----------|
+| [T-011] 游客模式改造 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+
+**子任务清单**:
+- [x] 1. 增强 auth.ts - 添加游客模式状态和 requireAuth 方法
+- [x] 2. 改造 index.vue - 移除强制登录，添加游客UI
+- [x] 3. 改造 login.vue - 添加微信登录按钮和返回游客入口
+- [x] 4. 添加微信登录API - auth.ts 新增 wechatLogin
+- [x] 5. 受限页面检查 - 添加 requireAuth 调用（index.vue中goToCreateManager）
+- [x] 6. 构建打包验证通过
+
 ---
 
 ## 提交规范
@@ -435,4 +820,14 @@ miniprogram/tests/
 
 *最后更新: 2026-02-10*
 *负责人: Miniprogram开发团队*
-*状态: 全部完成，等待微信审核*
+*状态: 前端完成，等待Backend服务提供API*
+
+---
+
+## 文档索引
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 开发规划 | `./TODO.md` | 本文件，开发规划与进度追踪 |
+| 测试脚本文档 | `./TEST_SCRIPTS.md` | 测试脚本功能说明与位置索引 |
+| 测试脚本源码 | `../../../miniprogram/tests/e2e/guest-mode.test.ts` | 游客模式E2E测试代码 |

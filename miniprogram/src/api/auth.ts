@@ -7,6 +7,7 @@ import type {
   UserInfo,
   ChangePasswordRequest,
   UpdateUserRequest,
+  WechatLoginRequest,
 } from '@/types/api'
 
 export const authApi = {
@@ -38,5 +39,10 @@ export const authApi = {
   // 退出登录
   logout(): Promise<void> {
     return request.post<void>('/auth/logout')
+  },
+
+  // 微信登录
+  wechatLogin(data: WechatLoginRequest): Promise<LoginResponse> {
+    return request.post<LoginResponse>('/auth/wechat-login', data)
   },
 }
