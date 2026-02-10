@@ -321,24 +321,46 @@ class TencentCollector(DataSource):
                     continue
 
                 try:
+                    # Helper for safe conversion
+                    def safe_float(v):
+                        if not v:
+                            return 0.0
+                        try:
+                            if '/' in str(v):
+                                v = str(v).split('/')[0]
+                            return float(v)
+                        except (ValueError, TypeError):
+                            return 0.0
+
+                    def safe_int(v):
+                        if not v:
+                            return 0
+                        try:
+                            if '/' in str(v):
+                                v = str(v).split('/')[0]
+                            return int(float(v))
+                        except (ValueError, TypeError):
+                            return 0
+
                     quote = {
                         "symbol": symbol,
                         "name": fields[1],
-                        "price": float(fields[3]) if fields[3] else 0.0,
-                        "prev_close": float(fields[4]) if fields[4] else 0.0,
-                        "open": float(fields[5]) if fields[5] else 0.0,
-                        "volume": int(fields[6]) if fields[6] else 0,
-                        "high": float(fields[34]) if fields[34] else 0.0,
-                        "low": float(fields[35]) if fields[35] else 0.0,
-                        "change": float(fields[32]) if fields[32] else 0.0,
-                        "change_percent": float(fields[33]) if fields[33] else 0.0,
-                        "pe_ratio": float(fields[38]) if fields[38] else 0.0,
-                        "pb_ratio": float(fields[39]) if fields[39] else 0.0,
-                        "amount": float(fields[37]) * float(fields[3]) if fields[37] and fields[3] else 0.0,
+                        "price": safe_float(fields[3]),
+                        "prev_close": safe_float(fields[4]),
+                        "open": safe_float(fields[5]),
+                        "volume": safe_int(fields[6]),
+                        "high": safe_float(fields[34]),
+                        "low": safe_float(fields[35]),
+                        "change": safe_float(fields[32]),
+                        "change_percent": safe_float(fields[33]),
+                        "pe_ratio": safe_float(fields[39]),
+                        "pb_ratio": safe_float(fields[46]) if len(fields) > 46 else 0.0,
+                        "amount": safe_float(fields[37]),
                         "timestamp": datetime.now()
                     }
                     quotes[symbol] = quote
-                except (ValueError, IndexError):
+                except (ValueError, IndexError) as e:
+                    logger.debug(f"Failed to parse {symbol}: {e}")
                     continue  # Skip invalid quotes
 
             return quotes

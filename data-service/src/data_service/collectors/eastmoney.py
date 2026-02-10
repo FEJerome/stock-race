@@ -2,6 +2,7 @@
 East Money data collector.
 """
 
+import asyncio
 import re
 import json
 from datetime import datetime, timedelta
@@ -55,13 +56,18 @@ class EastMoneyCollector(DataSource):
             if not text:
                 raise DataSourceError("Empty response from East Money")
 
-            # Parse JSONP response
-            match = re.search(r'jQuery\d+_\d+\((.*?)\);', text, re.DOTALL)
-            if not match:
-                raise DataSourceError(f"Invalid response format: {text[:200]}")
-
-            json_str = match.group(1)
-            data = json.loads(json_str)
+            # Parse response - may be JSON or JSONP
+            text = text.strip()
+            if text.startswith('jQuery'):
+                # JSONP format
+                match = re.search(r'jQuery\d+_\d+\((.*?)\);', text, re.DOTALL)
+                if not match:
+                    raise DataSourceError(f"Invalid JSONP format: {text[:200]}")
+                json_str = match.group(1)
+                data = json.loads(json_str)
+            else:
+                # Pure JSON format
+                data = json.loads(text)
 
             result = data.get("data", {})
             if not result:
@@ -85,38 +91,39 @@ class EastMoneyCollector(DataSource):
                     return 0
 
             # Map East Money field codes to meaningful names
+            # Note: East Money returns prices directly (no need to divide by 10000)
             quote = {
                 "symbol": symbol,
                 "name": result.get("f14", ""),
                 "code": result.get("f12", ""),
-                "price": safe_float(result.get("f43"), 10000),
-                "prev_close": safe_float(result.get("f60"), 10000),
-                "open": safe_float(result.get("f46"), 10000),
-                "high": safe_float(result.get("f44"), 10000),
-                "low": safe_float(result.get("f45"), 10000),
+                "price": safe_float(result.get("f43")),
+                "prev_close": safe_float(result.get("f60")),
+                "open": safe_float(result.get("f46")),
+                "high": safe_float(result.get("f44")),
+                "low": safe_float(result.get("f45")),
                 "volume": safe_int(result.get("f47")),
-                "amount": safe_float(result.get("f48"), 10000),
-                "bid_price_1": safe_float(result.get("f9"), 10000),
-                "bid_volume_1": safe_int(result.get("f10")),
-                "bid_price_2": safe_float(result.get("f11"), 10000),
-                "bid_volume_2": safe_int(result.get("f12")),
-                "bid_price_3": safe_float(result.get("f13"), 10000),
-                "bid_volume_3": safe_int(result.get("f14")),
-                "bid_price_4": safe_float(result.get("f15"), 10000),
-                "bid_volume_4": safe_int(result.get("f16")),
-                "bid_price_5": safe_float(result.get("f17"), 10000),
-                "bid_volume_5": safe_int(result.get("f18")),
-                "ask_price_1": safe_float(result.get("f19"), 10000),
+                "amount": safe_float(result.get("f48")),
+                "bid_price_1": safe_float(result.get("f31")),
+                "bid_volume_1": safe_int(result.get("f32")),
+                "bid_price_2": safe_float(result.get("f33")),
+                "bid_volume_2": safe_int(result.get("f34")),
+                "bid_price_3": safe_float(result.get("f35")),
+                "bid_volume_3": safe_int(result.get("f36")),
+                "bid_price_4": safe_float(result.get("f37")),
+                "bid_volume_4": safe_int(result.get("f38")),
+                "bid_price_5": safe_float(result.get("f39")),
+                "bid_volume_5": safe_int(result.get("f40")),
+                "ask_price_1": safe_float(result.get("f19")),
                 "ask_volume_1": safe_int(result.get("f20")),
-                "ask_price_2": safe_float(result.get("f21"), 10000),
+                "ask_price_2": safe_float(result.get("f21")),
                 "ask_volume_2": safe_int(result.get("f22")),
-                "ask_price_3": safe_float(result.get("f23"), 10000),
+                "ask_price_3": safe_float(result.get("f23")),
                 "ask_volume_3": safe_int(result.get("f24")),
-                "ask_price_4": safe_float(result.get("f25"), 10000),
+                "ask_price_4": safe_float(result.get("f25")),
                 "ask_volume_4": safe_int(result.get("f26")),
-                "ask_price_5": safe_float(result.get("f27"), 10000),
+                "ask_price_5": safe_float(result.get("f27")),
                 "ask_volume_5": safe_int(result.get("f28")),
-                "change": safe_float(result.get("f169"), 10000),
+                "change": safe_float(result.get("f169")),
                 "change_percent": safe_float(result.get("f170")),
                 "pe_ratio": safe_float(result.get("f162")),
                 "pb_ratio": safe_float(result.get("f167")),
@@ -269,90 +276,35 @@ class EastMoneyCollector(DataSource):
         """
         Get real-time quotes for multiple stocks.
 
+        Note: East Money batch API seems to return empty responses.
+        Using parallel single stock queries instead.
+
         Args:
             symbols: List of stock symbols
 
         Returns:
             Dictionary mapping symbol to quote data
         """
-        # Convert symbols to East Money format
-        eastmoney_codes = []
-        symbol_map = {}
-        for symbol in symbols:
-            market, code = self._parse_symbol(symbol)
-            eastmoney_code = f"{1 if market == 'SH' else 0}.{code}"
-            eastmoney_codes.append(eastmoney_code)
-            symbol_map[eastmoney_code] = symbol
+        results = {}
+        failed_symbols = []
 
-        # East Money supports batch queries
-        url = f"{self.base_url}/api/qt/ulist.np/get"
-        params = {
-            "fields": "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21,f22,f23,f24,f25,f26,f27,f28,f29,f30,f31,f32,f33,f34,f35,f36,f37,f38,f39,f40,f41,f42,f43,f44,f45,f46,f47,f48,f49,f50,f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65,f66,f67,f68,f69,f70,f71,f72,f73,f74,f75,f76,f77,f78,f79,f80,f81,f82,f83,f84,f85,f86,f87,f88,f89,f90,f91,f92,f93,f94,f95,f96,f97,f98,f99,f100,f101,f102,f103,f104,f105,f106,f107,f108,f109,f110,f111,f112,f113,f114,f115,f116,f117,f118,f119,f120,f121,f122,f123,f124,f125,f126,f127,f128,f129,f130,f131,f132,f133,f134,f135,f136,f137,f138,f139,f140,f141,f142,f143,f144,f145,f146,f147,f148,f149,f150,f151,f152,f153,f154,f155,f156,f157,f158,f159,f160,f161,f162,f163,f164,f165,f166,f167,f168,f169,f170,f171,f172,f173,f174,f175,f176,f177,f178,f179,f180,f181,f182,f183,f184,f185,f186,f187,f188,f189,f190,f191,f192,f193,f194,f195,f196,f197,f198,f199,f200",
-            "secids": ",".join(eastmoney_codes),
-            "ut": "fa5fd1943c7b386f172d6893dbfba10b",
-            "cb": "jQuery1830123456789012345678_1234567890123",
-            "_": "1234567890123"  # Timestamp
-        }
+        # Process symbols in parallel with limited concurrency
+        semaphore = asyncio.Semaphore(5)  # Limit concurrent requests
 
-        headers = {
-            "Referer": "https://quote.eastmoney.com",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }
-
-        try:
-            response = await self._make_request(url, params=params, headers=headers)
-            text = response.get("text", "")
-
-            if not text:
-                raise DataSourceError("Empty response from East Money")
-
-            # Parse JSONP response
-            match = re.search(r'jQuery\d+_\d+\((.*?)\);', text, re.DOTALL)
-            if not match:
-                raise DataSourceError(f"Invalid response format: {text[:200]}")
-
-            json_str = match.group(1)
-            data = json.loads(json_str)
-
-            result = data.get("data", {}).get("diff", [])
-            if not result:
-                raise DataSourceError("No data in batch response")
-
-            quotes = {}
-            for item in result:
-                eastmoney_code = item.get("f12", "")
-                if eastmoney_code not in symbol_map:
-                    continue
-
-                symbol = symbol_map[eastmoney_code]
+        async def process_symbol(symbol: str):
+            async with semaphore:
                 try:
-                    quote = {
-                        "symbol": symbol,
-                        "name": item.get("f14", ""),
-                        "price": item.get("f2", 0.0) / 10000 if item.get("f2") else 0.0,
-                        "prev_close": item.get("f18", 0.0) / 10000 if item.get("f18") else 0.0,
-                        "open": item.get("f17", 0.0) / 10000 if item.get("f17") else 0.0,
-                        "high": item.get("f15", 0.0) / 10000 if item.get("f15") else 0.0,
-                        "low": item.get("f16", 0.0) / 10000 if item.get("f16") else 0.0,
-                        "volume": item.get("f5", 0),
-                        "amount": item.get("f6", 0.0) / 10000 if item.get("f6") else 0.0,
-                        "change": item.get("f4", 0.0) / 10000 if item.get("f4") else 0.0,
-                        "change_percent": item.get("f3", 0.0),
-                        "pe_ratio": item.get("f9", 0.0),
-                        "pb_ratio": item.get("f23", 0.0),
-                        "market_cap": item.get("f20", 0.0),
-                        "circulating_market_cap": item.get("f21", 0.0),
-                        "turnover_rate": item.get("f8", 0.0),
-                        "timestamp": datetime.now()
-                    }
-                    quotes[symbol] = quote
-                except (ValueError, KeyError):
-                    continue  # Skip invalid quotes
+                    quote = await self.get_stock_quote(symbol)
+                    results[symbol] = quote
+                except Exception as e:
+                    logger.warning(f"Failed to get East Money quote for {symbol}: {str(e)}")
+                    failed_symbols.append(symbol)
 
-            return quotes
+        # Create tasks for all symbols
+        tasks = [process_symbol(symbol) for symbol in symbols]
+        await asyncio.gather(*tasks, return_exceptions=True)
 
-        except Exception as e:
-            raise DataSourceError(f"Failed to get batch quotes from East Money: {str(e)}")
+        return results
 
     def _parse_symbol(self, symbol: str) -> tuple[str, str]:
         """
