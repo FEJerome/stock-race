@@ -4,6 +4,7 @@ import { systemLogRepository } from '../models/index.js';
 import { aiService } from '../services/AIService.js';
 import { dataService } from '../services/DataService.js';
 import { promptCraftService, PromptCraftError } from '../services/PromptCraftService.js';
+import { tradeExecutionService, TradeExecutionError } from '../services/TradeExecutionService.js';
 
 export class AIController {
   constructor() {
@@ -1393,6 +1394,153 @@ export class AIController {
           error: error.message
         }
       };
+    }
+  }
+
+  /**
+   * 执行AI决策
+   * 接收 trading-ai-service 的决策结果，执行虚拟交易
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async executeAIDecision(req, res) {
+    try {
+      const { accountId, decision } = req.body;
+
+      // 验证必填字段
+      if (!accountId || !decision) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '缺少必填字段'
+          },
+          message: '请提供 accountId 和 decision'
+        });
+      }
+
+      const { action, symbol, quantity, price, reasoning, decisionId } = decision;
+
+      // 验证决策字段
+      if (!action || !symbol || quantity === undefined || price === undefined) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '决策数据不完整'
+          },
+          message: '决策必须包含 action, symbol, quantity, price'
+        });
+      }
+
+      // 执行交易
+      const result = await tradeExecutionService.executeDecision({
+        decisionId: decisionId || `decision-${Date.now()}`,
+        accountId,
+        action,
+        symbol,
+        quantity,
+        price,
+        reasoning
+      });
+
+      // 记录决策日志
+      await decisionLogRepository.create({
+        accountId: parseInt(accountId),
+        decisionType: action,
+        stockCode: symbol,
+        reasoning: reasoning || '',
+        confidence: 0.8, // 默认值
+        tradeId: result.tradeId,
+        inputData: JSON.stringify(decision),
+        outputData: JSON.stringify(result),
+        modelUsed: 'trading-ai-service',
+        status: result.success ? 'success' : 'failed',
+        createdAt: new Date()
+      });
+
+      if (result.success) {
+        res.json({
+          success: true,
+          data: {
+            tradeId: result.tradeId,
+            status: result.status,
+            action: result.details.action,
+            symbol: result.details.symbol,
+            quantity: result.details.quantity,
+            price: result.details.price,
+            details: result.details
+          },
+          message: result.message
+        });
+      } else {
+        // 根据错误类型返回不同状态码
+        let statusCode = 400;
+        if (result.code === 'ACCOUNT_NOT_FOUND') statusCode = 404;
+        if (result.code === 'STOCK_NOT_FOUND') statusCode = 404;
+        if (result.code === 'DUPLICATE_DECISION') statusCode = 409;
+
+        res.status(statusCode).json({
+          success: false,
+          error: {
+            code: result.code,
+            message: result.message,
+            details: result.details
+          },
+          message: result.message
+        });
+      }
+    } catch (error) {
+      console.error('执行AI决策控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '执行AI决策失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 批量执行AI决策
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async batchExecuteAIDecisions(req, res) {
+    try {
+      const { decisions } = req.body;
+
+      if (!Array.isArray(decisions) || decisions.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '决策数组不能为空'
+          },
+          message: '请提供决策数组'
+        });
+      }
+
+      // 批量执行
+      const results = await tradeExecutionService.batchExecuteDecisions(decisions);
+
+      res.json({
+        success: true,
+        data: results,
+        message: `批量执行完成: 成功 ${results.succeeded}/${results.total}`
+      });
+    } catch (error) {
+      console.error('批量执行AI决策控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '批量执行AI决策失败'
+      });
     }
   }
 }
