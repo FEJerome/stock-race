@@ -24,7 +24,7 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "service": "data-service",
+        "service": "market-data-service",
         "timestamp": datetime.now().isoformat(),
         "version": "0.1.0"
     }

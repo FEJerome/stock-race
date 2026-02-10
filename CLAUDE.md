@@ -17,7 +17,15 @@
 ### 核心文档
 - [**代码结构地图**](docs/architecture/CODE_MAP.md) - 项目结构与文件功能
 - [**技术架构**](docs/architecture/TECH_STACK.md) - 技术栈与架构设计
+- [**统一数据平台架构**](docs/architecture/UNIFIED_DATA_PLATFORM_ARCHITECTURE.md) - 四服务数据架构设计（最新）
+- [**六服务架构详细设计**](docs/architecture/DETAILED_SERVICE_ARCHITECTURE.md) - 服务间调用与数据流设计（最新）
 - [**项目结构**](docs/architecture/PROJECT_STRUCTURE.md) - 目录结构与组织
+
+### 历史架构文档
+- [**系统架构设计**](docs/architecture/SYSTEM_ARCHITECTURE.md) - 早期系统架构（历史版本）
+- [**服务通信架构**](docs/architecture/SERVICE_COMMUNICATION_ARCHITECTURE.md) - 早期服务通信设计（历史版本）
+- [**数据流架构**](docs/architecture/DATA_FLOW_ARCHITECTURE.md) - 早期数据流设计（历史版本）
+- [**数据服务集成**](docs/architecture/DATA_SERVICE_INTEGRATION.md) - 早期集成方案（历史版本）
 
 ### 需求与分析
 - [**需求规格说明书**](docs/analysis/REQUIREMENTS.md) - 详细功能需求
@@ -94,19 +102,19 @@
   - `backend/src/routes/` - API路由
   - `backend/src/controllers/` - 业务逻辑
 
-### AI服务模块
-- **主要文件**：`ai-service/src/ai_service/`
+### 交易AI服务模块
+- **主要文件**：`trading-ai-service/src/ai_service/`
 - **关键文件**：
-  - `ai-service/src/ai_service/main.py` - FastAPI应用
-  - `ai-service/src/ai_service/adapters/` - AI模型适配器
-  - `ai-service/src/ai_service/services/decision_service.py` - 决策服务
+  - `trading-ai-service/src/ai_service/main.py` - FastAPI应用
+  - `trading-ai-service/src/ai_service/adapters/` - AI模型适配器
+  - `trading-ai-service/src/ai_service/services/decision_service.py` - 决策服务
 
-### 数据服务模块
-- **主要文件**：`data-service/src/data_service/`
+### 市场行情数据服务模块
+- **主要文件**：`market-data-service/src/data_service/`
 - **关键文件**：
-  - `data-service/src/data_service/main.py` - FastAPI应用
-  - `data-service/src/data_service/collectors/` - 数据采集器
-  - `data-service/src/data_service/services/data_service.py` - 主数据服务
+  - `market-data-service/src/data_service/main.py` - FastAPI应用
+  - `market-data-service/src/data_service/collectors/` - 数据采集器
+  - `market-data-service/src/data_service/services/data_service.py` - 主数据服务
 
 ### 微信小程序模块
 - **主要文件**：`miniprogram/src/`
@@ -118,6 +126,37 @@
   - 📚 **文档**：[小程序需求规格](docs/miniprogram/REQUIREMENTS.md) | [技术栈](docs/miniprogram/TECH_STACK.md)
 
 ## 🔧 快速操作指南
+
+### 模块开发命令（module-dev）
+
+使用 `module-dev` 命令快速进入指定模块的开发工作流：
+
+```bash
+# 格式：module-dev <服务名>
+module-dev backend              # 后端模块开发
+module-dev frontend             # 前端模块开发
+module-dev market-data-service  # 市场行情数据服务开发
+module-dev trading-ai-service   # 交易AI服务开发
+module-dev news-service         # 新闻服务开发
+module-dev miniprogram          # 微信小程序开发
+```
+
+**命令执行流程**：
+1. 自动执行 `/pro-init` 熟悉项目结构
+2. 读取 `docs/modules/<服务名>/TODO.md` 开发规划
+3. 识别下一个待开发条目（🔲 待开发）
+4. 检查当前git分支，引导切换至正确worktree
+5. 制定具体执行计划，等待你的开发指令
+
+**模块开发规划文档**：
+- [Backend TODO](docs/modules/backend/TODO.md) - 后端开发规划（10个条目）
+- [Frontend TODO](docs/modules/frontend/TODO.md) - 前端开发规划（11个条目）
+- [Market Data Service TODO](docs/modules/market-data-service/TODO.md) - 数据服务规划（10个条目）
+- [Trading AI Service TODO](docs/modules/trading-ai-service/TODO.md) - AI服务规划（12个条目）
+- [News Service TODO](docs/modules/news-service/TODO.md) - 新闻服务规划（10个条目）
+- [Miniprogram TODO](docs/modules/miniprogram/TODO.md) - 小程序规划（10个条目，已完成）
+
+---
 
 ### 开发环境启动
 ```bash
@@ -134,18 +173,18 @@ docker-compose logs -f [service_name]
 ### 服务访问地址
 - **前端**：http://localhost:3000
 - **后端API**：http://localhost:3001
-- **AI服务**：http://localhost:8000
-- **数据服务**：http://localhost:8001
+- **交易AI服务**：http://localhost:8000 (AI账户交易决策)
+- **市场行情数据服务**：http://localhost:8001 (A股实时行情)
 
 ### 健康检查
 ```bash
 # 后端健康检查
 curl http://localhost:3001/api/health
 
-# AI服务健康检查
+# 交易AI服务健康检查
 curl http://localhost:8000/api/v1/health/
 
-# 数据服务健康检查
+# 市场行情数据服务健康检查
 curl http://localhost:8001/health
 ```
 
@@ -196,8 +235,8 @@ curl http://localhost:8001/health
 **关键成果**：制定中频层（10秒/300只）+ 低频层（60秒/全量）分层采集方案，新浪财经生产就绪（100%成功率/0.33s响应）。
 
 **详细报告**：
-- 📋 [v1.1分层采集方案](worktrees/worktree-data-service/data-service/docs/HYBRID_DATA_SOURCE_SOLUTION_v1.1.md)
-- 📋 [六数据源测试报告](worktrees/worktree-data-service/data-service/docs/SIX_SOURCES_ROBUSTNESS_TEST_REPORT.md)
+- 📋 [v1.1分层采集方案](data-service/docs/HYBRID_DATA_SOURCE_SOLUTION_v1.1.md)
+- 📋 [六数据源测试报告](data-service/docs/SIX_SOURCES_ROBUSTNESS_TEST_REPORT.md)
 
 ---
 
@@ -207,8 +246,8 @@ curl http://localhost:8001/health
 **关键成果**：修复腾讯财经和东方财富字段解析问题，所有3个数据源在集合竞价时段均正常工作。
 
 **详细报告**：
-- 📋 [混合数据源采集方案](worktrees/worktree-data-service/data-service/docs/HYBRID_DATA_SOURCE_SOLUTION.md)
-- 📋 [测试报告](worktrees/worktree-data-service/data-service/docs/DATA_SOURCE_TEST_REPORT_20260210.md)
+- 📋 [混合数据源采集方案](data-service/docs/HYBRID_DATA_SOURCE_SOLUTION.md)
+- 📋 [测试报告](data-service/docs/DATA_SOURCE_TEST_REPORT_20260210.md)
 
 ---
 

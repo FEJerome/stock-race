@@ -1,6 +1,6 @@
-# Stock Race Data Service
+# Stock Race Market Data Service
 
-股票数据采集和处理服务，为AI股票竞赛平台提供实时和历史股票数据。
+A股市场行情数据采集和处理服务，为AI股票竞赛平台提供实时和历史股票数据。
 
 ## 功能特性
 

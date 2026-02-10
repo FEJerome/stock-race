@@ -1,6 +1,6 @@
-# Stock Race AI Service
+# Stock Race Trading AI Service
 
-AI-powered trading decision service for the Stock Race platform.
+AI-powered trading decision service for AI accounts in the Stock Race platform.
 
 ## Overview
 

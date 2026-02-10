@@ -297,7 +297,7 @@ class AdminController {
           level: 'error',
           message: 'AI服务响应超时',
           timestamp: new Date(Date.now() - 1000 * 300).toISOString(),
-          source: 'ai-service'
+          source: 'trading-ai-service'
         },
         {
           id: '5',

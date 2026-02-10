@@ -51,7 +51,7 @@ async def health_check():
 
     return HealthResponse(
         status=status,
-        service="ai-service",
+        service="trading-ai-service",
         version="0.1.0",
         uptime_seconds=uptime_seconds,
         dependencies={

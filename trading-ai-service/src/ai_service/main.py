@@ -79,7 +79,7 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "service": "ai-service",
+        "service": "trading-ai-service",
         "version": "0.1.0",
     }
 

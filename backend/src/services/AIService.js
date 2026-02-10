@@ -410,7 +410,7 @@ export class AIService {
         status: 'connected',
         response_time: endTime - startTime,
         service_version: response.data.version || '0.1.0',
-        service: response.data.service || 'ai-service',
+        service: response.data.service || 'trading-ai-service',
         timestamp: new Date().toISOString()
       };
     } catch (error) {
