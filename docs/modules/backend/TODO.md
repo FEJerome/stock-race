@@ -267,9 +267,9 @@ curl -X POST http://localhost:3001/api/internal/ai-decisions \
 **功能**: 实现 `/api/health` 和 `/api/health/detailed`，监控依赖服务状态
 
 **测试要求**:
-- [ ] `test/integration/api/health-check.test.js` - 集成测试：验证健康检查端点
-- [ ] 依赖检测测试：模拟 trading-ai-service 不可用时返回 degraded
-- [ ] 性能测试：健康检查响应时间 < 100ms
+- [x] `test/integration/api/health-check.test.js` - 集成测试：验证健康检查端点
+- [x] 依赖检测测试：模拟 trading-ai-service 不可用时返回 degraded
+- [x] 性能测试：健康检查响应时间 < 100ms
 
 **验收标准**:
 ```json
@@ -324,7 +324,7 @@ backend/tests/
 | [T-007] 唤醒调度器 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
 | [T-008] 每日收盘任务 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
 | [T-009] 交易执行 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
-| [T-010] 健康检查 | 🔲 待开发 | - | - | - |
+| [T-010] 健康检查 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
 
 ---
 
