@@ -21,8 +21,8 @@ import asyncio
 import sys
 import os
 import json
-import time
-from datetime import datetime, timedelta
+import time as time_module
+from datetime import datetime, timedelta, time
 from pathlib import Path
 from collections import defaultdict
 import statistics
