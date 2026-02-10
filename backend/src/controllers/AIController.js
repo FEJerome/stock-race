@@ -139,14 +139,17 @@ export class AIController {
 
       // 验证初始余额
       const initialBalanceNum = parseFloat(initialBalance);
-      if (initialBalanceNum <= 0) {
+      const MIN_BALANCE = 10000;
+      const MAX_BALANCE = 1000000;
+
+      if (initialBalanceNum < MIN_BALANCE || initialBalanceNum > MAX_BALANCE) {
         return res.status(400).json({
           success: false,
           error: {
             code: 'VALIDATION_ERROR',
-            message: '初始余额必须大于0'
+            message: `初始余额必须在 ${MIN_BALANCE} 到 ${MAX_BALANCE} 之间`
           },
-          message: '初始余额必须大于0'
+          message: `初始余额必须在 ${MIN_BALANCE} 到 ${MAX_BALANCE} 之间`
         });
       }
 
