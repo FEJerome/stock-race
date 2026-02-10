@@ -11,6 +11,7 @@ References:
 """
 
 import asyncio
+import functools
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
@@ -58,11 +59,13 @@ class TushareCollector(DataSource):
             # Test connection with a simple query
             test_result = await loop.run_in_executor(
                 None,
-                self.pro_api.query,
-                "trade_cal",
-                exchange="SSE",
-                start_date="20240101",
-                end_date="20240101"
+                functools.partial(
+                    self.pro_api.query,
+                    api_name="trade_cal",
+                    exchange="SSE",
+                    start_date="20240101",
+                    end_date="20240101"
+                )
             )
 
             if test_result is None:
@@ -131,9 +134,11 @@ class TushareCollector(DataSource):
 
             df = await loop.run_in_executor(
                 None,
-                self.pro_api.daily,
-                ts_code=ts_code,
-                trade_date=today
+                functools.partial(
+                    self.pro_api.daily,
+                    ts_code=ts_code,
+                    trade_date=today
+                )
             )
 
             if df is not None and not df.empty:
@@ -168,8 +173,7 @@ class TushareCollector(DataSource):
             # Try 实时行情接口
             df = await loop.run_in_executor(
                 None,
-                ts.get_realtime_quotes,
-                symbols=[ts_code]
+                functools.partial(ts.get_realtime_quotes, symbols=[ts_code])
             )
 
             if df is not None and not df.empty:
@@ -215,10 +219,12 @@ class TushareCollector(DataSource):
 
             df = await loop.run_in_executor(
                 None,
-                self.pro_api.daily,
-                ts_code=ts_code,
-                start_date=start_date,
-                end_date=end_date
+                functools.partial(
+                    self.pro_api.daily,
+                    ts_code=ts_code,
+                    start_date=start_date,
+                    end_date=end_date
+                )
             )
 
             if df is not None and not df.empty:
@@ -310,20 +316,24 @@ class TushareCollector(DataSource):
                 freq = interval.replace("m", "")
                 df = await loop.run_in_executor(
                     None,
-                    self.pro_api.stk_mins,
-                    ts_code=ts_code,
-                    start_date=start_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    end_date=end_date.strftime("%Y-%m-%d %H:%M:%S"),
-                    freq=freq
+                    functools.partial(
+                        self.pro_api.stk_mins,
+                        ts_code=ts_code,
+                        start_date=start_date.strftime("%Y-%m-%d %H:%M:%S"),
+                        end_date=end_date.strftime("%Y-%m-%d %H:%M:%S"),
+                        freq=freq
+                    )
                 )
             else:
                 # Daily/Weekly/Monthly data
                 df = await loop.run_in_executor(
                     None,
-                    getattr(self.pro_api, api_method),
-                    ts_code=ts_code,
-                    start_date=start_date.strftime("%Y%m%d"),
-                    end_date=end_date.strftime("%Y%m%d")
+                    functools.partial(
+                        getattr(self.pro_api, api_method),
+                        ts_code=ts_code,
+                        start_date=start_date.strftime("%Y%m%d"),
+                        end_date=end_date.strftime("%Y%m%d")
+                    )
                 )
 
             if df is None or df.empty:
@@ -401,9 +411,11 @@ class TushareCollector(DataSource):
             # Get basic stock information
             df = await loop.run_in_executor(
                 None,
-                self.pro_api.stock_basic,
-                ts_code=ts_code,
-                fields="ts_code,name,fullname,enname,market,list_date,act_name,area,industry"
+                functools.partial(
+                    self.pro_api.stock_basic,
+                    ts_code=ts_code,
+                    fields="ts_code,name,fullname,enname,market,list_date,act_name,area,industry"
+                )
             )
 
             if df is None or df.empty:
@@ -489,9 +501,11 @@ class TushareCollector(DataSource):
             today = datetime.now().strftime("%Y%m%d")
             df = await loop.run_in_executor(
                 None,
-                self.pro_api.daily,
-                ts_code=",".join(ts_codes),
-                trade_date=today
+                functools.partial(
+                    self.pro_api.daily,
+                    ts_code=",".join(ts_codes),
+                    trade_date=today
+                )
             )
 
             if df is not None and not df.empty:
@@ -546,9 +560,11 @@ class TushareCollector(DataSource):
         try:
             df = await loop.run_in_executor(
                 None,
-                self.pro_api.stock_basic,
-                ts_code=ts_code,
-                fields="ts_code,name"
+                functools.partial(
+                    self.pro_api.stock_basic,
+                    ts_code=ts_code,
+                    fields="ts_code,name"
+                )
             )
 
             if df is not None and not df.empty:
@@ -572,10 +588,12 @@ class TushareCollector(DataSource):
             # Get daily indicators (includes PE, PB, etc.)
             df = await loop.run_in_executor(
                 None,
-                self.pro_api.daily_basic,
-                ts_code=ts_code,
-                start_date=start_date,
-                end_date=end_date
+                functools.partial(
+                    self.pro_api.daily_basic,
+                    ts_code=ts_code,
+                    start_date=start_date,
+                    end_date=end_date
+                )
             )
 
             if df is not None and not df.empty:
@@ -607,9 +625,11 @@ class TushareCollector(DataSource):
             # Get dividend information
             df = await loop.run_in_executor(
                 None,
-                self.pro_api.dividend,
-                ts_code=ts_code,
-                fields="ts_code,div_proc,stk_div,stk_bo_rate,record_date"
+                functools.partial(
+                    self.pro_api.dividend,
+                    ts_code=ts_code,
+                    fields="ts_code,div_proc,stk_div,stk_bo_rate,record_date"
+                )
             )
 
             if df is not None and not df.empty:
