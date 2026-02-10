@@ -3,6 +3,7 @@ import { decisionLogRepository } from '../models/index.js';
 import { systemLogRepository } from '../models/index.js';
 import { aiService } from '../services/AIService.js';
 import { dataService } from '../services/DataService.js';
+import { promptCraftService, PromptCraftError } from '../services/PromptCraftService.js';
 
 export class AIController {
   constructor() {
@@ -250,6 +251,182 @@ export class AIController {
           message: '服务器内部错误'
         },
         message: '创建AI账户失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * Finalize AI账户激活
+   * 根据对话提炼提示词并激活账户
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async finalizeAIAccount(req, res) {
+    try {
+      const { accountId } = req.params;
+      const userId = req.user?.id;
+      const { dialogueMessages, persona } = req.body;
+
+      // 验证用户认证
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'AUTH_001',
+            message: '用户未认证'
+          },
+          message: '请先登录'
+        });
+      }
+
+      // 验证accountId
+      const accountIdNum = parseInt(accountId);
+      if (isNaN(accountIdNum)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '无效的账户ID'
+          },
+          message: '账户ID必须是数字'
+        });
+      }
+
+      // 查找账户
+      const account = await aiAccountRepository.findOne({
+        id: accountIdNum
+      });
+
+      if (!account) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'ACCOUNT_NOT_FOUND',
+            message: 'AI账户不存在'
+          },
+          message: '找不到指定的AI账户'
+        });
+      }
+
+      // 验证账户所有权
+      if (account.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: '无权访问该账户'
+          },
+          message: '您没有权限操作此账户'
+        });
+      }
+
+      // 验证账户状态
+      if (account.status === 'active') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'ALREADY_ACTIVE',
+            message: '账户已激活'
+          },
+          message: '该AI账户已经处于激活状态'
+        });
+      }
+
+      if (account.status === 'suspended') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'ACCOUNT_SUSPENDED',
+            message: '账户已被暂停'
+          },
+          message: '该AI账户已被暂停，无法激活'
+        });
+      }
+
+      // 提炼提示词
+      let craftResult;
+      try {
+        craftResult = await promptCraftService.craftPrompt({
+          accountId: accountIdNum,
+          dialogueMessages: dialogueMessages || [],
+          persona: persona || account.riskLevel,
+          modelType: account.modelType
+        });
+      } catch (craftError) {
+        // 提示词提炼失败，返回错误但不改变账户状态
+        console.error('提示词提炼失败:', craftError);
+
+        if (craftError instanceof PromptCraftError) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: craftError.code,
+              message: craftError.message,
+              details: craftError.details
+            },
+            message: `提示词生成失败: ${craftError.message}`
+          });
+        }
+
+        throw craftError;
+      }
+
+      // 构建完整系统提示词
+      const systemPrompt = promptCraftService.buildSystemPrompt(craftResult.prompt);
+
+      // 更新账户状态和配置
+      const currentConfig = account.config ? JSON.parse(account.config) : {};
+      const updatedConfig = {
+        ...currentConfig,
+        prompt: craftResult.prompt,
+        systemPrompt,
+        finalizedAt: new Date().toISOString(),
+        isDefaultPrompt: craftResult.isDefault || false
+      };
+
+      const updatedAccount = await aiAccountRepository.update(accountIdNum, {
+        status: 'active',
+        config: JSON.stringify(updatedConfig),
+        promptTemplate: 'custom_crafted'
+      });
+
+      // 记录系统日志
+      await systemLogRepository.logUserActivity({
+        userId,
+        module: 'ai',
+        action: 'finalize_account',
+        message: `激活AI账户并生成提示词: ${account.name}`,
+        metadata: {
+          accountId: accountIdNum,
+          persona: persona || account.riskLevel,
+          isDefaultPrompt: craftResult.isDefault || false
+        }
+      });
+
+      res.json({
+        success: true,
+        data: {
+          account: {
+            id: updatedAccount.id,
+            name: updatedAccount.name,
+            status: updatedAccount.status,
+            modelType: updatedAccount.modelType,
+            prompt: craftResult.prompt,
+            isDefaultPrompt: craftResult.isDefault || false,
+            finalizedAt: updatedConfig.finalizedAt
+          }
+        },
+        message: 'AI账户激活成功'
+      });
+    } catch (error) {
+      console.error('Finalize AI账户控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '激活AI账户失败，请稍后重试'
       });
     }
   }
