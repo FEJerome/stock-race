@@ -58,9 +58,9 @@ SUBSCRIBE 'market:alert' - 市场异动
 **功能**: 创建统一的服务调用SDK，封装 trading-ai-service、market-data-service、news-service 的HTTP调用
 
 **测试要求**:
-- [ ] `test/unit/services/ServiceClient.test.js` - SDK单元测试：模拟服务调用，验证超时重试逻辑
-- [ ] `test/integration/services/service-communication.test.js` - 集成测试：实际调用各服务健康检查接口
-- [ ] 熔断器测试：模拟服务不可用，验证熔断开启和恢复
+- [x] `test/unit/services/ServiceClient.test.js` - SDK单元测试：模拟服务调用，验证超时重试逻辑
+- [x] `test/integration/services/service-communication.test.js` - 集成测试：实际调用各服务健康检查接口
+- [x] 熔断器测试：模拟服务不可用，验证熔断开启和恢复
 
 **验收标准**:
 ```javascript
@@ -79,9 +79,9 @@ const decision = await aiClient.generateDecision(accountId, marketData);
 **功能**: 封装 Redis Pub/Sub，提供发布/订阅接口
 
 **测试要求**:
-- [ ] `test/unit/events/EventBus.test.js` - 单元测试：验证发布订阅基本功能
-- [ ] `test/integration/events/event-pubsub.test.js` - 集成测试：跨进程消息传递验证
-- [ ] 重连测试：Redis断开时自动重连，消息不丢失
+- [x] `test/unit/events/EventBus.test.js` - 单元测试：验证发布订阅基本功能
+- [x] `test/integration/events/event-pubsub.test.js` - 集成测试：跨进程消息传递验证
+- [x] 重连测试：Redis断开时自动重连，消息不丢失
 
 **验收标准**:
 ```javascript
@@ -101,10 +101,10 @@ await eventBus.publish('ai:wakeup:trigger', { accountId, reason });
 **功能**: 实现 `POST /api/ai-accounts` 创建AI账户，包含初始配置验证
 
 **测试要求**:
-- [ ] `test/unit/routes/ai-accounts.test.js` - 单元测试：验证请求参数校验、数据库写入
-- [ ] `test/integration/api/ai-account-creation.test.js` - 集成测试：完整创建流程，验证数据库记录
-- [ ] 边界测试：验证资金范围限制（最小10000，最大1000000）
-- [ ] 权限测试：验证JWT认证，非本人无法创建
+- [x] `test/unit/routes/ai-accounts.test.js` - 单元测试：验证请求参数校验、数据库写入
+- [x] `test/integration/api/ai-account-creation.test.js` - 集成测试：完整创建流程，验证数据库记录
+- [x] 边界测试：验证资金范围限制（最小10000，最大1000000）
+- [x] 权限测试：验证JWT认证，非本人无法创建
 
 **验收标准**:
 ```bash
@@ -123,10 +123,10 @@ curl -X POST http://localhost:3001/api/ai-accounts \
 **功能**: 实现 `/ws/ai-account/:id` WebSocket对话，DeepSeek角色扮演，对话限制保护
 
 **测试要求**:
-- [ ] `test/integration/websocket/ai-dialogue.test.js` - WebSocket集成测试：连接、消息收发、断开
-- [ ] `test/unit/services/AIDialogueService.test.js` - 单元测试：对话轮数限制（10轮）、token限制（500/轮）、冷却时间（1秒）
-- [ ] 并发测试：同一账户同时只能有一个对话连接
-- [ ] 过期测试：1小时无操作自动断开
+- [x] `test/integration/websocket/ai-dialogue.test.js` - WebSocket集成测试：连接、消息收发、断开
+- [x] `test/unit/services/AIDialogueService.test.js` - 单元测试：对话轮数限制（10轮）、token限制（500/轮）、冷却时间（1秒）
+- [x] 并发测试：同一账户同时只能有一个对话连接
+- [x] 过期测试：1小时无操作自动断开
 
 **验收标准**:
 ```javascript
@@ -146,10 +146,10 @@ ws.on('message', (data) => {
 **功能**: 实现 `POST /api/ai-accounts/:id/finalize`，调用 trading-ai-service 提炼提示词，激活账户
 
 **测试要求**:
-- [ ] `test/integration/api/ai-account-finalize.test.js` - 集成测试：完整finalize流程
-- [ ] `test/unit/services/PromptCraftService.test.js` - 单元测试：验证提示词结构符合预期
-- [ ] 失败回滚测试：AI服务失败时账户状态不变，返回友好错误
-- [ ] 提示词验证测试：确保生成的提示词包含必需字段（role, philosophy, constraints）
+- [x] `test/integration/api/ai-account-finalize.test.js` - 集成测试：完整finalize流程
+- [x] `test/unit/services/PromptCraftService.test.js` - 单元测试：验证提示词结构符合预期
+- [x] 失败回滚测试：AI服务失败时账户状态不变，返回友好错误
+- [x] 提示词验证测试：确保生成的提示词包含必需字段（role, philosophy, constraints）
 
 **验收标准**:
 ```bash
@@ -169,10 +169,10 @@ curl -X POST http://localhost:3001/api/ai-accounts/123/finalize \
 **功能**: 定时任务（1分钟），查询活跃AI账户的持仓和关注列表，生成热股票列表推送至 market-data-service
 
 **测试要求**:
-- [ ] `test/unit/jobs/StockHeatScheduler.test.js` - 单元测试：验证热股票列表生成逻辑
-- [ ] `test/integration/jobs/hot-stocks-publishing.test.js` - 集成测试：验证Redis消息发布
-- [ ] 数据一致性测试：验证提取的持仓和关注列表准确
-- [ ] 性能测试：1000个活跃账户在1秒内完成计算
+- [x] `test/unit/jobs/StockHeatScheduler.test.js` - 单元测试：验证热股票列表生成逻辑
+- [x] `test/integration/jobs/hot-stocks-publishing.test.js` - 集成测试：验证Redis消息发布
+- [x] 数据一致性测试：验证提取的持仓和关注列表准确
+- [x] 性能测试：1000个活跃账户在1秒内完成计算
 
 **验收标准**:
 ```javascript
@@ -195,11 +195,11 @@ const message = {
 **功能**: Bull队列管理AI唤醒任务，实现防重保护（5分钟冷却、10次/日上限、token预算）
 
 **测试要求**:
-- [ ] `test/unit/services/AIWakeupScheduler.test.js` - 单元测试：验证shouldWakeup逻辑
-- [ ] `test/integration/queue/ai-wakeup-queue.test.js` - 集成测试：Bull队列任务提交和执行
-- [ ] 防重测试：连续触发验证冷却时间拦截
-- [ ] 限次测试：超过10次/日后被拒绝
-- [ ] 并发测试：5个并发AI同时执行
+- [x] `test/unit/services/AIWakeupScheduler.test.js` - 单元测试：验证shouldWakeup逻辑
+- [x] `test/integration/queue/ai-wakeup-queue.test.js` - 集成测试：Bull队列任务提交和执行
+- [x] 防重测试：连续触发验证冷却时间拦截
+- [x] 限次测试：超过10次/日后被拒绝
+- [x] 并发测试：5个并发AI同时执行
 
 **验收标准**:
 ```javascript
@@ -217,10 +217,10 @@ const result = await scheduler.triggerWakeup(accountId, 'manual');
 **功能**: Cron定时任务（工作日15:30），批量触发活跃AI账户的唤醒更新
 
 **测试要求**:
-- [ ] `test/integration/jobs/daily-close-job.test.js` - 集成测试：验证定时触发逻辑
-- [ ] 分批测试：验证100个账户分20批执行，每批间隔1秒
-- [ ] 错误处理测试：部分账户失败不影响其他账户
-- [ ] 限流测试：验证每秒最多5个请求
+- [x] `test/integration/jobs/daily-close-job.test.js` - 集成测试：验证定时触发逻辑
+- [x] 分批测试：验证100个账户分20批执行，每批间隔1秒
+- [x] 错误处理测试：部分账户失败不影响其他账户
+- [x] 限流测试：验证每秒最多5个请求
 
 **验收标准**:
 ```javascript
@@ -241,11 +241,11 @@ const results = await dailyAICloseJob.execute();
 **功能**: 接收 trading-ai-service 的决策结果，执行虚拟交易，更新持仓
 
 **测试要求**:
-- [ ] `test/integration/api/ai-decision-execution.test.js` - 集成测试：决策到交易的完整流程
-- [ ] `test/unit/services/TradeExecutionService.test.js` - 单元测试：交易逻辑（买入/卖出/持仓）
-- [ ] 资金检查测试：余额不足时拒绝交易
-- [ ] 持仓检查测试：卖出时检查持仓数量
-- [ ] 幂等测试：同一决策ID重复执行只生效一次
+- [x] `test/integration/api/ai-decision-execution.test.js` - 集成测试：决策到交易的完整流程
+- [x] `test/unit/services/TradeExecutionService.test.js` - 单元测试：交易逻辑（买入/卖出/持仓）
+- [x] 资金检查测试：余额不足时拒绝交易
+- [x] 持仓检查测试：卖出时检查持仓数量
+- [x] 幂等测试：同一决策ID重复执行只生效一次
 
 **验收标准**:
 ```bash
@@ -315,15 +315,15 @@ backend/tests/
 
 | 条目 | 状态 | 开发日期 | 测试通过日期 | 合并提交 |
 |------|------|----------|--------------|----------|
-| [T-001] Service SDK | 🔲 待开发 | - | - | - |
-| [T-002] Redis事件总线 | 🔲 待开发 | - | - | - |
-| [T-003] AI账户创建 | 🔲 待开发 | - | - | - |
-| [T-004] AI对话服务 | 🔲 待开发 | - | - | - |
-| [T-005] 提示词生成 | 🔲 待开发 | - | - | - |
-| [T-006] 热股票列表 | 🔲 待开发 | - | - | - |
-| [T-007] 唤醒调度器 | 🔲 待开发 | - | - | - |
-| [T-008] 每日收盘任务 | 🔲 待开发 | - | - | - |
-| [T-009] 交易执行 | 🔲 待开发 | - | - | - |
+| [T-001] Service SDK | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-002] Redis事件总线 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-003] AI账户创建 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-004] AI对话服务 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-005] 提示词生成 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-006] 热股票列表 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-007] 唤醒调度器 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-008] 每日收盘任务 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
+| [T-009] 交易执行 | ✅ 已完成 | 2026-02-10 | 2026-02-10 | - |
 | [T-010] 健康检查 | 🔲 待开发 | - | - | - |
 
 ---
