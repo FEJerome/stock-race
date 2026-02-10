@@ -1,0 +1,1783 @@
+{
+  "test_summary": {
+    "total_tests": 23,
+    "start_time": "2026-02-10T09:16:50.404165",
+    "end_time": "2026-02-10T09:39:07.899873"
+  },
+  "sources_summary": {
+    "新浪财经": {
+      "success_rate": 100.0,
+      "single_quote_rate": 100.0,
+      "batch_quote_rate": 100.0,
+      "average_latency": 0.20857952173913044,
+      "total_quotes": 115,
+      "total_tests": 23
+    },
+    "腾讯财经": {
+      "success_rate": 100.0,
+      "single_quote_rate": 0.0,
+      "batch_quote_rate": 100.0,
+      "average_latency": 0.22546534782608693,
+      "total_quotes": 0,
+      "total_tests": 23
+    },
+    "东方财富": {
+      "success_rate": 100.0,
+      "single_quote_rate": 100.0,
+      "batch_quote_rate": 100.0,
+      "average_latency": 0.30657626086956524,
+      "total_quotes": 0,
+      "total_tests": 23
+    }
+  },
+  "detailed_results": [
+    {
+      "test_index": 1,
+      "timestamp": "2026-02-10T09:16:50.404165",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 1,
+          "timestamp": "2026-02-10T09:16:50.404196",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.563498,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 1,
+          "timestamp": "2026-02-10T09:16:50.967729",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.522273,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 1,
+          "timestamp": "2026-02-10T09:16:51.490047",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.910552,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 2,
+      "timestamp": "2026-02-10T09:17:52.424592",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 2,
+          "timestamp": "2026-02-10T09:17:52.424752",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.193897,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 2,
+          "timestamp": "2026-02-10T09:17:52.618680",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.21074,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 2,
+          "timestamp": "2026-02-10T09:17:52.829445",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.333445,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 3,
+      "timestamp": "2026-02-10T09:18:53.223495",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 3,
+          "timestamp": "2026-02-10T09:18:53.223600",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.18429,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 3,
+          "timestamp": "2026-02-10T09:18:53.407916",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.207756,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 3,
+          "timestamp": "2026-02-10T09:18:53.615697",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.313435,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 4,
+      "timestamp": "2026-02-10T09:19:53.966648",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 4,
+          "timestamp": "2026-02-10T09:19:53.966744",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.205017,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 4,
+          "timestamp": "2026-02-10T09:19:54.171791",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.205987,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 4,
+          "timestamp": "2026-02-10T09:19:54.377805",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.304011,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 5,
+      "timestamp": "2026-02-10T09:20:54.742020",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 5,
+          "timestamp": "2026-02-10T09:20:54.742118",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.175972,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 5,
+          "timestamp": "2026-02-10T09:20:54.918113",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.212583,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 5,
+          "timestamp": "2026-02-10T09:20:55.130720",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.310521,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 6,
+      "timestamp": "2026-02-10T09:21:55.470993",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 6,
+          "timestamp": "2026-02-10T09:21:55.471095",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.182991,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 6,
+          "timestamp": "2026-02-10T09:21:55.654113",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.20317,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 6,
+          "timestamp": "2026-02-10T09:21:55.857306",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.310013,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 7,
+      "timestamp": "2026-02-10T09:22:56.228295",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 7,
+          "timestamp": "2026-02-10T09:22:56.228399",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.20714,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 7,
+          "timestamp": "2026-02-10T09:22:56.435563",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.208185,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 7,
+          "timestamp": "2026-02-10T09:22:56.643766",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.313296,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 8,
+      "timestamp": "2026-02-10T09:23:57.018199",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 8,
+          "timestamp": "2026-02-10T09:23:57.018303",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.202047,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 8,
+          "timestamp": "2026-02-10T09:23:57.220375",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.219071,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 8,
+          "timestamp": "2026-02-10T09:23:57.439467",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.334117,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 9,
+      "timestamp": "2026-02-10T09:24:57.798186",
+      "market_status": "pre_market",
+      "market_desc": "集合竞价中 (9:15-9:25)",
+      "sources": [
+        {
+          "test_index": 9,
+          "timestamp": "2026-02-10T09:24:57.798292",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.184643,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 0.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 0.0,
+              "change_percent": -100.0
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 0.0,
+              "change_percent": -100.0
+            }
+          }
+        },
+        {
+          "test_index": 9,
+          "timestamp": "2026-02-10T09:24:57.982962",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.224737,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/0/0'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 9,
+          "timestamp": "2026-02-10T09:24:58.207723",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.301788,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 10,
+      "timestamp": "2026-02-10T09:25:58.570291",
+      "market_status": "pre_open",
+      "market_desc": "集合竞价结束，等待开市 (9:25-9:30)",
+      "sources": [
+        {
+          "test_index": 10,
+          "timestamp": "2026-02-10T09:25:58.570397",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.193014,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1524.97,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.07,
+              "change_percent": 0.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.97,
+              "change_percent": 0.20161290322580216
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 107.18,
+              "change_percent": -0.16766020864380832
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.0,
+              "change_percent": -0.06662225183211445
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 365.17,
+              "change_percent": -0.9896426441082309
+            }
+          }
+        },
+        {
+          "test_index": 10,
+          "timestamp": "2026-02-10T09:25:58.763435",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.214901,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/213/32481861'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 10,
+          "timestamp": "2026-02-10T09:25:58.978359",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.314576,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 11,
+      "timestamp": "2026-02-10T09:26:59.313067",
+      "market_status": "pre_open",
+      "market_desc": "集合竞价结束，等待开市 (9:25-9:30)",
+      "sources": [
+        {
+          "test_index": 11,
+          "timestamp": "2026-02-10T09:26:59.313170",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.201166,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1524.97,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.07,
+              "change_percent": 0.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.97,
+              "change_percent": 0.20161290322580216
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 107.18,
+              "change_percent": -0.16766020864380832
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.0,
+              "change_percent": -0.06662225183211445
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 365.17,
+              "change_percent": -0.9896426441082309
+            }
+          }
+        },
+        {
+          "test_index": 11,
+          "timestamp": "2026-02-10T09:26:59.514360",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.211207,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/213/32481861'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 11,
+          "timestamp": "2026-02-10T09:26:59.725591",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.315555,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 12,
+      "timestamp": "2026-02-10T09:28:00.101970",
+      "market_status": "pre_open",
+      "market_desc": "集合竞价结束，等待开市 (9:25-9:30)",
+      "sources": [
+        {
+          "test_index": 12,
+          "timestamp": "2026-02-10T09:28:00.102072",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.183138,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1524.97,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.07,
+              "change_percent": 0.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.97,
+              "change_percent": 0.20161290322580216
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 107.18,
+              "change_percent": -0.16766020864380832
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.0,
+              "change_percent": -0.06662225183211445
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 365.17,
+              "change_percent": -0.9896426441082309
+            }
+          }
+        },
+        {
+          "test_index": 12,
+          "timestamp": "2026-02-10T09:28:00.285238",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.202984,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/213/32481861'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 12,
+          "timestamp": "2026-02-10T09:28:00.488244",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.314382,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 13,
+      "timestamp": "2026-02-10T09:29:00.862877",
+      "market_status": "pre_open",
+      "market_desc": "集合竞价结束，等待开市 (9:25-9:30)",
+      "sources": [
+        {
+          "test_index": 13,
+          "timestamp": "2026-02-10T09:29:00.862985",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.188661,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1524.97,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.07,
+              "change_percent": 0.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.97,
+              "change_percent": 0.20161290322580216
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 107.18,
+              "change_percent": -0.16766020864380832
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.0,
+              "change_percent": -0.06662225183211445
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 365.17,
+              "change_percent": -0.9896426441082309
+            }
+          }
+        },
+        {
+          "test_index": 13,
+          "timestamp": "2026-02-10T09:29:01.051672",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.215204,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/213/32481861'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 13,
+          "timestamp": "2026-02-10T09:29:01.266902",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.306452,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152497,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 14,
+      "timestamp": "2026-02-10T09:30:01.633879",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 14,
+          "timestamp": "2026-02-10T09:30:01.633983",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.19356,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1524.97,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.06,
+              "change_percent": -0.09033423667569816
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.97,
+              "change_percent": 0.20161290322580216
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 107.18,
+              "change_percent": -0.16766020864380832
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 89.98,
+              "change_percent": -0.08882966910948067
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 365.17,
+              "change_percent": -0.9896426441082309
+            }
+          }
+        },
+        {
+          "test_index": 14,
+          "timestamp": "2026-02-10T09:30:01.827600",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.202842,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1524.97/213/32481861'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 14,
+          "timestamp": "2026-02-10T09:30:02.030463",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.322475,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.152496,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 15,
+      "timestamp": "2026-02-10T09:31:02.373797",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 15,
+          "timestamp": "2026-02-10T09:31:02.373901",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.189557,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1515.02,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.07,
+              "change_percent": 0.0
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.94,
+              "change_percent": -0.40322580645160433
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.63,
+              "change_percent": -0.679955290611032
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 89.86,
+              "change_percent": -0.22207417277370958
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 366.16,
+              "change_percent": -0.721219022829556
+            }
+          }
+        },
+        {
+          "test_index": 15,
+          "timestamp": "2026-02-10T09:31:02.563482",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.213032,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1515.02/688/104642013'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 15,
+          "timestamp": "2026-02-10T09:31:02.776536",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.312347,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.151501,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 16,
+      "timestamp": "2026-02-10T09:32:03.149951",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 16,
+          "timestamp": "2026-02-10T09:32:03.150057",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.192826,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1508.58,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.06,
+              "change_percent": -0.09033423667569816
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.93,
+              "change_percent": -0.6048387096774244
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.5,
+              "change_percent": -0.8010432190760055
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.31,
+              "change_percent": 0.27759271596713303
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 367.55,
+              "change_percent": -0.3443414131554639
+            }
+          }
+        },
+        {
+          "test_index": 16,
+          "timestamp": "2026-02-10T09:32:03.342911",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.209824,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1508.80/1436/217666263'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 16,
+          "timestamp": "2026-02-10T09:32:03.552759",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.321063,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.15088,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 17,
+      "timestamp": "2026-02-10T09:33:03.924787",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 17,
+          "timestamp": "2026-02-10T09:33:03.924893",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.215,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1503.81,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.06,
+              "change_percent": -0.09033423667569816
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.91,
+              "change_percent": -1.0080645161290287
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.43,
+              "change_percent": -0.8662444113263716
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.19,
+              "change_percent": 0.14434821230290412
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 368.45,
+              "change_percent": -0.10031993926576774
+            }
+          }
+        },
+        {
+          "test_index": 17,
+          "timestamp": "2026-02-10T09:33:04.139920",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.212139,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1504.14/2420/366067392'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 17,
+          "timestamp": "2026-02-10T09:33:04.352081",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.322607,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.150381,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 18,
+      "timestamp": "2026-02-10T09:34:04.709403",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 18,
+          "timestamp": "2026-02-10T09:34:04.709506",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.190936,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1506.09,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.05,
+              "change_percent": -0.18066847335139632
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.91,
+              "change_percent": -1.0080645161290287
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.27,
+              "change_percent": -1.0152757078986618
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.31,
+              "change_percent": 0.27759271596713303
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 368.58,
+              "change_percent": -0.06507239303725641
+            }
+          }
+        },
+        {
+          "test_index": 18,
+          "timestamp": "2026-02-10T09:34:04.900470",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.218835,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1506.09/3583/540872941'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 18,
+          "timestamp": "2026-02-10T09:34:05.119325",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.195862,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.150587,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 19,
+      "timestamp": "2026-02-10T09:35:05.323697",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 19,
+          "timestamp": "2026-02-10T09:35:05.323808",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.193772,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1508.0,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.06,
+              "change_percent": -0.09033423667569816
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.9,
+              "change_percent": -1.209677419354831
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.22,
+              "change_percent": -1.061847988077497
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.31,
+              "change_percent": 0.27759271596713303
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 367.12,
+              "change_percent": -0.4609294506805457
+            }
+          }
+        },
+        {
+          "test_index": 19,
+          "timestamp": "2026-02-10T09:35:05.517648",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.216041,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1508.00/4187/631876191'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 19,
+          "timestamp": "2026-02-10T09:35:05.733716",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.176323,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.150801,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 20,
+      "timestamp": "2026-02-10T09:36:05.970968",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 20,
+          "timestamp": "2026-02-10T09:36:05.971072",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.175377,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1504.01,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.06,
+              "change_percent": -0.09033423667569816
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.91,
+              "change_percent": -1.0080645161290287
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.11,
+              "change_percent": -1.164307004470939
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.33,
+              "change_percent": 0.2998001332444992
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 367.84,
+              "change_percent": -0.26571227156879185
+            }
+          }
+        },
+        {
+          "test_index": 20,
+          "timestamp": "2026-02-10T09:36:06.146473",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.217753,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1504.51/4830/728696065'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 20,
+          "timestamp": "2026-02-10T09:36:06.364252",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.173879,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.150401,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 21,
+      "timestamp": "2026-02-10T09:37:06.598921",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 21,
+          "timestamp": "2026-02-10T09:37:06.599026",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.193763,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1506.66,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.09,
+              "change_percent": 0.18066847335139632
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.93,
+              "change_percent": -0.6048387096774244
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.23,
+              "change_percent": -1.0525335320417244
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.43,
+              "change_percent": 0.4108372196313619
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 367.55,
+              "change_percent": -0.3443414131554639
+            }
+          }
+        },
+        {
+          "test_index": 21,
+          "timestamp": "2026-02-10T09:37:06.792816",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.205994,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1506.66/5408/815732877'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 21,
+          "timestamp": "2026-02-10T09:37:06.998834",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.20292,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.150666,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 22,
+      "timestamp": "2026-02-10T09:38:07.262020",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 22,
+          "timestamp": "2026-02-10T09:38:07.262127",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.193516,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1510.37,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.09,
+              "change_percent": 0.18066847335139632
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.93,
+              "change_percent": -0.6048387096774244
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.35,
+              "change_percent": -0.9407600596125234
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.66,
+              "change_percent": 0.6662225183211129
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 367.01,
+              "change_percent": -0.4907542974892908
+            }
+          }
+        },
+        {
+          "test_index": 22,
+          "timestamp": "2026-02-10T09:38:07.455702",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.211689,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1510.37/5681/856917963'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 22,
+          "timestamp": "2026-02-10T09:38:07.667411",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.172128,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.15103699999999998,
+          "batch_details": {}
+        }
+      ]
+    },
+    {
+      "test_index": 23,
+      "timestamp": "2026-02-10T09:39:07.899873",
+      "market_status": "morning_session",
+      "market_desc": "上午交易时段 (9:30-11:30)",
+      "sources": [
+        {
+          "test_index": 23,
+          "timestamp": "2026-02-10T09:39:07.899979",
+          "source": "新浪财经",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 5,
+          "latency": 0.193548,
+          "errors": [],
+          "single_quote_name": "贵州茅台",
+          "single_quote_price": 1506.33,
+          "batch_details": {
+            "000001.SZ": {
+              "name": "平安银行",
+              "price": 11.08,
+              "change_percent": 0.09033423667569816
+            },
+            "000002.SZ": {
+              "name": "万 科Ａ",
+              "price": 4.92,
+              "change_percent": -0.8064516129032264
+            },
+            "000858.SZ": {
+              "name": "五 粮 液",
+              "price": 106.23,
+              "change_percent": -1.0525335320417244
+            },
+            "002594.SZ": {
+              "name": "比亚迪",
+              "price": 90.8,
+              "change_percent": 0.821674439262708
+            },
+            "300750.SZ": {
+              "name": "宁德时代",
+              "price": 369.75,
+              "change_percent": 0.2521555230193609
+            }
+          }
+        },
+        {
+          "test_index": 23,
+          "timestamp": "2026-02-10T09:39:08.093555",
+          "source": "腾讯财经",
+          "success": true,
+          "single_quote_success": false,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.218756,
+          "errors": [
+            "Single: Failed to get Tencent quote for 600519.SH: could not convert string to float: '1506.33/5944/896580411'"
+          ],
+          "batch_details": {}
+        },
+        {
+          "test_index": 23,
+          "timestamp": "2026-02-10T09:39:08.312336",
+          "source": "东方财富",
+          "success": true,
+          "single_quote_success": true,
+          "batch_quotes_success": true,
+          "quotes_count": 0,
+          "latency": 0.169507,
+          "errors": [],
+          "single_quote_name": "",
+          "single_quote_price": 0.15066400000000002,
+          "batch_details": {}
+        }
+      ]
+    }
+  ]
+}
