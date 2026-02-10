@@ -6,6 +6,7 @@ import tradesRoutes from './trades.js';
 import portfoliosRoutes from './portfolios.js';
 import marketRoutes from './market.js';
 import { authenticate, optionalAuthenticate, checkPermission, checkRole } from '../middleware/auth.js';
+import { healthService } from '../services/HealthService.js';
 
 const router = express.Router();
 
@@ -66,14 +67,53 @@ const router = express.Router();
 
 // 健康检查端点
 router.get('/health', (req, res) => {
+  const health = healthService.getBasicHealth();
   res.json({
     success: true,
-    data: {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0'
-    },
+    data: health,
     message: '系统运行正常'
+  });
+});
+
+// 详细健康检查端点
+router.get('/health/detailed', async (req, res) => {
+  try {
+    const health = await healthService.getDetailedHealth();
+
+    // 根据状态设置HTTP状态码
+    let statusCode = 200;
+    if (health.status === 'unhealthy') {
+      statusCode = 503;
+    } else if (health.status === 'degraded') {
+      statusCode = 200; // 仍然返回200，但状态标记为degraded
+    }
+
+    res.status(statusCode).json({
+      success: health.status !== 'unhealthy',
+      data: health,
+      message: health.status === 'healthy' ? '所有服务正常运行' :
+               health.status === 'degraded' ? '部分服务降级' : '服务不可用'
+    });
+  } catch (error) {
+    console.error('[Health] 详细健康检查失败:', error);
+    res.status(503).json({
+      success: false,
+      error: {
+        code: 'HEALTH_CHECK_FAILED',
+        message: error.message
+      },
+      message: '健康检查执行失败'
+    });
+  }
+});
+
+// 服务统计端点
+router.get('/health/stats', (req, res) => {
+  const stats = healthService.getStats();
+  res.json({
+    success: true,
+    data: stats,
+    message: '获取服务统计成功'
   });
 });
 
