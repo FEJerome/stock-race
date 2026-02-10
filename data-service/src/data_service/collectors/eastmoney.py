@@ -67,45 +67,62 @@ class EastMoneyCollector(DataSource):
             if not result:
                 raise DataSourceError(f"No data for symbol {symbol}")
 
+            # Helper function to safely convert to float
+            def safe_float(value, divisor=1.0):
+                if value is None or value == "":
+                    return 0.0
+                try:
+                    return float(value) / divisor
+                except (ValueError, TypeError):
+                    return 0.0
+
+            def safe_int(value):
+                if value is None or value == "":
+                    return 0
+                try:
+                    return int(float(value))
+                except (ValueError, TypeError):
+                    return 0
+
             # Map East Money field codes to meaningful names
             quote = {
                 "symbol": symbol,
                 "name": result.get("f14", ""),
                 "code": result.get("f12", ""),
-                "price": result.get("f43", 0.0) / 10000 if result.get("f43") else 0.0,
-                "prev_close": result.get("f60", 0.0) / 10000 if result.get("f60") else 0.0,
-                "open": result.get("f46", 0.0) / 10000 if result.get("f46") else 0.0,
-                "high": result.get("f44", 0.0) / 10000 if result.get("f44") else 0.0,
-                "low": result.get("f45", 0.0) / 10000 if result.get("f45") else 0.0,
-                "volume": result.get("f47", 0),
-                "amount": result.get("f48", 0.0) / 10000 if result.get("f48") else 0.0,
-                "bid_price_1": result.get("f9", 0.0) / 10000 if result.get("f9") else 0.0,
-                "bid_volume_1": result.get("f10", 0),
-                "bid_price_2": result.get("f11", 0.0) / 10000 if result.get("f11") else 0.0,
-                "bid_volume_2": result.get("f12", 0),
-                "bid_price_3": result.get("f13", 0.0) / 10000 if result.get("f13") else 0.0,
-                "bid_volume_3": result.get("f14", 0),
-                "bid_price_4": result.get("f15", 0.0) / 10000 if result.get("f15") else 0.0,
-                "bid_volume_4": result.get("f16", 0),
-                "bid_price_5": result.get("f17", 0.0) / 10000 if result.get("f17") else 0.0,
-                "bid_volume_5": result.get("f18", 0),
-                "ask_price_1": result.get("f19", 0.0) / 10000 if result.get("f19") else 0.0,
-                "ask_volume_1": result.get("f20", 0),
-                "ask_price_2": result.get("f21", 0.0) / 10000 if result.get("f21") else 0.0,
-                "ask_volume_2": result.get("f22", 0),
-                "ask_price_3": result.get("f23", 0.0) / 10000 if result.get("f23") else 0.0,
-                "ask_volume_3": result.get("f24", 0),
-                "ask_price_4": result.get("f25", 0.0) / 10000 if result.get("f25") else 0.0,
-                "ask_volume_4": result.get("f26", 0),
-                "ask_price_5": result.get("f27", 0.0) / 10000 if result.get("f27") else 0.0,
-                "ask_volume_5": result.get("f28", 0),
-                "change": result.get("f169", 0.0) / 10000 if result.get("f169") else 0.0,
-                "change_percent": result.get("f170", 0.0),
-                "pe_ratio": result.get("f162", 0.0),
-                "pb_ratio": result.get("f167", 0.0),
-                "market_cap": result.get("f116", 0.0),
-                "circulating_market_cap": result.get("f117", 0.0),
-                "turnover_rate": result.get("f168", 0.0),
+                "price": safe_float(result.get("f43"), 10000),
+                "prev_close": safe_float(result.get("f60"), 10000),
+                "open": safe_float(result.get("f46"), 10000),
+                "high": safe_float(result.get("f44"), 10000),
+                "low": safe_float(result.get("f45"), 10000),
+                "volume": safe_int(result.get("f47")),
+                "amount": safe_float(result.get("f48"), 10000),
+                "bid_price_1": safe_float(result.get("f9"), 10000),
+                "bid_volume_1": safe_int(result.get("f10")),
+                "bid_price_2": safe_float(result.get("f11"), 10000),
+                "bid_volume_2": safe_int(result.get("f12")),
+                "bid_price_3": safe_float(result.get("f13"), 10000),
+                "bid_volume_3": safe_int(result.get("f14")),
+                "bid_price_4": safe_float(result.get("f15"), 10000),
+                "bid_volume_4": safe_int(result.get("f16")),
+                "bid_price_5": safe_float(result.get("f17"), 10000),
+                "bid_volume_5": safe_int(result.get("f18")),
+                "ask_price_1": safe_float(result.get("f19"), 10000),
+                "ask_volume_1": safe_int(result.get("f20")),
+                "ask_price_2": safe_float(result.get("f21"), 10000),
+                "ask_volume_2": safe_int(result.get("f22")),
+                "ask_price_3": safe_float(result.get("f23"), 10000),
+                "ask_volume_3": safe_int(result.get("f24")),
+                "ask_price_4": safe_float(result.get("f25"), 10000),
+                "ask_volume_4": safe_int(result.get("f26")),
+                "ask_price_5": safe_float(result.get("f27"), 10000),
+                "ask_volume_5": safe_int(result.get("f28")),
+                "change": safe_float(result.get("f169"), 10000),
+                "change_percent": safe_float(result.get("f170")),
+                "pe_ratio": safe_float(result.get("f162")),
+                "pb_ratio": safe_float(result.get("f167")),
+                "market_cap": safe_float(result.get("f116")),
+                "circulating_market_cap": safe_float(result.get("f117")),
+                "turnover_rate": safe_float(result.get("f168")),
                 "timestamp": datetime.now()
             }
 
