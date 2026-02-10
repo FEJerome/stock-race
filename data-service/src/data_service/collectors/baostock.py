@@ -11,6 +11,7 @@ References:
 """
 
 import asyncio
+import functools
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
@@ -97,16 +98,18 @@ class BaostockCollector(DataSource):
             end_date = datetime.now().strftime("%Y-%m-%d")
             start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
-            # Query daily data
+            # Query daily data - use functools.partial for keyword arguments
             result = await loop.run_in_executor(
                 None,
-                bs.query_history_k_data_plus,
-                bs_code,
-                "date,code,open,high,low,close,preclose,volume,amount,turn,pctChg",
-                start_date=start_date,
-                end_date=end_date,
-                frequency="d",
-                adjustflag="3"  # 3=后复权
+                functools.partial(
+                    bs.query_history_k_data_plus,
+                    code=bs_code,
+                    fields="date,code,open,high,low,close,preclose,volume,amount,turn,pctChg",
+                    start_date=start_date,
+                    end_date=end_date,
+                    frequency="d",
+                    adjustflag="3"  # 3=后复权
+                )
             )
 
             if result.error_code != "0":
@@ -222,16 +225,18 @@ class BaostockCollector(DataSource):
         loop = asyncio.get_event_loop()
 
         try:
-            # Query historical data
+            # Query historical data - use functools.partial for keyword arguments
             result = await loop.run_in_executor(
                 None,
-                bs.query_history_k_data_plus,
-                bs_code,
-                fields,
-                start_date=start_date.strftime("%Y-%m-%d"),
-                end_date=end_date.strftime("%Y-%m-%d"),
-                frequency=frequency,
-                adjustflag=adjustflag
+                functools.partial(
+                    bs.query_history_k_data_plus,
+                    code=bs_code,
+                    fields=fields,
+                    start_date=start_date.strftime("%Y-%m-%d"),
+                    end_date=end_date.strftime("%Y-%m-%d"),
+                    frequency=frequency,
+                    adjustflag=adjustflag
+                )
             )
 
             if result.error_code != "0":
@@ -305,11 +310,10 @@ class BaostockCollector(DataSource):
         loop = asyncio.get_event_loop()
 
         try:
-            # Query stock basic information
+            # Query stock basic information - use functools.partial for keyword arguments
             result = await loop.run_in_executor(
                 None,
-                bs.query_stock_basic,
-                code=bs_code
+                functools.partial(bs.query_stock_basic, code=bs_code)
             )
 
             if result.error_code != "0":
@@ -393,8 +397,7 @@ class BaostockCollector(DataSource):
         try:
             result = await loop.run_in_executor(
                 None,
-                bs.query_stock_basic,
-                code=bs_code
+                functools.partial(bs.query_stock_basic, code=bs_code)
             )
 
             if result.error_code == "0":
@@ -419,13 +422,15 @@ class BaostockCollector(DataSource):
             today = datetime.now().strftime("%Y-%m-%d")
             result = await loop.run_in_executor(
                 None,
-                bs.query_history_k_data_plus,
-                bs_code,
-                "peTTM,pbMRQ",  # PE ratio (TTM), PB ratio (MRQ)
-                start_date=today,
-                end_date=today,
-                frequency="d",
-                adjustflag="3"
+                functools.partial(
+                    bs.query_history_k_data_plus,
+                    code=bs_code,
+                    fields="peTTM,pbMRQ",  # PE ratio (TTM), PB ratio (MRQ)
+                    start_date=today,
+                    end_date=today,
+                    frequency="d",
+                    adjustflag="3"
+                )
             )
 
             if result.error_code == "0":

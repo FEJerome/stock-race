@@ -68,48 +68,71 @@ class TencentCollector(DataSource):
                 if len(fields) < 40:
                     raise DataSourceError(f"Incomplete data: {len(fields)} fields")
 
+                # Helper function to safely extract first number from string
+                def safe_float(value):
+                    if not value or value == "":
+                        return 0.0
+                    try:
+                        # Handle cases like "1524.96/0/0" by taking first part
+                        if "/" in str(value):
+                            value = str(value).split("/")[0]
+                        return float(value)
+                    except (ValueError, TypeError):
+                        return 0.0
+
+                def safe_int(value):
+                    if not value or value == "":
+                        return 0
+                    try:
+                        # Handle cases like "123/0/0" by taking first part
+                        if "/" in str(value):
+                            value = str(value).split("/")[0]
+                        return int(float(value))
+                    except (ValueError, TypeError):
+                        return 0
+
                 # Parse fields according to Tencent format
                 quote = {
                     "symbol": symbol,
                     "name": fields[1],
                     "code": fields[2],
-                    "price": float(fields[3]) if fields[3] else 0.0,
-                    "prev_close": float(fields[4]) if fields[4] else 0.0,
-                    "open": float(fields[5]) if fields[5] else 0.0,
-                    "volume": int(fields[6]) if fields[6] else 0,
-                    "bid_volume": int(fields[7]) if fields[7] else 0,
-                    "ask_volume": int(fields[8]) if fields[8] else 0,
-                    "bid_price_1": float(fields[9]) if fields[9] else 0.0,
-                    "bid_volume_1": int(fields[10]) if fields[10] else 0,
-                    "bid_price_2": float(fields[11]) if fields[11] else 0.0,
-                    "bid_volume_2": int(fields[12]) if fields[12] else 0,
-                    "bid_price_3": float(fields[13]) if fields[13] else 0.0,
-                    "bid_volume_3": int(fields[14]) if fields[14] else 0,
-                    "bid_price_4": float(fields[15]) if fields[15] else 0.0,
-                    "bid_volume_4": int(fields[16]) if fields[16] else 0,
-                    "bid_price_5": float(fields[17]) if fields[17] else 0.0,
-                    "bid_volume_5": int(fields[18]) if fields[18] else 0,
-                    "ask_price_1": float(fields[19]) if fields[19] else 0.0,
-                    "ask_volume_1": int(fields[20]) if fields[20] else 0,
-                    "ask_price_2": float(fields[21]) if fields[21] else 0.0,
-                    "ask_volume_2": int(fields[22]) if fields[22] else 0,
-                    "ask_price_3": float(fields[23]) if fields[23] else 0.0,
-                    "ask_volume_3": int(fields[24]) if fields[24] else 0,
-                    "ask_price_4": float(fields[25]) if fields[25] else 0.0,
-                    "ask_volume_4": int(fields[26]) if fields[26] else 0,
-                    "ask_price_5": float(fields[27]) if fields[27] else 0.0,
-                    "ask_volume_5": int(fields[28]) if fields[28] else 0,
+                    "price": safe_float(fields[3]),
+                    "prev_close": safe_float(fields[4]),
+                    "open": safe_float(fields[5]),
+                    "volume": safe_int(fields[6]),
+                    "bid_volume": safe_int(fields[7]),
+                    "ask_volume": safe_int(fields[8]),
+                    "bid_price_1": safe_float(fields[9]),
+                    "bid_volume_1": safe_int(fields[10]),
+                    "bid_price_2": safe_float(fields[11]),
+                    "bid_volume_2": safe_int(fields[12]),
+                    "bid_price_3": safe_float(fields[13]),
+                    "bid_volume_3": safe_int(fields[14]),
+                    "bid_price_4": safe_float(fields[15]),
+                    "bid_volume_4": safe_int(fields[16]),
+                    "bid_price_5": safe_float(fields[17]),
+                    "bid_volume_5": safe_int(fields[18]),
+                    "ask_price_1": safe_float(fields[19]),
+                    "ask_volume_1": safe_int(fields[20]),
+                    "ask_price_2": safe_float(fields[21]),
+                    "ask_volume_2": safe_int(fields[22]),
+                    "ask_price_3": safe_float(fields[23]),
+                    "ask_volume_3": safe_int(fields[24]),
+                    "ask_price_4": safe_float(fields[25]),
+                    "ask_volume_4": safe_int(fields[26]),
+                    "ask_price_5": safe_float(fields[27]),
+                    "ask_volume_5": safe_int(fields[28]),
                     "recent_transaction": fields[29],
                     "timestamp": f"{fields[30]} {fields[31]}",
-                    "change": float(fields[32]) if fields[32] else 0.0,
-                    "change_percent": float(fields[33]) if fields[33] else 0.0,
-                    "high": float(fields[34]) if fields[34] else 0.0,
-                    "low": float(fields[35]) if fields[35] else 0.0,
-                    "price_volume_ratio": float(fields[36]) if fields[36] else 0.0,
-                    "turnover_rate": float(fields[37]) if fields[37] else 0.0,
-                    "pe_ratio": float(fields[38]) if fields[38] else 0.0,
-                    "pb_ratio": float(fields[39]) if fields[39] else 0.0,
-                    "amount": float(fields[37]) * float(fields[3]) if fields[37] and fields[3] else 0.0,
+                    "change": safe_float(fields[32]),
+                    "change_percent": safe_float(fields[33]),
+                    "high": safe_float(fields[34]),
+                    "low": safe_float(fields[35]),
+                    "price_volume_ratio": safe_float(fields[36]),
+                    "turnover_rate": safe_float(fields[37]),
+                    "pe_ratio": safe_float(fields[38]),
+                    "pb_ratio": safe_float(fields[39]),
+                    "amount": safe_float(fields[37]) * safe_float(fields[3]),
                     "processed_timestamp": datetime.now()
                 }
 
@@ -298,24 +321,46 @@ class TencentCollector(DataSource):
                     continue
 
                 try:
+                    # Helper for safe conversion
+                    def safe_float(v):
+                        if not v:
+                            return 0.0
+                        try:
+                            if '/' in str(v):
+                                v = str(v).split('/')[0]
+                            return float(v)
+                        except (ValueError, TypeError):
+                            return 0.0
+
+                    def safe_int(v):
+                        if not v:
+                            return 0
+                        try:
+                            if '/' in str(v):
+                                v = str(v).split('/')[0]
+                            return int(float(v))
+                        except (ValueError, TypeError):
+                            return 0
+
                     quote = {
                         "symbol": symbol,
                         "name": fields[1],
-                        "price": float(fields[3]) if fields[3] else 0.0,
-                        "prev_close": float(fields[4]) if fields[4] else 0.0,
-                        "open": float(fields[5]) if fields[5] else 0.0,
-                        "volume": int(fields[6]) if fields[6] else 0,
-                        "high": float(fields[34]) if fields[34] else 0.0,
-                        "low": float(fields[35]) if fields[35] else 0.0,
-                        "change": float(fields[32]) if fields[32] else 0.0,
-                        "change_percent": float(fields[33]) if fields[33] else 0.0,
-                        "pe_ratio": float(fields[38]) if fields[38] else 0.0,
-                        "pb_ratio": float(fields[39]) if fields[39] else 0.0,
-                        "amount": float(fields[37]) * float(fields[3]) if fields[37] and fields[3] else 0.0,
+                        "price": safe_float(fields[3]),
+                        "prev_close": safe_float(fields[4]),
+                        "open": safe_float(fields[5]),
+                        "volume": safe_int(fields[6]),
+                        "high": safe_float(fields[34]),
+                        "low": safe_float(fields[35]),
+                        "change": safe_float(fields[32]),
+                        "change_percent": safe_float(fields[33]),
+                        "pe_ratio": safe_float(fields[39]),
+                        "pb_ratio": safe_float(fields[46]) if len(fields) > 46 else 0.0,
+                        "amount": safe_float(fields[37]),
                         "timestamp": datetime.now()
                     }
                     quotes[symbol] = quote
-                except (ValueError, IndexError):
+                except (ValueError, IndexError) as e:
+                    logger.debug(f"Failed to parse {symbol}: {e}")
                     continue  # Skip invalid quotes
 
             return quotes
