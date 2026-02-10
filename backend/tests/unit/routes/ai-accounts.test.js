@@ -21,6 +21,17 @@ jest.unstable_mockModule('../../../src/models/index.js', () => ({
   },
   systemLogRepository: {
     logUserActivity: mockLogUserActivity
+  },
+  portfolioRepository: {
+    getPortfolio: jest.fn(),
+    updatePosition: jest.fn()
+  },
+  tradeRepository: {
+    getTrades: jest.fn()
+  },
+  stockRepository: {
+    findOne: jest.fn(),
+    getStocks: jest.fn()
   }
 }));
 
