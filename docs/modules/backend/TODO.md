@@ -138,14 +138,25 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C2-BE-001 | 集成Node.js事件总线SDK | 🔲 | P0 | 使用SDK发布和订阅事件 |
-| C2-BE-002 | 发布账户更新事件 | 🔲 | P0 | 账户状态变更时发布`backend:account:updated` |
-| C2-BE-003 | 发布交易执行事件 | 🔲 | P0 | 交易完成后发布`backend:trade:executed` |
-| C2-BE-004 | 订阅AI决策事件 | 🔲 | P0 | 订阅`ai:decision:made`，接收AI决策通知 |
-| C2-BE-005 | 实现事件处理器 | 🔲 | P0 | 处理AI决策事件，触发交易执行 |
-| C2-BE-006 | 配置消费者组 | 🔲 | P1 | Backend多实例负载均衡消费 |
+| C2-BE-001 | 集成Node.js事件总线SDK | ✅ | P0 | 使用SDK发布和订阅事件。已完成：SDK安装、EventBusService实现、15个集成测试通过 |
+| C2-BE-002 | 发布账户更新事件 | ✅ | P0 | 账户状态变更时发布`backend:account:updated`。已完成：publishAccountUpdated方法实现 |
+| C2-BE-003 | 发布交易执行事件 | ✅ | P0 | 交易完成后发布`backend:trade:executed`。已完成：publishTradeExecuted方法实现 |
+| C2-BE-004 | 订阅AI决策事件 | ✅ | P0 | 订阅`ai:decision:made`，接收AI决策通知。已完成：subscribeToAIDecisions方法实现 |
+| C2-BE-005 | 实现事件处理器 | ✅ | P0 | 处理AI决策事件，触发交易执行。已完成：handler包装器实现，支持错误处理和日志 |
+| C2-BE-006 | 配置消费者组 | ✅ | P1 | Backend多实例负载均衡消费。已完成：支持自定义consumerGroup和consumerName |
 
-**阻塞状态**: ✅ 已解除，Node.js SDK已就绪，可开始集成
+**实现详情**:
+- **SDK安装**: `npm install @stock-race/event-bus`
+- **服务文件**: `src/services/EventBusService.js`
+- **测试文件**: `tests/unit/services/EventBusIntegration.test.js` (15个测试通过)
+- **核心功能**:
+  - `initialize()`: 初始化Redis连接
+  - `publishAccountUpdated()`: 发布账户更新事件
+  - `publishTradeExecuted()`: 发布交易执行事件
+  - `subscribeToAIDecisions()`: 订阅AI决策事件
+  - `stop()`: 优雅关闭
+
+**阻塞状态**: ✅ 已完成，事件总线集成就绪
 
 #### 冲突4：AI对话服务实现（Backend承接）
 
@@ -191,7 +202,7 @@
 | O6-003 | 优化收益接口 | 🔲 | P0 | `GET /api/ai-accounts/{id}/performance`含持仓成本 |
 | O6-004 | 缓存Market Data数据 | 🔲 | P0 | 5秒TTL缓存行情数据，减少外部依赖 |
 
-**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（事件总线SDK）用于订阅行情
+**阻塞状态**: ✅ C2-001已完成，Backend事件总线集成已完成，可开始O6-004实现
 
 ---
 
