@@ -21,13 +21,7 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
     # CORS
-    CORS_ORIGINS: List[str] = []
-    _cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
-    try:
-        CORS_ORIGINS = json.loads(_cors_origins)
-    except json.JSONDecodeError:
-        # Comma-separated format
-        CORS_ORIGINS = [origin.strip() for origin in _cors_origins.split(",") if origin.strip()]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     # TimescaleDB (for all data)
     TSDB_HOST: str = os.getenv("TSDB_HOST", "localhost")
@@ -77,20 +71,12 @@ class Settings(BaseSettings):
     LOG_FILE: str = os.getenv("LOG_FILE", "logs/data_service.log")
 
     # Stock Symbols (default Chinese A-share stocks)
-    DEFAULT_STOCK_SYMBOLS: List[str] = []
-    _default_stock_symbols = os.getenv(
-        "DEFAULT_STOCK_SYMBOLS",
-        "000001.SZ,000002.SZ,000858.SZ,600036.SH,600519.SH"
-    )
-    try:
-        DEFAULT_STOCK_SYMBOLS = json.loads(_default_stock_symbols)
-    except json.JSONDecodeError:
-        # Comma-separated format
-        DEFAULT_STOCK_SYMBOLS = [symbol.strip() for symbol in _default_stock_symbols.split(",") if symbol.strip()]
+    DEFAULT_STOCK_SYMBOLS: List[str] = ["000001.SZ", "000002.SZ", "000858.SZ", "600036.SH", "600519.SH"]
 
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

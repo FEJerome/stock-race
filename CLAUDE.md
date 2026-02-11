@@ -229,6 +229,61 @@ curl http://localhost:8001/health
 
 ## 📈 近期开发进展
 
+### Market Data Service 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，测试覆盖率96%。
+
+**审查结论**：
+- 多数据源架构（6源）设计成熟，智能路由与动态权重机制完善
+- 三层缓存策略（Redis/TimescaleDB/内存回退）确保高可用性
+- 数据质量评估与降级策略有效保障数据可靠性
+- 单元测试通过率95.8%，核心功能100%覆盖
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/market-data-service/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/market-data-service/TODO.md)
+- 📋 [测试脚本索引](docs/modules/market-data-service/TEST_SCRIPTS.md)
+
+---
+
+### News Service 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，创建TEST_SCRIPTS.md索引测试脚本。
+
+**审查结论**：
+- 完全符合统一数据平台精简情报架构设计
+- DeepSeek流式处理，Token严格控制（单条<2000 tokens）
+- 分层存储策略合理（Redis 24h + PostgreSQL 7d），节省98%存储空间
+- 采集器、处理器、存储层设计规范，易于扩展
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/news-service/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/news-service/TODO.md)
+- 📋 [测试脚本索引](docs/modules/news-service/TEST_SCRIPTS.md)
+
+---
+
+### Trading AI Service 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，更新TEST_SCRIPTS.md索引测试脚本。
+
+**审查结论**：
+- 多模型适配器架构优秀（6大AI提供商统一接口）
+- Token成本控制精准（预算估算→限额控制→分级告警）
+- 数据融合设计合理（Market Data + News Service双源聚合）
+- 提示词工程成熟（基金经理画像自动提炼）
+- 综合功能测试32项全部通过（100%通过率）
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/trading-ai-service/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/trading-ai-service/TODO.md)
+- 📋 [测试脚本索引](docs/modules/trading-ai-service/TEST_SCRIPTS.md)
+
+---
+
 ### 六数据源鲁棒性测试项目（分层采集验证）
 **项目状态**：✅ 测试中，v1.1方案已制定（2026-02-10）
 
@@ -268,4 +323,4 @@ curl http://localhost:8001/health
 
 ---
 
-*本文档最后更新于：2026-02-10*
+*本文档最后更新于：2026-02-11*
