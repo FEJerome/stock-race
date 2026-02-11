@@ -140,13 +140,35 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C6-007 | 创建板块/行业/概念映射表 | 🔲 | P1 | 股票分类映射数据初始化 |
-| C6-004 | 实现板块行情查询 | 🔲 | P1 | `GET /api/v1/market/sector/{sector}/quotes` |
-| C6-005 | 实现行业行情查询 | 🔲 | P1 | `GET /api/v1/market/industry/{industry}/quotes` |
-| C6-006 | 实现指数成分股查询 | 🔲 | P1 | `GET /api/v1/market/index/{index}/components` |
-| C6-008 | 分页和缓存优化 | 🔲 | P2 | 大数据量分页，Redis缓存5分钟 |
+| C6-007 | 创建板块/行业/概念映射表 | ✅ | P1 | 股票分类映射数据初始化 | 已实现股票分类映射和列表查询 |
+| C6-004 | 实现板块行情查询 | ✅ | P1 | `GET /api/v1/market/sector/{sector}/quotes` | 已实现 get_sector_quotes 方法 |
+| C6-005 | 实现行业行情查询 | ✅ | P1 | `GET /api/v1/market/industry/{industry}/quotes` | 已实现 get_industry_quotes 方法 |
+| C6-006 | 实现指数成分股查询 | ✅ | P1 | `GET /api/v1/market/index/{index}/components` | 已实现 get_index_components 方法 |
+| C6-008 | 分页和缓存优化 | ✅ | P2 | 大数据量分页，Redis缓存5分钟 | Redis缓存300秒，分页支持skip/limit |
 
-**阻塞状态**: C6-007 阻塞 C6-004~C6-006
+**实现说明**:
+- 创建股票分类映射表，支持板块(financial/technology等)、行业(banking/software等)、概念标签
+- 实现板块行情查询：支持分页、排序(market_cap/price/change_percent/volume)、Redis缓存5分钟
+- 实现行业行情查询：支持按行业代码查询股票行情，支持板块筛选
+- 实现指数成分股查询：支持沪深300等指数成分股查询，包含成分股权重和行情
+- 实现分类列表查询：get_sector_list、get_industry_list、get_stock_classification
+- 19个单元测试全部通过
+
+**相关文件**:
+- `src/data_service/api/routes.py` - API端点定义 (行359-521)
+- `src/data_service/services/data_service.py` - 业务逻辑实现 (行815-1070)
+- `src/data_service/models/stock.py` - StockSector枚举定义
+- `tests/unit/api/test_sector_industry_api.py` - 单元测试
+
+**API端点**:
+- `GET /api/v1/market/sector/{sector}/quotes` - 板块行情
+- `GET /api/v1/market/industry/{industry}/quotes` - 行业行情
+- `GET /api/v1/market/index/{index}/components` - 指数成分股
+- `GET /api/v1/market/sectors` - 板块列表
+- `GET /api/v1/market/industries` - 行业列表
+- `GET /api/v1/market/classification/{symbol}` - 股票分类
+
+**阻塞状态**: 无阻塞，任务已完成
 
 #### 优化6：Miniprogram数据流优化
 
