@@ -40,7 +40,7 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
-| C2-001 | 实现事件总线SDK（Python版） | 🔄 | P0 | 2天 | 封装Redis Streams操作，支持发布/订阅/消费者组。已完成：EventSchema、EventProducer、EventConsumer、异常处理、单元测试（7 passed） |
+| C2-001 | 实现事件总线SDK（Python版） | ✅ | P0 | 2天 | 封装Redis Streams操作，支持发布/订阅/消费者组。已完成：EventSchema、EventProducer、EventConsumer、异常处理、单元测试（7 passed）、集成测试（2/2 passed） |
 | C2-002 | 实现事件总线SDK（Node.js版） | 🔲 | P0 | 2天 | Backend和Frontend使用的Node.js SDK |
 | C2-003 | 定义事件Schema和消息格式 | 🔲 | P0 | 1天 | 统一事件字段：event_id, timestamp, source, payload |
 | C2-004 | 实现消息持久化和ACK机制 | 🔲 | P1 | 1天 | 确保消息不丢失，支持手动ACK |
@@ -217,7 +217,7 @@ events:
 
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
-| O4-001 | 编写阶段一单节点Docker Compose | ✅ | P0 | 0.5天 | 单节点1GB，无持久化，开发环境。已完成：docker-compose.redis.yml、README.md |
+| O4-001 | 编写阶段一单节点Docker Compose | ✅ | P0 | 0.5天 | 单节点1GB，无持久化，开发环境。已完成：docker-compose.redis.yml、README.md，Redis已运行 |
 | O4-002 | 编写阶段二主从+Sentinel配置 | 🔲 | P1 | 1天 | Master-Slave+Sentinel，生产可用 |
 | O4-003 | 编写阶段三Cluster集群配置 | 🔲 | P2 | 1天 | 3主3从Cluster，大规模生产 |
 | O4-004 | 编写平滑迁移脚本 | 🔲 | P2 | 1天 | 阶段一→阶段二→阶段三迁移指南 |
