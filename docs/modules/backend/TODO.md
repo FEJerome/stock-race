@@ -145,7 +145,7 @@
 | C2-BE-005 | 实现事件处理器 | 🔲 | P0 | 处理AI决策事件，触发交易执行 |
 | C2-BE-006 | 配置消费者组 | 🔲 | P1 | Backend多实例负载均衡消费 |
 
-**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-002（Node.js SDK）
+**阻塞状态**: ✅ 已解除，Node.js SDK已就绪，可开始集成
 
 #### 冲突4：AI对话服务实现（Backend承接）
 
@@ -206,7 +206,7 @@
 | market-data-service | `GET /api/v1/market/rules` | ⏸️ 阻塞 | - | 仍需要 |
 | news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 阻塞 | - | 预留接口 |
 | news-service | `SUBSCRIBE news:breaking` | 🔄 解决中 | 2026-02-11 | 替换为事件总线订阅 |
-| infra | 事件总线Node.js SDK | 🔄 开发中 | 2026-02-11 | C2-002框架已搭建，Python SDK已完成可用，见下方使用指南 |
+| infra | 事件总线Node.js SDK | ✅ 已完成 | 2026-02-11 | C2-002已完成，22个测试通过，见下方使用指南 |
 | infra | 健康检查SDK | 🔲 待开发 | - | C1-003 |
 
 ---
@@ -217,82 +217,88 @@
 ```
 项目根目录/infra/event-bus/
 ├── src/event_bus/          # Python SDK（已完成）
-└── src/node/               # Node.js SDK（框架搭建中）
+└── src/node/               # Node.js SDK（✅ 已完成，22个测试通过）
 ```
 
 ### Backend使用说明
 
-Backend使用Node.js开发，事件总线Node.js SDK正在开发中。当前可使用的方案：
+Backend使用Node.js开发，事件总线Node.js SDK已开发完成。
 
-**方案1：使用ioredis直接操作（推荐临时方案）**
-```javascript
-const Redis = require('ioredis');
+**使用方法：**
 
-// 创建Redis连接
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379
-});
-
-// 订阅AI决策事件
-async function subscribeToAIDecisions() {
-  const consumerGroup = 'backend-trade-executor';
-  const consumerName = `backend-${Date.now()}`;
-  const streamKey = 'ai:decision:made';
-
-  // 创建消费者组
-  try {
-    await redis.xgroup('CREATE', streamKey, consumerGroup, '0', 'MKSTREAM');
-  } catch (err) {
-    if (!err.message.includes('BUSYGROUP')) throw err;
-  }
-
-  // 消费消息
-  while (true) {
-    const messages = await redis.xreadgroup(
-      'GROUP', consumerGroup, consumerName,
-      'BLOCK', 5000,
-      'STREAMS', streamKey, '>'
-    );
-
-    if (messages) {
-      for (const [, msgs] of messages) {
-        for (const [id, data] of msgs) {
-          const event = JSON.parse(data[1]);
-          console.log('收到AI决策:', event);
-
-          // 处理决策...
-          await executeTrade(event.payload);
-
-          // ACK确认
-          await redis.xack(streamKey, consumerGroup, id);
-        }
-      }
-    }
-  }
-}
-
-// 发布交易执行事件
-async function publishTradeExecuted(trade) {
-  const event = {
-    eventId: uuid(),
-    eventType: 'backend:trade:executed',
-    timestamp: new Date().toISOString(),
-    source: 'backend',
-    payload: trade
-  };
-
-  await redis.xadd('backend:trade:executed', '*', 'data', JSON.stringify(event));
-}
+1. **安装SDK**
+```bash
+cd /home/fe-jerome/projects/stock-rice/backend
+npm install /home/fe-jerome/projects/stock-rice/infra/event-bus/src/node
 ```
 
-**方案2：等待Node.js SDK完成**
-Node.js SDK框架已搭建，包含：
-- `schema.js` - 事件类型定义
-- `client.js` - Redis连接管理
-- `exceptions.js` - 异常定义
+2. **使用SDK发布和订阅事件**
+```javascript
+const {
+  EventBusClient,
+  EventProducer,
+  EventConsumer,
+  EventType,
+} = require('@stock-race/event-bus');
 
-完整实现预计2天工作量。
+class TradeExecutor {
+  constructor() {
+    this.client = new EventBusClient({
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT),
+    });
+
+    // 生产者：发布交易执行事件
+    this.producer = new EventProducer({
+      client: this.client,
+      serviceName: 'backend',
+    });
+
+    // 消费者：订阅AI决策
+    this.consumer = new EventConsumer({
+      client: this.client,
+      serviceName: 'backend',
+      consumerGroup: 'trade-executor-group',
+    });
+
+    // 注册处理器
+    this.consumer.subscribe(
+      EventType.AI_DECISION_MADE,
+      this._handleAIDecision.bind(this)
+    );
+  }
+
+  async _handleAIDecision(event) {
+    const { accountId, decision } = event.payload;
+
+    // 执行交易...
+    const tradeResult = await this._executeTrade(accountId, decision);
+
+    // 发布交易执行事件
+    await this.producer.publishEvent(
+      EventType.BACKEND_TRADE_EXECUTED,
+      {
+        accountId: accountId,
+        tradeId: tradeResult.id,
+        symbol: tradeResult.symbol,
+        action: tradeResult.action,
+        quantity: tradeResult.quantity,
+        price: tradeResult.price,
+      }
+    );
+  }
+
+  async start() {
+    await this.client.connect();
+    this.consumer.start();
+  }
+
+  async stop() {
+    await this.consumer.stop();
+    await this.client.disconnect();
+  }
+}
+```
 
 ### 事件Schema规范
 

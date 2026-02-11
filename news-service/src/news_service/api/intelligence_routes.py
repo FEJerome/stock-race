@@ -114,6 +114,54 @@ MOCK_INTELLIGENCE_DB = {
             "source": "eastmoney_news",
             "created_at": datetime.now()
         }
+    ],
+    "601012.SH": [
+        {
+            "stock_code": "601012.SH",
+            "stock_name": "隆基绿能",
+            "sentiment_score": 0.42,
+            "sentiment_type": "positive",
+            "summary": "光伏产业政策利好，隆基订单饱满",
+            "importance": 7,
+            "source": "sina_finance",
+            "created_at": datetime.now()
+        }
+    ],
+    "000063.SZ": [
+        {
+            "stock_code": "000063.SZ",
+            "stock_name": "中兴通讯",
+            "sentiment_score": 0.35,
+            "sentiment_type": "positive",
+            "summary": "5G建设加速，中兴获大额订单",
+            "importance": 7,
+            "source": "eastmoney_news",
+            "created_at": datetime.now()
+        }
+    ],
+    "000858.SZ": [
+        {
+            "stock_code": "000858.SZ",
+            "stock_name": "五粮液",
+            "sentiment_score": 0.28,
+            "sentiment_type": "positive",
+            "summary": "白酒行业旺季来临，五粮液动销良好",
+            "importance": 6,
+            "source": "xueqiu",
+            "created_at": datetime.now()
+        }
+    ],
+    "002304.SZ": [
+        {
+            "stock_code": "002304.SZ",
+            "stock_name": "洋河股份",
+            "sentiment_score": 0.15,
+            "sentiment_type": "positive",
+            "summary": "洋河新品发布，市场反响积极",
+            "importance": 5,
+            "source": "sina_finance",
+            "created_at": datetime.now()
+        }
     ]
 }
 
@@ -138,6 +186,7 @@ CATEGORY_STOCKS_MAP = {
         "锂电池": ["300750.SZ", "002594.SZ", "601012.SH"],
         "5G": ["000063.SZ", "600498.SH"],
         "新能源车": ["300750.SZ", "002594.SZ"],
+        "新能源": ["300750.SZ", "002594.SZ", "601012.SH"],
         "白酒": ["600519.SH", "000858.SZ", "002304.SZ"]
     }
 }
