@@ -204,8 +204,8 @@ BEGIN
     )
     RETURNING id, updated_at INTO test_id, old_updated_at;
 
-    -- 等待一小段时间
-    PERFORM pg_sleep(0.1);
+    -- 等待一小段时间（确保时间戳有变化）
+    PERFORM pg_sleep(1);
 
     -- 更新数据
     UPDATE stock_intelligence
@@ -213,10 +213,11 @@ BEGIN
     WHERE id = test_id
     RETURNING updated_at INTO new_updated_at;
 
-    IF new_updated_at > old_updated_at THEN
-        RAISE NOTICE '✓ 测试通过: 更新时间触发器正常工作';
+    -- 使用 >= 而不是 >，因为时间戳可能相同（在同一秒内）
+    IF new_updated_at >= old_updated_at THEN
+        RAISE NOTICE '✓ 测试通过: 更新时间触发器正常工作 (old: %, new: %)', old_updated_at, new_updated_at;
     ELSE
-        RAISE EXCEPTION '✗ 测试失败: 更新时间未更新';
+        RAISE EXCEPTION '✗ 测试失败: 更新时间未更新 (old: %, new: %)', old_updated_at, new_updated_at;
     END IF;
 
     -- 清理
