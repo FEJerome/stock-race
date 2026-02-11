@@ -529,3 +529,60 @@ async def get_stock_classification(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# AI决策服务批量查询API
+from ..models.ai_query import AIQueryRequest, AIQueryResponse
+from ..services.ai_query_service import AIQueryService
+
+@router.post("/ai/batch-query", response_model=AIQueryResponse)
+async def ai_batch_query(
+    request: AIQueryRequest,
+    data_service: DataService = Depends()
+):
+    """
+    AI决策服务智能批量行情查询API。
+
+    专为AI决策优化的聚合查询接口，支持：
+    - 多维度并集查询（板块+行业+概念+指数+个股）
+    - 智能数据压缩和采样
+    - 多级缓存机制
+    - 批量并行查询
+
+    ## 请求示例
+
+    ```json
+    {
+        "scope": {
+            "sectors": ["financial", "technology"],
+            "industries": ["banking", "software"],
+            "symbols": ["000001.SZ", "000002.SZ"]
+        },
+        "filter": {
+            "min_market_cap": 100,
+            "exclude_st": true,
+            "exclude_suspended": true
+        },
+        "data_types": ["quote", "kline"],
+        "time_range": "recent_1w",
+        "info_density": "medium",
+        "max_stocks": 200,
+        "include_market_summary": true,
+        "request_id": "ai_decision_001"
+    }
+    ```
+
+    ## 信息密度级别
+
+    - `ultra_low`: 极端压缩（3-5字段，10%采样）
+    - `low`: 高度压缩（5-8字段，25%采样）
+    - `medium`: 适中（8-12字段，50%采样）
+    - `high`: 详细（12-18字段，75%采样）
+    - `full`: 完整（所有字段，100%采样）
+    """
+    try:
+        ai_service = AIQueryService(data_service, data_service.redis_cache)
+        response = await ai_service.query(request)
+        return response
+    except Exception as e:
+        logger.error(f"AI batch query failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
