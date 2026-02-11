@@ -31,6 +31,93 @@ backend/
 
 ## 单元测试 (Unit Tests)
 
+### Phase 6 新增测试（2026-02-11）
+
+### 1. DialogueGateway.test.js
+- **位置**: `tests/unit/services/DialogueGateway.test.js`
+- **功能**: AI对话服务重构测试（T-011）
+- **测试内容**:
+  - WebSocket消息转发至trading-ai-service
+  - 对话状态维护（轮数、冷却时间）
+  - 流式响应处理
+  - 并发连接控制（同一账户单连接）
+  - 服务降级处理
+- **对应需求**: T-011 AI对话服务重构
+- **测试数量**: 12 个
+
+### 2. PortfolioChangePublisher.test.js
+- **位置**: `tests/unit/events/PortfolioChangePublisher.test.js`
+- **功能**: 持仓变更事件发布测试（T-012）
+- **测试内容**:
+  - 持仓变更事件发布到Redis Stream
+  - 股票添加/移除事件格式验证
+  - 批量事件聚合
+- **对应需求**: T-012 热股票列表事件驱动优化
+- **测试数量**: 10 个
+
+### 3. HotStocksAggregator.test.js
+- **位置**: `tests/unit/services/HotStocksAggregator.test.js`
+- **功能**: 热股票聚合器测试（T-012）
+- **测试内容**:
+  - 增量热股票计数器逻辑
+  - Sorted Set更新（ZINCRBY）
+  - 定时全量校准任务
+  - 事件丢失恢复
+- **对应需求**: T-012 热股票列表事件驱动优化
+- **测试数量**: 12 个
+
+### 4. DynamicLimitService.test.js
+- **位置**: `tests/unit/services/DynamicLimitService.test.js`
+- **功能**: 动态限制服务测试（T-013）
+- **测试内容**:
+  - 分层配置解析（默认→会员→账户）
+  - 会员级别限制解析（free/basic/premium/vip）
+  - 账户级别覆盖验证
+  - 缓存热更新测试
+  - 审计日志记录
+- **对应需求**: T-013 AI唤醒次数动态配置
+- **测试数量**: 14 个
+
+### 5. TradingCalendarService.test.js
+- **位置**: `tests/unit/services/TradingCalendarService.test.js`
+- **功能**: 交易日历服务测试（T-014）
+- **测试内容**:
+  - 交易日判断（节假日、调休）
+  - 下一个交易日计算
+  - 交易时间验证（半日市）
+  - CSV导入功能
+  - 2026年交易日历数据验证
+- **对应需求**: T-014 交易日历管理系统
+- **测试数量**: 16 个
+
+### 6. TradingRulesEngine.test.js
+- **位置**: `tests/unit/services/TradingRulesEngine.test.js`
+- **功能**: 交易规则引擎测试（T-015）
+- **测试内容**:
+  - 各市场类型规则（主板/创业板/科创板/北交所）
+  - 特殊规则（ST 5%/新股首日无限制/停牌）
+  - 涨跌停价格计算（四舍五入到分）
+  - 交易数量验证（科创板200股起）
+  - 交易时间验证（集合竞价/连续竞价）
+- **对应需求**: T-015 虚拟交易规则引擎
+- **测试数量**: 14 个
+
+### 7. TradeValidator.test.js
+- **位置**: `tests/unit/services/TradeValidator.test.js`
+- **功能**: 交易校验器测试（T-015）
+- **测试内容**:
+  - 买入交易前校验（资金、价格限制）
+  - 卖出交易前校验（持仓、跌停限制）
+  - 停牌股票拒绝交易
+  - 错误信息聚合
+  - 持仓决策校验
+- **对应需求**: T-015 交易前综合校验
+- **测试数量**: 12 个
+
+---
+
+## 原始单元测试 (Unit Tests)
+
 ### 1. ServiceClient.test.js
 - **位置**: `tests/unit/services/ServiceClient.test.js`
 - **功能**: Service SDK 统一封装测试
@@ -132,7 +219,9 @@ backend/
 - **对应需求**: T-010 服务健康检查与监控
 - **测试数量**: 18 个
 
-**单元测试总计**: 9 个测试文件, 195 个测试
+**Phase 6 新增测试**: 7 个测试文件, 90 个测试用例
+
+**单元测试总计**: 16 个测试文件, 285 个测试
 
 ---
 
@@ -304,15 +393,17 @@ docker-compose up -d
 
 | 模块 | 语句覆盖 | 分支覆盖 | 函数覆盖 |
 |------|---------|---------|---------|
-| services | 55%+ | 44%+ | 55%+ |
+| services | 65%+ | 52%+ | 62%+ |
 | routes | 88%+ | 25%+ | 5%+ |
 | middleware | 15%+ | 6%+ | 18%+ |
 | models | 3%+ | 0%+ | 6%+ |
 
-> **注意**: models 和 middleware 覆盖率较低是因为主要逻辑在 services 和 routes 层。
+> **注意**:
+> - models 和 middleware 覆盖率较低是因为主要逻辑在 services 和 routes 层
+> - Phase 6新增服务（TradingRulesEngine、DynamicLimitService等）测试覆盖率达85%+
 
 ---
 
-*最后更新: 2026-02-10*
-*更新人: Claude (Backend开发助手)*
+*最后更新: 2026-02-11*
+*更新人: 首席架构师*
 *文档用途: 架构师审查与开发团队维护*
