@@ -4,8 +4,10 @@ process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';
 process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.DATABASE_URL = 'postgresql://postgres:password@localhost:5432/stock_race_test';
 
-// 设置测试超时时间
-jest.setTimeout(30000);
+// 设置测试超时时间（在jest环境中）
+if (typeof jest !== 'undefined') {
+  jest.setTimeout(30000);
+}
 
 // 全局测试钩子
 beforeAll(async () => {
@@ -51,37 +53,40 @@ global.mockRequest = (options = {}) => {
   };
 };
 
-global.mockResponse = () => {
-  const res = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
-  res.send = jest.fn().mockReturnValue(res);
-  res.end = jest.fn();
-  return res;
-};
 
-// 模拟服务
-global.mockServices = {
-  aiService: {
-    requestDecision: jest.fn(),
-    requestBatchDecisions: jest.fn(),
-    analyzeAccount: jest.fn(),
-    checkModelStatus: jest.fn()
-  },
-  dataService: {
-    getRealtimeData: jest.fn(),
-    getKlineData: jest.fn(),
-    getTechnicalIndicators: jest.fn(),
-    getMarketStats: jest.fn()
-  },
-  virtualTradingService: {
-    validateTradeOrder: jest.fn(),
-    executeTradeOrder: jest.fn(),
-    getTradingRules: jest.fn()
-  },
-  webSocketService: {
-    broadcastStockPrice: jest.fn(),
-    broadcastTradeNotification: jest.fn(),
-    broadcastAIDecision: jest.fn()
-  }
-};
+// 模拟服务（仅在jest环境中）
+if (typeof jest !== 'undefined') {
+  global.mockServices = {
+    aiService: {
+      requestDecision: jest.fn(),
+      requestBatchDecisions: jest.fn(),
+      analyzeAccount: jest.fn(),
+      checkModelStatus: jest.fn()
+    },
+    dataService: {
+      getRealtimeData: jest.fn(),
+      getKlineData: jest.fn(),
+      getTechnicalIndicators: jest.fn(),
+      getMarketStats: jest.fn()
+    },
+    virtualTradingService: {
+      validateTradeOrder: jest.fn(),
+      executeTradeOrder: jest.fn(),
+      getTradingRules: jest.fn()
+    },
+    webSocketService: {
+      broadcastStockPrice: jest.fn(),
+      broadcastTradeNotification: jest.fn(),
+      broadcastAIDecision: jest.fn()
+    }
+  };
+
+  global.mockResponse = () => {
+    const res = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    res.send = jest.fn().mockReturnValue(res);
+    res.end = jest.fn();
+    return res;
+  };
+}
