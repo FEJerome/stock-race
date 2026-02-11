@@ -160,8 +160,84 @@
 | Market Data Service | 批量实时行情 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
 | News Service | 股票新闻接口 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
 | Backend | 决策回调通知 | 🔄 解决中 | 2026-02-11 | 架构变更：事件发布 |
-| infra | 事件总线Python SDK | 🔲 待开发 | - | C2-001 |
+| infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 |
 | infra | Token防抖机制规范 | 🔲 待开发 | - | C3-009 |
+
+---
+
+## 附录：事件总线SDK使用指南
+
+### SDK位置
+```
+项目根目录/infra/event-bus/src/event_bus/
+```
+
+### 快速开始
+
+**1. 添加Python路径（在main.py顶部）**
+```python
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root / "infra" / "event-bus" / "src"))
+```
+
+**2. 导入SDK**
+```python
+from event_bus import (
+    EventBusClient, EventProducer, EventConsumer,
+    EventType, EventSchema
+)
+```
+
+**3. 订阅行情和新闻事件**
+```python
+# 创建消费者
+client = EventBusClient(host="redis", port=6379)
+consumer = EventConsumer(
+    client=client,
+    service_name="trading-ai",
+    consumer_group="ai-decision-group"
+)
+
+# 定义处理器
+def handle_market_quote(event: EventSchema):
+    symbol = event.payload["symbol"]
+    price = event.payload["price"]
+    # AI决策逻辑...
+
+def handle_news(event: EventSchema):
+    stock_code = event.payload["stock_code"]
+    sentiment = event.payload["sentiment"]
+    # 处理新闻...
+
+# 订阅事件
+consumer.subscribe(EventType.MARKET_QUOTE_REALTIME, handle_market_quote)
+consumer.subscribe(EventType.NEWS_INTELLIGENCE_EXTRACTED, handle_news)
+consumer.start()
+```
+
+**4. 发布AI决策事件**
+```python
+# 创建生产者
+producer = EventProducer(client=client, service_name="trading-ai")
+
+# 发布决策
+producer.publish_event(
+    EventType.AI_DECISION_MADE,
+    {
+        "account_id": "acc_123",
+        "decision": "buy",
+        "confidence": 0.85,
+        "reasoning": "技术指标突破",
+        "timestamp": "2026-02-11T10:00:00Z"
+    }
+)
+```
+
+### 完整文档
+- [SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md)
+- [SDK README](../../infra/event-bus/README.md)
 
 ---
 

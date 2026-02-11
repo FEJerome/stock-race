@@ -160,7 +160,72 @@
 | AI Service | 行情订阅需求确认 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
 | News Service | 事件订阅机制 | 🔄 解决中 | 2026-02-11 | 通过事件总线联动 |
 | Frontend | WebSocket客户端 | ⏸️ 阻塞 | - | T-007需要 |
-| infra | 事件总线Python SDK | 🔲 待开发 | - | C2-001 |
+| infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 |
+
+---
+
+## 附录：事件总线SDK使用指南
+
+### SDK位置
+```
+项目根目录/infra/event-bus/src/event_bus/
+```
+
+### 快速开始
+
+**1. 添加Python路径（在main.py顶部）**
+```python
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root / "infra" / "event-bus" / "src"))
+```
+
+**2. 导入SDK**
+```python
+from event_bus import EventBusClient, EventProducer, EventType
+```
+
+**3. 发布行情事件**
+```python
+# 创建发布器
+client = EventBusClient(host="redis", port=6379)
+producer = EventProducer(client=client, service_name="market-data")
+
+# 发布实时行情
+producer.publish_event(
+    EventType.MARKET_QUOTE_REALTIME,
+    {
+        "symbol": "000001.SZ",
+        "price": 12.58,
+        "change": 0.5,
+        "volume": 10000,
+        "timestamp": "2026-02-11T10:00:00Z"
+    }
+)
+
+# 发布价格异动告警
+producer.publish_event(
+    EventType.MARKET_ALERT_PRICE_MOVE,
+    {
+        "symbol": "000001.SZ",
+        "alert_type": "price_surge",
+        "severity": "high",
+        "message": "涨幅超过7%"
+    }
+)
+```
+
+### 完整文档
+- [SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md)
+- [SDK README](../../infra/event-bus/README.md)
+
+### 测试验证
+```bash
+# 运行集成测试
+cd /home/fe-jerome/projects/stock-race/infra/event-bus
+python3 tests/integration_test.py
+```
 
 ---
 

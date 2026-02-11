@@ -206,8 +206,119 @@
 | market-data-service | `GET /api/v1/market/rules` | ⏸️ 阻塞 | - | 仍需要 |
 | news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 阻塞 | - | 预留接口 |
 | news-service | `SUBSCRIBE news:breaking` | 🔄 解决中 | 2026-02-11 | 替换为事件总线订阅 |
-| infra | 事件总线Node.js SDK | 🔲 待开发 | - | C2-002 |
+| infra | 事件总线Node.js SDK | 🔄 开发中 | 2026-02-11 | C2-002框架已搭建，Python SDK已完成可用，见下方使用指南 |
 | infra | 健康检查SDK | 🔲 待开发 | - | C1-003 |
+
+---
+
+## 附录：事件总线SDK使用指南
+
+### SDK位置
+```
+项目根目录/infra/event-bus/
+├── src/event_bus/          # Python SDK（已完成）
+└── src/node/               # Node.js SDK（框架搭建中）
+```
+
+### Backend使用说明
+
+Backend使用Node.js开发，事件总线Node.js SDK正在开发中。当前可使用的方案：
+
+**方案1：使用ioredis直接操作（推荐临时方案）**
+```javascript
+const Redis = require('ioredis');
+
+// 创建Redis连接
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT || 6379
+});
+
+// 订阅AI决策事件
+async function subscribeToAIDecisions() {
+  const consumerGroup = 'backend-trade-executor';
+  const consumerName = `backend-${Date.now()}`;
+  const streamKey = 'ai:decision:made';
+
+  // 创建消费者组
+  try {
+    await redis.xgroup('CREATE', streamKey, consumerGroup, '0', 'MKSTREAM');
+  } catch (err) {
+    if (!err.message.includes('BUSYGROUP')) throw err;
+  }
+
+  // 消费消息
+  while (true) {
+    const messages = await redis.xreadgroup(
+      'GROUP', consumerGroup, consumerName,
+      'BLOCK', 5000,
+      'STREAMS', streamKey, '>'
+    );
+
+    if (messages) {
+      for (const [, msgs] of messages) {
+        for (const [id, data] of msgs) {
+          const event = JSON.parse(data[1]);
+          console.log('收到AI决策:', event);
+
+          // 处理决策...
+          await executeTrade(event.payload);
+
+          // ACK确认
+          await redis.xack(streamKey, consumerGroup, id);
+        }
+      }
+    }
+  }
+}
+
+// 发布交易执行事件
+async function publishTradeExecuted(trade) {
+  const event = {
+    eventId: uuid(),
+    eventType: 'backend:trade:executed',
+    timestamp: new Date().toISOString(),
+    source: 'backend',
+    payload: trade
+  };
+
+  await redis.xadd('backend:trade:executed', '*', 'data', JSON.stringify(event));
+}
+```
+
+**方案2：等待Node.js SDK完成**
+Node.js SDK框架已搭建，包含：
+- `schema.js` - 事件类型定义
+- `client.js` - Redis连接管理
+- `exceptions.js` - 异常定义
+
+完整实现预计2天工作量。
+
+### 事件Schema规范
+
+所有事件遵循统一格式：
+```json
+{
+  "eventId": "uuid",
+  "eventType": "ai:decision:made",
+  "timestamp": "2026-02-11T10:00:00Z",
+  "source": "trading-ai",
+  "payload": { ... },
+  "correlationId": "optional"
+}
+```
+
+### Backend需要处理的事件
+
+| 事件类型 | 方向 | 处理逻辑 |
+|----------|------|----------|
+| `ai:decision:made` | 订阅 | 接收AI决策，执行交易 |
+| `backend:trade:executed` | 发布 | 交易完成后发布结果 |
+| `backend:account:updated` | 发布 | 账户状态变更时发布 |
+
+### 完整文档
+- [SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md) - 包含Python示例，Node.js可参考
+- [SDK README](../../infra/event-bus/README.md)
 
 ---
 
