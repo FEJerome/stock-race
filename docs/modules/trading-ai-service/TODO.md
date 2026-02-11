@@ -120,7 +120,7 @@
 | C3-003 | 订阅实时行情事件 | 🔲 | P0 | 订阅`market:quote:realtime`，移除HTTP轮询 |
 | C3-003B | 订阅新闻情报事件 | 🔲 | P0 | 订阅`news:intelligence:extracted`，移除HTTP调用 |
 | C3-003C | 订阅技术指标事件 | 🔲 | P1 | 订阅`market:indicator:updated` |
-| C3-009 | 实现Token防抖机制 | 🔲 | P0 | 防止事件风暴导致成本爆炸（最小5分钟决策间隔） |
+| C3-009 | 实现Token防抖机制 | 🔄 | P0 | 开发中：DebounceKey+TokenDebouncer实现，17个测试通过（2026-02-11） |
 | C3-004 | 发布AI决策事件 | 🔲 | P0 | 决策完成后发布`ai:decision:made` |
 | C3-004B | 发布绩效报告事件 | 🔲 | P1 | 定期发布`ai:performance:report` |
 | C3-006 | 移除Market Data HTTP客户端 | 🔲 | P1 | 删除行情查询HTTP调用 |

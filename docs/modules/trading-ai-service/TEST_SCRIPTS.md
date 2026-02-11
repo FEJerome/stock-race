@@ -12,10 +12,19 @@
 | Phase 1-4 | 综合功能测试 | 1 | 32 | 100% |
 | Phase 5 | 单元测试（新增） | 5 | 75 | 100% |
 | Phase 1 | 适配器测试 | 9 | ~69 | 100% |
+<<<<<<< HEAD
 | Phase 2 | 服务层测试 | 5 | ~82 | 100% |
 | Phase 3 | API测试 | 3 | ~20 | 预估 88% |
 | Phase 4 | 监控测试 | 1 | ~15 | 预估 92% |
 | **总计** | - | **19** | **~205** | **预估 95%** |
+=======
+| Phase 2 | 服务层测试 | 6 | ~104 | 100% |
+| D-001 | APScheduler调度器测试 | 1 | 22 | 100% |
+| C3-009 | Token防抖机制测试 | 1 | 17 | 100% |
+| Phase 3 | API测试 | 3 | ~20 | 预估 88% |
+| Phase 4 | 监控测试 | 1 | ~15 | 预估 92% |
+| **总计** | - | **21** | **~244** | **预估 96%** |
+>>>>>>> 24c57dd (feat(trading-ai): [C3-009] Token防抖机制实现)
 
 ---
 
@@ -36,6 +45,11 @@
 | Moonshot适配器 | ✅ 13/13 通过 | 2026-02-11 | Moonshot API调用 |
 | K线特征提取 | ✅ 17/17 通过 | 2026-02-11 | K线形态识别、趋势分析 |
 | 风险画像服务 | ✅ 20/20 通过 | 2026-02-11 | 12种风险+4维度评估 |
+<<<<<<< HEAD
+=======
+| APScheduler调度器 | ✅ 22/22 通过 | 2026-02-11 | SchedulerManager单例/任务管理/频率控制 |
+| Token防抖机制 | ✅ 17/17 通过 | 2026-02-11 | DebounceKey/TokenDebouncer/5分钟间隔控制 |
+>>>>>>> 24c57dd (feat(trading-ai): [C3-009] Token防抖机制实现)
 
 ### ✅ 已完成测试（2026-02-11）
 
@@ -56,6 +70,64 @@
 
 ---
 
+<<<<<<< HEAD
+=======
+### 新增测试（D-001 APScheduler调度器）
+
+#### test_scheduler.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_scheduler.py`
+
+**测试功能**:
+- SchedulerManager单例模式验证
+- APScheduler初始化/关闭生命周期
+- 决策任务添加/移除/查询
+- 5/15/60分钟频率验证
+- 同步/异步回调支持
+- 错误处理和异常场景
+
+**核心测试用例**:
+- `test_singleton` - 单例模式验证
+- `test_initialize` - 调度器初始化
+- `test_add_interval_job` - 添加间隔任务
+- `test_job_frequency_validation` - 频率验证(5/15/60)
+- `test_remove_job` - 任务移除
+- `test_job_replace_existing` - 任务替换
+- `test_async_job_execution` - 异步回调
+- `test_full_lifecycle` - 完整生命周期
+
+**依赖**: pytest, pytest-asyncio, APScheduler
+**状态**: ✅ 22/22 通过
+
+---
+
+### 新增测试（C3-009 Token防抖机制）
+
+#### test_token_debouncer.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_token_debouncer.py`
+
+**测试功能**:
+- DebounceKey 复合键验证（相等性、哈希）
+- TokenDebouncer 单例模式验证
+- 首次请求允许检查
+- 间隔内拦截（防抖）功能
+- 间隔后允许功能
+- 不同键独立跟踪
+- 统计和清理功能
+
+**核心测试用例**:
+- `test_singleton` - 单例模式验证
+- `test_can_make_request_first_time` - 首次请求允许
+- `test_can_make_request_within_interval` - 间隔内拦截
+- `test_can_make_request_after_interval` - 间隔后允许
+- `test_different_keys_independent` - 键独立性
+- `test_realistic_usage_scenario` - 真实场景测试
+
+**依赖**: pytest
+**状态**: ✅ 17/17 通过
+
+---
+
+>>>>>>> 24c57dd (feat(trading-ai): [C3-009] Token防抖机制实现)
 ## 运行测试
 
 ### 环境准备
@@ -138,6 +210,11 @@ tests/unit/
 ├── services/
 │   ├── test_kline_feature_service.py  # ✅ K线特征提取 - 17测试通过
 │   ├── test_risk_profile_service.py   # ✅ 风险画像服务 - 20测试通过
+<<<<<<< HEAD
+=======
+│   ├── test_scheduler.py              # ✅ APScheduler调度器 - 22测试通过
+│   ├── test_token_debouncer.py        # ✅ Token防抖机制 - 17测试通过
+>>>>>>> 24c57dd (feat(trading-ai): [C3-009] Token防抖机制实现)
 │   ├── test_decision_service.py       # 决策服务
 │   ├── test_data_fusion_service.py    # 数据融合
 │   ├── test_prompt_craft_service.py   # 提示词提炼
@@ -173,7 +250,11 @@ tests/integration/
 | 模块 | 测试文件数 | 测试用例数 | 覆盖率 | 状态 |
 |------|-----------|-----------|--------|------|
 | adapters | 9 | ~69 | 90% | ✅ Qwen/Wenxin/Moonshot测试完成 |
+<<<<<<< HEAD
 | services | 6 | ~82 | 85% | ✅ K线特征/风险画像测试完成 |
+=======
+| services | 8 | ~143 | 90% | ✅ 新增APScheduler调度器和Token防抖测试 |
+>>>>>>> 24c57dd (feat(trading-ai): [C3-009] Token防抖机制实现)
 | prompts | 2 | ~15 | 90% | ✅ |
 | db | 1 | ~10 | 75% | ⚠️ 需补充 |
 | monitoring | 1 | ~15 | 85% | ✅ |
@@ -193,6 +274,11 @@ tests/integration/
 | 2026-02-11 | Qwen/Wenxin/Moonshot适配器测试 | ✅ 38/38 通过 | 开发智能体 |
 | 2026-02-11 | K线特征提取服务测试 | ✅ 17/17 通过 | 开发智能体 |
 | 2026-02-11 | 多维度风险画像测试 | ✅ 20/20 通过 | 开发智能体 |
+<<<<<<< HEAD
+=======
+| 2026-02-11 | APScheduler调度器测试 | ✅ 22/22 通过 | 开发智能体 |
+| 2026-02-11 | Token防抖机制测试 | ✅ 17/17 通过 | 开发智能体 |
+>>>>>>> 24c57dd (feat(trading-ai): [C3-009] Token防抖机制实现)
 
 ---
 
