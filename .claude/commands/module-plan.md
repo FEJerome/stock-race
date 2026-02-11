@@ -104,12 +104,18 @@ module-dev trading-ai-service
 ### 步骤 4: 检查 Git 上下文
 
 检查当前 git 分支并与预期的 worktree 分支进行比较:
-- backend → worktree-backend
-- frontend → worktree-frontend
-- market-data-service → worktree-market-data-service
-- trading-ai-service → worktree-trading-ai-service
-- news-service → worktree-news-service
-- miniprogram → worktree-miniprogram
+
+**分支切换逻辑**:
+- 如果服务名是 `miniprogram`：切换至 `develop` 分支
+- 否则：切换至 `<服务名>` 分支
+
+**详细映射**:
+- backend → backend
+- frontend → frontend
+- market-data-service → market-data-service
+- trading-ai-service → trading-ai-service
+- news-service → news-service
+- miniprogram → develop
 
 如果不在正确的分支上，引导用户切换。
 
