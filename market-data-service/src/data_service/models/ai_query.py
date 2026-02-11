@@ -6,7 +6,7 @@ AI决策服务批量行情查询模型
 
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any, Set
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from enum import Enum
 
 
@@ -70,7 +70,8 @@ class AIQueryScope(BaseModel):
         description="具体股票代码列表，如 ['000001.SZ', '000002.SZ']"
     )
 
-    @validator('symbols')
+    @field_validator('symbols')
+    @classmethod
     def validate_symbols(cls, v):
         """验证股票代码格式"""
         if v:
@@ -189,8 +190,8 @@ class AIQueryRequest(BaseModel):
         description="请求ID（用于日志追踪和缓存）"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "scope": {
                     "sectors": ["financial", "technology"],
@@ -210,6 +211,7 @@ class AIQueryRequest(BaseModel):
                 "request_id": "ai_decision_001"
             }
         }
+    )
 
 
 class StockCompactData(BaseModel):
@@ -323,8 +325,8 @@ class AIQueryResponse(BaseModel):
     # 元数据
     metadata: AIQueryMetadata = Field(..., description="查询元数据")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "request_id": "ai_decision_001",
@@ -355,3 +357,4 @@ class AIQueryResponse(BaseModel):
                 }
             }
         }
+    )
