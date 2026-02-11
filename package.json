@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@stock-race/event-bus": "file:../../infra/event-bus/src/node"
+  }
+}

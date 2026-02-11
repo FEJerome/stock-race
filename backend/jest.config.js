@@ -1,6 +1,6 @@
 export default {
   testEnvironment: 'node',
-  roots: ['<rootDir>/test'],
+  roots: ['<rootDir>/test', '<rootDir>/tests'],
   testMatch: ['**/*.test.js'],
   collectCoverageFrom: [
     'src/**/*.js',

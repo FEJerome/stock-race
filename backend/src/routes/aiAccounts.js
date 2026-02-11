@@ -269,6 +269,90 @@ router.put('/:accountId', authenticate, (req, res) => aiController.updateAIAccou
 
 /**
  * @swagger
+ * /ai-accounts/{accountId}/finalize:
+ *   post:
+ *     tags: [AI账户]
+ *     summary: Finalize并激活AI账户
+ *     description: 根据对话提炼提示词并激活AI账户
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: accountId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: AI账户ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - dialogueMessages
+ *             properties:
+ *               dialogueMessages:
+ *                 type: array
+ *                 description: 对话消息数组
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     role:
+ *                       type: string
+ *                       enum: [user, assistant]
+ *                     content:
+ *                       type: string
+ *               persona:
+ *                 type: string
+ *                 enum: [conservative, aggressive, balanced, day_trader]
+ *                 description: 交易风格
+ *     responses:
+ *       200:
+ *         description: AI账户激活成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     account:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         name:
+ *                           type: string
+ *                         status:
+ *                           type: string
+ *                         prompt:
+ *                           type: object
+ *                           properties:
+ *                             role:
+ *                               type: string
+ *                             philosophy:
+ *                               type: string
+ *                             constraints:
+ *                               type: string
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: 请求参数错误或提示词生成失败
+ *       401:
+ *         description: 未认证
+ *       403:
+ *         description: 无权访问该账户
+ *       404:
+ *         description: AI账户不存在
+ */
+router.post('/:accountId/finalize', authenticate, (req, res) => aiController.finalizeAIAccount(req, res));
+
+/**
+ * @swagger
  * /ai-accounts/{accountId}:
  *   delete:
  *     tags: [AI账户]

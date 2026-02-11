@@ -34,7 +34,9 @@
     "docs": "echo 'API文档: http://localhost:3001/api/docs'"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@prisma/client": "^5.22.0",
+    "@stock-race/event-bus": "file:../../../infra/event-bus/src/node",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.11.5",

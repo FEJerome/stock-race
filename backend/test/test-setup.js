@@ -4,7 +4,7 @@ process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';
 process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.DATABASE_URL = 'postgresql://postgres:password@localhost:5432/stock_race_test';
 
-// 设置测试超时时间（在jest环境中）
+// 设置测试超时时间
 if (typeof jest !== 'undefined') {
   jest.setTimeout(30000);
 }
@@ -34,25 +34,35 @@ global.createTestToken = (user) => {
 };
 
 // 模拟请求和响应对象
-global.mockRequest = (options = {}) => {
-  const {
-    body = {},
-    params = {},
-    query = {},
-    headers = {},
-    user = global.createTestUser()
-  } = options;
+if (typeof jest !== 'undefined') {
+  global.mockRequest = (options = {}) => {
+    const {
+      body = {},
+      params = {},
+      query = {},
+      headers = {},
+      user = global.createTestUser()
+    } = options;
 
-  return {
-    body,
-    params,
-    query,
-    headers,
-    user,
-    get: (headerName) => headers[headerName]
+    return {
+      body,
+      params,
+      query,
+      headers,
+      user,
+      get: (headerName) => headers[headerName]
+    };
   };
-};
 
+  global.mockResponse = () => {
+    const res = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    res.send = jest.fn().mockReturnValue(res);
+    res.end = jest.fn();
+    return res;
+  };
+}
 
 // 模拟服务（仅在jest环境中）
 if (typeof jest !== 'undefined') {
@@ -79,14 +89,5 @@ if (typeof jest !== 'undefined') {
       broadcastTradeNotification: jest.fn(),
       broadcastAIDecision: jest.fn()
     }
-  };
-
-  global.mockResponse = () => {
-    const res = {};
-    res.status = jest.fn().mockReturnValue(res);
-    res.json = jest.fn().mockReturnValue(res);
-    res.send = jest.fn().mockReturnValue(res);
-    res.end = jest.fn();
-    return res;
   };
 }

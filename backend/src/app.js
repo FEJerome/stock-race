@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { config } from './config.js'; // 加载环境变量和配置
 import routes from './routes/index.js';
+import internalRoutes from './routes/internal.js';
 import { requestLogger } from './middleware/auth.js';
 import { sessionService } from './services/SessionService.js';
 import { webSocketService } from './services/WebSocketService.js';
@@ -170,6 +171,9 @@ app.use(`${API_PREFIX}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 
 // API路由
 app.use(API_PREFIX, routes);
+
+// 内部API路由（服务间通信）
+app.use(API_PREFIX + '/internal', internalRoutes);
 
 // 404处理
 app.use(notFoundHandler);
