@@ -1,3 +1,9 @@
+> ⚠️ **历史文档警告**
+> 本文档为历史版本V1，创建于2026-02-04，记录早期数据服务集成方案。
+> 最新数据平台架构请参考 [CURRENT/DATA_PLATFORM.md](../CURRENT/DATA_PLATFORM.md)
+
+---
+
 # DataService 集成指南
 
 ## 概述

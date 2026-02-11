@@ -89,7 +89,7 @@
 
 **解决方案**: 采用"共享Redis + 冷启动"混合方案（方案C）
 
-**详细方案对比**: [循环依赖解决方案横向对比分析](./CIRCULAR_DEPENDENCY_SOLUTION_COMPARISON.md)
+**详细方案对比**: [循环依赖解决方案横向对比分析](../CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md)
 
 #### 方案C详细设计
 
@@ -151,7 +151,7 @@
 
 **解决方案**: 统一采用 **Redis Streams 事件总线**（方案C的组成部分）
 
-**详细风险分析**: [Redis Streams事件总线风险分析](./EVENT_BUS_RISK_ANALYSIS.md)
+**详细风险分析**: [Redis Streams事件总线风险分析](../CURRENT/DECISIONS/002-EVENT-BUS.md)
 
 #### 事件总线设计方案
 
@@ -290,7 +290,7 @@ backend:trade:executed:   # 交易执行
 - Phase 5: Backend改造 - 2天
 - Phase 6: 联调测试 - 3天
 
-**详细设计文档**: [AI Service双向依赖解耦设计](./AI_SERVICE_DECOUPLING_DESIGN.md)
+**详细设计文档**: [AI Service双向依赖解耦设计](../CURRENT/DECISIONS/004-AI-DECOUPLING.md)
 
 **包含内容**:
 - 完整的双向依赖分析（3个依赖环详细拆解）
@@ -315,7 +315,7 @@ backend:trade:executed:   # 交易执行
 
 **解决方案**: **AI对话功能由Backend实现**（方案B）
 
-**详细分析**: [AI对话服务职责划分分析](./AI_DIALOGUE_SERVICE_DESIGN.md)
+**详细分析**: [AI对话服务职责划分分析](../CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md)
 
 #### 决策理由
 
@@ -389,7 +389,7 @@ Frontend ◄──► Backend ◄──► DeepSeek (对话生成)
 
 **解决方案**: **三层API架构 + 智能游客模式**
 
-**详细设计方案**: [微信小程序游客模式设计](./MINIPROGRAM_GUEST_MODE_DESIGN.md)
+**详细设计方案**: [微信小程序游客模式设计](../CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md)
 
 #### 三层API架构
 
@@ -445,7 +445,7 @@ POST /api/trades                    # 执行交易
 
 **解决方案**: **AI决策服务广度查询需求确认文档**
 
-**详细需求文档**: [AI决策服务广度查询需求确认](./AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md)
+**详细需求文档**: [AI决策服务广度查询需求确认](../CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md)
 
 #### 核心需求：一次调用，广度数据
 
@@ -573,7 +573,7 @@ Redis Streams:
 2. **Backend缓存行情数据** - 5秒TTL，确保持仓列表中的当前价与收益计算一致
 3. **小程序数据合并** - 成本数据(Backend) + 实时股价(Market Data) → 本地计算市值
 
-**详细方案文档**: [Miniprogram数据流优化方案分析](./MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md)
+**详细方案文档**: [Miniprogram数据流优化方案分析](../CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md)
 
 **实施步骤**:
 - [ ] Phase 1: Market Data开放WebSocket公开行情推送（1天）
@@ -661,7 +661,7 @@ services:
 - **客户端兼容**: SDK自动适配单节点/Sentinel/Cluster模式
 - **监控告警**: 每个阶段都有配套的健康检查脚本
 
-**详细部署文档**: [Redis渐进式部署策略](./REDIS_DEPLOYMENT_STRATEGY.md)
+**详细部署文档**: [Redis渐进式部署策略](../CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md)
 
 **包含内容**:
 - 三个阶段的完整Docker Compose配置
@@ -859,22 +859,22 @@ app.get('/api/health', (req, res) => {
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| **循环依赖解决方案横向对比** | [CIRCULAR_DEPENDENCY_SOLUTION_COMPARISON.md](./CIRCULAR_DEPENDENCY_SOLUTION_COMPARISON.md) | 三种方案（纯Redis/纯冷启动/Redis+冷启动）的详细对比分析 |
-| **事件总线风险分析** | [EVENT_BUS_RISK_ANALYSIS.md](./EVENT_BUS_RISK_ANALYSIS.md) | Redis Streams事件总线的风险点、成本、性能分析 |
-| **AI对话服务职责划分** | [AI_DIALOGUE_SERVICE_DESIGN.md](./AI_DIALOGUE_SERVICE_DESIGN.md) | AI对话功能放在Backend还是Trading AI Service的详细分析 |
-| **微信小程序游客模式设计** | [MINIPROGRAM_GUEST_MODE_DESIGN.md](./MINIPROGRAM_GUEST_MODE_DESIGN.md) | 三层API架构 + 智能过期策略（24h/72h）设计 |
-| **AI决策服务广度查询需求确认** | [AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md](./AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md) | News Service和Market Data Service的广度数据查询需求确认 |
-| **Miniprogram数据流优化方案** | [MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md](./MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md) | 混合分离方案：行情直连+收益后端计算详细设计 |
-| **AI Service双向依赖解耦** | [AI_SERVICE_DECOUPLING_DESIGN.md](./AI_SERVICE_DECOUPLING_DESIGN.md) | 基于事件总线的完全解耦方案，消除3个双向依赖环 |
-| **Redis渐进式部署策略** | [REDIS_DEPLOYMENT_STRATEGY.md](./REDIS_DEPLOYMENT_STRATEGY.md) | 从单节点到Cluster的渐进式部署，成本可控平滑扩容 |
+| **循环依赖解决方案横向对比** | [001-CIRCULAR-DEPENDENCY.md](../CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md) | 三种方案（纯Redis/纯冷启动/Redis+冷启动）的详细对比分析 |
+| **事件总线风险分析** | [002-EVENT-BUS.md](../CURRENT/DECISIONS/002-EVENT-BUS.md) | Redis Streams事件总线的风险点、成本、性能分析 |
+| **AI对话服务职责划分** | [003-AI-DIALOGUE-LOCATION.md](../CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md) | AI对话功能放在Backend还是Trading AI Service的详细分析 |
+| **微信小程序游客模式设计** | [005-MINIPROGRAM-GUEST-MODE.md](../CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md) | 三层API架构 + 智能过期策略（24h/72h）设计 |
+| **AI决策服务广度查询需求确认** | [007-BREADTH-QUERY-REQUIREMENTS.md](../CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) | News Service和Market Data Service的广度数据查询需求确认 |
+| **Miniprogram数据流优化方案** | [006-MINIPROGRAM-DATA-FLOW.md](../CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) | 混合分离方案：行情直连+收益后端计算详细设计 |
+| **AI Service双向依赖解耦** | [004-AI-DECOUPLING.md](../CURRENT/DECISIONS/004-AI-DECOUPLING.md) | 基于事件总线的完全解耦方案，消除3个双向依赖环 |
+| **Redis渐进式部署策略** | [008-REDIS-DEPLOYMENT.md](../CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) | 从单节点到Cluster的渐进式部署，成本可控平滑扩容 |
 
 ### 架构设计参考
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| 六服务架构详细设计 | [DETAILED_SERVICE_ARCHITECTURE.md](./DETAILED_SERVICE_ARCHITECTURE.md) | 服务间调用关系、AI唤醒机制、数据分层策略 |
-| 统一数据平台架构 | [UNIFIED_DATA_PLATFORM_ARCHITECTURE.md](./UNIFIED_DATA_PLATFORM_ARCHITECTURE.md) | 数据主权划分、分层存储、事件总线设计 |
-| 代码结构地图 | [CODE_MAP.md](./CODE_MAP.md) | 项目文件结构、模块映射、关键文件说明 |
+| 六服务架构详细设计 | [SERVICE_ARCHITECTURE.md](../CURRENT/SERVICE_ARCHITECTURE.md) | 服务间调用关系、AI唤醒机制、数据分层策略 |
+| 统一数据平台架构 | [DATA_PLATFORM.md](../CURRENT/DATA_PLATFORM.md) | 数据主权划分、分层存储、事件总线设计 |
+| 代码结构地图 | [CODE_MAP.md](../CODE_MAP.md) | 项目文件结构、模块映射、关键文件说明 |
 
 ### 各服务TODO文档
 

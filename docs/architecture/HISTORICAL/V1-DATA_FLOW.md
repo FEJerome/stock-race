@@ -1,3 +1,10 @@
+> ⚠️ **历史文档警告**
+> 本文档为历史版本V1，创建于2026-02-03，已被后续版本取代。
+> 最新数据流设计请参考 [CURRENT/SERVICE_ARCHITECTURE.md](../CURRENT/SERVICE_ARCHITECTURE.md)
+> 统一数据平台架构详见 [CURRENT/DATA_PLATFORM.md](../CURRENT/DATA_PLATFORM.md)
+
+---
+
 # AI股票竞赛平台 - 数据流架构设计
 
 ## 1. 整体数据流概述

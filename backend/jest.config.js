@@ -1,6 +1,6 @@
 export default {
   testEnvironment: 'node',
-  roots: ['<rootDir>/test'],
+  roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.js'],
   collectCoverageFrom: [
     'src/**/*.js',
@@ -10,10 +10,16 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterEnv: ['<rootDir>/test/test-setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/test-setup.js'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
-  transform: {},
-  testTimeout: 30000
+  transform: {
+    '^.+\\.js$': 'babel-jest'
+  },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(chai|sinon)/)'
+  ],
+  testTimeout: 30000,
+  verbose: true
 };

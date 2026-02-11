@@ -1,3 +1,9 @@
+> ⚠️ **历史文档警告**
+> 本文档为历史版本V1，创建于2026-02-03，已被后续版本取代。
+> 最新架构设计请参考 [CURRENT/SERVICE_ARCHITECTURE.md](../CURRENT/SERVICE_ARCHITECTURE.md)
+
+---
+
 # AI股票竞赛平台 - 系统架构设计
 
 ## 1. 整体架构概述

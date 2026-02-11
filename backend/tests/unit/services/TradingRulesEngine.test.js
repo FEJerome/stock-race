@@ -9,9 +9,9 @@
  * - 交易时间验证
  */
 
-const { expect } = require('chai');
-const sinon = require('sinon');
-const TradingRulesEngine = require('../../../src/services/TradingRulesEngine');
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { TradingRulesEngine } from '../../../src/services/TradingRulesEngine.js';
 
 describe('TradingRulesEngine', () => {
   let engine;
@@ -139,8 +139,8 @@ describe('TradingRulesEngine', () => {
 
       // 10.05 * 1.10 = 11.055 -> 11.06
       expect(limits.upper).to.equal(11.06);
-      // 10.05 * 0.90 = 9.045 -> 9.05
-      expect(limits.lower).to.equal(9.04);
+      // 10.05 * 0.90 = 9.045 -> 9.05 (四舍五入)
+      expect(limits.lower).to.equal(9.05);
     });
   });
 
@@ -178,7 +178,7 @@ describe('TradingRulesEngine', () => {
       const result = engine.validateQuantity(2000000, 'SH', {});
 
       expect(result.valid).to.be.false;
-      expect(result.error).to.include('最大');
+      expect(result.error).to.include('不能超过');
     });
   });
 

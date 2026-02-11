@@ -16,28 +16,32 @@
 
 ### 核心文档
 - [**代码结构地图**](docs/architecture/CODE_MAP.md) - 项目结构与文件功能
-- [**技术架构**](docs/architecture/TECH_STACK.md) - 技术栈与架构设计
-- [**统一数据平台架构**](docs/architecture/UNIFIED_DATA_PLATFORM_ARCHITECTURE.md) - 四服务数据架构设计（最新）
-- [**六服务架构详细设计**](docs/architecture/DETAILED_SERVICE_ARCHITECTURE.md) - 服务间调用与数据流设计（最新）
-- [**六服务架构更新**](docs/architecture/DETAILED_SERVICE_ARCHITECTURE_UPDATE.md) - 2026-02-11架构审查后的关键决策更新
-- [**项目结构**](docs/architecture/PROJECT_STRUCTURE.md) - 目录结构与组织
+- [**架构文档总入口**](docs/architecture/README.md) - 架构文档导航中心
+- [**六服务架构详细设计**](docs/architecture/CURRENT/SERVICE_ARCHITECTURE.md) - 服务间调用与数据流设计（最新）
+- [**统一数据平台架构**](docs/architecture/CURRENT/DATA_PLATFORM.md) - 四服务数据架构设计
+- [**技术架构**](docs/architecture/CURRENT/TECH_STACK.md) - 技术栈与架构设计
+- [**API规范**](docs/architecture/CURRENT/API_SPECIFICATION.md) - RESTful API与WebSocket设计
+- [**数据库设计**](docs/architecture/CURRENT/DATABASE_DESIGN.md) - 数据库ER图与表结构
 
 ### 架构决策文档（2026-02-11更新）
-- [**服务依赖冲突分析**](docs/architecture/SERVICE_DEPENDENCY_ANALYSIS.md) - 五服务外部依赖对接需求分析与6个冲突解决方案
-- [**循环依赖解决方案对比**](docs/architecture/CIRCULAR_DEPENDENCY_SOLUTION_COMPARISON.md) - 三种方案详细对比分析
-- [**事件总线风险分析**](docs/architecture/EVENT_BUS_RISK_ANALYSIS.md) - Redis Streams事件总线的风险点、成本、性能分析
-- [**AI对话服务职责划分**](docs/architecture/AI_DIALOGUE_SERVICE_DESIGN.md) - AI对话功能放在Backend还是Trading AI Service的详细分析
-- [**微信小程序游客模式设计**](docs/architecture/MINIPROGRAM_GUEST_MODE_DESIGN.md) - 三层API架构 + 智能过期策略（24h/72h）设计
-- [**Miniprogram数据流优化方案**](docs/architecture/MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md) - 混合分离方案：行情直连+收益后端计算
-- [**AI Service双向依赖解耦设计**](docs/architecture/AI_SERVICE_DECOUPLING_DESIGN.md) - 基于事件总线的完全解耦方案，消除3个双向依赖环
-- [**AI决策服务广度查询需求确认**](docs/architecture/AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
-- [**Redis渐进式部署策略**](docs/architecture/REDIS_DEPLOYMENT_STRATEGY.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
+- [**服务依赖冲突分析**](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 五服务外部依赖对接需求分析与6个冲突解决方案
+- [**循环依赖解决方案**](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md) - 三种方案详细对比分析
+- [**事件总线风险分析**](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md) - Redis Streams事件总线的风险点、成本、性能分析
+- [**AI对话服务职责划分**](docs/architecture/CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md) - AI对话功能放在Backend还是Trading AI Service的详细分析
+- [**AI Service双向依赖解耦**](docs/architecture/CURRENT/DECISIONS/004-AI-DECOUPLING.md) - 基于事件总线的完全解耦方案，消除3个双向依赖环
+- [**微信小程序游客模式设计**](docs/architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md) - 三层API架构 + 智能过期策略（24h/72h）设计
+- [**Miniprogram数据流优化方案**](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) - 混合分离方案：行情直连+收益后端计算
+- [**AI决策服务广度查询需求确认**](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
+- [**Redis渐进式部署策略**](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
 
 ### 历史架构文档
-- [**系统架构设计**](docs/architecture/SYSTEM_ARCHITECTURE.md) - 早期系统架构（历史版本）
-- [**服务通信架构**](docs/architecture/SERVICE_COMMUNICATION_ARCHITECTURE.md) - 早期服务通信设计（历史版本）
-- [**数据流架构**](docs/architecture/DATA_FLOW_ARCHITECTURE.md) - 早期数据流设计（历史版本）
-- [**数据服务集成**](docs/architecture/DATA_SERVICE_INTEGRATION.md) - 早期集成方案（历史版本）
+历史架构文档已归档至 [docs/architecture/HISTORICAL/](docs/architecture/HISTORICAL/) 目录：
+- **V2026-02-10-SERVICE_ARCHITECTURE.md** - 六服务架构详细设计初版
+- **V1-SYSTEM_ARCHITECTURE.md** - 早期系统架构（历史版本）
+- **V1-SERVICE_COMMUNICATION.md** - 早期服务通信设计（历史版本）
+- **V1-DATA_FLOW.md** - 早期数据流设计（历史版本）
+- **V1-PROJECT_STRUCTURE.md** - 早期项目结构（历史版本）
+- **V1-DATA_SERVICE_INTEGRATION.md** - 早期集成方案（历史版本）
 
 ### 需求与分析
 - [**需求规格说明书**](docs/analysis/REQUIREMENTS.md) - 详细功能需求
@@ -240,7 +244,7 @@ curl http://localhost:8001/health
 - 核心文件通过 CODE_MAP.md 统一索引
 
 **常用搜索路径**：
-- 架构相关：`docs/architecture/`
+- 架构相关：`docs/architecture/` ([README](docs/architecture/README.md))
 - 开发相关：`docs/development/`
 - 部署相关：`docs/deployment/`
 - 智能体相关：`docs/agents/`
@@ -269,16 +273,16 @@ curl http://localhost:8001/health
 - Redis部署：渐进式策略，从单节点¥0起步到Cluster集群
 
 **详细文档**：
-- 📋 [服务依赖冲突分析](docs/architecture/SERVICE_DEPENDENCY_ANALYSIS.md) - 主文档，6个冲突完整分析
-- 📋 [六服务架构更新](docs/architecture/DETAILED_SERVICE_ARCHITECTURE_UPDATE.md) - 关键决策更新
-- 📋 [循环依赖解决方案对比](docs/architecture/CIRCULAR_DEPENDENCY_SOLUTION_COMPARISON.md)
-- 📋 [事件总线风险分析](docs/architecture/EVENT_BUS_RISK_ANALYSIS.md)
-- 📋 [AI对话服务职责划分](docs/architecture/AI_DIALOGUE_SERVICE_DESIGN.md)
-- 📋 [Miniprogram游客模式设计](docs/architecture/MINIPROGRAM_GUEST_MODE_DESIGN.md)
-- 📋 [Miniprogram数据流优化](docs/architecture/MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md)
-- 📋 [AI Service双向依赖解耦](docs/architecture/AI_SERVICE_DECOUPLING_DESIGN.md)
-- 📋 [AI决策广度查询需求](docs/architecture/AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md)
-- 📋 [Redis渐进式部署策略](docs/architecture/REDIS_DEPLOYMENT_STRATEGY.md)
+- 📋 [服务依赖冲突分析](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 主文档，6个冲突完整分析
+- 📋 [六服务架构设计](docs/architecture/CURRENT/SERVICE_ARCHITECTURE.md) - 关键决策更新
+- 📋 [循环依赖解决方案](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md)
+- 📋 [事件总线风险分析](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md)
+- 📋 [AI对话服务职责划分](docs/architecture/CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md)
+- 📋 [Miniprogram游客模式设计](docs/architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md)
+- 📋 [Miniprogram数据流优化](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md)
+- 📋 [AI Service双向依赖解耦](docs/architecture/CURRENT/DECISIONS/004-AI-DECOUPLING.md)
+- 📋 [AI决策广度查询需求](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md)
+- 📋 [Redis渐进式部署策略](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md)
 
 ---
 

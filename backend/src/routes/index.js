@@ -7,6 +7,7 @@ import portfoliosRoutes from './portfolios.js';
 import marketRoutes from './market.js';
 import rankingsRoutes from './rankings.js';
 import adminRoutes from './admin.js';
+import guestRoutes from './guest.js';
 import { authenticate, optionalAuthenticate, checkPermission, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -129,6 +130,9 @@ router.use('/market', marketRoutes);
 
 // 排行榜路由
 router.use('/rankings', rankingsRoutes);
+
+// 游客路由（无需认证）
+router.use('/guest', guestRoutes);
 
 // 管理员路由（需要管理员权限）
 router.use('/admin', adminRoutes);

@@ -175,12 +175,12 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C5-001 | 实现游客Token生成 | 🔲 | P0 | `POST /api/guest/auth/token`，基于openid_hash |
-| C5-002 | 实现游客AI账户创建 | 🔲 | P0 | `POST /api/guest/ai-accounts`，限制2个 |
-| C5-003 | 实现游客AI对话 | 🔲 | P0 | `POST /api/guest/ai-accounts/:id/chat`，限制10轮 |
-| C5-004 | 实现游客数据迁移 | 🔲 | P0 | 登录后游客数据绑定到正式用户，事务保护 |
-| C5-005 | 实现智能过期策略 | 🔲 | P0 | 无AI账户24h过期，有AI账户72h过期 |
-| C5-006 | 创建guest_sessions表 | 🔲 | P0 | 游客会话表设计，含openid_hash、expires_at等字段 |
+| C5-001 | 实现游客Token生成 | ✅ | P0 | `POST /api/guest/auth/token`，基于openid_hash |
+| C5-002 | 实现游客AI账户创建 | ✅ | P0 | `POST /api/guest/ai-accounts`，限制2个 |
+| C5-003 | 实现游客AI对话 | ✅ | P0 | `POST /api/guest/ai-accounts/:id/chat`，限制10轮 |
+| C5-004 | 实现游客数据迁移 | ✅ | P0 | 登录后游客数据绑定到正式用户，事务保护 |
+| C5-005 | 实现智能过期策略 | ✅ | P0 | 无AI账户24h过期，有AI账户72h过期 |
+| C5-006 | 创建guest_sessions表 | ✅ | P0 | 游客会话表设计，含openid_hash、expires_at等字段 |
 
 **阻塞状态**: 无阻塞，可独立开发
 

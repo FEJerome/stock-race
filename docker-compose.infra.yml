@@ -1,0 +1,108 @@
+version: '3.8'
+
+# 基础服务配置 - 用于生产环境一键启动
+# 包含：PostgreSQL, TimescaleDB, Redis, pgAdmin, Redis Commander
+
+services:
+  # PostgreSQL Database (for metadata)
+  postgres:
+    image: postgres:15-alpine
+    container_name: stock-race-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_race
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # TimescaleDB (for time-series data)
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: stock-race-timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_race_tsdb
+      POSTGRES_USER: timescale
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./docker/timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timescale"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Event Bus
+  redis:
+    image: redis:7-alpine
+    container_name: stock-race-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (Database Management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: stock-race-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@stock-race.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - stock-race-network
+    depends_on:
+      - postgres
+      - timescaledb
+
+  # Redis Commander (Redis Management)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: stock-race-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - stock-race-network
+    depends_on:
+      - redis
+
+networks:
+  stock-race-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  timescaledb_data:
+  redis_data:
+  pgadmin_data:

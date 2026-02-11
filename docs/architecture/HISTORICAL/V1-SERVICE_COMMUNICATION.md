@@ -1,10 +1,18 @@
+> ⚠️ **历史文档警告**
+> 本文档为历史版本V1，创建于2026-02-10，已被后续版本取代。
+> 最新服务通信设计请参考 [CURRENT/SERVICE_ARCHITECTURE.md](../CURRENT/SERVICE_ARCHITECTURE.md)
+> 事件总线架构设计详见 [CURRENT/DECISIONS/002-EVENT-BUS.md](../CURRENT/DECISIONS/002-EVENT-BUS.md)
+
+---
+
 # 服务通信架构设计文档
 
 ## 文档信息
 
-- **文档版本**: v1.0 (草稿)
+- **文档版本**: v1.0 (历史归档)
 - **创建日期**: 2026-02-10
-- **状态**: 待讨论优化
+- **归档日期**: 2026-02-11
+- **状态**: 已归档，被 CURRENT/SERVICE_ARCHITECTURE.md 取代
 - **作者**: 首席架构师
 
 ## 1. 概述
