@@ -41,7 +41,7 @@
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
 | C2-001 | 实现事件总线SDK（Python版） | ✅ | P0 | 2天 | 封装Redis Streams操作，支持发布/订阅/消费者组。已完成：EventSchema、EventProducer、EventConsumer、异常处理、单元测试（7 passed）、集成测试（2/2 passed） |
-| C2-002 | 实现事件总线SDK（Node.js版） | ✅ | P0 | 2天 | Backend和Frontend使用的Node.js SDK。已完成：EventSchema、EventProducer、EventConsumer、单元测试+集成测试（22 passed），使用指南已创建 |
+| C2-002 | 实现事件总线SDK（Node.js版） | ✅ | P0 | 2天 | Backend和Frontend使用的Node.js SDK。已完成：EventSchema、EventProducer、EventConsumer、单元测试+集成测试（23 passed），使用指南已创建 |
 | C2-003 | 定义事件Schema和消息格式 | ✅ | P0 | 0.5天 | 统一事件字段：eventId, eventType, timestamp, source, payload。已完成：schema.js已定义 |
 | C2-004 | 实现消息持久化和ACK机制 | ✅ | P1 | 0.5天 | 确保消息不丢失，支持手动ACK。已完成：Consumer自动ACK，Pending消息查询接口已实现 |
 | C2-005 | 配置监控和告警 | 🔲 | P1 | 1天 | 消息堆积、消费延迟、错误率监控 |
@@ -322,7 +322,7 @@ events:
 | SDK | 语言 | 测试状态 | 使用指南 |
 |-----|------|----------|----------|
 | Python SDK | Python 3.10+ | ✅ 9个测试通过 | `infra/event-bus/USAGE_GUIDE.md` |
-| Node.js SDK | Node.js 18+ | ✅ 22个测试通过 | `infra/event-bus/src/node/USAGE_GUIDE.md` |
+| Node.js SDK | Node.js 18+ | ✅ 23个测试通过 | `infra/event-bus/src/node/USAGE_GUIDE.md` |
 
 ### 5.2 各服务接入状态
 

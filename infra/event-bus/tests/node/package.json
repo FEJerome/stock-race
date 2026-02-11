@@ -1,0 +1,22 @@
+{
+  "name": "event-bus-node-tests",
+  "version": "1.0.0",
+  "description": "Node.js Event Bus SDK Tests",
+  "scripts": {
+    "test": "jest --testTimeout=30000",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "ioredis": "^5.3.2",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^../../src/node$": "<rootDir>/../../src/node"
+    }
+  }
+}
