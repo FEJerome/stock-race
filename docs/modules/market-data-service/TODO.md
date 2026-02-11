@@ -28,9 +28,9 @@
 
 | 编号 | 优化项 | 状态 | 优先级 | 说明 |
 |------|--------|------|--------|------|
-| P3-001 | 修复数据库测试Mock问题 | ⚠️ | P2 | 15个单元测试因MockPool配置失败，非功能缺陷 |
-| P3-002 | 测试导入路径统一 | ⚠️ | P3 | 统一使用`data_service`或`src.data_service` |
-| P3-003 | Pydantic v2迁移 | ⚠️ | P3 | 迁移`class Config`到`ConfigDict`消除弃用警告 |
+| P3-001 | 修复数据库测试Mock问题 | ✅ | P2 | MockPool配置已修复，15个数据库测试全部通过 |
+| P3-002 | 测试导入路径统一 | ✅ | P3 | 导入路径已统一，所有测试使用`data_service`前缀 |
+| P3-003 | Pydantic v2迁移 | ✅ | P3 | 已迁移`class Config`到`ConfigDict`，`@validator`到`@field_validator` |
 
 ---
 
