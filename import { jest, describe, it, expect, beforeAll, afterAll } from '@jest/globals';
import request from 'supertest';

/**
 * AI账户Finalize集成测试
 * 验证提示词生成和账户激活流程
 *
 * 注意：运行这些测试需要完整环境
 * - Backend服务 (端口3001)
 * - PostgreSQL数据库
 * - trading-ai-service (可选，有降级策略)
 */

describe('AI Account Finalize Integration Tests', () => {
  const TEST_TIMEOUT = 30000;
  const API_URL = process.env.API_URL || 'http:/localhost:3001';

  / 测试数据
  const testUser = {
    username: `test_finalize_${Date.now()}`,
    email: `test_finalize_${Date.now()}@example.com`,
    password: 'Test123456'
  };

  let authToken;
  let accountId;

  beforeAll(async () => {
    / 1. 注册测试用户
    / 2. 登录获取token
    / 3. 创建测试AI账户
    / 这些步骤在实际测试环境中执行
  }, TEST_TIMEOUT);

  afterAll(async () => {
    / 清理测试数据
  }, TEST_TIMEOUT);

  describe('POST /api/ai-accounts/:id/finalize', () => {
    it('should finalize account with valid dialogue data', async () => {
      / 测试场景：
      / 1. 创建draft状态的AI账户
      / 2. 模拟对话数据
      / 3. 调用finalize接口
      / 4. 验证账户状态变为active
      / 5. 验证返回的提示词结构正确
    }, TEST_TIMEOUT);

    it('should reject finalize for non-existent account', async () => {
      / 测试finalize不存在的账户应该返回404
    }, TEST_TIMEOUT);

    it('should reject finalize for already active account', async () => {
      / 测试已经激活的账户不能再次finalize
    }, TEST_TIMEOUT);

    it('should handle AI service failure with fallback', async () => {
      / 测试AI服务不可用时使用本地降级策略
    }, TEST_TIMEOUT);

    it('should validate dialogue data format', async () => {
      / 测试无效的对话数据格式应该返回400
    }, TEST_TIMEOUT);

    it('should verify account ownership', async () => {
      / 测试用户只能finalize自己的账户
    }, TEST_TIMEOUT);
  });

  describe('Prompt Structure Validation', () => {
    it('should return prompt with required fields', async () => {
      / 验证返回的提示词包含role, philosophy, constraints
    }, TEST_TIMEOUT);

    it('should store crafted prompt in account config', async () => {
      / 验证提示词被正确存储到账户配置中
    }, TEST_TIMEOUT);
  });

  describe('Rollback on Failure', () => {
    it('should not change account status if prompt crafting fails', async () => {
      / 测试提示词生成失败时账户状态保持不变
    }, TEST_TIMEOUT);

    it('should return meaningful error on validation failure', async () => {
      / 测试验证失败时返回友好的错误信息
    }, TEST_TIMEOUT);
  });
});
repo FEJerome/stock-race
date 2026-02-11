@@ -1,6 +1,0 @@
-describe('AI Account Finalize Integration Tests - Stub', () => {
-  it('should be implemented when integration environment is ready', () => {
-    // This is a stub file for future integration tests
-    expect(true).toBe(true);
-  });
-});
