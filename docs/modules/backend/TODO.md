@@ -217,7 +217,7 @@
 | market-data-service | `GET /api/v1/market/rules` | ⏸️ 阻塞 | - | 仍需要 |
 | news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 阻塞 | - | 预留接口 |
 | news-service | `SUBSCRIBE news:breaking` | 🔄 解决中 | 2026-02-11 | 替换为事件总线订阅 |
-| infra | 事件总线Node.js SDK | ✅ 已完成 | 2026-02-11 | C2-002已完成，22个测试通过，见下方使用指南 |
+| infra | 事件总线Node.js SDK | ✅ 已完成 | 2026-02-11 | C2-002已完成，23个测试通过，见下方使用指南 |
 | infra | 健康检查SDK | 🔲 待开发 | - | C1-003 |
 
 ---
@@ -228,7 +228,8 @@
 ```
 项目根目录/infra/event-bus/
 ├── src/event_bus/          # Python SDK（已完成）
-└── src/node/               # Node.js SDK（✅ 已完成，22个测试通过）
+└── src/node/               # Node.js SDK（✅ 已完成，23个测试通过）
+    └── USAGE_GUIDE.md      # Node.js SDK使用指南
 ```
 
 ### Backend使用说明
@@ -334,7 +335,8 @@ class TradeExecutor {
 | `backend:account:updated` | 发布 | 账户状态变更时发布 |
 
 ### 完整文档
-- [SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md) - 包含Python示例，Node.js可参考
+- [Node.js SDK使用指南](../../infra/event-bus/src/node/USAGE_GUIDE.md) - Backend使用
+- [Python SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md) - Python服务使用
 - [SDK README](../../infra/event-bus/README.md)
 
 ---
