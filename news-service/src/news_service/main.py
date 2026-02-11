@@ -471,17 +471,21 @@ class NewsService:
             except asyncio.CancelledError:
                 pass
 
-        # 停止事件消费者
+        # 停止事件消费者（stop是同步方法）
         if self.event_consumer:
             try:
-                await self.event_consumer.stop()
+                self.event_consumer.stop()
             except Exception as e:
                 logger.error(f"停止事件消费者失败: {e}")
 
         # 关闭事件总线客户端
         if self.event_bus_client:
             try:
-                await self.event_bus_client.close()
+                # 使用disconnect方法关闭连接
+                if hasattr(self.event_bus_client, 'disconnect'):
+                    self.event_bus_client.disconnect()
+                elif hasattr(self.event_bus_client, 'close'):
+                    self.event_bus_client.close()
             except Exception as e:
                 logger.error(f"关闭事件总线失败: {e}")
 

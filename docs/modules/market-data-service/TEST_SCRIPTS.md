@@ -99,7 +99,8 @@ unit/
 │   └── test_event_publisher_service.py # ✅ 14/14 通过 (事件发布服务)
 ├── services/
 │   ├── test_data_service.py            # ✅ ~80 通过
-│   └── test_granular_collector.py      # ✅ 通过
+│   ├── test_granular_collector.py      # ✅ 通过
+│   └── test_health_service.py          # ✅ 15/15 通过 (C1-MD-001~003)
 ├── cache/
 │   └── test_cache.py                   # ✅ 30/30 通过
 ├── db/
@@ -148,6 +149,7 @@ integration/
 | 2026-02-11 | 事件总线集成测试 | ✅ 27/27 通过 | 开发团队 |
 | 2026-02-11 | 公开WebSocket测试 | ✅ 26/26 通过 | 开发团队 |
 | 2026-02-11 | 板块/行业API测试 | ✅ 19/19 通过 | 开发团队 |
+| 2026-02-11 | 健康服务集成测试 | ✅ 15/15 通过 | 开发团队 |
 
 ---
 

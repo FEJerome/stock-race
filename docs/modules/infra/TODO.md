@@ -24,7 +24,7 @@
 |------|------|------|--------|-----------|------|
 | C1-001 | 部署共享Redis集群（阶段一：单节点） | 🔲 | P0 | 0.5天 | 阶段一：单节点1GB内存，无持久化，成本¥0 |
 | C1-002 | 定义服务启动状态机 | 🔲 | P0 | 1天 | 定义：初始化→降级运行→正常运行的状态流转 |
-| C1-003 | 实现健康检查SDK | 🔲 | P0 | 1天 | 统一封装依赖服务健康检查逻辑 |
+| C1-003 | 实现健康检查SDK | ✅ | P0 | 1天 | 统一封装依赖服务健康检查逻辑。已完成：HealthChecker、HealthStatus、HealthReporter、装饰器，16个测试通过 |
 
 **测试描述**:
 - 测试场景1：Redis不可用，服务应以降级模式启动
@@ -105,15 +105,15 @@ events:
 
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
-| C3-001 | Market Data发布行情事件 | 🔲 | P0 | 1天 | 发布`market:quote:realtime`到事件总线 |
-| C3-002 | News Service发布新闻事件 | 🔲 | P0 | 1天 | 发布`news:intelligence:extracted`到事件总线 |
-| C3-003 | Trading AI订阅行情和新闻事件 | 🔲 | P0 | 2天 | 从事件总线订阅行情和新闻，不再HTTP轮询 |
-| C3-004 | Trading AI发布决策事件 | 🔲 | P0 | 1天 | 发布`ai:decision:made`到事件总线 |
-| C3-005 | Backend订阅决策事件 | 🔲 | P0 | 1天 | 从事件总线订阅AI决策，不再HTTP回调 |
-| C3-006 | 移除Trading AI到Market Data的HTTP调用 | 🔲 | P1 | 0.5天 | 删除行情查询HTTP客户端 |
-| C3-007 | 移除Trading AI到News Service的HTTP调用 | 🔲 | P1 | 0.5天 | 删除新闻查询HTTP客户端 |
-| C3-008 | 移除Trading AI到Backend的HTTP回调 | 🔲 | P1 | 0.5天 | 删除决策通知HTTP客户端 |
-| C3-009 | Token防抖机制实现 | 🔲 | P0 | 1天 | 防止事件风暴导致Token成本爆炸（¥5184/天） |
+| C3-001 | Market Data发布行情事件 | ✅ | P0 | 1天 | 发布`market:quote:realtime`到事件总线。已完成：MarketDataEventPublisher.publish_quote |
+| C3-002 | News Service发布新闻事件 | ⏸️ | P0 | 1天 | 发布`news:intelligence:extracted`到事件总线。阻塞：等待News Service开发 |
+| C3-003 | Trading AI订阅行情和新闻事件 | ⏸️ | P0 | 2天 | 从事件总线订阅行情和新闻，不再HTTP轮询。阻塞：等待C3-001, C3-002完成 |
+| C3-004 | Trading AI发布决策事件 | ⏸️ | P0 | 1天 | 发布`ai:decision:made`到事件总线。阻塞：等待Trading AI Service开发 |
+| C3-005 | Backend订阅决策事件 | ⏸️ | P0 | 1天 | 从事件总线订阅AI决策，不再HTTP回调。阻塞：等待C3-004完成 |
+| C3-006 | 移除Trading AI到Market Data的HTTP调用 | ⏸️ | P1 | 0.5天 | 删除行情查询HTTP客户端。阻塞：等待C3-003完成 |
+| C3-007 | 移除Trading AI到News Service的HTTP调用 | ⏸️ | P1 | 0.5天 | 删除新闻查询HTTP客户端。阻塞：等待C3-003完成 |
+| C3-008 | 移除Trading AI到Backend的HTTP回调 | ⏸️ | P1 | 0.5天 | 删除决策通知HTTP客户端。阻塞：等待C3-005完成 |
+| C3-009 | Token防抖机制实现 | ⏸️ | P0 | 1天 | 防止事件风暴导致Token成本爆炸（¥5184/天）。阻塞：等待Trading AI Service开发 |
 
 **测试描述**:
 - 测试场景1：Trading AI仅通过事件总线获取行情数据
