@@ -145,7 +145,7 @@
 | C2-BE-005 | 实现事件处理器 | 🔲 | P0 | 处理AI决策事件，触发交易执行 |
 | C2-BE-006 | 配置消费者组 | 🔲 | P1 | Backend多实例负载均衡消费 |
 
-**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-002（Node.js SDK）
+**阻塞状态**: ✅ 已解除，Node.js SDK已就绪，可开始集成
 
 #### 冲突4：AI对话服务实现（Backend承接）
 
@@ -206,8 +206,125 @@
 | market-data-service | `GET /api/v1/market/rules` | ⏸️ 阻塞 | - | 仍需要 |
 | news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 阻塞 | - | 预留接口 |
 | news-service | `SUBSCRIBE news:breaking` | 🔄 解决中 | 2026-02-11 | 替换为事件总线订阅 |
-| infra | 事件总线Node.js SDK | 🔲 待开发 | - | C2-002 |
+| infra | 事件总线Node.js SDK | ✅ 已完成 | 2026-02-11 | C2-002已完成，22个测试通过，见下方使用指南 |
 | infra | 健康检查SDK | 🔲 待开发 | - | C1-003 |
+
+---
+
+## 附录：事件总线SDK使用指南
+
+### SDK位置
+```
+项目根目录/infra/event-bus/
+├── src/event_bus/          # Python SDK（已完成）
+└── src/node/               # Node.js SDK（✅ 已完成，22个测试通过）
+```
+
+### Backend使用说明
+
+Backend使用Node.js开发，事件总线Node.js SDK已开发完成。
+
+**使用方法：**
+
+1. **安装SDK**
+```bash
+cd /home/fe-jerome/projects/stock-rice/backend
+npm install /home/fe-jerome/projects/stock-rice/infra/event-bus/src/node
+```
+
+2. **使用SDK发布和订阅事件**
+```javascript
+const {
+  EventBusClient,
+  EventProducer,
+  EventConsumer,
+  EventType,
+} = require('@stock-race/event-bus');
+
+class TradeExecutor {
+  constructor() {
+    this.client = new EventBusClient({
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT),
+    });
+
+    // 生产者：发布交易执行事件
+    this.producer = new EventProducer({
+      client: this.client,
+      serviceName: 'backend',
+    });
+
+    // 消费者：订阅AI决策
+    this.consumer = new EventConsumer({
+      client: this.client,
+      serviceName: 'backend',
+      consumerGroup: 'trade-executor-group',
+    });
+
+    // 注册处理器
+    this.consumer.subscribe(
+      EventType.AI_DECISION_MADE,
+      this._handleAIDecision.bind(this)
+    );
+  }
+
+  async _handleAIDecision(event) {
+    const { accountId, decision } = event.payload;
+
+    // 执行交易...
+    const tradeResult = await this._executeTrade(accountId, decision);
+
+    // 发布交易执行事件
+    await this.producer.publishEvent(
+      EventType.BACKEND_TRADE_EXECUTED,
+      {
+        accountId: accountId,
+        tradeId: tradeResult.id,
+        symbol: tradeResult.symbol,
+        action: tradeResult.action,
+        quantity: tradeResult.quantity,
+        price: tradeResult.price,
+      }
+    );
+  }
+
+  async start() {
+    await this.client.connect();
+    this.consumer.start();
+  }
+
+  async stop() {
+    await this.consumer.stop();
+    await this.client.disconnect();
+  }
+}
+```
+
+### 事件Schema规范
+
+所有事件遵循统一格式：
+```json
+{
+  "eventId": "uuid",
+  "eventType": "ai:decision:made",
+  "timestamp": "2026-02-11T10:00:00Z",
+  "source": "trading-ai",
+  "payload": { ... },
+  "correlationId": "optional"
+}
+```
+
+### Backend需要处理的事件
+
+| 事件类型 | 方向 | 处理逻辑 |
+|----------|------|----------|
+| `ai:decision:made` | 订阅 | 接收AI决策，执行交易 |
+| `backend:trade:executed` | 发布 | 交易完成后发布结果 |
+| `backend:account:updated` | 发布 | 账户状态变更时发布 |
+
+### 完整文档
+- [SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md) - 包含Python示例，Node.js可参考
+- [SDK README](../../infra/event-bus/README.md)
 
 ---
 

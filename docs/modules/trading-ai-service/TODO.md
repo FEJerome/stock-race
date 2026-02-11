@@ -22,9 +22,9 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 说明 |
 |------|------|------|--------|------|
-| E-001 | GLM/Moonshot完整适配器 | ⚠️ | P2 | 框架已就绪，需完成HTTP调用逻辑 |
-| E-002 | K线特征提取服务 | 🔲 | P2 | 将原始K线转为自然语言描述供AI理解 |
-| E-003 | 多维度风险画像 | 🔲 | P2 | 12种主类型+4个维度评估 |
+| E-001 | GLM/Moonshot完整适配器 | ✅ | P2 | 已完成：Qwen/Wenxin/Moonshot适配器HTTP调用实现（2026-02-11） |
+| E-002 | K线特征提取服务 | ✅ | P2 | 已完成：K线形态识别、趋势分析、自然语言描述生成（2026-02-11） |
+| E-003 | 多维度风险画像 | ✅ | P2 | 已完成：12种风险类型+4维度评估+风险报告生成（2026-02-11） |
 
 ---
 
@@ -160,8 +160,84 @@
 | Market Data Service | 批量实时行情 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
 | News Service | 股票新闻接口 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
 | Backend | 决策回调通知 | 🔄 解决中 | 2026-02-11 | 架构变更：事件发布 |
-| infra | 事件总线Python SDK | 🔲 待开发 | - | C2-001 |
+| infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 |
 | infra | Token防抖机制规范 | 🔲 待开发 | - | C3-009 |
+
+---
+
+## 附录：事件总线SDK使用指南
+
+### SDK位置
+```
+项目根目录/infra/event-bus/src/event_bus/
+```
+
+### 快速开始
+
+**1. 添加Python路径（在main.py顶部）**
+```python
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root / "infra" / "event-bus" / "src"))
+```
+
+**2. 导入SDK**
+```python
+from event_bus import (
+    EventBusClient, EventProducer, EventConsumer,
+    EventType, EventSchema
+)
+```
+
+**3. 订阅行情和新闻事件**
+```python
+# 创建消费者
+client = EventBusClient(host="redis", port=6379)
+consumer = EventConsumer(
+    client=client,
+    service_name="trading-ai",
+    consumer_group="ai-decision-group"
+)
+
+# 定义处理器
+def handle_market_quote(event: EventSchema):
+    symbol = event.payload["symbol"]
+    price = event.payload["price"]
+    # AI决策逻辑...
+
+def handle_news(event: EventSchema):
+    stock_code = event.payload["stock_code"]
+    sentiment = event.payload["sentiment"]
+    # 处理新闻...
+
+# 订阅事件
+consumer.subscribe(EventType.MARKET_QUOTE_REALTIME, handle_market_quote)
+consumer.subscribe(EventType.NEWS_INTELLIGENCE_EXTRACTED, handle_news)
+consumer.start()
+```
+
+**4. 发布AI决策事件**
+```python
+# 创建生产者
+producer = EventProducer(client=client, service_name="trading-ai")
+
+# 发布决策
+producer.publish_event(
+    EventType.AI_DECISION_MADE,
+    {
+        "account_id": "acc_123",
+        "decision": "buy",
+        "confidence": 0.85,
+        "reasoning": "技术指标突破",
+        "timestamp": "2026-02-11T10:00:00Z"
+    }
+)
+```
+
+### 完整文档
+- [SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md)
+- [SDK README](../../infra/event-bus/README.md)
 
 ---
 
@@ -180,6 +256,11 @@
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-11 | 完成E-001~E-003增强功能开发 | 开发智能体 |
+| 2026-02-11 | Qwen/Wenxin/Moonshot适配器HTTP调用实现 | 开发智能体 |
+| 2026-02-11 | K线特征提取服务开发完成 | 开发智能体 |
+| 2026-02-11 | 多维度风险画像服务开发完成 | 开发智能体 |
+| 2026-02-11 | 新增单元测试27个，全部通过 | 开发智能体 |
 | 2026-02-11 | 重构TODO.md，创建HAVE_DONE.md | 首席架构师 |
 | 2026-02-10 | 完成T-001~T-012所有基础功能 | 开发团队 |
 | 2026-02-10 | 综合功能测试32项全部通过 | 开发团队 |

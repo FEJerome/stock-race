@@ -136,11 +136,85 @@
 
 | 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 说明 |
 |----------|---------|---------|---------|------|
-| Backend | Redis Streams事件总线 | 🔄 解决中 | 2026-02-11 | 等待统一事件总线SDK |
+| Backend | Redis Streams事件总线 | ✅ 已完成 | 2026-02-11 | SDK已就绪，见下方使用指南 |
 | AI Service | 决策反馈接口 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
 | Market Data Service | 行情异动事件 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
-| infra | 事件总线Python SDK | 🔲 待开发 | - | C2-001 |
+| infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 |
 | infra | 健康检查SDK | 🔲 待开发 | - | C1-003 |
+
+---
+
+## 附录：事件总线SDK使用指南
+
+### SDK位置
+```
+项目根目录/infra/event-bus/src/event_bus/
+```
+
+### 快速开始
+
+**1. 添加Python路径（在main.py顶部）**
+```python
+import sys
+from pathlib import Path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root / "infra" / "event-bus" / "src"))
+```
+
+**2. 导入SDK**
+```python
+from event_bus import (
+    EventBusClient, EventProducer, EventConsumer,
+    EventType, EventSchema
+)
+```
+
+**3. 订阅行情异动事件**
+```python
+# 创建消费者
+client = EventBusClient(host="redis", port=6379)
+consumer = EventConsumer(
+    client=client,
+    service_name="news-service",
+    consumer_group="news-trigger-group"
+)
+
+# 定义处理器：行情异动触发新闻采集
+def handle_price_alert(event: EventSchema):
+    symbol = event.payload["symbol"]
+    alert_type = event.payload["alert_type"]
+    # 触发新闻采集...
+    print(f"价格异动: {symbol}, 类型: {alert_type}")
+
+# 订阅事件
+consumer.subscribe(EventType.MARKET_ALERT_PRICE_MOVE, handle_price_alert)
+consumer.start()
+```
+
+**4. 发布新闻情报事件**
+```python
+# 创建生产者
+producer = EventProducer(client=client, service_name="news-service")
+
+# 发布情报
+producer.publish_event(
+    EventType.NEWS_INTELLIGENCE_EXTRACTED,
+    {
+        "stock_code": "000001.SZ",
+        "intelligence": "平安银行发布利好公告...",
+        "sentiment": "positive",
+        "timestamp": "2026-02-11T10:00:00Z"
+    }
+)
+```
+
+### 完整文档
+- [SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md)
+- [SDK README](../../infra/event-bus/README.md)
+
+---
+
+## 六、外部依赖跟踪（更新）
 
 ---
 

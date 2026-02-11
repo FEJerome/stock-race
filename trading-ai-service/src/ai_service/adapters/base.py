@@ -209,6 +209,9 @@ class AdapterFactory:
         elif provider == AIProvider.GLM:
             from .glm_adapter import GLMAdapter
             return GLMAdapter()
+        elif provider == AIProvider.MOONSHOT:
+            from .moonshot_adapter import MoonshotAdapter
+            return MoonshotAdapter()
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 

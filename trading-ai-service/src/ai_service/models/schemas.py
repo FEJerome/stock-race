@@ -32,6 +32,7 @@ class AIProvider(str, Enum):
     QWEN = "qwen"
     WENXIN = "wenxin"
     GLM = "glm"  # 智谱AI
+    MOONSHOT = "moonshot"  # 月之暗面
 
 
 class StockData(BaseModel):
