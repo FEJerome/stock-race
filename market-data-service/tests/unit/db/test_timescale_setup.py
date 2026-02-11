@@ -39,25 +39,32 @@ class MockConnection:
 
 
 class MockPool:
-    """Mock asyncpg pool for testing."""
+    """Mock asyncpg pool for testing with proper async context manager support."""
 
     def __init__(self):
         self._conn = MockConnection()
         self.closed = False
 
-    async def acquire(self):
-        return self._conn
+    def acquire(self):
+        """Return an async context manager for acquiring connections."""
+        class _AcquireContext:
+            def __init__(_self, conn):
+                _self._conn = conn
+
+            async def __aenter__(_self):
+                return _self._conn
+
+            async def __aexit__(_self, exc_type, exc_val, exc_tb):
+                return None
+
+        return _AcquireContext(self._conn)
 
     async def close(self):
         self.closed = True
 
     def acquire_context(self):
-        class _Context:
-            async def __aenter__(_self):
-                return self._conn
-            async def __aexit__(_self, *args):
-                pass
-        return _Context()
+        """Legacy method for backward compatibility."""
+        return self.acquire()
 
 
 class TestDatabaseStorageInitialization:
@@ -77,7 +84,11 @@ class TestDatabaseStorageInitialization:
         """Test successful database connection."""
         mock_pool = MockPool()
 
-        with patch('asyncpg.create_pool', return_value=mock_pool):
+        # asyncpg.create_pool is async, so we need to mock it with an async function
+        async def mock_create_pool(*args, **kwargs):
+            return mock_pool
+
+        with patch('asyncpg.create_pool', side_effect=mock_create_pool):
             await db_storage.connect()
 
         assert db_storage.timescale_pool is mock_pool
@@ -172,15 +183,14 @@ class TestDatabaseTableCreation:
 
         await db._create_tables()
 
-        # Check index creation
+        # Check index creation - indexes are created in a single execute call
         queries = [q[0] for q in mock_pool._conn.executed_queries]
-        index_queries = [q for q in queries if 'CREATE INDEX' in q]
-
-        assert len(index_queries) >= 2
+        # Join all queries to check for index names (they may be in one or multiple queries)
+        all_queries_text = '\n'.join(queries)
 
         # Check for specific indexes
-        index_names = [q for q in queries if 'idx_quotes_symbol_time' in q or 'idx_history_symbol_interval_time' in q]
-        assert len(index_names) >= 2
+        assert 'idx_quotes_symbol_time' in all_queries_text
+        assert 'idx_history_symbol_interval_time' in all_queries_text
 
     @pytest.mark.asyncio
     async def test_skip_table_creation_when_no_pool(self):
