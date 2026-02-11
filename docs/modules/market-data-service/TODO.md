@@ -119,11 +119,11 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C2-MD-001 | 集成Python事件总线SDK | 🔲 | P0 | 使用SDK发布事件到Redis Streams |
-| C3-001 | 发布实时行情事件 | 🔲 | P0 | 每10秒发布`market:quote:realtime`事件 |
-| C3-001B | 发布价格异动事件 | 🔲 | P0 | 涨跌幅>7%时发布`market:alert:price_move` |
-| C3-001C | 发布技术指标事件 | 🔲 | P1 | 技术指标更新时发布`market:indicator:updated` |
-| C2-MD-002 | 配置生产者确认 | 🔲 | P1 | 确保消息成功写入Redis |
+| C2-MD-001 | 集成Python事件总线SDK | ✅ | P0 | 使用SDK发布事件到Redis Streams | 已实现 MarketDataEventPublisher 类 |
+| C3-001 | 发布实时行情事件 | ✅ | P0 | 每10秒发布`market:quote:realtime`事件 | 已实现 publish_quote 方法 |
+| C3-001B | 发布价格异动事件 | ✅ | P0 | 涨跌幅>7%时发布`market:alert:price_move` | 已实现 check_and_publish_price_alert 方法 |
+| C3-001C | 发布技术指标事件 | ✅ | P1 | 技术指标更新时发布`market:indicator:updated` | 已实现 publish_indicator_update 方法 |
+| C2-MD-002 | 配置生产者确认 | ✅ | P1 | 确保消息成功写入Redis | 已实现 get_stream_info 和 message ID 返回 |
 
 **阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（Python SDK）
 
@@ -245,6 +245,8 @@ python3 tests/integration_test.py
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-11 | 完成C2-MD-001~C2-MD-002, C3-001~C3-001C事件总线集成开发 | 开发团队 |
+| 2026-02-11 | 新增事件总线测试脚本：test_event_publisher.py, test_event_publisher_service.py | 开发团队 |
 | 2026-02-11 | 重构TODO.md，将已完成内容移至HAVE_DONE.md | 首席架构师 |
 | 2026-02-10 | 更新Phase 5优化进度，标记P0-001~P2-001为完成 | 开发团队 |
 | 2026-02-09 | 完成T-010性能优化 | 开发团队 |

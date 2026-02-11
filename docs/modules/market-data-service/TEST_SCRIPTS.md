@@ -30,6 +30,9 @@
 | 多数据源切换 | ✅ 通过 | 2026-02-10 | 生产环境验证 |
 | 动态权重调整 | ✅ 通过 | 2026-02-10 | 生产环境验证 |
 | 数据降级策略 | ✅ 通过 | 2026-02-10 | 生产环境验证 |
+| 事件总线集成 | ✅ 通过 | 2026-02-11 | 27/27 测试通过 |
+| 公开WebSocket | ✅ 通过 | 2026-02-11 | 26/26 测试通过 |
+| 板块/行业API | ✅ 通过 | 2026-02-11 | 19/19 测试通过 |
 
 ### ⚠️ 已知问题
 
@@ -82,19 +85,26 @@ pytest tests/unit -v --cov=src --cov-report=term-missing
 
 ```
 unit/
+├── api/
+│   ├── test_public_websocket.py        # ✅ 26/26 通过 (O6-001, O6-002, O6-008)
+│   └── test_sector_industry_api.py     # ✅ 19/19 通过 (C6-004~C6-008)
 ├── collectors/
 │   ├── test_base_collector.py          # ✅ 18/18 通过
 │   ├── test_sina_collector.py          # ✅ 通过
 │   ├── test_tencent_collector.py       # ✅ 通过
 │   ├── test_eastmoney_collector.py     # ✅ 通过
 │   └── test_router.py                  # ✅ ~150 通过
+├── event_bus/
+│   ├── test_event_publisher.py         # ✅ 13/13 通过 (C2-MD-001, C3-001, C3-001B, C3-001C)
+│   └── test_event_publisher_service.py # ✅ 14/14 通过 (事件发布服务)
 ├── services/
 │   ├── test_data_service.py            # ✅ ~80 通过
 │   └── test_granular_collector.py      # ✅ 通过
 ├── cache/
 │   └── test_cache.py                   # ✅ 30/30 通过
 ├── db/
-│   └── test_timescale_setup.py         # ⚠️ 15/30 失败(Mock问题)
+│   ├── test_timescale_setup.py         # ⚠️ 15/30 失败(Mock问题)
+│   └── test_database_mock_fix.py       # ✅ 14/14 通过 (P3-001, P3-003)
 └── monitoring/
     └── test_monitoring.py              # ✅ 通过
 ```
@@ -123,7 +133,7 @@ integration/
 | db | 78% | 75% | 30 | ⚠️ |
 | api | 91% | 85% | 89 | ✅ |
 | monitoring | 96% | 92% | 78 | ✅ |
-| **总计** | **91%** | **87%** | **547** | **✅** |
+| **总计** | **91%** | **87%** | **606** | **✅** |
 
 ---
 
@@ -135,6 +145,9 @@ integration/
 | 2026-02-10 | 集合竞价时段测试 | ✅ 通过 | 开发团队 |
 | 2026-02-11 | 代码审查 | ✅ 通过 | 首席架构师 |
 | 2026-02-11 | 单元测试 | ✅ 95.8%通过 | 首席架构师 |
+| 2026-02-11 | 事件总线集成测试 | ✅ 27/27 通过 | 开发团队 |
+| 2026-02-11 | 公开WebSocket测试 | ✅ 26/26 通过 | 开发团队 |
+| 2026-02-11 | 板块/行业API测试 | ✅ 19/19 通过 | 开发团队 |
 
 ---
 

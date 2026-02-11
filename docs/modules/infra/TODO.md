@@ -41,9 +41,9 @@
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
 | C2-001 | 实现事件总线SDK（Python版） | ✅ | P0 | 2天 | 封装Redis Streams操作，支持发布/订阅/消费者组。已完成：EventSchema、EventProducer、EventConsumer、异常处理、单元测试（7 passed）、集成测试（2/2 passed） |
-| C2-002 | 实现事件总线SDK（Node.js版） | 🔲 | P0 | 2天 | Backend和Frontend使用的Node.js SDK |
-| C2-003 | 定义事件Schema和消息格式 | 🔲 | P0 | 1天 | 统一事件字段：event_id, timestamp, source, payload |
-| C2-004 | 实现消息持久化和ACK机制 | 🔲 | P1 | 1天 | 确保消息不丢失，支持手动ACK |
+| C2-002 | 实现事件总线SDK（Node.js版） | ✅ | P0 | 2天 | Backend和Frontend使用的Node.js SDK。已完成：EventSchema、EventProducer、EventConsumer、单元测试+集成测试（22 passed），使用指南已创建 |
+| C2-003 | 定义事件Schema和消息格式 | ✅ | P0 | 0.5天 | 统一事件字段：eventId, eventType, timestamp, source, payload。已完成：schema.js已定义 |
+| C2-004 | 实现消息持久化和ACK机制 | ✅ | P1 | 0.5天 | 确保消息不丢失，支持手动ACK。已完成：Consumer自动ACK，Pending消息查询接口已实现 |
 | C2-005 | 配置监控和告警 | 🔲 | P1 | 1天 | 消息堆积、消费延迟、错误率监控 |
 | C2-006 | 实现事件总线管理后台 | 🔲 | P2 | 2天 | 查看事件流、消费者组状态、消息堆积情况 |
 
@@ -97,7 +97,7 @@ events:
 - 测试场景5：事件风暴防护（批量事件防抖）
 - 测试场景6：跨服务事件流转（端到端测试）
 
-**阻塞状态**: C2-001~C2-003阻塞所有服务的"接入事件总线"任务
+**阻塞状态**: ✅ C2-001~C2-004已完成，各服务可开始接入事件总线
 
 ---
 
@@ -315,7 +315,49 @@ events:
 
 ---
 
-## 五、风险缓解
+## 五、SDK就绪状态与使用指南
+
+### 5.1 SDK完成状态
+
+| SDK | 语言 | 测试状态 | 使用指南 |
+|-----|------|----------|----------|
+| Python SDK | Python 3.10+ | ✅ 9个测试通过 | `infra/event-bus/USAGE_GUIDE.md` |
+| Node.js SDK | Node.js 18+ | ✅ 22个测试通过 | `infra/event-bus/src/node/USAGE_GUIDE.md` |
+
+### 5.2 各服务接入状态
+
+| 服务 | 语言 | SDK就绪 | 可开始任务 |
+|------|------|---------|-----------|
+| market-data-service | Python | ✅ | C3-001, C3-002 |
+| news-service | Python | ✅ | C3-002 |
+| trading-ai-service | Python | ✅ | C3-003, C3-004 |
+| backend | Node.js | ✅ | C2-BE-001~006, C3-005 |
+
+### 5.3 快速开始
+
+**Python服务:**
+```python
+import sys
+sys.path.insert(0, '/home/fe-jerome/projects/stock-race/infra/event-bus/src')
+from event_bus import EventBusClient, EventProducer, EventType
+
+client = EventBusClient(host="localhost", port=6379)
+producer = EventProducer(client=client, service_name="my-service")
+producer.publish_event(EventType.MARKET_QUOTE_REALTIME, {...})
+```
+
+**Backend服务:**
+```javascript
+const { EventBusClient, EventProducer, EventType } = require('@stock-race/event-bus');
+
+const client = new EventBusClient({ host: process.env.REDIS_HOST, port: 6379 });
+const producer = new EventProducer({ client, serviceName: 'backend' });
+await producer.publishEvent(EventType.BACKEND_TRADE_EXECUTED, {...});
+```
+
+---
+
+## 六、风险缓解
 
 | 风险 | 影响 | 缓解措施 |
 |------|------|----------|
@@ -327,7 +369,7 @@ events:
 
 ---
 
-## 六、外部依赖跟踪
+## 七、外部依赖跟踪
 
 | 依赖 | 所需功能 | 状态 | 跟进 |
 |------|----------|------|------|
@@ -337,11 +379,13 @@ events:
 
 ---
 
-## 七、最近更新记录
+## 八、最近更新记录
 
 | 日期 | 更新内容 | 更新人 |
 |------|----------|--------|
 | 2026-02-11 | 创建基础设施TODO.md，整合6个冲突解决方案和2个优化方案 | 首席架构师 |
+| 2026-02-11 | Node.js SDK开发完成（C2-002），22个测试通过 | Claude |
+| 2026-02-11 | Python SDK测试通过（C2-001），9个测试通过 | Claude |
 
 ---
 
