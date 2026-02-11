@@ -120,6 +120,130 @@
 
 ---
 
+## 四、P0 紧急任务（架构审查发现）
+
+> 基于架构审查报告 [ARCHITECTURE_REVIEW_2026-02-11.md](./ARCHITECTURE_REVIEW_2026-02-11.md)，以下任务需立即执行（1周内）。
+
+### 4.1 测试系统修复
+
+| 编号 | 任务 | 状态 | 优先级 | 测试要求 |
+|------|------|------|--------|----------|
+| P0-001 | 修复 ESM/CommonJS 混合问题 | 🔲 | P0 | 所有测试文件通过 `npm test` 运行 |
+| P0-002 | 整合 test/ 和 tests/ 目录 | 🔲 | P0 | Jest 配置统一指向 tests/ 目录 |
+| P0-003 | 替换 Chai/Sinon 为 Jest 断言 | 🔲 | P0 | 测试使用 Jest 内置 `expect` 和 `jest.fn()` |
+
+**P0-001 详细测试要求**:
+```javascript
+// 测试文件必须使用 ESM 格式
+// ❌ 错误：使用 CommonJS
+const { expect } = require('chai');
+
+// ✅ 正确：使用 ESM + Jest
+import { jest, describe, it, expect } from '@jest/globals';
+
+// 断言使用 Jest 内置
+expect(result).toBe(value);
+expect(result).toEqual(object);
+expect(mockFn).toHaveBeenCalled();
+```
+
+**测试通过标准**:
+- [ ] `npm test` 运行无语法错误
+- [ ] 至少 195 个单元测试全部通过
+- [ ] 覆盖率报告正确生成
+- [ ] 无 `require is not defined` 错误
+
+---
+
+### 4.2 GuestService 持久化改造
+
+| 编号 | 任务 | 状态 | 优先级 | 测试要求 |
+|------|------|------|--------|----------|
+| P0-004 | GuestService Redis 持久化 | 🔲 | P0 | 服务重启后游客数据不丢失 |
+| P0-005 | 添加 GuestService 单元测试 | 🔲 | P0 | 覆盖 C5-001 ~ C5-006 全部功能 |
+
+**P0-004 详细测试要求**:
+```javascript
+// tests/unit/services/GuestService.test.js
+
+describe('GuestService Persistence', () => {
+  it('should persist session to Redis', async () => {
+    const token = await GuestService.createGuestToken('openid-123');
+    // 模拟服务重启
+    GuestService.sessions.clear();
+    // 从 Redis 恢复
+    await GuestService.restoreFromRedis();
+    const session = await GuestService.getSession(token.token);
+    expect(session).not.toBeNull();
+  });
+
+  it('should handle Redis connection failure gracefully', async () => {
+    // Redis 断开时降级到内存模式
+    redis.disconnect();
+    const token = await GuestService.createGuestToken('openid-123');
+    expect(token).toHaveProperty('token');
+  });
+});
+```
+
+**P0-005 测试覆盖要求**:
+| 功能点 | 测试场景 | 断言要求 |
+|--------|----------|----------|
+| C5-001 创建游客Token | 同一 openid 生成相同 token | `expect(token1).toBe(token2)` |
+| C5-001 Token 过期 | 过期后验证失败 | `expect(session).toBeNull()` |
+| C5-002 创建AI账户 | 最多2个账户限制 | 第3个创建抛出 `ACCOUNT_LIMIT_REACHED` |
+| C5-003 AI对话 | 10轮对话限制 | 第11轮抛出 `ROUND_LIMIT_REACHED` |
+| C5-004 数据迁移 | 迁移成功后游客数据绑定 | `expect(account.migratedTo).toBe(userId)` |
+| C5-005 过期清理 | 无AI账户24h过期 | 模拟时间前进24h后状态为 `expired` |
+
+---
+
+### 4.3 核心功能验证
+
+| 编号 | 任务 | 状态 | 优先级 | 测试要求 |
+|------|------|------|--------|----------|
+| P0-006 | EventBusService 集成测试 | 🔲 | P0 | 发布/订阅事件端到端测试 |
+| P0-007 | TradingRulesEngine 规则验证 | 🔲 | P0 | 涨跌停计算精度测试 |
+
+**P0-006 测试要求**:
+```javascript
+// 集成测试要求
+it('should publish and consume events', async () => {
+  const handler = jest.fn();
+  await EventBusService.subscribeToAIDecisions(handler);
+
+  // 发布测试事件
+  await EventBusService.publishTradeExecuted({
+    accountId: 'test-acc',
+    tradeId: 'test-trade',
+    symbol: '000001.SZ',
+    action: 'buy',
+    quantity: 100,
+    price: 12.58
+  });
+
+  // 验证消费
+  await waitFor(() => expect(handler).toHaveBeenCalled());
+});
+```
+
+**P0-007 测试要求**:
+```javascript
+// 涨跌停计算精度测试
+it('should calculate limit prices correctly', () => {
+  // 主板 10% 涨跌幅
+  const result = TradingRulesEngine.calculateLimitPrices('000001.SZ', 10.00);
+  expect(result.upper).toBe(11.00);  // 10 * 1.10
+  expect(result.lower).toBe(9.00);   // 10 * 0.90
+
+  // 科创板 20% 涨跌幅
+  const kcbResult = TradingRulesEngine.calculateLimitPrices('688001.SH', 10.00);
+  expect(kcbResult.upper).toBe(12.00);  // 10 * 1.20
+});
+```
+
+---
+
 ## 四、架构优化任务（2026-02-11新增）
 
 ### 4.1 冲突解决方案
