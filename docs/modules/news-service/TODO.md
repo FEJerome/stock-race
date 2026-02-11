@@ -75,12 +75,12 @@
 
 - [x] 创建数据库表初始化脚本（2026-02-11完成）
 - [x] 运行完整测试套件，补充实际测试数据（2026-02-11完成）
-- [ ] 接入统一事件总线（Redis Streams）
+- [x] 接入统一事件总线（Redis Streams）- 2026-02-11完成
 
 ### 4.2 中期（1-2月）
 
-- [ ] AI Service深度集成，优化情报提取
-- [ ] 行情异动联动机制
+- [x] AI Service深度集成，优化情报提取 - 2026-02-11完成
+- [x] 行情异动联动机制 - 2026-02-11完成
 - [ ] 新闻采集调度优化（APScheduler）
 
 ### 4.3 长期（3月+）
@@ -109,12 +109,12 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C2-NS-001 | 集成Python事件总线SDK | 🔲 | P0 | 使用SDK订阅和发布事件 |
-| C3-002 | 发布新闻情报事件 | 🔲 | P0 | 情报提取完成后发布`news:intelligence:extracted` |
-| C3-002B | 发布情感变化事件 | 🔲 | P1 | 情感分析变化时发布`news:sentiment:changed` |
-| C3-003B | 订阅行情异动事件 | 🔲 | P0 | 订阅`market:alert:price_move`触发新闻采集 |
+| C2-NS-001 | 集成Python事件总线SDK | ✅ | P0 | 已创建main.py，集成EventBusClient、Producer、Consumer |
+| C3-002 | 发布新闻情报事件 | ✅ | P0 | 已实现publish_intelligence_event()方法 |
+| C3-002B | 发布情感变化事件 | ✅ | P1 | 已实现publish_sentiment_change_event()方法 |
+| C3-003B | 订阅行情异动事件 | ✅ | P0 | 已订阅market:alert:price_move，实现_handle_price_alert |
 | C3-003C | 订阅AI决策反馈事件 | 🔲 | P1 | 订阅`ai:performance:report`优化Prompt |
-| C2-NS-002 | 配置消费者组 | 🔲 | P1 | 多实例负载均衡消费行情事件 |
+| C2-NS-002 | 配置消费者组 | ✅ | P1 | 已配置消费者组news-trigger-group |
 
 **阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（Python SDK）
 
@@ -122,11 +122,11 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C6-NS-001 | 创建股票分类映射表 | 🔲 | P1 | 板块/行业/概念映射数据 |
-| C6-001 | 实现板块情报查询 | 🔲 | P1 | `GET /api/v1/intelligence/sector/{sector}` |
-| C6-002 | 实现行业情报查询 | 🔲 | P1 | `GET /api/v1/intelligence/industry/{industry}` |
-| C6-003 | 实现概念情报查询 | 🔲 | P1 | `GET /api/v1/intelligence/concept/{concept}` |
-| C6-NS-002 | 批量查询优化 | 🔲 | P2 | 支持一次查询多只股票情报 |
+| C6-NS-001 | 创建股票分类映射表 | ✅ | P1 | 已创建stock_classification表，含36条示例数据 |
+| C6-001 | 实现板块情报查询 | ✅ | P1 | `GET /api/v1/intelligence/sector/{sector}` - 已实现 |
+| C6-002 | 实现行业情报查询 | ✅ | P1 | `GET /api/v1/intelligence/industry/{industry}` - 已实现 |
+| C6-003 | 实现概念情报查询 | ✅ | P1 | `GET /api/v1/intelligence/concept/{concept}` - 已实现 |
+| C6-NS-002 | 批量查询优化 | ✅ | P2 | `GET /api/v1/intelligence/batch` - 已实现 |
 
 **阻塞状态**: C6-NS-001 阻塞 C6-001~C6-003
 
@@ -232,6 +232,8 @@ producer.publish_event(
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-11 | 完成事件总线集成（C2-NS-001, C3-002, C3-003B）和广度查询API（C6-001~C6-003） | 开发团队 |
+| 2026-02-11 | 完成股票分类映射表（C6-NS-001）和批量查询（C6-NS-002） | 开发团队 |
 | 2026-02-11 | 完成P3-001~P3-003生产环境优化任务（数据库脚本、测试文档、Pydantic v2验证） | 开发团队 |
 | 2026-02-11 | 重构TODO.md，创建HAVE_DONE.md和TEST_SCRIPTS.md | 首席架构师 |
 | 2026-02-10 | 完成T-001~T-010所有开发任务 | 开发团队 |
