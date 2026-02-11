@@ -82,19 +82,28 @@ pytest tests/unit -v --cov=src --cov-report=term-missing
 
 ```
 unit/
+├── api/
+│   ├── test_public_websocket.py        # ✅ 26/26 通过 (O6-001, O6-002, O6-008)
+│   └── test_sector_industry_api.py     # ✅ 19/19 通过 (C6-004~C6-008)
 ├── collectors/
 │   ├── test_base_collector.py          # ✅ 18/18 通过
 │   ├── test_sina_collector.py          # ✅ 通过
 │   ├── test_tencent_collector.py       # ✅ 通过
 │   ├── test_eastmoney_collector.py     # ✅ 通过
 │   └── test_router.py                  # ✅ ~150 通过
+├── event_bus/
+│   ├── test_event_publisher.py         # ✅ 13/13 通过 (C2-MD-001, C3-001, C3-001B, C3-001C)
+│   └── test_event_publisher_service.py # ✅ 14/14 通过 (事件发布服务)
 ├── services/
 │   ├── test_data_service.py            # ✅ ~80 通过
-│   └── test_granular_collector.py      # ✅ 通过
+│   ├── test_granular_collector.py      # ✅ 通过
+│   ├── test_health_service.py          # ✅ 15/15 通过 (C1-MD-001~003)
+│   └── test_ai_query_service.py        # ✅ 20/20 通过 (AI-001~004)
 ├── cache/
 │   └── test_cache.py                   # ✅ 30/30 通过
 ├── db/
-│   └── test_timescale_setup.py         # ⚠️ 15/30 失败(Mock问题)
+│   ├── test_timescale_setup.py         # ⚠️ 15/30 失败(Mock问题)
+│   └── test_database_mock_fix.py       # ✅ 14/14 通过 (P3-001, P3-003)
 └── monitoring/
     └── test_monitoring.py              # ✅ 通过
 ```
