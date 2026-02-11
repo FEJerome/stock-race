@@ -5,5 +5,6 @@ News Service 服务层
 """
 
 from .hot_intelligence_selector import HotIntelligenceSelector
+from .hot_intelligence_pusher import HotIntelligencePusher
 
-__all__ = ["HotIntelligenceSelector"]
+__all__ = ["HotIntelligenceSelector", "HotIntelligencePusher"]
