@@ -14,8 +14,10 @@
 | Phase 3 | 存储与API测试 | 4 | ~50 | 预估 88% |
 | Phase 4 | 推送与监控测试 | 3 | ~35 | 预估 85% |
 | E2E | 端到端测试 | 1 | ~15 | 预估 80% |
-| DB | 数据库测试 | 2 | 10 | ✅ 100% (已验证) |
-| **总计** | - | **17** | **~210** | **预估 90%** |
+| DB | 数据库测试 | 3 | 10 | ✅ 100% (已验证) |
+| Integration | 集成测试 | 3 | 33 | ✅ 100% (已验证) |
+| Startup | 服务启动脚本 | 3 | - | ✅ 已验证 |
+| **总计** | - | **20** | **~243** | **预估 90%** |
 
 ---
 
@@ -90,8 +92,12 @@ unit/
 │   └── test_news_models.py                 # 数据模型测试
 ├── monitoring/
 │   └── test_collection_monitor.py          # 监控测试
-└── core/
-    └── test_config.py                      # 配置测试
+├── core/
+│   └── test_config.py                      # 配置测试
+├── api/
+│   └── test_intelligence_routes.py         # 情报查询API测试(14用例)
+├── test_event_bus_integration.py           # 事件总线集成测试(7用例)
+└── test_health_check_integration.py        # 健康检查集成测试(12用例)
 ```
 
 ### 集成测试 (tests/integration/)
@@ -141,6 +147,46 @@ psql -U postgres -d stock_race_news -f news-service/sql/init.sql
 psql -U postgres -d stock_race_news -f news-service/sql/test_init.sql
 ```
 
+### 服务启动脚本 (根目录)
+
+```
+news-service/
+├── start_service.py              # 服务启动脚本
+├── check_service.py              # 服务状态检查脚本
+├── test_degraded_mode.py         # 降级模式测试脚本
+└── sql/
+    ├── init.sql                  # 数据库初始化
+    ├── test_init.sql             # 数据库测试
+    └── stock_classification.sql  # 股票分类映射表
+```
+
+**启动服务**:
+```bash
+cd news-service
+
+# 自动模式（根据健康检查自动选择模式）
+python3 start_service.py
+
+# 强制正常模式
+python3 start_service.py --mode normal
+
+# 强制降级模式
+python3 start_service.py --mode degraded
+
+# 自定义检查间隔
+python3 start_service.py --check-interval 30 --recovery-interval 30
+```
+
+**检查服务状态**:
+```bash
+python3 check_service.py
+```
+
+**测试降级模式**:
+```bash
+python3 test_degraded_mode.py
+```
+
 ---
 
 ## 测试覆盖统计
@@ -169,6 +215,11 @@ psql -U postgres -d stock_race_news -f news-service/sql/test_init.sql
 | 2026-02-11 | 代码审查 | ✅ 通过 | 首席架构师 |
 | 2026-02-11 | 数据库初始化脚本 | ✅ 已应用 | 开发团队 |
 | 2026-02-11 | 数据库测试脚本 | ✅ 10/10通过 | 开发团队 |
+| 2026-02-11 | 服务启动测试 | ✅ 正常模式启动 | 开发团队 |
+| 2026-02-11 | 降级模式测试 | ✅ 降级模式工作正常 | 开发团队 |
+| 2026-02-11 | 健康检查集成 | ✅ 12/12测试通过 | 开发团队 |
+| 2026-02-11 | 事件总线集成 | ✅ 已连接Redis | 开发团队 |
+| 2026-02-11 | 联调准备 | ✅ 服务就绪 | 开发团队 |
 
 ---
 
