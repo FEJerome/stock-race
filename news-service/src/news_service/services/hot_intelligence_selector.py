@@ -132,6 +132,117 @@ class HotIntelligenceSelector:
 
         return sorted(list(coverage))
 
+    def _extract_coverage_sectors(self, intelligence_list: List[Dict[str, Any]]) -> List[str]:
+        """
+        提取覆盖的板块列表
+
+        NS-D-003: 计算热情报覆盖的板块范围
+
+        Args:
+            intelligence_list: 热情报列表
+
+        Returns:
+            List[str]: 去重后的板块列表
+        """
+        coverage: Set[str] = set()
+
+        for item in intelligence_list:
+            sectors = item.get("related_sectors")
+            if sectors and isinstance(sectors, (list, tuple)):
+                for sector in sectors:
+                    if sector:
+                        coverage.add(sector)
+
+        return sorted(list(coverage))
+
+    def _extract_coverage_industries(self, intelligence_list: List[Dict[str, Any]]) -> List[str]:
+        """
+        提取覆盖的行业列表
+
+        NS-D-003: 计算热情报覆盖的行业范围
+
+        Args:
+            intelligence_list: 热情报列表
+
+        Returns:
+            List[str]: 去重后的行业列表
+        """
+        coverage: Set[str] = set()
+
+        for item in intelligence_list:
+            industries = item.get("related_industries")
+            if industries and isinstance(industries, (list, tuple)):
+                for industry in industries:
+                    if industry:
+                        coverage.add(industry)
+
+        return sorted(list(coverage))
+
+    def _extract_coverage_concepts(self, intelligence_list: List[Dict[str, Any]]) -> List[str]:
+        """
+        提取覆盖的概念列表
+
+        NS-D-003: 计算热情报覆盖的概念范围
+
+        Args:
+            intelligence_list: 热情报列表
+
+        Returns:
+            List[str]: 去重后的概念列表
+        """
+        coverage: Set[str] = set()
+
+        for item in intelligence_list:
+            concepts = item.get("related_concepts")
+            if concepts and isinstance(concepts, (list, tuple)):
+                for concept in concepts:
+                    if concept:
+                        coverage.add(concept)
+
+        return sorted(list(coverage))
+
+    def _get_coverage_analysis(self, intelligence_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        获取完整的覆盖范围分析
+
+        NS-D-003: 多维度覆盖分析（股票/板块/行业/概念）
+
+        Args:
+            intelligence_list: 热情报列表
+
+        Returns:
+            Dict: 包含以下字段:
+                - total_intelligence: 情报总数
+                - stocks: {count, items} 股票覆盖
+                - sectors: {count, items} 板块覆盖
+                - industries: {count, items} 行业覆盖
+                - concepts: {count, items} 概念覆盖
+        """
+        stocks = self._extract_coverage_stocks(intelligence_list)
+        sectors = self._extract_coverage_sectors(intelligence_list)
+        industries = self._extract_coverage_industries(intelligence_list)
+        concepts = self._extract_coverage_concepts(intelligence_list)
+
+        return {
+            "total_intelligence": len(intelligence_list),
+            "stocks": {
+                "count": len(stocks),
+                "items": stocks,
+            },
+            "sectors": {
+                "count": len(sectors),
+                "items": sectors,
+            },
+            "industries": {
+                "count": len(industries),
+                "items": industries,
+            },
+            "concepts": {
+                "count": len(concepts),
+                "items": concepts,
+            },
+        }
+
     def _format_for_push(self, intelligence_list: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         格式化为推送格式
@@ -168,9 +279,13 @@ class HotIntelligenceSelector:
         # 计算覆盖范围
         coverage = self._extract_coverage_stocks(intelligence_list)
 
+        # 计算多维度覆盖分析
+        coverage_analysis = self._get_coverage_analysis(intelligence_list)
+
         return {
             "intelligence": simplified_intelligence,
             "coverage": coverage,
+            "coverage_analysis": coverage_analysis,
             "timestamp": datetime.now().isoformat(),
         }
 
