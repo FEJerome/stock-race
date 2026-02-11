@@ -19,7 +19,19 @@
 - [**技术架构**](docs/architecture/TECH_STACK.md) - 技术栈与架构设计
 - [**统一数据平台架构**](docs/architecture/UNIFIED_DATA_PLATFORM_ARCHITECTURE.md) - 四服务数据架构设计（最新）
 - [**六服务架构详细设计**](docs/architecture/DETAILED_SERVICE_ARCHITECTURE.md) - 服务间调用与数据流设计（最新）
+- [**六服务架构更新**](docs/architecture/DETAILED_SERVICE_ARCHITECTURE_UPDATE.md) - 2026-02-11架构审查后的关键决策更新
 - [**项目结构**](docs/architecture/PROJECT_STRUCTURE.md) - 目录结构与组织
+
+### 架构决策文档（2026-02-11更新）
+- [**服务依赖冲突分析**](docs/architecture/SERVICE_DEPENDENCY_ANALYSIS.md) - 五服务外部依赖对接需求分析与6个冲突解决方案
+- [**循环依赖解决方案对比**](docs/architecture/CIRCULAR_DEPENDENCY_SOLUTION_COMPARISON.md) - 三种方案详细对比分析
+- [**事件总线风险分析**](docs/architecture/EVENT_BUS_RISK_ANALYSIS.md) - Redis Streams事件总线的风险点、成本、性能分析
+- [**AI对话服务职责划分**](docs/architecture/AI_DIALOGUE_SERVICE_DESIGN.md) - AI对话功能放在Backend还是Trading AI Service的详细分析
+- [**微信小程序游客模式设计**](docs/architecture/MINIPROGRAM_GUEST_MODE_DESIGN.md) - 三层API架构 + 智能过期策略（24h/72h）设计
+- [**Miniprogram数据流优化方案**](docs/architecture/MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md) - 混合分离方案：行情直连+收益后端计算
+- [**AI Service双向依赖解耦设计**](docs/architecture/AI_SERVICE_DECOUPLING_DESIGN.md) - 基于事件总线的完全解耦方案，消除3个双向依赖环
+- [**AI决策服务广度查询需求确认**](docs/architecture/AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
+- [**Redis渐进式部署策略**](docs/architecture/REDIS_DEPLOYMENT_STRATEGY.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
 
 ### 历史架构文档
 - [**系统架构设计**](docs/architecture/SYSTEM_ARCHITECTURE.md) - 早期系统架构（历史版本）
@@ -125,6 +137,12 @@
   - `miniprogram/src/api/` - API服务层
   - 📚 **文档**：[小程序需求规格](docs/miniprogram/REQUIREMENTS.md) | [技术栈](docs/miniprogram/TECH_STACK.md)
 
+### 基础设施模块
+- **文档位置**：`docs/modules/infra/`
+- **关键文件**：
+  - **[基础设施TODO](docs/modules/infra/TODO.md)** - 跨服务架构任务跟踪（事件总线、Redis部署、冲突解决方案）
+  - 共享Redis集群部署、统一事件总线SDK、服务解耦实施计划
+
 ## 🔧 快速操作指南
 
 ### 模块开发命令（module-dev）
@@ -149,12 +167,13 @@ module-dev miniprogram          # 微信小程序开发
 5. 制定具体执行计划，等待你的开发指令
 
 **模块开发规划文档**：
-- [Backend TODO](docs/modules/backend/TODO.md) - 后端开发规划（10个条目）
-- [Frontend TODO](docs/modules/frontend/TODO.md) - 前端开发规划（11个条目）
-- [Market Data Service TODO](docs/modules/market-data-service/TODO.md) - 数据服务规划（10个条目）
-- [Trading AI Service TODO](docs/modules/trading-ai-service/TODO.md) - AI服务规划（12个条目）
-- [News Service TODO](docs/modules/news-service/TODO.md) - 新闻服务规划（10个条目）
-- [Miniprogram TODO](docs/modules/miniprogram/TODO.md) - 小程序规划（10个条目，已完成）
+- [Backend TODO](docs/modules/backend/TODO.md) - 后端开发规划（含架构优化任务C1~C6, O3, O6）
+- [Frontend TODO](docs/modules/frontend/TODO.md) - 前端开发规划
+- [Market Data Service TODO](docs/modules/market-data-service/TODO.md) - 数据服务规划（含架构优化任务C1~C6, O6）
+- [Trading AI Service TODO](docs/modules/trading-ai-service/TODO.md) - AI服务规划（含架构优化任务C1~C4）
+- [News Service TODO](docs/modules/news-service/TODO.md) - 新闻服务规划（含架构优化任务C1~C6）
+- [Miniprogram TODO](docs/modules/miniprogram/TODO.md) - 小程序规划（含架构优化任务C1, C5, O6）
+- **[Infrastructure TODO](docs/modules/infra/TODO.md)** - 基础设施规划（6个冲突解决方案 + 2个优化方案）
 
 ---
 
@@ -228,6 +247,40 @@ curl http://localhost:8001/health
 - 微信小程序：`docs/miniprogram/`
 
 ## 📈 近期开发进展
+
+### 五服务架构冲突分析与解决方案制定
+**项目状态**：✅ **架构审查完成，6个冲突全部解决（2026-02-11）**
+
+**关键成果**：首席架构师完成Backend、Market Data Service、Trading AI Service、News Service、Miniprogram五个服务的TODO.md综合审查，识别6个架构冲突并提供完整解决方案。
+
+**解决的架构冲突**：
+1. ✅ **循环依赖问题** - 采用"共享Redis + 冷启动"混合方案（方案C）
+2. ✅ **事件总线设计不一致** - 统一采用Redis Streams事件总线
+3. ✅ **AI Service双向依赖过多** - 基于事件总线的完全解耦
+4. ✅ **AI对话服务职责分歧** - 确定由Backend实现AI对话功能
+5. ✅ **Miniprogram公开API冲突** - 三层API架构 + 智能游客模式
+6. ✅ **接口定义重复/不一致** - AI决策服务广度查询需求确认
+
+**关键架构决策**：
+- 统一事件总线架构：所有服务通过Redis Streams通信，消除直接依赖
+- AI对话服务：由Backend实现，避免Backend ↔ Trading AI循环依赖
+- Miniprogram游客模式：支持24h/72h智能过期，80%功能无需登录
+- 数据流优化：行情直连Market Data，Backend负载降低90%
+- Redis部署：渐进式策略，从单节点¥0起步到Cluster集群
+
+**详细文档**：
+- 📋 [服务依赖冲突分析](docs/architecture/SERVICE_DEPENDENCY_ANALYSIS.md) - 主文档，6个冲突完整分析
+- 📋 [六服务架构更新](docs/architecture/DETAILED_SERVICE_ARCHITECTURE_UPDATE.md) - 关键决策更新
+- 📋 [循环依赖解决方案对比](docs/architecture/CIRCULAR_DEPENDENCY_SOLUTION_COMPARISON.md)
+- 📋 [事件总线风险分析](docs/architecture/EVENT_BUS_RISK_ANALYSIS.md)
+- 📋 [AI对话服务职责划分](docs/architecture/AI_DIALOGUE_SERVICE_DESIGN.md)
+- 📋 [Miniprogram游客模式设计](docs/architecture/MINIPROGRAM_GUEST_MODE_DESIGN.md)
+- 📋 [Miniprogram数据流优化](docs/architecture/MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md)
+- 📋 [AI Service双向依赖解耦](docs/architecture/AI_SERVICE_DECOUPLING_DESIGN.md)
+- 📋 [AI决策广度查询需求](docs/architecture/AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md)
+- 📋 [Redis渐进式部署策略](docs/architecture/REDIS_DEPLOYMENT_STRATEGY.md)
+
+---
 
 ### Market Data Service 代码审查与文档重构
 **项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**

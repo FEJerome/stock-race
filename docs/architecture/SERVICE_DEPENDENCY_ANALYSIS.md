@@ -2,7 +2,7 @@
 
 > 本文档记录Backend、Market Data Service、Trading AI Service、News Service、Miniprogram五个服务的外部依赖分析结果，包括发现的冲突和优化建议。
 >
-> **文档版本**: v1.7
+> **文档版本**: v1.8
 > **分析日期**: 2026-02-11
 > **更新日期**: 2026-02-11
 > **分析依据**: 各服务TODO.md文档（位于docs/modules/服务名/TODO.md）
@@ -582,20 +582,93 @@ Redis Streams:
 
 ---
 
-### 优化4: 部署共享Redis集群
+### 优化4: 部署共享Redis集群 (渐进式部署策略) ✅ 已有详细方案
 
-当前项目缺少共享Redis，这是循环依赖的根源。
+**问题背景**: 当前项目缺少共享Redis基础设施，这是服务间循环依赖的根源。同时需要考虑个人项目的成本约束。
+
+**解决方案**: **渐进式Redis部署策略**
+
+从最低成本起步，平滑过渡到企业级高可用：
+
+```
+阶段一：起步期（0-6个月）
+┌─────────────┐
+│  单节点     │  ◄── 个人开发/小范围测试
+│  1GB内存   │      成本：¥0（本机/Docker）
+│  无持久化   │      可用性：99%（单点）
+└─────────────┘
+       │
+       ▼  用户增长，需要高可用
+
+阶段二：成长期（6-12个月）
+┌─────────────┐     ┌─────────────┐
+│   Master    │◄───►│    Slave    │  ◄── 小规模生产
+│   主节点    │ 同步  │   从节点    │      成本：¥50-100/月
+│   2GB内存  │       │   2GB内存  │      可用性：99.9%
+└──────┬──────┘     └─────────────┘
+       │
+  ┌────┴────┐
+  │Sentinel │  自动故障转移
+  │  哨兵   │
+  └─────────┘
+       │
+       ▼  数据量增长，需要分片
+
+阶段三：成熟期（12个月+）
+┌─────────┐  ┌─────────┐  ┌─────────┐
+│ Master1 │  │ Master2 │  │ Master3 │  ◄── 大规模生产
+│  Slot   │  │  Slot   │  │  Slot   │      成本：¥300-500/月
+│ 0-5460  │  │ 5461-10922│ 10923-16383│     可用性：99.95%
+└────┬────┘  └────┬────┘  └────┬────┘
+     │            │            │
+┌────┴────┐  ┌────┴────┐  ┌────┴────┐
+│  Slave1 │  │  Slave2 │  │  Slave3 │
+└─────────┘  └─────────┘  └─────────┘
+```
+
+**各阶段适用场景**:
+
+| 阶段 | 用户规模 | 数据量 | QPS | 成本/月 | 触发升级条件 |
+|------|----------|--------|-----|---------|--------------|
+| **阶段一** | < 100人 | < 1GB | < 1000 | ¥0-50 | 起步期 |
+| **阶段二** | 100-1000人 | 1-10GB | 1000-10000 | ¥50-200 | 不能容忍停机 |
+| **阶段三** | 1000+人 | 10GB+ | 10000+ | ¥200-500 | 需要分片 |
+
+**起步期最低配置（推荐当前使用）**:
 
 ```yaml
-# docker-compose.yml 建议配置
+# docker-compose.yml - 起步期配置
 services:
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
+    container_name: stock-race-redis
+    command: >
+      redis-server
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+```
+
+**关键设计**:
+- **阶段一**: 单节点Docker，足够支撑100用户，成本¥0
+- **平滑迁移**: 提供阶段1→2→3的完整迁移脚本，数据不丢失
+- **客户端兼容**: SDK自动适配单节点/Sentinel/Cluster模式
+- **监控告警**: 每个阶段都有配套的健康检查脚本
+
+**详细部署文档**: [Redis渐进式部署策略](./REDIS_DEPLOYMENT_STRATEGY.md)
+
+**包含内容**:
+- 三个阶段的完整Docker Compose配置
+- Sentinel和Cluster的详细配置
+- 平滑迁移脚本（零停机）
+- 成本对比（自建 vs 云托管）
+- 各阶段的运维脚本和监控方案
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -793,6 +866,7 @@ app.get('/api/health', (req, res) => {
 | **AI决策服务广度查询需求确认** | [AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md](./AI_DECISION_BREADTH_QUERY_REQUIREMENTS.md) | News Service和Market Data Service的广度数据查询需求确认 |
 | **Miniprogram数据流优化方案** | [MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md](./MINIPROGRAM_DATA_FLOW_OPTIMIZATION.md) | 混合分离方案：行情直连+收益后端计算详细设计 |
 | **AI Service双向依赖解耦** | [AI_SERVICE_DECOUPLING_DESIGN.md](./AI_SERVICE_DECOUPLING_DESIGN.md) | 基于事件总线的完全解耦方案，消除3个双向依赖环 |
+| **Redis渐进式部署策略** | [REDIS_DEPLOYMENT_STRATEGY.md](./REDIS_DEPLOYMENT_STRATEGY.md) | 从单节点到Cluster的渐进式部署，成本可控平滑扩容 |
 
 ### 架构设计参考
 
@@ -814,7 +888,7 @@ app.get('/api/health', (req, res) => {
 
 ---
 
-*文档版本: v1.7*
+*文档版本: v1.8*
 *更新日期: 2026-02-11*
 *更新内容:*
 * - 添加循环依赖问题解决方案（方案C - Redis+冷启动）*
@@ -824,5 +898,6 @@ app.get('/api/health', (req, res) => {
 * - 添加AI决策服务广度查询需求确认（冲突6解决方案）*
 * - 添加Miniprogram数据流优化方案（混合分离：行情直连+收益后端计算）*
 * - 添加AI Service双向依赖解耦方案（基于事件总线）*
+* - 添加Redis渐进式部署策略（从单节点到Cluster，成本可控）*
 * - 添加任务分配参考*
 *维护者: 首席架构师分析*

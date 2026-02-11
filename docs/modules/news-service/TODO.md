@@ -34,20 +34,20 @@
 
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
-| 统一事件总线接入 | Backend Redis Streams | ⏸️ | 发布`news:breaking`事件到统一事件总线 |
+| 统一事件总线接入 | Backend Redis Streams | 🔄 | 解决中：发布`news:intelligence:extracted`到事件总线，见C2-001, C3-002 |
 
 ### 2.2 等待 AI Service
 
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
-| AI决策反馈优化 | AI Service决策日志 | ⏸️ | 根据AI决策准确率优化情报提取Prompt |
-| AI情报订阅接口 | AI Service需求确认 | ⏸️ | 支持AI Service订阅特定股票新闻 |
+| AI决策反馈优化 | AI Service决策日志 | 🔄 | 解决中：通过事件总线获取AI决策反馈，订阅`ai:performance:report`，见C3-004B |
+| AI情报订阅接口 | AI Service需求确认 | 🔄 | 解决中：Trading AI通过事件总线订阅`news:intelligence:extracted`，见C3-002, C3-003B |
 
 ### 2.3 等待 Market Data Service
 
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
-| 行情异动联动 | Market Data Service事件 | ⏸️ | 根据行情异动（如涨跌幅>7%）触发新闻采集 |
+| 行情异动联动 | Market Data Service事件 | 🔄 | 解决中：订阅`market:alert:price_move`事件触发新闻采集，见C3-001, C3-003 |
 
 ---
 
@@ -91,13 +91,66 @@
 
 ---
 
+## 五、架构优化任务（2026-02-11新增）
+
+### 5.1 冲突解决方案
+
+#### 冲突1：循环依赖解决（共享Redis + 冷启动）
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C1-NS-001 | 接入健康检查SDK | 🔲 | P0 | 服务启动时检查Redis和DeepSeek API状态 |
+| C1-NS-002 | 实现降级运行模式 | 🔲 | P0 | DeepSeek不可用时缓存模式运行 |
+| C1-NS-003 | 实现自动恢复机制 | 🔲 | P0 | API恢复后恢复正常采集模式 |
+
+**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C1-003（健康检查SDK）
+
+#### 冲突2/3：统一事件总线接入与双向依赖解耦
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C2-NS-001 | 集成Python事件总线SDK | 🔲 | P0 | 使用SDK订阅和发布事件 |
+| C3-002 | 发布新闻情报事件 | 🔲 | P0 | 情报提取完成后发布`news:intelligence:extracted` |
+| C3-002B | 发布情感变化事件 | 🔲 | P1 | 情感分析变化时发布`news:sentiment:changed` |
+| C3-003B | 订阅行情异动事件 | 🔲 | P0 | 订阅`market:alert:price_move`触发新闻采集 |
+| C3-003C | 订阅AI决策反馈事件 | 🔲 | P1 | 订阅`ai:performance:report`优化Prompt |
+| C2-NS-002 | 配置消费者组 | 🔲 | P1 | 多实例负载均衡消费行情事件 |
+
+**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（Python SDK）
+
+#### 冲突6：广度查询支持
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C6-NS-001 | 创建股票分类映射表 | 🔲 | P1 | 板块/行业/概念映射数据 |
+| C6-001 | 实现板块情报查询 | 🔲 | P1 | `GET /api/v1/intelligence/sector/{sector}` |
+| C6-002 | 实现行业情报查询 | 🔲 | P1 | `GET /api/v1/intelligence/industry/{industry}` |
+| C6-003 | 实现概念情报查询 | 🔲 | P1 | `GET /api/v1/intelligence/concept/{concept}` |
+| C6-NS-002 | 批量查询优化 | 🔲 | P2 | 支持一次查询多只股票情报 |
+
+**阻塞状态**: C6-NS-001 阻塞 C6-001~C6-003
+
+---
+
+## 六、外部依赖跟踪（更新）
+
+| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 说明 |
+|----------|---------|---------|---------|------|
+| Backend | Redis Streams事件总线 | 🔄 解决中 | 2026-02-11 | 等待统一事件总线SDK |
+| AI Service | 决策反馈接口 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
+| Market Data Service | 行情异动事件 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
+| infra | 事件总线Python SDK | 🔲 待开发 | - | C2-001 |
+| infra | 健康检查SDK | 🔲 待开发 | - | C1-003 |
+
+---
+
 ## 五、外部依赖跟踪
 
 | 依赖服务 | 所需功能 | 当前状态 | 跟进日期 |
 |----------|---------|---------|---------|
-| Backend | Redis Streams事件总线 | 🔲 未开始 | - |
-| AI Service | 决策反馈接口 | 🔲 未确认 | - |
-| Market Data Service | 行情异动事件 | 🔲 未开始 | - |
+| Backend | Redis Streams事件总线 | 🔄 解决中 | 2026-02-11 | 等待统一事件总线SDK，见C2-001 |
+| AI Service | ~~决策反馈接口~~ | 🔄 解决中 | 2026-02-11 | 架构变更：通过事件总线发布`news:intelligence:extracted`，见C3-002 |
+| Market Data Service | 行情异动事件 | 🔄 解决中 | 2026-02-11 | 订阅`market:alert:price_move`触发新闻采集，见C3-001 |
 
 ---
 

@@ -140,20 +140,67 @@
 ### 4.3 长期（3月+）
 
 - [ ] 微信登录真机测试上线
-- [ ] 实时行情WebSocket推送
+- [ ] ~~实时行情WebSocket推送~~ ➤ 架构变更：直连Market Data公开WebSocket，见O6-001
 - [ ] 消息推送通知
 - [ ] 分享功能（收益海报、邀请好友）
 
 ---
 
-## 五、外部依赖跟踪
+## 五、架构优化任务（2026-02-11新增）
+
+### 5.1 冲突解决方案
+
+#### 冲突1：循环依赖解决（共享Redis + 冷启动）
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C1-MP-001 | 实现服务健康检查 | 🔲 | P1 | 检测Backend和Market Data可用性 |
+| C1-MP-002 | 实现降级展示模式 | 🔲 | P1 | 服务不可用时展示缓存数据和提示 |
+
+**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C1-003（健康检查SDK规范）
+
+#### 冲突5：游客模式适配
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C5-007 | 实现游客Token获取 | 🔲 | P0 | 无JWT时自动调用`/api/guest/auth/token` |
+| C5-007B | 游客Token本地存储 | 🔲 | P0 | 本地存储游客Token（有效期24h/72h） |
+| C5-008 | 登录后数据迁移 | 🔲 | P0 | 调用Backend接口绑定游客数据到正式账户 |
+| C5-008B | 本地数据清理 | 🔲 | P1 | 迁移成功后清理本地游客数据 |
+| C5-010 | 游客模式UI适配 | 🔲 | P1 | 提示用户游客状态、剩余时间、登录入口 |
+
+**阻塞状态**: 依赖C5-001~C5-006（Backend游客模式接口）
+
+#### 优化6：Miniprogram数据流优化
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| O6-005 | 实现WebSocket连接管理 | 🔲 | P0 | 连接Market Data公开WebSocket |
+| O6-005B | 实现股票订阅管理 | 🔲 | P0 | 根据AI账户持仓动态订阅/取消订阅 |
+| O6-006 | 实现数据合并逻辑 | 🔲 | P0 | Pinia Store合并实时行情+Backend收益数据 |
+| O6-006B | 实现持仓收益实时计算 | 🔲 | P0 | 基于实时股价+Backend成本数据计算收益 |
+| O6-007 | 实现WebSocket自动重连 | 🔲 | P1 | 断线自动重连，降级HTTP轮询 |
+| O6-009 | 收益数据定期刷新 | 🔲 | P1 | 每分钟调用Backend获取准确累计收益 |
+| O6-010 | 数据一致性保障 | 🔲 | P1 | WebSocket断开时使用Backend缓存数据 |
+
+**阻塞状态**: 依赖O6-001, O6-002（Market Data公开WebSocket）
+
+---
+
+## 六、外部依赖跟踪
 
 | 依赖服务 | 所需功能 | 当前状态 | 跟进日期 |
 |----------|---------|---------|---------|
 | Backend | 微信登录API | 🔲 未开始 | - |
-| Backend | 排行榜公开API | 🔲 未开始 | - |
-| Backend | 行情公开API | 🔲 未开始 | - |
-| Backend | 股票搜索API | 🔲 未开始 | - |
+| Backend | 排行榜公开API | 🔄 解决中 | 2026-02-11 | 架构变更：三层API，公开层`/api/public/ranking`，见O3-001 |
+| Backend | 行情公开API | 🔄 解决中 | 2026-02-11 | 架构变更：三层API，公开层`/api/public/market/quotes`，见O3-001 |
+| Backend | 股票搜索API | 🔄 解决中 | 2026-02-11 | 架构变更：三层API，公开层`/api/public/market/search`，见O3-001 |
+| Backend | 游客Token接口 | 🔲 待开发 | - | `POST /api/guest/auth/token`，见C5-001 |
+| Backend | 游客AI账户接口 | 🔲 待开发 | - | `POST /api/guest/ai-accounts`，见C5-002 |
+| Backend | 游客对话接口 | 🔲 待开发 | - | `POST /api/guest/ai-accounts/:id/chat`，见C5-003 |
+| Market Data | 公开WebSocket | 🔲 待开发 | - | `wss://market-data/ws/public/quotes`，见O6-001 |
+| Backend | 收益数据接口优化 | 🔲 待开发 | - | `GET /api/ai-accounts/{id}/performance`，见O6-003 |
+| infra | 事件总线Node.js SDK | 🔲 待开发 | - | C2-002（如需要事件订阅） |
 
 ---
 

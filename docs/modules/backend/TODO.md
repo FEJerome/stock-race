@@ -39,8 +39,10 @@
 
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
-| AI对话会话 | `POST /api/v1/dialogue/session` | ⏸️ | T-011重构依赖此接口 |
-| 投资偏好提取 | `POST /api/v1/dialogue/preference` | ⏸️ | 从对话提取结构化偏好 |
+| AI对话会话 | `POST /api/v1/dialogue/session` | ⏸️ | ~~T-011重构依赖此接口~~ ➤ 架构变更：由Backend实现，见C4-001 |
+| 投资偏好提取 | `POST /api/v1/dialogue/preference` | ⏸️ | ~~从对话提取结构化偏好~~ ➤ 架构变更：由Backend实现，见C4-003 |
+
+> **架构变更说明**: 根据冲突4解决方案，AI对话服务由Backend实现，不再依赖Trading AI Service。见 [infra/TODO.md](../infra/TODO.md) C4-001~C4-007。
 
 **接口规格**:
 
@@ -68,8 +70,10 @@
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
 | 股票交易状态 | `GET /api/v1/stocks/{symbol}/trading-status` | ⏸️ | T-015需要实时状态 |
-| 状态变更订阅 | `WS /ws/market/stock-status` | ⏸️ | 实时获取停牌/ST变更 |
+| 状态变更订阅 | `WS /ws/market/stock-status` | ⏸️ | ~~实时获取停牌/ST变更~~ ➤ 优化方案：通过事件总线订阅 `market:alert:price_move`，见C2-001 |
 | 市场规则配置 | `GET /api/v1/market/rules` | ⏸️ | 各市场交易规则 |
+
+> **架构变更说明**: 根据冲突2/3解决方案，优先使用事件总线替代部分WebSocket订阅。见 [infra/TODO.md](../infra/TODO.md) C2-001, C3-001。
 
 **接口规格**:
 
@@ -91,7 +95,9 @@
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
 | 新闻情报获取 | `GET /api/v1/intelligence/{stock_code}` | ⏸️ | 预留接口 |
-| 新闻推送订阅 | `SUBSCRIBE news:breaking` | ⏸️ | 突发新闻通知 |
+| 新闻推送订阅 | `SUBSCRIBE news:breaking` | 🔄 | 解决中：通过事件总线订阅 `news:intelligence:extracted`，依赖C2-001, C3-002 |
+
+> **架构变更说明**: 根据冲突2/3解决方案，使用事件总线订阅新闻事件。见 [infra/TODO.md](../infra/TODO.md) C2-001, C3-002。
 
 ---
 
@@ -111,6 +117,97 @@
 | API响应缓存 | P2 | 热点数据Redis缓存 | 1天 |
 | 数据库连接池 | P2 | 优化PostgreSQL连接池配置 | 0.5天 |
 | WebSocket性能 | P3 | 支持更多并发连接 | 1天 |
+
+---
+
+## 四、架构优化任务（2026-02-11新增）
+
+### 4.1 冲突解决方案
+
+#### 冲突1：循环依赖解决（共享Redis + 冷启动）
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C1-BE-001 | 接入健康检查SDK | 🔲 | P0 | 服务启动时检查Redis和依赖服务状态 |
+| C1-BE-002 | 实现降级运行模式 | 🔲 | P0 | 依赖不可用时以降级模式启动，提供有限功能 |
+| C1-BE-003 | 实现自动恢复机制 | 🔲 | P0 | 依赖恢复后自动升级到正常模式 |
+
+**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C1-003（健康检查SDK）
+
+#### 冲突2：统一事件总线接入
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C2-BE-001 | 集成Node.js事件总线SDK | 🔲 | P0 | 使用SDK发布和订阅事件 |
+| C2-BE-002 | 发布账户更新事件 | 🔲 | P0 | 账户状态变更时发布`backend:account:updated` |
+| C2-BE-003 | 发布交易执行事件 | 🔲 | P0 | 交易完成后发布`backend:trade:executed` |
+| C2-BE-004 | 订阅AI决策事件 | 🔲 | P0 | 订阅`ai:decision:made`，接收AI决策通知 |
+| C2-BE-005 | 实现事件处理器 | 🔲 | P0 | 处理AI决策事件，触发交易执行 |
+| C2-BE-006 | 配置消费者组 | 🔲 | P1 | Backend多实例负载均衡消费 |
+
+**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-002（Node.js SDK）
+
+#### 冲突4：AI对话服务实现（Backend承接）
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C4-001 | 实现对话会话接口 | 🔲 | P0 | `POST /api/ai-accounts/{id}/dialogue/session`创建会话 |
+| C4-002 | 实现对话消息接口（SSE） | 🔲 | P0 | `POST /api/ai-accounts/{id}/dialogue/message`流式响应 |
+| C4-003 | 实现画像提取接口 | 🔲 | P0 | `POST /api/ai-accounts/{id}/finalize`提取并激活账户 |
+| C4-004 | 对接DeepSeek API | 🔲 | P0 | 封装DeepSeek调用，支持流式响应 |
+| C4-005 | 实现对话上下文管理 | 🔲 | P0 | Redis存储对话历史，10轮限制 |
+| C4-006 | 实现Token成本控制 | 🔲 | P1 | 单条<2000 tokens，总额度限制 |
+
+**阻塞状态**: 无阻塞，可独立开发
+
+#### 冲突5：Miniprogram游客模式（Backend实现）
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C5-001 | 实现游客Token生成 | 🔲 | P0 | `POST /api/guest/auth/token`，基于openid_hash |
+| C5-002 | 实现游客AI账户创建 | 🔲 | P0 | `POST /api/guest/ai-accounts`，限制2个 |
+| C5-003 | 实现游客AI对话 | 🔲 | P0 | `POST /api/guest/ai-accounts/:id/chat`，限制10轮 |
+| C5-004 | 实现游客数据迁移 | 🔲 | P0 | 登录后游客数据绑定到正式用户，事务保护 |
+| C5-005 | 实现智能过期策略 | 🔲 | P0 | 无AI账户24h过期，有AI账户72h过期 |
+| C5-006 | 创建guest_sessions表 | 🔲 | P0 | 游客会话表设计，含openid_hash、expires_at等字段 |
+
+**阻塞状态**: 无阻塞，可独立开发
+
+#### 优化3：三层API架构
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| O3-001 | 公开API层实现 | 🔲 | P0 | `/api/public/*`行情、排行榜、搜索无需认证 |
+| O3-002 | 游客API层实现 | 🔲 | P0 | `/api/guest/*`游客Token、临时AI账户 |
+| O3-003 | 认证API层保护 | 🔲 | P0 | `/api/*`JWT认证加固 |
+| O3-004 | API路由分层中间件 | 🔲 | P0 | 根据路由前缀应用不同认证策略 |
+
+**阻塞状态**: 依赖C5-001~C5-006（游客模式）
+
+#### 优化6：Miniprogram数据流优化（Backend部分）
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| O6-003 | 优化收益接口 | 🔲 | P0 | `GET /api/ai-accounts/{id}/performance`含持仓成本 |
+| O6-004 | 缓存Market Data数据 | 🔲 | P0 | 5秒TTL缓存行情数据，减少外部依赖 |
+
+**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（事件总线SDK）用于订阅行情
+
+---
+
+## 五、外部依赖跟踪（更新）
+
+| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 |
+|----------|---------|---------|---------|
+| trading-ai-service | `POST /api/v1/dialogue/session` | ❌ 取消 | 2026-02-11 | 架构变更：由Backend实现 |
+| trading-ai-service | `POST /api/v1/dialogue/preference` | ❌ 取消 | 2026-02-11 | 架构变更：由Backend实现 |
+| market-data-service | `GET /api/v1/stocks/{symbol}/trading-status` | ⏸️ 阻塞 | - | 仍需要 |
+| market-data-service | `WS /ws/market/stock-status` | 🔄 解决中 | 2026-02-11 | 替换为事件总线订阅 |
+| market-data-service | `GET /api/v1/market/rules` | ⏸️ 阻塞 | - | 仍需要 |
+| news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 阻塞 | - | 预留接口 |
+| news-service | `SUBSCRIBE news:breaking` | 🔄 解决中 | 2026-02-11 | 替换为事件总线订阅 |
+| infra | 事件总线Node.js SDK | 🔲 待开发 | - | C2-002 |
+| infra | 健康检查SDK | 🔲 待开发 | - | C1-003 |
 
 ---
 
