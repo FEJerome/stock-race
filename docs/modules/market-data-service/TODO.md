@@ -152,9 +152,21 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| O6-001 | 开放公开WebSocket | 🔲 | P0 | `wss://market-data/ws/public/quotes`，无需认证 |
-| O6-002 | 实现股票订阅管理 | 🔲 | P0 | 支持订阅/取消订阅特定股票代码 |
-| O6-008 | WebSocket限流保护 | 🔲 | P1 | 单个连接订阅上限50只股票 |
+| O6-001 | 开放公开WebSocket | ✅ | P0 | `wss://market-data/ws/public/quotes`，无需认证 | 已实现 PublicWebSocketManager 类 |
+| O6-002 | 实现股票订阅管理 | ✅ | P0 | 支持订阅/取消订阅特定股票代码 | 已实现 subscribe/unsubscribe 方法 |
+| O6-008 | WebSocket限流保护 | ✅ | P1 | 单个连接订阅上限50只股票 | MAX_SUBSCRIPTIONS_PER_CONNECTION = 50 |
+
+**实现说明**:
+- 创建 `PublicWebSocketManager` 类，支持公开WebSocket连接（无需JWT认证）
+- 实现股票订阅管理：subscribe、unsubscribe、批量订阅接口
+- WebSocket限流保护：单个连接最多订阅50只股票，超限返回错误
+- 支持实时行情推送，每10秒广播订阅股票列表的最新行情
+- 26个单元测试全部通过
+
+**相关文件**:
+- `src/data_service/api/public_websocket.py` - 公开WebSocket实现
+- `src/data_service/main.py` - WebSocket端点注册 `/ws/public/quotes`
+- `tests/unit/api/test_public_websocket.py` - WebSocket测试
 
 **阻塞状态**: 无阻塞，可独立开发
 

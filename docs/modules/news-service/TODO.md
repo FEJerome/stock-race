@@ -113,7 +113,7 @@
 | C3-002 | 发布新闻情报事件 | ✅ | P0 | 已实现publish_intelligence_event()方法 |
 | C3-002B | 发布情感变化事件 | ✅ | P1 | 已实现publish_sentiment_change_event()方法 |
 | C3-003B | 订阅行情异动事件 | ✅ | P0 | 已订阅market:alert:price_move，实现_handle_price_alert |
-| C3-003C | 订阅AI决策反馈事件 | 🔲 | P1 | 订阅`ai:performance:report`优化Prompt |
+| C3-003C | 订阅AI决策反馈事件 | ✅ | P1 | 订阅`ai:performance:report`优化Prompt |
 | C2-NS-002 | 配置消费者组 | ✅ | P1 | 已配置消费者组news-trigger-group |
 
 **阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（Python SDK）
@@ -232,6 +232,7 @@ producer.publish_event(
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-11 | 完成C3-003C：AI决策反馈事件订阅，实现`_handle_ai_performance_report`处理器，5项测试全部通过 | 开发团队 |
 | 2026-02-11 | 完成P0健康检查SDK集成（C1-NS-001~003）和降级运行模式 | 开发团队 |
 | 2026-02-11 | 完成事件总线集成（C2-NS-001, C3-002, C3-003B）和广度查询API（C6-001~C6-003） | 开发团队 |
 | 2026-02-11 | 完成股票分类映射表（C6-NS-001）和批量查询（C6-NS-002） | 开发团队 |
@@ -241,8 +242,8 @@ producer.publish_event(
 
 ---
 
-*文档版本: v2.0（精简版）*
+*文档版本: v2.1（精简版）*
 *最后更新: 2026-02-11*
-*维护者: 首席架构师*
+*维护者: 开发团队*
 
 **提示：已完成功能详情和代码审查报告请查阅 [HAVE_DONE.md](./HAVE_DONE.md)**
