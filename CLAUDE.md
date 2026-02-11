@@ -284,6 +284,30 @@ curl http://localhost:8001/health
 
 ---
 
+### Miniprogram 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查。重构TODO.md，创建HAVE_DONE.md记录已完成功能（T-001~T-011），更新TEST_SCRIPTS.md索引测试脚本。
+
+**审查结论**：
+- 游客模式设计优秀，无需登录即可访问公开数据，降低用户使用门槛
+- Pinia状态管理规范，5个Store职责分明，持久化配置合理
+- 代码规范统一，TypeScript类型完善，Vue 3 Composition API使用规范
+- UI设计符合A股习惯（红涨绿跌），西式复古精英风格独特
+- E2E测试覆盖游客模式7个场景（20+子测试全部通过）
+
+**待完成工作**：
+- AI经理详情页（T-007）需要完善收益曲线和持仓列表
+- 排行榜/行情页需等待Backend提供公开API
+- 单元测试待补充（T-001~T-010）
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/miniprogram/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/miniprogram/TODO.md)
+- 📋 [测试脚本索引](docs/modules/miniprogram/TEST_SCRIPTS.md)
+
+---
+
 ### 六数据源鲁棒性测试项目（分层采集验证）
 **项目状态**：✅ 测试中，v1.1方案已制定（2026-02-10）
 
