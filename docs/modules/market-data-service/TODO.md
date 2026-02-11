@@ -101,7 +101,78 @@
 
 ---
 
-## 五、外部依赖跟踪
+## 五、架构优化任务（2026-02-11新增）
+
+### 5.1 冲突解决方案
+
+#### 冲突1：循环依赖解决（共享Redis + 冷启动）
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C1-MD-001 | 接入健康检查SDK | ✅ | P0 | 服务启动时检查Redis和依赖服务状态 |
+| C1-MD-002 | 实现降级运行模式 | ✅ | P0 | 采集器降级、数据源降级策略 |
+| C1-MD-003 | 实现自动恢复机制 | ✅ | P0 | 依赖恢复后自动升级到正常采集模式 |
+
+**实现说明**:
+- 创建 `MarketDataHealthService` 类，集成健康检查SDK
+- 实现 Redis 和数据源健康检查依赖
+- 支持降级模式策略（`DegradedModeStrategies`）
+- 自动恢复监控（每10秒检查一次）
+- 15个单元测试全部通过
+
+**相关文件**:
+- `src/data_service/services/health_service.py` - 健康服务实现
+- `tests/unit/services/test_health_service.py` - 健康服务测试
+
+#### 冲突2：统一事件总线接入
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C2-MD-001 | 集成Python事件总线SDK | ✅ | P0 | 使用SDK发布事件到Redis Streams | 已实现 MarketDataEventPublisher 类 |
+| C3-001 | 发布实时行情事件 | ✅ | P0 | 每10秒发布`market:quote:realtime`事件 | 已实现 publish_quote 方法 |
+| C3-001B | 发布价格异动事件 | ✅ | P0 | 涨跌幅>7%时发布`market:alert:price_move` | 已实现 check_and_publish_price_alert 方法 |
+| C3-001C | 发布技术指标事件 | ✅ | P1 | 技术指标更新时发布`market:indicator:updated` | 已实现 publish_indicator_update 方法 |
+| C2-MD-002 | 配置生产者确认 | ✅ | P1 | 确保消息成功写入Redis | 已实现 get_stream_info 和 message ID 返回 |
+
+**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（Python SDK）
+
+#### 冲突6：广度查询支持
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| C6-007 | 创建板块/行业/概念映射表 | 🔲 | P1 | 股票分类映射数据初始化 |
+| C6-004 | 实现板块行情查询 | 🔲 | P1 | `GET /api/v1/market/sector/{sector}/quotes` |
+| C6-005 | 实现行业行情查询 | 🔲 | P1 | `GET /api/v1/market/industry/{industry}/quotes` |
+| C6-006 | 实现指数成分股查询 | 🔲 | P1 | `GET /api/v1/market/index/{index}/components` |
+| C6-008 | 分页和缓存优化 | 🔲 | P2 | 大数据量分页，Redis缓存5分钟 |
+
+**阻塞状态**: C6-007 阻塞 C6-004~C6-006
+
+#### 优化6：Miniprogram数据流优化
+
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
+|------|------|------|--------|----------|
+| O6-001 | 开放公开WebSocket | ✅ | P0 | `wss://market-data/ws/public/quotes`，无需认证 | 已实现 PublicWebSocketManager 类 |
+| O6-002 | 实现股票订阅管理 | ✅ | P0 | 支持订阅/取消订阅特定股票代码 | 已实现 subscribe/unsubscribe 方法 |
+| O6-008 | WebSocket限流保护 | ✅ | P1 | 单个连接订阅上限50只股票 | MAX_SUBSCRIPTIONS_PER_CONNECTION = 50 |
+
+**实现说明**:
+- 创建 `PublicWebSocketManager` 类，支持公开WebSocket连接（无需JWT认证）
+- 实现股票订阅管理：subscribe、unsubscribe、批量订阅接口
+- WebSocket限流保护：单个连接最多订阅50只股票，超限返回错误
+- 支持实时行情推送，每10秒广播订阅股票列表的最新行情
+- 26个单元测试全部通过
+
+**相关文件**:
+- `src/data_service/api/public_websocket.py` - 公开WebSocket实现
+- `src/data_service/main.py` - WebSocket端点注册 `/ws/public/quotes`
+- `tests/unit/api/test_public_websocket.py` - WebSocket测试
+
+**阻塞状态**: 无阻塞，可独立开发
+
+---
+
+## 六、外部依赖跟踪
 
 | 依赖服务 | 所需功能 | 当前状态 | 跟进日期 |
 |----------|---------|---------|---------|
