@@ -25,7 +25,7 @@
 | E-001 | GLM/Moonshot完整适配器 | ✅ | P2 | 已完成：Qwen/Wenxin/Moonshot适配器HTTP调用实现（2026-02-11） |
 | E-002 | K线特征提取服务 | ✅ | P2 | 已完成：K线形态识别、趋势分析、自然语言描述生成（2026-02-11） |
 | E-003 | 多维度风险画像 | ✅ | P2 | 已完成：12种风险类型+4维度评估+风险报告生成（2026-02-11） |
-| D-001 | APScheduler集成 | 🔄 | P0 | 开发中：SchedulerManager单例实现，支持5/15/60分钟定时任务（2026-02-11） |
+| D-001 | APScheduler集成 | ✅ | P0 | 已完成：SchedulerManager单例实现，支持5/15/60分钟定时任务（2026-02-11） |
 
 ---
 
@@ -117,12 +117,12 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C2-TAI-001 | 集成Python事件总线SDK | 🔲 | P0 | 使用SDK订阅和发布事件 |
-| C3-003 | 订阅实时行情事件 | 🔲 | P0 | 订阅`market:quote:realtime`，移除HTTP轮询 |
-| C3-003B | 订阅新闻情报事件 | 🔲 | P0 | 订阅`news:intelligence:extracted`，移除HTTP调用 |
+| C2-TAI-001 | 集成Python事件总线SDK | ✅ | P0 | 已完成：EventBusManager单例实现，支持订阅和发布事件 |
+| C3-003 | 订阅实时行情事件 | ✅ | P0 | 已完成：MarketDataHandler订阅`market:quote:realtime`事件 |
+| C3-003B | 订阅新闻情报事件 | ✅ | P0 | 已完成：NewsHandler订阅`news:intelligence:extracted`事件 |
 | C3-003C | 订阅技术指标事件 | 🔲 | P1 | 订阅`market:indicator:updated` |
-| C3-009 | 实现Token防抖机制 | 🔄 | P0 | 开发中：DebounceKey+TokenDebouncer实现，17个测试通过（2026-02-11） |
-| C3-004 | 发布AI决策事件 | 🔲 | P0 | 决策完成后发布`ai:decision:made` |
+| C3-009 | 实现Token防抖机制 | ✅ | P0 | 已完成：DebounceKey+TokenDebouncer实现，17个测试通过 |
+| C3-004 | 发布AI决策事件 | ✅ | P0 | 已完成：DecisionEventPublisher发布`ai:decision:made`事件 |
 | C3-004B | 发布绩效报告事件 | 🔲 | P1 | 定期发布`ai:performance:report` |
 | C3-006 | 移除Market Data HTTP客户端 | 🔲 | P1 | 删除行情查询HTTP调用 |
 | C3-007 | 移除News Service HTTP客户端 | 🔲 | P1 | 删除新闻查询HTTP调用 |
@@ -162,7 +162,7 @@
 | News Service | 股票新闻接口 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
 | Backend | 决策回调通知 | 🔄 解决中 | 2026-02-11 | 架构变更：事件发布 |
 | infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 |
-| infra | Token防抖机制规范 | 🔲 待开发 | - | C3-009 |
+| infra | Token防抖机制规范 | ✅ 已完成 | 2026-02-11 | C3-009已完成，实现DebounceKey+TokenDebouncer |
 
 ---
 

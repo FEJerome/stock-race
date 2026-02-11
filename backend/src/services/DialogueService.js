@@ -11,6 +11,8 @@
  */
 
 import { getRedisClient } from '../database/redis.js';
+import { DialogueConfigService } from './DialogueConfigService.js';
+import { DialogueAuditService } from './DialogueAuditService.js';
 
 class DialogueService {
   constructor(options = {}) {
@@ -19,16 +21,21 @@ class DialogueService {
     this.deepseekApiKey = options.deepseekApiKey || process.env.DEEPSEEK_API_KEY;
     this.deepseekApiUrl = options.deepseekApiUrl || 'https://api.deepseek.com/v1/chat/completions';
 
-    // 配置
-    this.config = {
-      maxRounds: 10,
-      maxTokensPerMessage: 2000,
-      totalTokenBudget: 10000,
-      sessionExpiry: 24 * 60 * 60, // 24小时（秒）
-      sessionPrefix: 'dialogue:session:',
-      historyPrefix: 'dialogue:history:',
-      preferencePrefix: 'dialogue:preference:'
+    // 初始化配置服务和审计服务
+    this.configService = options.configService || new DialogueConfigService({ db: this.db, redis: this.redis });
+    this.auditService = options.auditService || new DialogueAuditService({ db: this.db, redis: this.redis });
+
+    // Redis键前缀（硬编码，不涉及业务配置）
+    this.keyPrefix = {
+      session: 'dialogue:session:',
+      history: 'dialogue:history:',
+      preference: 'dialogue:preference:'
     };
+
+    // 本地缓存配置
+    this.cachedConfig = null;
+    this.configCacheTime = null;
+    this.configCacheTTL = 60000; // 1分钟本地缓存
   }
 
   /**
@@ -37,6 +44,17 @@ class DialogueService {
   async initialize() {
     try {
       this.redis = getRedisClient();
+
+      // 初始化配置服务和审计服务
+      await this.configService.initialize();
+      await this.auditService.initialize();
+
+      // 注入db连接到服务（如果可用）
+      if (this.db) {
+        this.configService.db = this.db;
+        this.auditService.db = this.db;
+      }
+
       console.log('✅ DialogueService initialized with Redis');
     } catch (error) {
       console.warn('⚠️ DialogueService running without Redis:', error.message);
@@ -45,16 +63,54 @@ class DialogueService {
   }
 
   /**
+   * 获取动态配置（带本地缓存）
+   * @private
+   */
+  async _getConfig() {
+    // 检查本地缓存
+    if (this.cachedConfig && this.configCacheTime &&
+        (Date.now() - this.configCacheTime) < this.configCacheTTL) {
+      return this.cachedConfig;
+    }
+
+    // 从配置服务获取
+    const config = {
+      maxRounds: await this.configService.getConfig('max_rounds'),
+      maxTokensPerMessage: await this.configService.getConfig('max_tokens_per_message'),
+      totalTokenBudget: await this.configService.getConfig('total_token_budget'),
+      sessionExpiryHours: await this.configService.getConfig('session_expiry_hours'),
+      enableContentAudit: await this.configService.getConfig('enable_content_audit')
+    };
+
+    // 更新本地缓存
+    this.cachedConfig = config;
+    this.configCacheTime = Date.now();
+
+    return config;
+  }
+
+  /**
+   * 清除配置缓存（当配置更新时调用）
+   */
+  invalidateConfigCache() {
+    this.cachedConfig = null;
+    this.configCacheTime = null;
+  }
+
+  /**
    * [C4-001] 创建对话会话
    */
   async createSession(accountId, userPreferences = {}) {
+    const config = await this._getConfig();
+    const sessionExpiry = config.sessionExpiryHours * 60 * 60; // 转换为秒
+
     const sessionId = `dlg_${accountId}_${Date.now()}`;
     const session = {
       id: sessionId,
       accountId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      expiresAt: Date.now() + (this.config.sessionExpiry * 1000),
+      expiresAt: Date.now() + (sessionExpiry * 1000),
       roundCount: 0,
       totalTokens: 0,
       userPreferences,
@@ -65,15 +121,15 @@ class DialogueService {
     // 保存到 Redis
     if (this.redis) {
       await this.redis.setEx(
-        `${this.config.sessionPrefix}${sessionId}`,
-        this.config.sessionExpiry,
+        `${this.keyPrefix.session}${sessionId}`,
+        sessionExpiry,
         JSON.stringify(session)
       );
 
       // 初始化对话历史
       await this.redis.setEx(
-        `${this.config.historyPrefix}${sessionId}`,
-        this.config.sessionExpiry,
+        `${this.keyPrefix.history}${sessionId}`,
+        sessionExpiry,
         JSON.stringify([])
       );
     }
@@ -81,7 +137,7 @@ class DialogueService {
     return {
       sessionId,
       roundCount: 0,
-      remainingRounds: this.config.maxRounds,
+      remainingRounds: config.maxRounds,
       expiresAt: session.expiresAt
     };
   }
@@ -94,7 +150,7 @@ class DialogueService {
       throw new Error('Redis not available');
     }
 
-    const data = await this.redis.get(`${this.config.sessionPrefix}${sessionId}`);
+    const data = await this.redis.get(`${this.keyPrefix.session}${sessionId}`);
     if (!data) {
       return null;
     }
@@ -115,24 +171,27 @@ class DialogueService {
       return [];
     }
 
-    const data = await this.redis.get(`${this.config.historyPrefix}${sessionId}`);
+    const data = await this.redis.get(`${this.keyPrefix.history}${sessionId}`);
     return data ? JSON.parse(data) : [];
   }
 
   /**
    * [C4-002] 发送消息并获取AI回复（SSE流式）
    */
-  async sendMessage(sessionId, message, onStream) {
+  async sendMessage(sessionId, message, onStream, clientInfo = {}) {
+    const config = await this._getConfig();
+    const sessionExpiry = config.sessionExpiryHours * 60 * 60;
+
     const session = await this.getSession(sessionId);
     if (!session) {
       throw new Error('SESSION_NOT_FOUND');
     }
 
-    if (session.roundCount >= this.config.maxRounds) {
+    if (session.roundCount >= config.maxRounds) {
       throw new Error('ROUND_LIMIT_REACHED');
     }
 
-    if (session.totalTokens >= this.config.totalTokenBudget) {
+    if (session.totalTokens >= config.totalTokenBudget) {
       throw new Error('TOKEN_BUDGET_EXHAUSTED');
     }
 
@@ -143,7 +202,7 @@ class DialogueService {
     const messages = [
       {
         role: 'system',
-        content: this._buildSystemPrompt(session.userPreferences)
+        content: this._buildSystemPrompt(session.userPreferences, config)
       },
       ...history.map(h => ({
         role: h.role,
@@ -156,7 +215,7 @@ class DialogueService {
     ];
 
     // 调用 DeepSeek API
-    const response = await this._callDeepSeekAPI(messages, true);
+    const response = await this._callDeepSeekAPI(messages, true, config);
 
     // 处理流式响应
     let fullContent = '';
@@ -173,7 +232,7 @@ class DialogueService {
           type: 'message',
           content,
           roundCount: session.roundCount + 1,
-          remainingRounds: this.config.maxRounds - session.roundCount - 1
+          remainingRounds: config.maxRounds - session.roundCount - 1
         });
       }
     }
@@ -191,22 +250,56 @@ class DialogueService {
 
     if (this.redis) {
       await this.redis.setEx(
-        `${this.config.historyPrefix}${sessionId}`,
-        this.config.sessionExpiry,
+        `${this.keyPrefix.history}${sessionId}`,
+        sessionExpiry,
         JSON.stringify(history)
       );
 
       await this.redis.setEx(
-        `${this.config.sessionPrefix}${sessionId}`,
-        this.config.sessionExpiry,
+        `${this.keyPrefix.session}${sessionId}`,
+        sessionExpiry,
         JSON.stringify(session)
       );
+    }
+
+    // 记录审计日志（如果启用）
+    if (config.enableContentAudit) {
+      try {
+        // 记录用户消息
+        await this.auditService.recordMessage({
+          sessionId,
+          accountId: session.accountId,
+          userId: clientInfo.userId || null,
+          role: 'user',
+          content: message,
+          tokenCount: this._estimateTokens(message),
+          roundNumber: session.roundCount,
+          ipAddress: clientInfo.ipAddress || null,
+          userAgent: clientInfo.userAgent || null
+        });
+
+        // 记录AI回复
+        await this.auditService.recordMessage({
+          sessionId,
+          accountId: session.accountId,
+          userId: clientInfo.userId || null,
+          role: 'assistant',
+          content: fullContent,
+          tokenCount,
+          roundNumber: session.roundCount,
+          ipAddress: clientInfo.ipAddress || null,
+          userAgent: clientInfo.userAgent || null
+        });
+      } catch (auditError) {
+        console.error('审计日志记录失败:', auditError);
+        // 审计失败不影响主流程
+      }
     }
 
     return {
       content: fullContent,
       roundCount: session.roundCount,
-      remainingRounds: this.config.maxRounds - session.roundCount,
+      remainingRounds: config.maxRounds - session.roundCount,
       totalTokens: session.totalTokens
     };
   }
@@ -215,6 +308,9 @@ class DialogueService {
    * [C4-003] 提取投资偏好并激活账户
    */
   async finalizeAccount(sessionId) {
+    const config = await this._getConfig();
+    const sessionExpiry = config.sessionExpiryHours * 60 * 60;
+
     const session = await this.getSession(sessionId);
     if (!session) {
       throw new Error('SESSION_NOT_FOUND');
@@ -239,7 +335,7 @@ ${history.map(h => `${h.role}: ${h.content}`).join('\n')}
     // 调用 DeepSeek API 提取偏好
     const response = await this._callDeepSeekAPI([
       { role: 'user', content: extractPrompt }
-    ], false);
+    ], false, config);
 
     let extractedPreference;
     try {
@@ -256,14 +352,14 @@ ${history.map(h => `${h.role}: ${h.content}`).join('\n')}
 
     if (this.redis) {
       await this.redis.setEx(
-        `${this.config.sessionPrefix}${sessionId}`,
-        this.config.sessionExpiry,
+        `${this.keyPrefix.session}${sessionId}`,
+        sessionExpiry,
         JSON.stringify(session)
       );
 
       await this.redis.setEx(
-        `${this.config.preferencePrefix}${session.accountId}`,
-        this.config.sessionExpiry * 7, // 保存7天
+        `${this.keyPrefix.preference}${session.accountId}`,
+        sessionExpiry * 7, // 保存7天
         JSON.stringify(extractedPreference)
       );
     }
@@ -293,18 +389,19 @@ ${history.map(h => `${h.role}: ${h.content}`).join('\n')}
    * 构建系统提示词
    * @private
    */
-  _buildSystemPrompt(userPreferences) {
+  _buildSystemPrompt(userPreferences, config) {
+    const maxRounds = config?.maxRounds || 10;
     return `你是一位专业的AI投资顾问，正在帮助用户创建AI投资账户。
 
 你的职责：
 1. 通过对话了解用户的投资偏好和风险承受能力
 2. 提供专业但易懂的投资建议
-3. 在10轮对话内收集足够信息生成投资画像
+3. 在${maxRounds}轮对话内收集足够信息生成投资画像
 
 用户已知偏好：${JSON.stringify(userPreferences)}
 
 对话限制：
-- 最多10轮对话
+- 最多${maxRounds}轮对话
 - 每轮回复控制在500字以内
 - 保持专业、友好的语气`;
   }
@@ -313,7 +410,9 @@ ${history.map(h => `${h.role}: ${h.content}`).join('\n')}
    * 调用 DeepSeek API
    * @private
    */
-  async _callDeepSeekAPI(messages, stream = false) {
+  async _callDeepSeekAPI(messages, stream = false, config = null) {
+    const maxTokens = config?.maxTokensPerMessage || 2000;
+
     const response = await fetch(this.deepseekApiUrl, {
       method: 'POST',
       headers: {
@@ -324,7 +423,7 @@ ${history.map(h => `${h.role}: ${h.content}`).join('\n')}
         model: 'deepseek-chat',
         messages,
         stream,
-        max_tokens: this.config.maxTokensPerMessage,
+        max_tokens: maxTokens,
         temperature: 0.7
       })
     });

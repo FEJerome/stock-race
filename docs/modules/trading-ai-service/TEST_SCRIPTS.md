@@ -17,7 +17,7 @@
 | C3-009 | Token防抖机制测试 | 1 | 17 | 100% |
 | Phase 3 | API测试 | 3 | ~20 | 预估 88% |
 | Phase 4 | 监控测试 | 1 | ~15 | 预估 92% |
-| **总计** | - | **21** | **~244** | **预估 96%** |
+| **总计** | - | **22** | **~265** | **预估 97%** |
 
 ---
 
@@ -40,6 +40,8 @@
 | 风险画像服务 | ✅ 20/20 通过 | 2026-02-11 | 12种风险+4维度评估 |
 | APScheduler调度器 | ✅ 22/22 通过 | 2026-02-11 | SchedulerManager单例/任务管理/频率控制 |
 | Token防抖机制 | ✅ 17/17 通过 | 2026-02-11 | DebounceKey/TokenDebouncer/5分钟间隔控制 |
+| 事件总线管理器 | ✅ 5/5 通过 | 2026-02-11 | EventBusManager单例/订阅/发布/健康检查 |
+| 事件处理器 | ✅ 16/16 通过 | 2026-02-11 | MarketDataHandler/NewsHandler/缓存管理 |
 
 ### ✅ 已完成测试（2026-02-11）
 
@@ -85,6 +87,54 @@
 
 **依赖**: pytest, pytest-asyncio, APScheduler
 **状态**: ✅ 22/22 通过
+
+---
+
+### 新增测试（事件总线集成）
+
+#### test_event_bus_manager.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_event_bus_manager.py`
+
+**测试功能**:
+- EventBusManager单例模式验证
+- 未初始化状态检查
+- 发布/订阅/健康检查在未初始化时的异常处理
+- 初始化状态属性验证
+
+**核心测试用例**:
+- `test_singleton` - 单例模式验证
+- `test_publish_not_initialized` - 未初始化发布异常
+- `test_subscribe_not_initialized` - 未初始化订阅异常
+- `test_health_check_not_initialized` - 未初始化健康检查
+- `test_is_initialized_property` - 初始化状态属性
+
+**依赖**: pytest, unittest.mock
+**状态**: ✅ 5/5 通过
+
+#### test_event_handlers.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_event_handlers.py`
+
+**测试功能**:
+- MarketDataHandler初始化和缓存管理
+- NewsHandler初始化和情感缓存
+- 事件处理（行情报价、新闻情报）
+- 单股票/多股票代码支持
+- 缓存统计和清理
+- EventHandlerManager统一接口
+
+**核心测试用例**:
+- `test_init` - 处理器初始化
+- `test_start_not_initialized` - 事件总线未初始化异常
+- `test_handle_market_quote` - 行情事件处理
+- `test_handle_news_intelligence` - 新闻事件处理
+- `test_handle_news_intelligence_list_format` - 多股票代码支持
+- `test_get_quote_cached` - 缓存查询
+- `test_clear_cache` - 缓存清理
+- `test_get_cache_stats` - 缓存统计
+- `test_handlers_work_together` - 处理器协作
+
+**依赖**: pytest, pytest-asyncio, unittest.mock
+**状态**: ✅ 16/16 通过
 
 ---
 
@@ -234,7 +284,7 @@ tests/integration/
 | 模块 | 测试文件数 | 测试用例数 | 覆盖率 | 状态 |
 |------|-----------|-----------|--------|------|
 | adapters | 9 | ~69 | 90% | ✅ Qwen/Wenxin/Moonshot测试完成 |
-| services | 8 | ~143 | 90% | ✅ 新增APScheduler调度器和Token防抖测试 |
+| services | 8 | ~164 | 92% | ✅ 新增事件总线集成、APScheduler调度器、Token防抖测试 |
 | prompts | 2 | ~15 | 90% | ✅ |
 | db | 1 | ~10 | 75% | ⚠️ 需补充 |
 | monitoring | 1 | ~15 | 85% | ✅ |
@@ -255,6 +305,7 @@ tests/integration/
 | 2026-02-11 | K线特征提取服务测试 | ✅ 17/17 通过 | 开发智能体 |
 | 2026-02-11 | 多维度风险画像测试 | ✅ 20/20 通过 | 开发智能体 |
 | 2026-02-11 | APScheduler调度器测试 | ✅ 22/22 通过 | 开发智能体 |
+| 2026-02-11 | 事件总线集成测试 | ✅ 21/21 通过 | 首席架构师 |
 | 2026-02-11 | Token防抖机制测试 | ✅ 17/17 通过 | 开发智能体 |
 
 ---

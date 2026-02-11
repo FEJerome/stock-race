@@ -162,12 +162,14 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C4-001 | 实现对话会话接口 | 🔲 | P0 | `POST /api/ai-accounts/{id}/dialogue/session`创建会话 |
-| C4-002 | 实现对话消息接口（SSE） | 🔲 | P0 | `POST /api/ai-accounts/{id}/dialogue/message`流式响应 |
-| C4-003 | 实现画像提取接口 | 🔲 | P0 | `POST /api/ai-accounts/{id}/finalize`提取并激活账户 |
-| C4-004 | 对接DeepSeek API | 🔲 | P0 | 封装DeepSeek调用，支持流式响应 |
-| C4-005 | 实现对话上下文管理 | 🔲 | P0 | Redis存储对话历史，10轮限制 |
-| C4-006 | 实现Token成本控制 | 🔲 | P1 | 单条<2000 tokens，总额度限制 |
+| C4-001 | 实现对话会话接口 | ✅ | P0 | `POST /api/ai-accounts/{id}/dialogue/session`创建会话 |
+| C4-002 | 实现对话消息接口（SSE） | ✅ | P0 | `POST /api/ai-accounts/{id}/dialogue/message`流式响应 |
+| C4-003 | 实现画像提取接口 | ✅ | P0 | `POST /api/ai-accounts/{id}/finalize`提取并激活账户 |
+| C4-004 | 对接DeepSeek API | ✅ | P0 | 封装DeepSeek调用，支持流式响应 |
+| C4-005 | 实现对话上下文管理 | ✅ | P0 | Redis存储对话历史，10轮限制 |
+| C4-006 | 实现Token成本控制 | ✅ | P1 | 单条<2000 tokens，总额度限制 |
+| C4-007 | 实现动态配置系统 | ✅ | P1 | DialogueConfigService，支持分层配置、缓存、热更新 |
+| C4-008 | 实现内容审查机制 | ✅ | P1 | DialogueAuditService，敏感词检测、审计日志、管理接口 |
 
 **阻塞状态**: 无阻塞，可独立开发
 

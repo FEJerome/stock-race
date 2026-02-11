@@ -8,6 +8,8 @@ import marketRoutes from './market.js';
 import rankingsRoutes from './rankings.js';
 import adminRoutes from './admin.js';
 import guestRoutes from './guest.js';
+import dialogueRoutes from './dialogue.js';
+import adminDialogueRoutes from './admin-dialogue.js';
 import { authenticate, optionalAuthenticate, checkPermission, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -116,6 +118,9 @@ router.use('/auth', authRoutes);
 // AI账户路由
 router.use('/ai-accounts', aiAccountsRoutes);
 
+// AI对话路由
+router.use('/ai-accounts', dialogueRoutes);
+
 // 股票路由
 router.use('/stocks', stocksRoutes);
 
@@ -136,6 +141,9 @@ router.use('/guest', guestRoutes);
 
 // 管理员路由（需要管理员权限）
 router.use('/admin', adminRoutes);
+
+// AI对话管理路由（管理员）
+router.use('/admin/dialogue', adminDialogueRoutes);
 
 // 受保护的路由示例（需要认证）
 router.get('/protected', authenticate, (req, res) => {

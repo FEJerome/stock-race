@@ -33,6 +33,49 @@ backend/
 
 ### Phase 6 新增测试（2026-02-11）
 
+### 0. AI对话服务测试（C4-001 ~ C4-008）
+
+#### DialogueService.test.js
+- **位置**: `tests/unit/services/DialogueService.test.js`
+- **功能**: AI对话核心服务测试
+- **测试内容**:
+  - 对话会话管理（创建、获取、过期）
+  - 对话消息处理（SSE流式响应）
+  - 投资偏好提取与画像生成
+  - Token成本控制（轮数限制、预算限制）
+  - 系统提示词构建
+- **对应需求**: C4-001 ~ C4-006
+- **测试数量**: 16 个
+
+#### DialogueConfigService.test.js
+- **位置**: `tests/unit/services/DialogueConfigService.test.js`
+- **功能**: AI对话动态配置服务测试
+- **测试内容**:
+  - 默认配置获取
+  - Redis缓存读取与写入
+  - 数据库配置加载
+  - 配置更新与验证（范围检查）
+  - 配置变更历史记录
+  - 本地缓存与Redis缓存清除
+  - 管理员视图配置获取
+- **对应需求**: C4-007 动态配置系统
+- **测试数量**: 17 个
+
+#### DialogueAuditService.test.js
+- **位置**: `tests/unit/services/DialogueAuditService.test.js`
+- **功能**: AI对话内容审计服务测试
+- **测试内容**:
+  - 消息记录与审计状态判定（approved/flagged/blocked）
+  - 敏感词检测与敏感度评分
+  - 审计日志多维度查询（会话、账户、状态、日期范围）
+  - 消息审核（通过/拒绝）
+  - 敏感词列表更新
+  - 会话审查检查
+  - 审计统计报表
+  - 内容哈希计算
+- **对应需求**: C4-008 内容审查机制
+- **测试数量**: 25 个
+
 ### 1. DialogueGateway.test.js
 - **位置**: `tests/unit/services/DialogueGateway.test.js`
 - **功能**: AI对话服务重构测试（T-011）
@@ -235,7 +278,23 @@ backend/
 
 **Phase 6 新增测试**: 8 个测试文件, 105 个测试用例
 
-**单元测试总计**: 17 个测试文件, 300 个测试
+**单元测试总计**: 18 个测试文件, 314 个测试
+
+---
+
+## 新增测试 (2026-02-11)
+
+### 11. DialogueService.test.js
+- **位置**: `tests/unit/services/DialogueService.test.js`
+- **功能**: AI对话服务单元测试（C4-001~C4-006）
+- **测试内容**:
+  - 对话会话管理（创建、获取、过期）
+  - 对话消息处理（轮数限制、Token预算）
+  - 投资偏好提取与账户激活
+  - Token成本控制
+  - 系统提示词构建
+- **对应需求**: C4-001 ~ C4-006 AI对话服务
+- **测试数量**: 14 个
 
 ---
 

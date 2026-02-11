@@ -1,7 +1,7 @@
 # Backend 模块 - 已完成功能总结
 
 > 本文档记录 Backend（Node.js + Express）模块已完成的全部功能、架构师评价及潜在优化空间。
-> 最后更新：2026-02-11
+> 最后更新：2026-02-11（已添加C4-007/C4-008动态配置与审计系统）
 
 ---
 
@@ -184,6 +184,43 @@
 | T-014 | 交易日历管理系统 | ✅ | `src/services/TradingCalendarService.js` | 优秀 |
 | T-015 | 虚拟交易规则引擎 | ✅ | `src/services/TradingRulesEngine.js` | 优秀 |
 
+**C4-007/C4-008 AI对话动态配置与审计系统（新增）：**
+- **动态配置服务** (`DialogueConfigService.js`):
+  - 支持分层配置：默认配置 → 系统配置 → 账户级别覆盖
+  - 双层缓存策略：本地内存缓存(1分钟) + Redis缓存(5分钟)
+  - 配置热更新：无需重启服务即可生效
+  - 配置变更历史记录，支持审计追溯
+  - 管理员接口支持实时调整配置
+  - 配置项验证：max_rounds(1-50), max_tokens_per_message(500-8000), total_token_budget(1000-50000)
+
+- **内容审计服务** (`DialogueAuditService.js`):
+  - 全量对话内容记录，满足监管合规要求
+  - 敏感词检测：支持自定义敏感词列表
+  - 敏感度评分：每个敏感词+0.15分，0.6分以上自动拦截
+  - 审计状态管理：pending/approved/flagged/blocked四级状态
+  - 告警机制：敏感内容自动触发Redis发布告警
+  - 管理员审核接口：支持人工审核标记内容
+  - 统计报表：按日期统计消息量、拦截率、敏感度趋势
+
+- **管理员接口** (`admin-dialogue.js`):
+  - `GET /api/admin/dialogue/configs` - 获取所有配置
+  - `PUT /api/admin/dialogue/configs/:key` - 更新配置
+  - `GET /api/admin/dialogue/configs/:key/history` - 获取配置变更历史
+  - `GET /api/admin/dialogue/audit-logs` - 查询审计日志（支持多维度过滤）
+  - `POST /api/admin/dialogue/audit/:id/review` - 审核消息
+  - `PUT /api/admin/dialogue/sensitive-words` - 更新敏感词列表
+  - `GET /api/admin/dialogue/audit-stats` - 获取审计统计
+
+- **数据库迁移**:
+  - `004_create_dialogue_config.sql` - 对话配置表
+  - `005_create_dialogue_audit.sql` - 对话审计表
+
+- **测试覆盖**:
+  - `DialogueService.test.js` - 16个测试
+  - `DialogueConfigService.test.js` - 17个测试
+  - `DialogueAuditService.test.js` - 25个测试
+  - 总计58个测试全部通过
+
 **T-015 交易规则引擎 实现细节（架构亮点）：**
 - **支持市场类型**:
   | 市场 | 代码 | 涨跌幅 | 最小数量 | 特殊规则 |
@@ -245,6 +282,8 @@
 │  │  AIService    TradeValidator    TradingRulesEngine     │    │
 │  │  DynamicLimitService    TradingCalendarService         │    │
 │  │  WebSocketService    SessionService                     │    │
+│  │  DialogueService    DialogueConfigService              │    │
+│  │  DialogueAuditService    EventBusService                │    │
 │  └─────────────────────────┬───────────────────────────────┘    │
 │                            │                                     │
 │  数据访问层                                                   │
