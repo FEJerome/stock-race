@@ -1,12 +1,32 @@
 // 常量定义
+// API 配置已迁移至 src/config/env.ts，支持多环境切换
 
-// API 基础配置
-export const API_BASE_URL = 'http://localhost:3001/api'
-export const AI_SERVICE_URL = 'http://localhost:8000/api/v1'
-export const DATA_SERVICE_URL = 'http://localhost:8001'
+import {
+  API_BASE_URL,
+  AI_SERVICE_URL,
+  DATA_SERVICE_URL,
+  WS_BASE_URL,
+  REQUEST_TIMEOUT,
+  ENABLE_LOG,
+  ENV_FEATURES,
+  IS_LOCAL,
+  IS_DEV,
+  IS_PROD,
+} from '@/config/env'
 
-// 请求超时时间
-export const REQUEST_TIMEOUT = 30000
+// 重新导出 API 配置（保持向后兼容）
+export {
+  API_BASE_URL,
+  AI_SERVICE_URL,
+  DATA_SERVICE_URL,
+  WS_BASE_URL,
+  REQUEST_TIMEOUT,
+  ENABLE_LOG,
+  ENV_FEATURES,
+  IS_LOCAL,
+  IS_DEV,
+  IS_PROD,
+}
 
 // 缓存时间配置（秒）
 export const CACHE_TTL = {
