@@ -7,12 +7,15 @@ NS-D-002: 每2分钟发布`news:hot_intelligence_update`事件到事件总线
 import logging
 import asyncio
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 logger = logging.getLogger(__name__)
+
+# NS-D-004: 允许的推送间隔（分钟）
+ALLOWED_PUSH_INTERVALS = [1, 2, 5]
 
 
 class HotIntelligencePusher:
@@ -36,17 +39,146 @@ class HotIntelligencePusher:
         """
         初始化热情报推送器
 
+        NS-D-004: 支持配置推送间隔（1/2/5分钟）
+
         Args:
             selector: HotIntelligenceSelector 实例
             event_producer: EventProducer 实例（事件总线）
-            push_interval_minutes: 推送间隔分钟数（默认2分钟）
+            push_interval_minutes: 推送间隔分钟数（默认2分钟，可选1/2/5）
+
+        Raises:
+            ValueError: 如果 push_interval_minutes 不是允许的值（1, 2, 5）
         """
+        # 验证推送间隔
+        self._validate_push_interval(push_interval_minutes)
+
         self.selector = selector
         self.event_producer = event_producer
         self.push_interval_minutes = push_interval_minutes
 
         self._scheduler: Optional[AsyncIOScheduler] = None
         self._is_running = False
+
+    def _validate_push_interval(self, interval: int) -> None:
+        """
+        验证推送间隔是否有效
+
+        NS-D-004: 只允许 1, 2, 5 分钟
+
+        Args:
+            interval: 推送间隔（分钟）
+
+        Raises:
+            ValueError: 如果间隔无效
+        """
+        if interval not in ALLOWED_PUSH_INTERVALS:
+            raise ValueError(
+                f"Invalid push interval: {interval} minutes. "
+                f"Allowed values are: {ALLOWED_PUSH_INTERVALS}"
+            )
+
+    async def update_push_interval(self, new_interval: int) -> bool:
+        """
+        更新推送间隔
+
+        NS-D-004: 支持运行时动态调整推送频率
+
+        Args:
+            new_interval: 新的推送间隔（分钟，必须是1/2/5）
+
+        Returns:
+            bool: 更新成功返回 True，失败返回 False
+        """
+        try:
+            # 验证新间隔
+            self._validate_push_interval(new_interval)
+
+            # 如果间隔相同，无需更新
+            if new_interval == self.push_interval_minutes:
+                logger.info(f"Push interval is already {new_interval} minutes")
+                return True
+
+            old_interval = self.push_interval_minutes
+            self.push_interval_minutes = new_interval
+
+            # 如果正在运行，重启调度器以应用新间隔
+            if self._is_running and self._scheduler:
+                await self._restart_scheduler()
+
+            logger.info(
+                f"Push interval updated from {old_interval}min to {new_interval}min"
+            )
+            return True
+
+        except ValueError as e:
+            logger.error(f"Failed to update push interval: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error updating push interval: {e}")
+            return False
+
+    async def _restart_scheduler(self) -> bool:
+        """
+        重启调度器以应用新的推送间隔
+
+        Returns:
+            bool: 重启成功返回 True
+        """
+        try:
+            # 停止当前调度器
+            if self._scheduler:
+                self._scheduler.shutdown(wait=True)
+
+            # 创建新的调度器
+            self._scheduler = AsyncIOScheduler()
+
+            # 添加定时任务
+            self._scheduler.add_job(
+                self.push_hot_intelligence,
+                trigger=IntervalTrigger(minutes=self.push_interval_minutes),
+                id="hot_intelligence_push_job",
+                name="Push hot intelligence to event bus",
+                replace_existing=True,
+            )
+
+            # 启动调度器
+            self._scheduler.start()
+
+            logger.info(f"Scheduler restarted with {self.push_interval_minutes}min interval")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to restart scheduler: {e}")
+            return False
+
+    def get_available_intervals(self) -> List[int]:
+        """
+        获取可用的推送间隔列表
+
+        NS-D-004: 返回所有允许的推送间隔
+
+        Returns:
+            List[int]: 允许的间隔列表 [1, 2, 5]
+        """
+        return ALLOWED_PUSH_INTERVALS.copy()
+
+    def get_interval_config(self) -> Dict[str, Any]:
+        """
+        获取推送间隔配置信息
+
+        NS-D-004: 获取当前配置和可用选项
+
+        Returns:
+            Dict: 配置信息
+                - current: 当前间隔
+                - available: 可用间隔列表
+                - unit: 单位（minutes）
+        """
+        return {
+            "current": self.push_interval_minutes,
+            "available": self.get_available_intervals(),
+            "unit": "minutes",
+        }
 
     @property
     def is_running(self) -> bool:
