@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 class ConnectionManager:
     """Manage WebSocket connections."""
 
+    # Maximum number of symbols per connection (O6-008)
+    MAX_SUBSCRIPTIONS_PER_CONNECTION = 50
+
     def __init__(self):
         self.active_connections: Dict[str, Set[WebSocket]] = {}
         self.connection_subscriptions: Dict[WebSocket, Set[str]] = {}
@@ -56,17 +59,36 @@ class ConnectionManager:
 
         logger.info(f"WebSocket disconnected: {client_id or 'anonymous'}")
 
-    def subscribe(self, websocket: WebSocket, symbols: List[str]):
+    def subscribe(self, websocket: WebSocket, symbols: List[str]) -> List[str]:
         """
-        Subscribe to stock symbols.
+        Subscribe to stock symbols with limit enforcement (O6-008).
 
         Args:
             websocket: WebSocket connection
             symbols: List of stock symbols to subscribe to
+
+        Returns:
+            List of actually subscribed symbols (may be limited)
         """
-        if websocket in self.connection_subscriptions:
-            self.connection_subscriptions[websocket].update(symbols)
-            logger.debug(f"Subscribed {websocket} to symbols: {symbols}")
+        if websocket not in self.connection_subscriptions:
+            return []
+
+        current_subs = self.connection_subscriptions[websocket]
+        available_slots = self.MAX_SUBSCRIPTIONS_PER_CONNECTION - len(current_subs)
+
+        if available_slots <= 0:
+            logger.warning(f"Connection {websocket} has reached max subscriptions limit ({self.MAX_SUBSCRIPTIONS_PER_CONNECTION})")
+            return []
+
+        # Only subscribe up to the limit
+        symbols_to_add = symbols[:available_slots]
+        current_subs.update(symbols_to_add)
+
+        if len(symbols) > available_slots:
+            logger.warning(f"Subscription limited: requested {len(symbols)}, added {len(symbols_to_add)} (max: {self.MAX_SUBSCRIPTIONS_PER_CONNECTION})")
+
+        logger.debug(f"Subscribed {websocket} to symbols: {symbols_to_add}")
+        return symbols_to_add
 
     def unsubscribe(self, websocket: WebSocket, symbols: List[str]):
         """
@@ -76,7 +98,14 @@ class ConnectionManager:
             websocket: WebSocket connection
             symbols: List of stock symbols to unsubscribe from
         """
-        if websocket in self.connection_subscriptions:
+        if websocket not in self.connection_subscriptions:
+            return
+
+        # If symbols is empty, unsubscribe from all (clear all subscriptions)
+        if not symbols:
+            self.connection_subscriptions[websocket].clear()
+            logger.debug(f"Unsubscribed {websocket} from all symbols")
+        else:
             for symbol in symbols:
                 self.connection_subscriptions[websocket].discard(symbol)
             logger.debug(f"Unsubscribed {websocket} from symbols: {symbols}")
@@ -200,7 +229,7 @@ class RealtimeService:
             }
         )
         await self.connection_manager.send_personal_message(
-            welcome_message.dict(),
+            welcome_message.model_dump(),
             websocket
         )
 
@@ -265,22 +294,24 @@ class RealtimeService:
             await self._send_error(websocket, "No valid symbols provided")
             return
 
-        # Subscribe to symbols
-        self.connection_manager.subscribe(websocket, valid_symbols)
+        # Subscribe to symbols (with limit enforcement)
+        subscribed_symbols = self.connection_manager.subscribe(websocket, valid_symbols)
 
         # Send confirmation
         response = RealtimeMessage(
             type="subscription_confirmed",
             data={
-                "symbols": valid_symbols,
-                "message": f"Subscribed to {len(valid_symbols)} symbols",
+                "symbols": subscribed_symbols,
+                "requested_count": len(valid_symbols),
+                "subscribed_count": len(subscribed_symbols),
+                "message": f"Subscribed to {len(subscribed_symbols)} symbols",
                 "timestamp": datetime.now().isoformat()
             }
         )
-        await self.connection_manager.send_personal_message(response.dict(), websocket)
+        await self.connection_manager.send_personal_message(response.model_dump(), websocket)
 
         # Send current data for subscribed symbols
-        await self._send_current_data(websocket, valid_symbols)
+        await self._send_current_data(websocket, subscribed_symbols)
 
     async def _handle_unsubscribe(self, websocket: WebSocket, data: Dict[str, Any]):
         """
@@ -308,7 +339,7 @@ class RealtimeService:
                 "timestamp": datetime.now().isoformat()
             }
         )
-        await self.connection_manager.send_personal_message(response.dict(), websocket)
+        await self.connection_manager.send_personal_message(response.model_dump(), websocket)
 
     async def _handle_ping(self, websocket: WebSocket):
         """
@@ -324,7 +355,7 @@ class RealtimeService:
                 "message": "pong"
             }
         )
-        await self.connection_manager.send_personal_message(response.dict(), websocket)
+        await self.connection_manager.send_personal_message(response.model_dump(), websocket)
 
     async def _handle_get_subscriptions(self, websocket: WebSocket):
         """
@@ -342,7 +373,7 @@ class RealtimeService:
                 "timestamp": datetime.now().isoformat()
             }
         )
-        await self.connection_manager.send_personal_message(response.dict(), websocket)
+        await self.connection_manager.send_personal_message(response.model_dump(), websocket)
 
     async def _handle_get_stats(self, websocket: WebSocket):
         """
@@ -359,7 +390,7 @@ class RealtimeService:
                 "timestamp": datetime.now().isoformat()
             }
         )
-        await self.connection_manager.send_personal_message(response.dict(), websocket)
+        await self.connection_manager.send_personal_message(response.model_dump(), websocket)
 
     async def _send_current_data(self, websocket: WebSocket, symbols: List[str]):
         """
@@ -378,12 +409,12 @@ class RealtimeService:
                         type="quote_update",
                         data={
                             "symbol": symbol,
-                            "quote": quote.dict(),
+                            "quote": quote.model_dump(),
                             "timestamp": datetime.now().isoformat()
                         }
                     )
                     await self.connection_manager.send_personal_message(
-                        message.dict(),
+                        message.model_dump(),
                         websocket
                     )
             except Exception as e:
@@ -404,7 +435,7 @@ class RealtimeService:
                 "timestamp": datetime.now().isoformat()
             }
         )
-        await self.connection_manager.send_personal_message(response.dict(), websocket)
+        await self.connection_manager.send_personal_message(response.model_dump(), websocket)
 
     async def publish_quote_update(self, quote):
         """
@@ -417,7 +448,7 @@ class RealtimeService:
             type="quote_update",
             data={
                 "symbol": quote.symbol,
-                "quote": quote.dict(),
+                "quote": quote.model_dump(),
                 "timestamp": datetime.now().isoformat()
             }
         )
@@ -425,7 +456,7 @@ class RealtimeService:
         # Broadcast to all subscribers of this symbol
         await self.connection_manager.broadcast_to_subscribers(
             quote.symbol,
-            message.dict()
+            message.model_dump()
         )
 
     async def publish_market_update(self, update_type: str, data: Dict[str, Any]):
@@ -445,7 +476,7 @@ class RealtimeService:
         )
 
         # Broadcast to all connected clients
-        await self.connection_manager.broadcast_to_all(message.dict())
+        await self.connection_manager.broadcast_to_all(message.model_dump())
 
     async def publish_system_message(self, message_type: str, data: Dict[str, Any]):
         """
@@ -464,7 +495,7 @@ class RealtimeService:
         )
 
         # Broadcast to all connected clients
-        await self.connection_manager.broadcast_to_all(message.dict())
+        await self.connection_manager.broadcast_to_all(message.model_dump())
 
     async def start_redis_subscription(self):
         """Start Redis subscription for real-time updates."""
@@ -525,5 +556,5 @@ class RealtimeService:
             }
         )
 
-        await self.connection_manager.broadcast_to_all(disconnect_message.dict())
+        await self.connection_manager.broadcast_to_all(disconnect_message.model_dump())
         logger.info("Real-time service closed")
