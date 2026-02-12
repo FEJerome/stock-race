@@ -31,3 +31,16 @@ async def close_redis() -> None:
         logger.info("Redis connection closed")
     except Exception as e:
         logger.error(f"Failed to close Redis connection: {e}")
+
+
+async def get_redis_client() -> Optional[redis.Redis]:
+    """Get the Redis client instance.
+
+    Returns:
+        Redis client if connected, None otherwise.
+    """
+    from ..utils.cache import cache_manager
+
+    if cache_manager._redis:
+        return cache_manager._redis
+    return None
