@@ -159,15 +159,23 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C6-TAI-001 | 支持板块级决策 | ⏸️ | P1 | **阻塞**：等待Market Data Service完成C6-004板块行情查询接口 |
-| C6-TAI-002 | 支持行业级决策 | ⏸️ | P1 | **阻塞**：等待Market Data Service完成C6-005行业行情查询接口 |
-| C6-TAI-003 | 实现批量股票决策 | ⏸️ | P1 | **阻塞**：等待Market Data Service完成C6-006股票列表查询接口 |
+| C6-TAI-001 | 支持板块级决策 | ✅ | P1 | 已完成：MarketDataClient + BreadthDecisionService，调用GET /api/v1/market/sector/{sector}/quotes |
+| C6-TAI-002 | 支持行业级决策 | ✅ | P1 | 已完成：调用GET /api/v1/market/industry/{industry}/quotes |
+| C6-TAI-003 | 实现批量股票决策 | ✅ | P1 | 已完成：调用GET /api/v1/market/index/{index}/components，支持指数成分股批量分析 |
 
-**阻塞详情**:
-- 依赖服务: Market Data Service
-- 依赖任务: C6-004（板块行情）、C6-005（行业行情）、C6-006（股票列表）
-- 阻塞原因: 需要广度查询接口支持板块/行业级分析和批量股票筛选
-- 预计解锁时间: 等待Market Data Service排期开发
+**完成详情** (2026-02-12):
+- ✅ MarketDataClient 实现：封装 HTTP 调用 Market Data Service 广度查询接口
+- ✅ BreadthDecisionService 实现：板块/行业/批量决策生成
+- ✅ API 集成：GET /api/v1/market/sector/{sector}/quotes
+- ✅ API 集成：GET /api/v1/market/industry/{industry}/quotes
+- ✅ API 集成：GET /api/v1/market/index/{index}/components
+- ✅ AI 决策提示词：针对板块、行业、批量场景优化
+- ✅ 单元测试：25个测试全部通过
+- 相关文件:
+  - `services/market_data_client.py` - HTTP 客户端
+  - `services/breadth_decision_service.py` - 决策服务
+  - `tests/unit/services/test_market_data_client.py` - 客户端测试
+  - `tests/unit/services/test_breadth_decision_service.py` - 决策服务测试
 
 ---
 
@@ -280,6 +288,9 @@ producer.publish_event(
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-12 | 完成C6-TAI-001~003板块/行业/批量决策服务 | 开发智能体 |
+| 2026-02-12 | 新增MarketDataClient和BreadthDecisionService | 开发智能体 |
+| 2026-02-12 | 新增单元测试：market_data_client10+breadth_decision15 | 开发智能体 |
 | 2026-02-12 | 完成技术债务：独立单元测试（新增58个测试） | 开发智能体 |
 | 2026-02-12 | 完成C1-TAI-001~003健康检查SDK接入 | 开发智能体 |
 | 2026-02-12 | 完成C3-004B绩效报告事件发布器 | 开发智能体 |
@@ -305,12 +316,21 @@ producer.publish_event(
 | Phase 5 增强功能 | 4 | 4 | 0 | 0 | 0 |
 | 阻塞任务 | 10 | 0 | 0 | 10 | 0 |
 | 技术债务 | 3 | 1 | 0 | 1 | 1 |
-| 架构优化任务 | 13 | 8 | 0 | 5 | 0 |
-| **总计** | **30** | **13** | **0** | **16** | **1** |
+| 架构优化任务 | 13 | 11 | 0 | 2 | 0 |
+| **总计** | **30** | **16** | **0** | **13** | **1** |
 
 ### 7.2 本次开发完成内容（2026-02-12）
 
-1. **C1-TAI-001~003 健康检查与降级模式**
+1. **C6-TAI-001~003 板块/行业/批量决策服务**
+   - 实现 MarketDataClient HTTP 客户端，封装 Market Data Service 接口
+   - 实现 BreadthDecisionService 广度决策服务
+   - 支持板块级决策：GET /api/v1/market/sector/{sector}/quotes
+   - 支持行业级决策：GET /api/v1/market/industry/{industry}/quotes
+   - 支持批量决策：GET /api/v1/market/index/{index}/components
+   - 针对板块、行业、批量场景优化 AI 提示词
+   - 新增 25 个单元测试全部通过
+
+2. **C1-TAI-001~003 健康检查与降级模式**
    - 使用 infra/health-check SDK 实现健康检查服务
    - 支持 NORMAL/DEGRADED/OFFLINE 三种服务模式
    - 每10秒自动检查依赖状态，支持自动恢复
@@ -339,9 +359,6 @@ producer.publish_event(
 | C3-006 | 移除Market Data HTTP客户端 | 等待事件总线可完全替代HTTP | Market Data Service | C3-001 |
 | C3-007 | 移除News Service HTTP客户端 | 等待事件总线可完全替代HTTP | News Service | C3-002 |
 | C3-008 | 移除Backend HTTP回调 | 等待Backend可接收决策事件 | Backend | C3-004订阅 |
-| C6-TAI-001 | 板块级决策 | 等待广度查询接口 | Market Data Service | C6-004 |
-| C6-TAI-002 | 行业级决策 | 等待广度查询接口 | Market Data Service | C6-005 |
-| C6-TAI-003 | 批量股票决策 | 等待股票列表接口 | Market Data Service | C6-006 |
 | K线数据接口 | 低频数据查询 | 仍需HTTP接口 | Market Data Service | - |
 | 集成测试 | 对接测试 | 等待服务就绪 | Market Data/News | C3-001/C3-002 |
 

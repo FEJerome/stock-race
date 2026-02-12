@@ -258,6 +258,8 @@ tests/unit/
 │   ├── test_event_handlers.py             # ✅ 事件处理器 - 23测试通过
 │   ├── test_decision_event_publisher.py   # ✅ 决策事件发布 - 8测试通过
 │   ├── test_token_debouncer.py            # ✅ Token防抖 - 17测试通过
+│   ├── test_market_data_client.py         # ✅ Market Data HTTP客户端 - 10测试通过
+│   ├── test_breadth_decision_service.py   # ✅ 广度决策服务 - 15测试通过
 │   ├── test_decision_service.py           # 决策服务
 │   ├── test_data_fusion_service.py        # 数据融合
 │   └── test_prompt_craft_service.py       # 提示词提炼
