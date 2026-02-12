@@ -3,7 +3,7 @@ import { BaseRepository } from './BaseRepository.js';
 export class DecisionLogRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'decisionLog';
+    this.modelName = 'DecisionLog';
   }
 
   /**

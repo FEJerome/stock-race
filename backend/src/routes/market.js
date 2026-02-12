@@ -409,4 +409,80 @@ router.get('/trends', optionalAuthenticate, (req, res) => marketController.getMa
  */
 router.get('/indices', optionalAuthenticate, (req, res) => marketController.getIndices(req, res));
 
+/**
+ * @swagger
+ * /market/status:
+ *   get:
+ *     tags: [市场]
+ *     summary: 获取市场状态
+ *     description: 获取当前市场状态，包括交易时间、数据服务状态、下次交易时间等信息
+ *     responses:
+ *       200:
+ *         description: 获取市场状态成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router.get('/status', (req, res) => marketController.getMarketStatus(req, res));
+
+/**
+ * @swagger
+ * /market/realtime:
+ *   get:
+ *     tags: [市场]
+ *     summary: 获取实时市场数据
+ *     description: 获取实时市场数据，包括市场统计、涨跌榜、热门行业等
+ *     parameters:
+ *       - in: query
+ *         name: market
+ *         schema:
+ *           type: string
+ *         description: 市场代码过滤
+ *     responses:
+ *       200:
+ *         description: 获取实时市场数据成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router.get('/realtime', optionalAuthenticate, (req, res) => marketController.getRealtime(req, res));
+
+/**
+ * @swagger
+ * /market/history:
+ *   get:
+ *     tags: [市场]
+ *     summary: 获取市场历史数据
+ *     description: 获取指定股票的历史数据
+ *     parameters:
+ *       - in: query
+ *         name: symbol
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 股票代码
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: 历史数据天数
+ *     responses:
+ *       200:
+ *         description: 获取市场历史数据成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: 请求参数错误
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/history', optionalAuthenticate, (req, res) => marketController.getHistory(req, res));
+
 export default router;

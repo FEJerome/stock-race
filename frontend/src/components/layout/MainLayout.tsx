@@ -244,9 +244,12 @@ const MainLayout: React.FC = () => {
                   padding: '8px 12px',
                   borderRadius: token.borderRadius,
                   transition: 'all 0.3s',
-                  ':hover': {
-                    background: token.colorFillTertiary,
-                  },
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = token.colorFillTertiary;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
                 }}
               >
                 <Avatar

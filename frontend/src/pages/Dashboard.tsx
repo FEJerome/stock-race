@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Row,
   Col,
@@ -14,6 +14,7 @@ import {
   Grid,
   Spin,
   Alert,
+  Select,
 } from 'antd';
 import {
   ArrowUpOutlined,
@@ -27,6 +28,7 @@ import {
   FallOutlined,
   DashboardOutlined,
   ReloadOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { useQuery } from 'react-query';
 import ProfitChart from '../components/charts/ProfitChart';
@@ -36,33 +38,74 @@ import AIDecisionLog from '../components/ai/AIDecisionLog';
 import { tradingService } from '../services/trading.service';
 import { marketService } from '../services/market.service';
 import { aiService } from '../services/ai.service';
+import { marketStatusService } from '../services/market-status.service';
 import { formatCurrency, formatPercent } from '../utils/formatters';
+import { AIAccount } from '../types/api.types';
 
 const { Title, Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
+const { Option } = Select;
 
 const Dashboard: React.FC = () => {
   const screens = useBreakpoint();
+  const [selectedAIAccountId, setSelectedAIAccountId] = useState<string>('');
 
-  // 使用React Query获取数据
+  // 获取用户的所有AI账户
+  const { data: aiAccounts, isLoading: aiAccountsLoading } = useQuery(
+    'aiAccounts',
+    () => aiService.getAIAccounts(),
+    {
+      onSuccess: (accounts) => {
+        // 如果有AI账户但未选择，默认选择第一个活跃账户
+        if (accounts.length > 0 && !selectedAIAccountId) {
+          const activeAccount = accounts.find(account => account.isActive) || accounts[0];
+          setSelectedAIAccountId(activeAccount.id);
+        }
+      }
+    }
+  );
+
+  // 获取市场状态
+  const { data: marketStatus, isLoading: marketStatusLoading } = useQuery(
+    'marketStatus',
+    () => marketStatusService.getMarketStatus(),
+    {
+      refetchInterval: 60000, // 每60秒刷新一次
+      staleTime: 30000, // 30秒内不使用网络请求
+    }
+  );
+
+  // 使用React Query获取数据，根据选中的AI账户
   const { data: portfolioSummary, isLoading: portfolioLoading, refetch: refetchPortfolio } = useQuery(
-    'portfolioSummary',
-    () => tradingService.getPortfolioSummary()
+    ['portfolioSummary', selectedAIAccountId],
+    () => tradingService.getPortfolioSummary(selectedAIAccountId),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: positions, isLoading: positionsLoading, refetch: refetchPositions } = useQuery(
-    'positions',
-    () => tradingService.getPositions()
+    ['positions', selectedAIAccountId],
+    () => tradingService.getPositions(selectedAIAccountId),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: recentOrders, isLoading: ordersLoading, refetch: refetchOrders } = useQuery(
-    'recentOrders',
-    () => tradingService.getOrders({ page: 1, pageSize: 5 })
+    ['recentOrders', selectedAIAccountId],
+    () => tradingService.getOrders({ page: 1, pageSize: 5, accountId: selectedAIAccountId }),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: aiDecisions, isLoading: aiDecisionsLoading, refetch: refetchAiDecisions } = useQuery(
-    'aiDecisions',
-    () => aiService.getAIDecisions({ page: 1, pageSize: 5 })
+    ['aiDecisions', selectedAIAccountId],
+    () => aiService.getAIDecisions(selectedAIAccountId, { page: 1, pageSize: 5 }),
+    {
+      enabled: !!selectedAIAccountId,
+    }
   );
 
   const { data: marketData, isLoading: marketLoading, refetch: refetchMarket } = useQuery(
@@ -106,7 +149,7 @@ const Dashboard: React.FC = () => {
     reason: decision.reason,
   })) || [];
 
-  const isLoading = portfolioLoading || positionsLoading || ordersLoading || aiDecisionsLoading || marketLoading;
+  const isLoading = portfolioLoading || positionsLoading || ordersLoading || aiDecisionsLoading || marketLoading || aiAccountsLoading;
 
   if (isLoading) {
     return (
@@ -139,7 +182,81 @@ const Dashboard: React.FC = () => {
             </Button>
           </Col>
         </Row>
+
+        {/* AI账户选择器 */}
+        <Row align="middle" gutter={[16, 0]}>
+          <Col>
+            <Text strong>
+              <RobotOutlined /> 选择AI账户:
+            </Text>
+          </Col>
+          <Col flex="auto">
+            <Select
+              style={{ width: '100%', maxWidth: 300 }}
+              placeholder="选择AI账户查看投资组合"
+              value={selectedAIAccountId || undefined}
+              onChange={setSelectedAIAccountId}
+              loading={aiAccountsLoading}
+              disabled={aiAccountsLoading}
+            >
+              {aiAccounts?.map((account: AIAccount) => (
+                <Option key={account.id} value={account.id}>
+                  {account.name} ({account.modelType}) {account.isActive ? '✅' : '⏸️'}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col>
+            <Text type="secondary">
+              {selectedAIAccountId ? `当前查看: ${aiAccounts?.find(a => a.id === selectedAIAccountId)?.name || '未知账户'}` : '请选择AI账户'}
+            </Text>
+          </Col>
+        </Row>
       </Space>
+
+      {/* 市场状态显示 */}
+      {marketStatus && !marketStatusLoading && (
+        <Alert
+          message={`市场状态: ${marketStatus.description}`}
+          description={
+            <div>
+              <div>当前状态: {marketStatus.status === 'open' ? '交易中' :
+                marketStatus.status === 'closed' ? '已收盘' :
+                marketStatus.status === 'pre_open' ? '开盘前' :
+                marketStatus.status === 'lunch_break' ? '午间休市' :
+                marketStatus.status === 'after_hours' ? '收盘后' :
+                marketStatus.status === 'weekend' ? '周末休市' : '未知状态'}</div>
+              {marketStatus.nextTradingTime && (
+                <div>下次交易时间: {new Date(marketStatus.nextTradingTime).toLocaleString('zh-CN')}</div>
+              )}
+              {marketStatus.dataServiceStatus !== 'healthy' && (
+                <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
+                  数据服务状态: {marketStatus.dataServiceStatus === 'degraded' ? '部分降级' : '不可用'}，
+                  数据状态: {marketStatus.dataStatus === 'realtime' ? '实时' : '历史'}数据
+                  {marketStatus.isFallback && '（降级数据）'}
+                </div>
+              )}
+            </div>
+          }
+          type={marketStatus.status === 'open' ? 'success' :
+                marketStatus.status === 'closed' || marketStatus.status === 'after_hours' ? 'info' :
+                marketStatus.status === 'pre_open' || marketStatus.status === 'lunch_break' ? 'warning' :
+                marketStatus.status === 'weekend' ? 'warning' : 'info'}
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      )}
+
+      {/* 如果没有选择AI账户，显示提示 */}
+      {!selectedAIAccountId && (
+        <Alert
+          message="请选择AI账户"
+          description="请从上方选择器中选择一个AI账户，以查看该账户的投资组合数据和交易记录。"
+          type="info"
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      )}
 
       {/* 统计数据卡片 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -244,7 +361,7 @@ const Dashboard: React.FC = () => {
             {/* 持仓汇总 */}
             <Col span={24}>
               <Card title="持仓汇总" extra={<WalletOutlined />}>
-                <PortfolioSummary />
+                <PortfolioSummary accountId={selectedAIAccountId} />
               </Card>
             </Col>
 

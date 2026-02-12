@@ -240,18 +240,24 @@ pip --version
 ## 📚 参考文档
 
 ### 核心文档
-- **项目主文档**：[CLAUDE.md](../CLAUDE.md) - 完整的技术架构和开发指南
+- **项目主文档**：[CLAUDE.md](../../CLAUDE.md) - 项目文档导航中心
+- **代码结构地图**：[CODE_MAP.md](../architecture/CODE_MAP.md) - 项目结构与文件功能
 - **开发进度报告**：[progress_report.md](../progress_report.md) - 已完成功能清单和验证步骤
 - **数据获取方案**：[data_acquisition_plan.md](../data_acquisition_plan.md) - 多数据源策略和技术实现
 
 ### 架构文档
-- **技术栈说明**：[TECH_STACK.md](../architecture/TECH_STACK.md)
-- **系统架构**：[SYSTEM_ARCHITECTURE.md](../architecture/SYSTEM_ARCHITECTURE.md)
-- **数据库设计**：[DATABASE_DESIGN.md](../architecture/DATABASE_DESIGN.md)
+- **技术架构**：[TECH_STACK.md](../architecture/TECH_STACK.md) - 技术栈版本和选型理由
+- **系统架构**：[SYSTEM_ARCHITECTURE.md](../architecture/SYSTEM_ARCHITECTURE.md) - 混合架构设计
+- **数据库设计**：[DATABASE_DESIGN.md](../architecture/DATABASE_DESIGN.md) - 数据库ER图和表结构
+- **API接口规范**：[API_SPECIFICATION.md](../architecture/API_SPECIFICATION.md) - RESTful API设计
 
 ### 开发规范
-- **编码标准**：[CODING_STANDARDS.md](../development/CODING_STANDARDS.md)
-- **多智能体协作**：[GENERIC_COLLABORATION_PLAN.md](../agents/GENERIC_COLLABORATION_PLAN.md)
+- **编码标准**：[CODING_STANDARDS.md](../development/CODING_STANDARDS.md) - 编码标准与最佳实践
+- **智能体协作**：[GENERIC_COLLABORATION_PLAN.md](../agents/GENERIC_COLLABORATION_PLAN.md) - 多智能体工作流程
+
+### 部署文档
+- **部署指南**：[DEPLOYMENT_GUIDE.md](../deployment/DEPLOYMENT_GUIDE.md) - 生产环境部署
+- **生产部署指南**：[PRODUCTION_DEPLOYMENT_GUIDE.md](../deployment/PRODUCTION_DEPLOYMENT_GUIDE.md) - 快速部署流程
 
 ## 🎯 开发最佳实践
 

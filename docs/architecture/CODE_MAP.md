@@ -10,28 +10,21 @@
 
 **目标**：帮助新会话快速理解项目结构，减少上下文开销，提高开发效率。
 
-## 🚀 架构设计文档快速导航
+## 🚀 快速导航
 
-### 核心架构文档
-- **系统架构设计**：`/docs/architecture/SYSTEM_ARCHITECTURE.md`
-  - 混合架构设计（Node.js + React + Python）
-  - 各服务模块划分和通信机制
+### 架构文档
+- [**系统架构设计**](SYSTEM_ARCHITECTURE.md) - 混合架构设计
+- [**服务通信架构**](SERVICE_COMMUNICATION_ARCHITECTURE.md) - 六服务间调用架构设计（待讨论优化）
+- [**详细服务架构**](DETAILED_SERVICE_ARCHITECTURE.md) - 完整六服务架构设计方案（含数据分层、AI唤醒、提示词生成）
+- [**数据库设计**](DATABASE_DESIGN.md) - 数据库ER图和表结构
+- [**API接口规范**](API_SPECIFICATION.md) - RESTful API和WebSocket设计
+- [**数据流架构**](DATA_FLOW_ARCHITECTURE.md) - 数据采集和处理流程
+- [**技术架构**](TECH_STACK.md) - 技术栈版本和选型理由
 
-- **数据库设计**：`/docs/architecture/DATABASE_DESIGN.md`
-  - 数据库ER图和表结构设计
-  - PostgreSQL + Redis + TimescaleDB组合
-
-- **API接口规范**：`/docs/architecture/API_SPECIFICATION.md`
-  - RESTful API和WebSocket接口设计
-  - 服务间API通信协议
-
-- **数据流架构**：`/docs/architecture/DATA_FLOW_ARCHITECTURE.md`
-  - 股票数据采集和处理流程
-  - AI决策和实时监控流程
-
-- **技术架构**：`/docs/architecture/TECH_STACK.md`
-  - 具体技术栈版本和选型理由
-  - 部署架构和扩展方案
+### 其他核心文档
+- [**项目主文档**](../../CLAUDE.md) - 项目文档导航中心
+- [**新手指南**](../../docs/usage/QUICK_START.md) - 环境搭建和快速上手
+- [**开发规范**](../../docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
 
 ## 🗺️ 核心模块代码映射
 
@@ -46,14 +39,15 @@ frontend/src/
 │   └── auth.store.ts          # Zustand认证状态管理（含持久化）
 ├── services/                   # API服务层
 │   ├── api.ts                 # Axios基础配置和拦截器
-│   ├── auth.service.ts        # 认证服务（模拟登录/注册）
-│   ├── trading.service.ts     # 交易服务（订单、持仓、组合）
-│   ├── market.service.ts      # 市场数据服务（行情、搜索、历史）
-│   └── ai.service.ts          # AI服务（账户、决策、分析）
+│   ├── auth.service.ts        # 认证服务（真实API + 降级机制）
+│   ├── trading.service.ts     # 交易服务（真实API + 缓存 + 降级机制）
+│   ├── market.service.ts      # 市场数据服务（真实API + 缓存 + 降级机制）
+│   └── ai.service.ts          # AI服务（真实API + 缓存 + 降级机制）
 ├── hooks/
 │   └── useWebSocket.ts        # WebSocket连接管理（含心跳、重连）
 ├── utils/
-│   └── formatters.ts          # 数据格式化工具（货币、百分比、日期等）
+│   ├── formatters.ts          # 数据格式化工具（货币、百分比、日期等）
+│   └── cache.ts               # 缓存工具（多级缓存，A股交易时间感知）
 ├── components/
 │   ├── common/
 │   │   └── ProtectedRoute.tsx # 路由保护组件（认证检查）
@@ -399,57 +393,59 @@ data-service/src/data_service/
 - `/demo_stock_race.py` - 核心功能演示脚本
 - `/demo_enhanced.py` - 增强演示脚本（展示完整交易流程）
 
-## 🚀 快速导航指南
+### 2026-02-05 ~ 2026-02-06: 前端模拟数据改造项目
+- **创建者**: 首席架构师
+- **变更内容**:
+  - 将前端所有模拟数据改为真实数据，共完成6个阶段
+  - 阶段一：认证系统连接 - 打通前后端认证，实现降级机制
+  - 阶段二：市场数据服务改造 - 创建缓存工具，实现A股交易时间感知的缓存策略
+  - 阶段三：交易系统改造 - 修改7个核心函数调用真实API
+  - 阶段四：AI系统改造 - 修改11个核心函数调用真实API
+  - 阶段五：组件层清理 - 移除所有组件中的模拟数据
+  - 阶段六：测试与优化 - 创建端到端测试脚本，验证所有功能
+  - 实现多级缓存机制（内存+本地存储），优化非交易时间数据获取
+  - 保留完整的降级机制，确保系统始终可用
+  - 创建完整文档体系，包括6个阶段文档和最终总结报告
 
-### 新会话快速上手
+### 关键文件修改和创建:
+- `/frontend/src/utils/cache.ts` - 缓存工具（新创建）
+- `/frontend/src/services/auth.service.ts` - 认证服务（修改为真实API + 降级）
+- `/frontend/src/services/market.service.ts` - 市场数据服务（修改为真实API + 缓存）
+- `/frontend/src/services/trading.service.ts` - 交易服务（修改为真实API + 缓存）
+- `/frontend/src/services/ai.service.ts` - AI服务（修改为真实API + 缓存）
+- `/frontend/src/pages/Analytics.tsx` - 分析页面（移除模拟数据）
+- `/frontend/src/pages/Competition.tsx` - 竞赛页面（移除模拟数据）
+- `/frontend/src/pages/Settings.tsx` - 设置页面（移除模拟数据）
+- `/test_frontend_real_data.sh` - 前端真实数据验证脚本（新创建）
+- `/test_cache_mechanism.sh` - 缓存机制测试脚本（新创建）
+- `/test_login.sh` - 登录测试脚本（新创建）
+- `/docs/development/FRONTEND_DATA_MIGRATION_PHASE1-6.md` - 阶段文档（新创建）
+- `/docs/development/FRONTEND_DATA_MIGRATION_SUMMARY.md` - 项目总结报告（新创建）
+- `/backend/src/config.js` - 后端配置中心（新创建，解决JWT验证问题）
 
-1. **环境检查**:
-   ```bash
-   # 检查项目结构
-   ls -la /home/fe-jerome/projects/stock-race/
+## 🚀 开发环境快速参考
 
-   # 查看各服务配置
-   cat frontend/package.json
-   cat backend/package.json
-   ```
+### 服务访问地址
+- **前端**: http://localhost:3000
+- **后端API**: http://localhost:3001
+- **API文档**: http://localhost:3001/api-docs
+- **AI服务**: http://localhost:8000
+- **数据服务**: http://localhost:8001
 
-2. **启动开发环境**:
-   ```bash
-   # 使用Docker Compose启动所有服务
-   docker-compose up -d
+### 启动命令
+```bash
+# 一键启动所有服务
+docker-compose up -d
 
-   # 查看服务状态
-   docker-compose ps
-   ```
+# 单独启动服务
+cd frontend && npm run dev          # 前端开发
+cd backend && npm run dev           # 后端开发
+cd ai-service && uvicorn ai_service.main:app --reload  # AI服务
+cd data-service && uvicorn data_service.main:app --reload  # 数据服务
+```
 
-3. **访问服务**:
-   - 前端: http://localhost:3000
-   - 后端API: http://localhost:3001
-   - API文档: http://localhost:3001/api-docs
-   - AI服务: http://localhost:8000
-   - 数据服务: http://localhost:8001
-
-4. **开发命令**:
-   ```bash
-   # 前端开发
-   cd frontend && npm run dev
-
-   # 后端开发
-   cd backend && npm run dev
-
-   # AI服务开发
-   cd ai-service && uvicorn ai_service.main:app --reload
-
-   # 数据服务开发
-   cd data-service && uvicorn data_service.main:app --reload
-   ```
-
-### 关键文件位置
-- **项目主文档**: `/home/fe-jerome/projects/stock-race/CLAUDE.md`
-- **开发规范**: `/home/fe-jerome/projects/stock-race/docs/development/CODING_STANDARDS.md`
-- **技术架构**: `/home/fe-jerome/projects/stock-race/docs/architecture/TECH_STACK.md`
-- **项目结构**: `/home/fe-jerome/projects/stock-race/docs/architecture/PROJECT_STRUCTURE.md`
-- **代码地图**: `/home/fe-jerome/projects/stock-race/docs/architecture/CODE_MAP.md`
+### 更多信息
+详细的环境搭建和开发指南请参考 [新手指南](../../docs/usage/QUICK_START.md)
 
 ## 📌 重要说明
 
@@ -500,5 +496,5 @@ data-service/src/data_service/
 
 ---
 
-*本文档最后更新于: 2026-02-03*
-*文档维护者: 数据工程智能体*
+*本文档最后更新于: 2026-02-06*
+*文档维护者: 首席架构师 (前端模拟数据改造项目更新)*

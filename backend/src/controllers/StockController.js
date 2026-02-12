@@ -79,7 +79,7 @@ export class StockController {
     );
 
     if (!stock) {
-      return res.stockNotFound(stockCode);
+      return res.stock_not_found(stockCode);
     }
 
     // 获取实时行情数据
@@ -105,12 +105,12 @@ export class StockController {
       realtime: realtimeData,
       kline: klineData,
       technicalIndicators,
-      topHolders: stock.portfolios.map(p => ({
+      topHolders: (stock.portfolios || []).map(p => ({
         accountId: p.accountId,
         quantity: p.quantity,
         marketValue: parseFloat(p.marketValue)
       })),
-      recentTrades: stock.trades.map(t => ({
+      recentTrades: (stock.trades || []).map(t => ({
         id: t.id,
         accountId: t.accountId,
         tradeType: t.tradeType,
@@ -140,7 +140,7 @@ export class StockController {
     // 验证股票是否存在
     const stock = await stockRepository.findOne({ code: stockCode });
     if (!stock) {
-      return res.stockNotFound(stockCode);
+      return res.stock_not_found(stockCode);
     }
 
     // 获取K线数据
@@ -172,7 +172,7 @@ export class StockController {
     // 验证股票是否存在
     const stock = await stockRepository.findOne({ code: stockCode });
     if (!stock) {
-      return res.stockNotFound(stockCode);
+      return res.stock_not_found(stockCode);
     }
 
     // 获取实时行情数据
@@ -192,16 +192,18 @@ export class StockController {
    * @param {Object} res - 响应对象
    */
   searchStocks = asyncHandler(async (req, res) => {
-    const { q, limit = 20 } = req.query;
+    // 支持 keyword 和 q 两种参数名（兼容前端调用）
+    const searchTerm = req.query.keyword || req.query.q;
+    const { limit = 20 } = req.query;
 
-    if (!q || q.trim().length < 2) {
+    if (!searchTerm || searchTerm.trim().length < 2) {
       return res.validationError([{
-        field: 'q',
+        field: 'keyword',
         message: '搜索关键词至少需要2个字符'
       }]);
     }
 
-    const result = await stockRepository.searchStocks(q.trim(), {}, {
+    const result = await stockRepository.searchStocks(searchTerm.trim(), {}, {
       limit: parseInt(limit)
     });
 
@@ -212,7 +214,7 @@ export class StockController {
       stocks: stocksWithPrices,
       count: result.data.length,
       total: result.pagination.total,
-      searchTerm: q.trim()
+      searchTerm: searchTerm.trim()
     }, '搜索股票成功');
   });
 
@@ -311,7 +313,7 @@ export class StockController {
     const missingCodes = stockCodes.filter(code => !existingCodes.includes(code));
 
     if (missingCodes.length > 0) {
-      return res.stockNotFound(`部分股票不存在: ${missingCodes.join(', ')}`, { missingCodes });
+      return res.stock_not_found(`部分股票不存在: ${missingCodes.join(', ')}`, { missingCodes });
     }
 
     // 批量获取实时数据

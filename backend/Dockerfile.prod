@@ -1,0 +1,68 @@
+# Backend Production Dockerfile
+# 多阶段构建：构建阶段 + 生产运行阶段
+
+# 构建阶段
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# 复制依赖文件
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# 安装依赖（包括开发依赖用于构建）
+RUN npm ci
+
+# 复制源代码
+COPY . .
+
+# 生成Prisma客户端
+RUN npx prisma generate
+
+# 构建TypeScript代码
+RUN npm run build
+
+# 清理开发依赖
+RUN npm prune --production
+
+# 生产阶段
+FROM node:20-alpine AS production
+
+# 安装运行时依赖（curl用于健康检查）
+RUN apk add --no-cache curl
+
+# 创建非root用户
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+WORKDIR /app
+
+# 从构建阶段复制已安装的依赖
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+
+# 复制构建产物和必要文件
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nodejs:nodejs /app/src ./src
+
+# 创建日志目录
+RUN mkdir -p logs && chown nodejs:nodejs logs
+
+# 设置环境变量
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV HOST=0.0.0.0
+
+# 切换到非root用户
+USER nodejs
+
+# 暴露端口
+EXPOSE 3001
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3001/api/health || exit 1
+
+# 启动应用
+CMD ["node", "dist/app.js"]

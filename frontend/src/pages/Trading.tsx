@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Card,
   Tabs,
-  Form,
   Input,
-  InputNumber,
-  Select,
   Button,
   Typography,
   Space,
@@ -19,21 +16,15 @@ import {
   Grid,
   Spin,
   message,
-  Modal,
+  Select,
 } from 'antd';
 import {
   StockOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
   SearchOutlined,
   HistoryOutlined,
-  CalculatorOutlined,
-  DollarOutlined,
   ReloadOutlined,
-  PlusOutlined,
-  MinusOutlined,
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { tradingService } from '../services/trading.service';
 import { marketService } from '../services/market.service';
 import { formatCurrency, formatPercent, formatChange, formatChangePercent } from '../utils/formatters';
@@ -69,20 +60,9 @@ interface Position {
   isFallback?: boolean;         // 是否为降级数据
 }
 
-interface OrderForm {
-  stockSymbol: string;      // 股票代码
-  orderType: 'buy' | 'sell'; // 订单类型
-  quantity: number;         // 数量
-  limitPrice?: number;      // 限价（可选）
-  priceType?: 'market' | 'limit'; // 价格类型
-}
 
 const Trading: React.FC = () => {
-  const [form] = Form.useForm();
-  const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [orderType, setOrderType] = useState<'buy' | 'sell'>('buy');
-  const [isOrderModalVisible, setIsOrderModalVisible] = useState(false);
   const screens = useBreakpoint();
   const queryClient = useQueryClient();
 
@@ -127,24 +107,6 @@ const Trading: React.FC = () => {
     }
   );
 
-  // 创建订单的mutation
-  const createOrderMutation = useMutation(
-    (orderData: OrderForm) => tradingService.createOrder(orderData),
-    {
-      onSuccess: () => {
-        message.success('订单创建成功！');
-        setIsOrderModalVisible(false);
-        form.resetFields();
-        // 刷新相关数据
-        queryClient.invalidateQueries('tradingOrders');
-        queryClient.invalidateQueries('tradingPositions');
-        queryClient.invalidateQueries('portfolioSummary');
-      },
-      onError: (error: any) => {
-        message.error(`订单创建失败: ${error.message}`);
-      },
-    }
-  );
 
   // 过滤显示的股票
   const filteredStocks = stocks?.filter(stock => {
@@ -157,56 +119,8 @@ const Trading: React.FC = () => {
     );
   }) || [];
 
-  // 处理股票选择
-  const handleStockSelect = (code: string) => {
-    const stock = stocks?.find(s => (s.code || s.symbol) === code);
-    if (stock) {
-      setSelectedStock({
-        code: stock.code || stock.symbol || '',
-        name: stock.name,
-        currentPrice: stock.currentPrice,
-        change: stock.change || 0,
-        changePercent: stock.changePercent || 0,
-        market: stock.market,
-        isFallback: stock.isFallback,
-        symbol: stock.code || stock.symbol
-      });
-      form.setFieldsValue({
-        stockSymbol: stock.code || stock.symbol,
-        limitPrice: stock.currentPrice,
-      });
-    }
-  };
 
-  // 处理订单提交
-  const handleOrderSubmit = (values: OrderForm) => {
-    createOrderMutation.mutate(values);
-  };
 
-  // 处理快速交易
-  const handleQuickTrade = (code: string, type: 'buy' | 'sell') => {
-    const stock = stocks?.find(s => (s.code || s.symbol) === code);
-    if (stock) {
-      setSelectedStock({
-        code: stock.code || stock.symbol || '',
-        name: stock.name,
-        currentPrice: stock.currentPrice,
-        change: stock.change || 0,
-        changePercent: stock.changePercent || 0,
-        market: stock.market,
-        isFallback: stock.isFallback,
-        symbol: stock.code || stock.symbol
-      });
-      setOrderType(type);
-      form.setFieldsValue({
-        stockSymbol: stock.code || stock.symbol,
-        orderType: type,
-        quantity: type === 'buy' ? 100 : 100, // 默认100股
-        limitPrice: stock.currentPrice,
-      });
-      setIsOrderModalVisible(true);
-    }
-  };
 
   // 刷新所有数据
   const refreshAllData = () => {
@@ -215,18 +129,7 @@ const Trading: React.FC = () => {
     refetchOrders();
   };
 
-  // 计算订单总金额
-  const calculateOrderTotal = () => {
-    const quantity = form.getFieldValue('quantity') || 0;
-    const price = form.getFieldValue('limitPrice') || selectedStock?.currentPrice || 0;
-    return quantity * price;
-  };
 
-  // 检查是否有足够的持仓用于卖出
-  const canSellStock = (code: string) => {
-    const position = positions?.find(p => p.stockSymbol === code);
-    return position && position.quantity > 0;
-  };
 
   const isLoading = stocksLoading || positionsLoading || ordersLoading;
 
@@ -300,24 +203,17 @@ const Trading: React.FC = () => {
         return (
           <Space>
             <Button
-              type="primary"
+              type="link"
               size="small"
-              icon={<PlusOutlined />}
-              onClick={() => handleQuickTrade(code, 'buy')}
-              disabled={record.isFallback}
-              title={record.isFallback ? '模拟数据不支持交易' : '买入'}
+              icon={<SearchOutlined />}
+              onClick={() => {
+                // 查看股票详情，不进行交易
+                message.info(`查看股票详情: ${code} - ${record.name}`);
+                // TODO: 实现股票详情查看功能
+              }}
+              title="查看股票详情"
             >
-              买入
-            </Button>
-            <Button
-              type="default"
-              size="small"
-              icon={<MinusOutlined />}
-              disabled={!canSellStock(code) || record.isFallback}
-              onClick={() => handleQuickTrade(code, 'sell')}
-              title={record.isFallback ? '模拟数据不支持交易' : '卖出'}
-            >
-              卖出
+              详情
             </Button>
           </Space>
         );
@@ -389,24 +285,17 @@ const Trading: React.FC = () => {
       render: (_: any, record: Position) => (
         <Space>
           <Button
-            type="primary"
+            type="link"
             size="small"
-            icon={<PlusOutlined />}
-            onClick={() => handleQuickTrade(record.stockSymbol, 'buy')}
-            disabled={record.isFallback}
-            title={record.isFallback ? '模拟数据不支持交易' : '加仓'}
+            icon={<SearchOutlined />}
+            onClick={() => {
+              // 查看持仓详情
+              message.info(`查看持仓详情: ${record.stockSymbol} - ${record.stockName}`);
+              // TODO: 实现持仓详情查看功能
+            }}
+            title="查看持仓详情"
           >
-            加仓
-          </Button>
-          <Button
-            type="default"
-            size="small"
-            icon={<MinusOutlined />}
-            onClick={() => handleQuickTrade(record.stockSymbol, 'sell')}
-            disabled={record.isFallback}
-            title={record.isFallback ? '模拟数据不支持交易' : '减仓'}
-          >
-            减仓
+            详情
           </Button>
         </Space>
       ),
@@ -498,189 +387,57 @@ const Trading: React.FC = () => {
         </Row>
       </Space>
 
-      {/* 交易表单 */}
-      <Card title="交易下单" style={{ marginBottom: 24 }}>
+      {/* 交易说明 - 用户不直接交易，所有交易由AI自主执行 */}
+      <Card title="交易说明" style={{ marginBottom: 24 }}>
+        <Alert
+          message="交易模式说明"
+          description="根据业务需求，用户不能直接进行股票交易。所有交易操作均由AI账户自主执行。您可以查看AI账户的持仓和交易记录，但无法手动创建或执行交易订单。"
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={12}>
-            <Form
-              form={form}
-              layout="vertical"
-              initialValues={{
-                orderType: 'buy',
-                quantity: 100,
-              }}
-              onFinish={handleOrderSubmit}
-            >
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="stockSymbol"
-                    label="股票代码"
-                    rules={[{ required: true, message: '请选择股票' }]}
-                  >
-                    <Select
-                      placeholder="选择股票"
-                      showSearch
-                      onSearch={setSearchQuery}
-                      onChange={handleStockSelect}
-                      loading={searchLoading}
-                      filterOption={false}
-                    >
-                      {searchResults?.map(stock => {
-                        const code = stock.code || stock.symbol || '';
-                        const name = stock.name || '';
-                        return (
-                          <Option key={code} value={code}>
-                            {code} - {name}
-                            {stock.isFallback && ' (模拟)'}
-                          </Option>
-                        );
-                      })}
-                      {filteredStocks.map(stock => {
-                        const code = stock.code || stock.symbol || '';
-                        const name = stock.name || '';
-                        return (
-                          <Option key={code} value={code}>
-                            {code} - {name}
-                            {stock.isFallback && ' (模拟)'}
-                          </Option>
-                        );
-                      })}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="orderType"
-                    label="交易类型"
-                    rules={[{ required: true, message: '请选择交易类型' }]}
-                  >
-                    <Select>
-                      <Option value="buy">
-                        <Space>
-                          <ArrowUpOutlined style={{ color: '#52c41a' }} />
-                          买入
-                        </Space>
-                      </Option>
-                      <Option value="sell">
-                        <Space>
-                          <ArrowDownOutlined style={{ color: '#ff4d4f' }} />
-                          卖出
-                        </Space>
-                      </Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="quantity"
-                    label="数量（股）"
-                    rules={[
-                      { required: true, message: '请输入数量' },
-                      { type: 'number', min: 1, message: '数量必须大于0' },
-                    ]}
-                  >
-                    <InputNumber
-                      style={{ width: '100%' }}
-                      min={1}
-                      step={100}
-                      placeholder="输入数量"
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="limitPrice"
-                    label="限价（可选）"
-                  >
-                    <InputNumber
-                      style={{ width: '100%' }}
-                      min={0.01}
-                      step={0.01}
-                      precision={2}
-                      placeholder="输入限价"
-                      addonAfter="¥"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              {selectedStock && (
-                <Alert
-                  message={
-                    <Space>
-                      <Text strong>{selectedStock.code || selectedStock.symbol} - {selectedStock.name}</Text>
-                      <Text>当前价格: {formatCurrency(selectedStock.currentPrice)}</Text>
-                      <Text type={selectedStock.change >= 0 ? 'success' : 'danger'}>
-                        {formatChange(selectedStock.change)} ({formatChangePercent(selectedStock.changePercent)})
-                      </Text>
-                      {selectedStock.isFallback && (
-                        <Tag color="warning" style={{ marginLeft: 8 }}>模拟数据</Tag>
-                      )}
-                    </Space>
-                  }
-                  type={selectedStock.isFallback ? 'warning' : 'info'}
-                  showIcon
-                  style={{ marginBottom: 16 }}
-                />
-              )}
-
-              <Form.Item>
-                <Space>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={createOrderMutation.isLoading}
-                    icon={<DollarOutlined />}
-                  >
-                    提交订单
-                  </Button>
-                  <Button
-                    onClick={() => form.resetFields()}
-                  >
-                    重置
-                  </Button>
-                  <Statistic
-                    title="订单总金额"
-                    value={calculateOrderTotal()}
-                    precision={2}
-                    prefix="¥"
-                    valueStyle={{ fontSize: '16px' }}
-                  />
-                </Space>
-              </Form.Item>
-            </Form>
-          </Col>
-
-          <Col xs={24} lg={12}>
-            <Card title="交易说明" size="small">
+            <Card title="AI交易流程" size="small">
               <Paragraph>
-                <strong>买入说明：</strong>
-                <ul>
-                  <li>输入股票代码和买入数量</li>
-                  <li>可选择限价或市价交易</li>
-                  <li>订单提交后进入待处理状态</li>
-                  <li>系统会在合适的价格执行订单</li>
-                </ul>
-              </Paragraph>
-              <Paragraph>
-                <strong>卖出说明：</strong>
-                <ul>
-                  <li>只能卖出已持有的股票</li>
-                  <li>卖出数量不能超过持仓数量</li>
-                  <li>可选择限价或市价交易</li>
-                  <li>卖出所得资金将进入现金账户</li>
-                </ul>
+                <strong>AI自主交易流程：</strong>
+                <ol>
+                  <li>AI账户分析市场数据和股票行情</li>
+                  <li>AI基于分析结果做出交易决策</li>
+                  <li>AI自动创建交易订单并执行</li>
+                  <li>系统记录交易详情和决策理由</li>
+                  <li>用户可查看AI账户的持仓和交易记录</li>
+                </ol>
               </Paragraph>
               <Alert
-                message="风险提示"
-                description="股票交易存在风险，投资需谨慎。本系统为模拟交易平台，不涉及真实资金。"
-                type="warning"
+                message="当前状态"
+                description="您的AI账户将根据市场情况自动进行交易决策，无需手动干预。"
+                type="success"
                 showIcon
               />
+            </Card>
+          </Col>
+          <Col xs={24} lg={12}>
+            <Card title="用户权限" size="small">
+              <Paragraph>
+                <strong>您可以进行的操作：</strong>
+                <ul>
+                  <li>查看股票行情和市场数据</li>
+                  <li>查看AI账户的持仓情况</li>
+                  <li>查看AI账户的交易记录</li>
+                  <li>查看交易统计和分析</li>
+                  <li>管理AI账户配置</li>
+                </ul>
+              </Paragraph>
+              <Paragraph>
+                <strong>您不能进行的操作：</strong>
+                <ul>
+                  <li>手动创建交易订单</li>
+                  <li>手动执行或取消交易</li>
+                  <li>直接修改持仓</li>
+                  <li>干预AI交易决策</li>
+                </ul>
+              </Paragraph>
             </Card>
           </Col>
         </Row>
@@ -707,8 +464,15 @@ const Trading: React.FC = () => {
           </Card>
         </TabPane>
 
-        <TabPane tab="我的持仓" key="positions">
+        <TabPane tab="AI账户持仓" key="positions">
           <Card>
+            <Alert
+              message="AI账户持仓说明"
+              description="这是您管理的AI账户的持仓情况。所有股票持仓均由AI账户自主交易产生，您不能直接进行持仓操作。"
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
               <Col>
                 <Statistic
@@ -747,6 +511,13 @@ const Trading: React.FC = () => {
 
         <TabPane tab="订单记录" key="orders">
           <Card>
+            <Alert
+              message="AI账户订单说明"
+              description="这是您管理的AI账户的交易订单记录。所有订单均由AI账户自主创建和执行，您不能直接创建或取消订单。"
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
             <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
               <Col>
                 <Statistic
@@ -781,93 +552,6 @@ const Trading: React.FC = () => {
         </TabPane>
       </Tabs>
 
-      {/* 订单确认模态框 */}
-      <Modal
-        title="确认订单"
-        open={isOrderModalVisible}
-        onCancel={() => setIsOrderModalVisible(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setIsOrderModalVisible(false)}>
-            取消
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            loading={createOrderMutation.isLoading}
-            onClick={() => form.submit()}
-          >
-            确认下单
-          </Button>,
-        ]}
-      >
-        {selectedStock && (
-          <div>
-            <Alert
-              message={
-                <Space>
-                  <Text>{`${orderType === 'buy' ? '买入' : '卖出'} ${selectedStock.code || selectedStock.symbol} - ${selectedStock.name}`}</Text>
-                  {selectedStock.isFallback && (
-                    <Tag color="warning">模拟数据交易</Tag>
-                  )}
-                </Space>
-              }
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-            <Row gutter={16}>
-              <Col span={12}>
-                <Statistic
-                  title="当前价格"
-                  value={selectedStock.currentPrice}
-                  precision={2}
-                  prefix="¥"
-                />
-              </Col>
-              <Col span={12}>
-                <Statistic
-                  title="涨跌幅"
-                  value={selectedStock.changePercent}
-                  precision={2}
-                  suffix="%"
-                  valueStyle={{ color: selectedStock.changePercent >= 0 ? '#3f8600' : '#cf1322' }}
-                />
-              </Col>
-            </Row>
-            <Divider />
-            <Form form={form} layout="vertical">
-              <Form.Item
-                name="quantity"
-                label="交易数量"
-                rules={[{ required: true, message: '请输入数量' }]}
-              >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={1}
-                  step={orderType === 'buy' ? 100 : 1}
-                />
-              </Form.Item>
-              <Form.Item
-                name="limitPrice"
-                label="限价（可选）"
-              >
-                <InputNumber
-                  style={{ width: '100%' }}
-                  min={0.01}
-                  step={0.01}
-                  precision={2}
-                  addonAfter="¥"
-                />
-              </Form.Item>
-              <Alert
-                message={`订单总金额: ${formatCurrency(calculateOrderTotal())}`}
-                type="warning"
-                showIcon
-              />
-            </Form>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

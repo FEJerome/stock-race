@@ -928,6 +928,69 @@ export class DataService {
 
     throw lastError;
   }
+
+  /**
+   * 获取增强的市场状态信息
+   * @returns {Promise<Object>} 市场状态信息
+   */
+  async getEnhancedMarketStatus() {
+    const cacheKey = 'enhanced_market_status';
+    const cached = this.getFromCache(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      // 调用数据服务的增强市场状态端点
+      const response = await this.client.get('/api/v2/market/status');
+
+      // 转换数据格式
+      const result = {
+        success: true,
+        isTrading: response.data.is_open,
+        status: response.data.status,
+        description: response.data.description,
+        nextTradingTime: response.data.next_trading_time,
+        currentTime: response.data.current_time,
+        recommendedInterval: response.data.recommended_interval,
+        dataServiceStatus: response.data.data_service_status,
+        dataQuality: response.data.data_quality,
+        dataStatus: response.data.data_status,
+        activeSources: response.data.active_sources,
+        successRate: response.data.success_rate,
+        timestamp: new Date().toISOString()
+      };
+
+      // 缓存30秒
+      this.setToCache(cacheKey, result, 30000);
+      return result;
+    } catch (error) {
+      console.error('获取增强市场状态失败:', error.message);
+
+      // 返回降级方案的市场状态信息
+      const now = new Date();
+      const isAfterHours = now.getHours() >= 15 || now.getHours() < 9 || (now.getHours() === 9 && now.getMinutes() < 30);
+
+      return {
+        success: false,
+        isTrading: false,
+        status: isAfterHours ? 'after_hours' : 'unknown',
+        description: isAfterHours ? '收盘后（降级数据）' : '未知（降级数据）',
+        nextTradingTime: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 30).toISOString(),
+        currentTime: now.toISOString(),
+        recommendedInterval: '5m',
+        dataServiceStatus: 'degraded',
+        dataQuality: 0.0,
+        dataStatus: 'historical',
+        activeSources: [],
+        successRate: 0.0,
+        isFallback: true,
+        fallbackReason: '数据服务不可用',
+        timestamp: now.toISOString()
+      };
+    }
+  }
 }
 
 // 创建单例实例

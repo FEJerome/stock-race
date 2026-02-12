@@ -52,50 +52,6 @@ router.get('/', authenticate, (req, res) => portfolioController.getPortfolios(re
 
 /**
  * @swagger
- * /portfolios/{portfolioId}:
- *   get:
- *     tags: [持仓]
- *     summary: 获取持仓详情
- *     description: 获取指定持仓的详细信息
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: portfolioId
- *         required: true
- *         schema:
- *           type: integer
- *         description: 持仓ID
- *     responses:
- *       200:
- *         description: 获取持仓详情成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未认证
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       403:
- *         description: 权限不足
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       404:
- *         description: 持仓不存在
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/:portfolioId', authenticate, (req, res) => portfolioController.getPortfolioDetail(req, res));
-
-/**
- * @swagger
  * /portfolios/stats:
  *   get:
  *     tags: [持仓]
@@ -335,5 +291,49 @@ router.post('/rebalance', authenticate, (req, res) => portfolioController.rebala
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/update-market-values', authenticate, (req, res) => portfolioController.updateMarketValues(req, res));
+
+/**
+ * @swagger
+ * /portfolios/{portfolioId}:
+ *   get:
+ *     tags: [持仓]
+ *     summary: 获取持仓详情
+ *     description: 获取指定持仓的详细信息
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: portfolioId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 持仓ID
+ *     responses:
+ *       200:
+ *         description: 获取持仓详情成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: 未认证
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: 权限不足
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: 持仓不存在
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/:portfolioId', authenticate, (req, res) => portfolioController.getPortfolioDetail(req, res));
 
 export default router;

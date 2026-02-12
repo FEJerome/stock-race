@@ -53,6 +53,31 @@ router.get('/', authenticate, (req, res) => aiController.getAIAccounts(req, res)
 
 /**
  * @swagger
+ * /ai-accounts/health:
+ *   get:
+ *     tags: [AI账户]
+ *     summary: 检查AI服务健康状态
+ *     description: 检查AI服务的健康状态和连接状态
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 获取AI服务健康状态成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       401:
+ *         description: 未认证
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/health', authenticate, (req, res) => aiController.checkAIServiceHealthEndpoint(req, res));
+
+/**
+ * @swagger
  * /ai-accounts/{accountId}:
  *   get:
  *     tags: [AI账户]
@@ -490,7 +515,7 @@ router.get('/:accountId/performance', authenticate, (req, res) => aiController.g
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.get('/:accountId/decisions', authenticate, (req, res) => aiController.getDecisionHistory(req, res));
+router.get('/:accountId/decisions', authenticate, (req, res) => aiController.getAIDecisionHistory(req, res));
 
 /**
  * @swagger
@@ -600,7 +625,7 @@ router.post('/:accountId/decisions/request', authenticate, (req, res) => aiContr
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.get('/:accountId/balance', authenticate, (req, res) => aiController.getAccountBalance(req, res));
+router.get('/:accountId/balance', authenticate, (req, res) => aiController.getAccountBalance(req, res));
 
 /**
  * @swagger
@@ -666,7 +691,7 @@ router.post('/:accountId/decisions/request', authenticate, (req, res) => aiContr
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.post('/:accountId/balance/deposit', authenticate, (req, res) => aiController.depositBalance(req, res));
+router.post('/:accountId/balance/deposit', authenticate, (req, res) => aiController.depositBalance(req, res));
 
 /**
  * @swagger
@@ -732,31 +757,6 @@ router.post('/:accountId/decisions/request', authenticate, (req, res) => aiContr
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-//router.post('/:accountId/balance/withdraw', authenticate, (req, res) => aiController.withdrawBalance(req, res));
-
-/**
- * @swagger
- * /ai-accounts/health:
- *   get:
- *     tags: [AI账户]
- *     summary: 检查AI服务健康状态
- *     description: 检查AI服务的健康状态和连接状态
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 获取AI服务健康状态成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未认证
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/health', authenticate, (req, res) => aiController.checkAIServiceHealth(req, res));
+router.post('/:accountId/balance/withdraw', authenticate, (req, res) => aiController.withdrawBalance(req, res));
 
 export default router;

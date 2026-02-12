@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -21,6 +21,7 @@ import {
   Divider,
   Grid,
   InputNumber,
+  message,
 } from 'antd';
 import {
   RobotOutlined,
@@ -40,85 +41,134 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-// 模拟AI账户数据
-const mockAIAccounts = [
-  {
-    id: '1',
-    name: '量化策略AI',
-    modelType: 'openai',
-    status: 'active',
-    apiKey: 'sk-...1234',
-    isActive: true,
-    performance: 85,
-    decisionsToday: 24,
-    successRate: 78.5,
-    createdAt: '2026-01-15',
-  },
-  {
-    id: '2',
-    name: '价值投资助手',
-    modelType: 'claude',
-    status: 'active',
-    apiKey: 'sk-ant-...5678',
-    isActive: true,
-    performance: 72,
-    decisionsToday: 18,
-    successRate: 65.2,
-    createdAt: '2026-01-20',
-  },
-  {
-    id: '3',
-    name: '技术分析大师',
-    modelType: 'wenxin',
-    status: 'inactive',
-    apiKey: 'sk-wenxin-...9012',
-    isActive: false,
-    performance: 68,
-    decisionsToday: 0,
-    successRate: 71.8,
-    createdAt: '2026-01-25',
-  },
-  {
-    id: '4',
-    name: '风险控制专家',
-    modelType: 'qwen',
-    status: 'error',
-    apiKey: 'sk-qwen-...3456',
-    isActive: false,
-    performance: 45,
-    decisionsToday: 5,
-    successRate: 52.3,
-    createdAt: '2026-02-01',
-  },
-];
+// AI服务导入
+import { aiService } from '../services/ai.service';
+// AI决策详情组件
+import AIDecisionDetail from '../components/ai/AIDecisionDetail';
 
-// 模型类型配置
+// 模型类型配置（仅支持deepseek和GLM模型）
 const modelTypes = {
-  openai: { name: 'OpenAI GPT', color: 'green', icon: '🤖' },
-  claude: { name: 'Claude', color: 'blue', icon: '🧠' },
-  wenxin: { name: '文心一言', color: 'red', icon: '💬' },
-  qwen: { name: '通义千问', color: 'orange', icon: '⚡' },
+  deepseek: { name: 'DeepSeek', color: 'blue', icon: '🤖' },
+  'glm-4.5': { name: 'GLM-4.5', color: 'green', icon: '🧠' },
+  'glm-4.6': { name: 'GLM-4.6', color: 'purple', icon: '⚡' },
+  'glm-4.7': { name: 'GLM-4.7', color: 'orange', icon: '🔥' },
 };
 
 const AIAccounts: React.FC = () => {
+  const [aiAccounts, setAiAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
+  const [decisionDetailVisible, setDecisionDetailVisible] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [decisionDetail, setDecisionDetail] = useState<any>(null);
   const screens = useBreakpoint();
 
-  // 处理添加/编辑AI账户
-  const handleSubmit = (values: any) => {
-    console.log('提交AI账户:', values);
-    if (editingAccount) {
-      // 更新现有账户
-      alert(`更新AI账户: ${values.name}`);
-    } else {
-      // 添加新账户
-      alert(`添加新AI账户: ${values.name}`);
+  // 加载AI账户数据
+  useEffect(() => {
+    loadAIAccounts();
+  }, []);
+
+  const loadAIAccounts = async () => {
+    setLoading(true);
+    try {
+      const accounts = await aiService.getAIAccounts();
+      // 转换数据格式以适应组件
+      const formattedAccounts = accounts.map(account => ({
+        id: account.id,
+        name: account.name,
+        modelType: account.modelType,
+        status: account.isActive ? 'active' : 'inactive',
+        apiKey: 'sk-...' + (account.id || '').slice(-4), // 模拟部分API密钥
+        isActive: account.isActive,
+        performance: Math.floor(Math.random() * 40) + 60, // 临时模拟性能数据
+        decisionsToday: Math.floor(Math.random() * 30), // 临时模拟今日决策数
+        successRate: 60 + Math.random() * 35, // 临时模拟成功率
+        createdAt: account.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+      }));
+      setAiAccounts(formattedAccounts);
+    } catch (error) {
+      console.error('加载AI账户失败:', error);
+      message.error('加载AI账户失败，使用模拟数据');
+      // 降级时使用模拟数据
+      const fallbackAccounts = [
+        {
+          id: '1',
+          name: '量化策略AI',
+          modelType: 'deepseek',
+          status: 'active',
+          apiKey: 'sk-...1234',
+          isActive: true,
+          performance: 85,
+          decisionsToday: 24,
+          successRate: 78.5,
+          createdAt: '2026-01-15',
+        },
+        {
+          id: '2',
+          name: '价值投资助手',
+          modelType: 'glm-4.5',
+          status: 'active',
+          apiKey: 'sk-...5678',
+          isActive: true,
+          performance: 72,
+          decisionsToday: 18,
+          successRate: 65.2,
+          createdAt: '2026-01-20',
+        },
+        {
+          id: '3',
+          name: '技术分析大师',
+          modelType: 'glm-4.6',
+          status: 'inactive',
+          apiKey: 'sk-...9012',
+          isActive: false,
+          performance: 68,
+          decisionsToday: 0,
+          successRate: 71.8,
+          createdAt: '2026-01-25',
+        },
+        {
+          id: '4',
+          name: '风险控制专家',
+          modelType: 'glm-4.7',
+          status: 'error',
+          apiKey: 'sk-...3456',
+          isActive: false,
+          performance: 45,
+          decisionsToday: 5,
+          successRate: 52.3,
+          createdAt: '2026-02-01',
+        },
+      ];
+      setAiAccounts(fallbackAccounts);
+    } finally {
+      setLoading(false);
     }
-    setModalVisible(false);
-    form.resetFields();
-    setEditingAccount(null);
+  };
+
+  // 处理添加/编辑AI账户
+  const handleSubmit = async (values: any) => {
+    try {
+      if (editingAccount) {
+        // 更新现有账户
+        await aiService.updateAIAccount(editingAccount.id, values);
+        message.success(`AI账户 ${values.name} 更新成功`);
+      } else {
+        // 添加新账户
+        await aiService.createAIAccount(values);
+        message.success(`AI账户 ${values.name} 创建成功`);
+      }
+      setModalVisible(false);
+      form.resetFields();
+      setEditingAccount(null);
+      // 刷新AI账户列表
+      loadAIAccounts();
+    } catch (error) {
+      console.error('保存AI账户失败:', error);
+      message.error('保存AI账户失败，请重试');
+    }
   };
 
   // 处理删除AI账户
@@ -129,10 +179,108 @@ const AIAccounts: React.FC = () => {
       okText: '删除',
       okType: 'danger',
       cancelText: '取消',
-      onOk: () => {
-        alert(`删除AI账户: ${account.name}`);
+      onOk: async () => {
+        try {
+          await aiService.deleteAIAccount(account.id);
+          message.success(`AI账户 ${account.name} 删除成功`);
+          // 刷新AI账户列表
+          loadAIAccounts();
+        } catch (error) {
+          console.error('删除AI账户失败:', error);
+          message.error('删除AI账户失败，请重试');
+        }
       },
     });
+  };
+
+  const handleViewDecisionDetail = async (accountId: number) => {
+    try {
+      setSelectedAccountId(accountId);
+      setDecisionDetailVisible(true);
+
+      // 这里应该调用API获取账户的最新决策详情
+      // 暂时使用模拟数据
+      const mockDecision = {
+        id: '1',
+        aiAccountId: accountId,
+        aiAccountName: aiAccounts.find(a => a.id === accountId)?.name || 'AI账户',
+        symbol: '000001',
+        action: 'buy' as const,
+        quantity: 100,
+        price: 15.50,
+        amount: 1550,
+        reason: '技术面显示突破形态，基本面业绩超预期，建议买入',
+        confidence: 85,
+        modelType: 'deepseek',
+        riskLevel: 'high',
+        strategy: 'momentum',
+        status: 'executed' as const,
+        executedPrice: 15.45,
+        executedAt: '2026-02-07T10:30:25Z',
+        createdAt: '2026-02-07T10:30:00Z',
+        updatedAt: '2026-02-07T10:30:25Z',
+        // 新增字段：完整提示词相关
+        promptTemplate: 'aggressive_decision_v1',
+        fullPrompt: `你是一个专业的股票交易AI助手。请分析以下信息并给出交易建议：
+
+账户信息：测试AI账户 (ID: ${accountId})
+模型类型：deepseek
+风险等级：high
+用户偏好：风险偏好: 激进, 交易风格: 波段
+
+股票数据：
+- 代码：000001
+- 名称：平安银行
+- 当前价格：15.50
+- 涨跌幅：+1.64%
+- 成交量：1,000,000股
+
+市场环境：
+- 整体趋势：震荡上行
+- 行业表现：金融板块表现平稳
+- 技术指标：MACD金叉，RSI处于60
+
+持仓情况：
+- 现金余额：50,000
+- 总资产：150,000
+- 当前持仓：1000股@14.50
+
+交易约束：
+- 最大仓位比例：30%
+- 最小现金比例：5%
+- 最大单日亏损：-8%
+
+请基于以上信息，给出具体的交易建议（买入/卖出/持有），并说明理由。`,
+        tokenCount: 280,
+        userPreferences: {
+          riskTolerance: 'aggressive',
+          tradingStyle: 'swing',
+          preferredStrategies: ['momentum', 'technical'],
+          avoidStrategies: ['speculative'],
+          tradingLimits: {
+            maxPositionSize: 0.3,
+            minCashRatio: 0.05,
+            maxDailyLoss: -0.08,
+          },
+        },
+        promptVariables: {
+          account_info: `测试AI账户 (ID: ${accountId})`,
+          stock_data: '股票代码: 000001, 价格: 15.50',
+          market_conditions: '市场环境: 震荡上行',
+          user_preferences: '风险偏好: 激进, 交易风格: 波段',
+        },
+        modelContext: {
+          modelType: 'deepseek',
+          riskLevel: 'high',
+          tokenBudget: 2000,
+        },
+      };
+
+      setDecisionDetail(mockDecision);
+    } catch (error) {
+      console.error('加载决策详情失败:', error);
+      message.error('加载决策详情失败');
+    }
   };
 
   // 处理激活/停用AI账户
@@ -239,11 +387,12 @@ const AIAccounts: React.FC = () => {
       key: 'action',
       render: (_: any, record: any) => (
         <Space>
-          <Tooltip title="查看详情">
+          <Tooltip title="查看最新决策详情">
             <Button
               type="text"
               icon={<EyeOutlined />}
               size="small"
+              onClick={() => handleViewDecisionDetail(record.id)}
             />
           </Tooltip>
           <Tooltip title="编辑">
@@ -290,8 +439,8 @@ const AIAccounts: React.FC = () => {
           <Card>
             <Statistic
               title="活跃AI账户"
-              value={mockAIAccounts.filter(a => a.isActive).length}
-              suffix={`/ ${mockAIAccounts.length}`}
+              value={aiAccounts.filter(a => a.isActive).length}
+              suffix={`/ ${aiAccounts.length}`}
               valueStyle={{ color: '#52c41a' }}
               prefix={<PlayCircleOutlined />}
             />
@@ -302,7 +451,7 @@ const AIAccounts: React.FC = () => {
           <Card>
             <Statistic
               title="今日总决策"
-              value={mockAIAccounts.reduce((sum, a) => sum + a.decisionsToday, 0)}
+              value={aiAccounts.reduce((sum, a) => sum + a.decisionsToday, 0)}
               valueStyle={{ color: '#1890ff' }}
               prefix={<ThunderboltOutlined />}
             />
@@ -314,7 +463,7 @@ const AIAccounts: React.FC = () => {
             <Statistic
               title="平均成功率"
               value={(
-                mockAIAccounts.reduce((sum, a) => sum + a.successRate, 0) / mockAIAccounts.length
+                aiAccounts.reduce((sum, a) => sum + a.successRate, 0) / aiAccounts.length
               ).toFixed(1)}
               suffix="%"
               valueStyle={{ color: '#722ed1' }}
@@ -328,7 +477,7 @@ const AIAccounts: React.FC = () => {
             <Statistic
               title="平均性能"
               value={(
-                mockAIAccounts.reduce((sum, a) => sum + a.performance, 0) / mockAIAccounts.length
+                aiAccounts.reduce((sum, a) => sum + a.performance, 0) / aiAccounts.length
               ).toFixed(0)}
               suffix="分"
               valueStyle={{ color: '#fa8c16' }}
@@ -363,11 +512,12 @@ const AIAccounts: React.FC = () => {
             }
           >
             <Table
-              dataSource={mockAIAccounts}
+              dataSource={aiAccounts}
               columns={accountColumns}
               rowKey="id"
               pagination={false}
               scroll={{ x: true }}
+              loading={loading}
             />
           </Card>
         </Col>
@@ -387,26 +537,26 @@ const AIAccounts: React.FC = () => {
             >
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
                 <Alert
-                  message="OpenAI配置"
-                  description="前往 OpenAI Platform 获取API密钥"
+                  message="DeepSeek配置"
+                  description="前往 DeepSeek Platform 获取API密钥"
                   type="info"
                   showIcon
                 />
                 <Alert
-                  message="Claude配置"
-                  description="前往 Anthropic Console 获取API密钥"
+                  message="GLM-4.5配置"
+                  description="前往智谱AI开放平台获取API密钥"
                   type="info"
                   showIcon
                 />
                 <Alert
-                  message="文心一言配置"
-                  description="前往百度AI开放平台获取API密钥"
+                  message="GLM-4.6配置"
+                  description="前往智谱AI开放平台获取API密钥"
                   type="info"
                   showIcon
                 />
                 <Alert
-                  message="通义千问配置"
-                  description="前往阿里云获取API密钥"
+                  message="GLM-4.7配置"
+                  description="前往智谱AI开放平台获取API密钥"
                   type="info"
                   showIcon
                 />
@@ -484,7 +634,7 @@ const AIAccounts: React.FC = () => {
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            modelType: 'openai',
+            modelType: 'deepseek',
             isActive: true,
           }}
         >
@@ -506,10 +656,10 @@ const AIAccounts: React.FC = () => {
                 rules={[{ required: true, message: '请选择AI模型' }]}
               >
                 <Select placeholder="选择AI模型">
-                  <Option value="openai">OpenAI GPT</Option>
-                  <Option value="claude">Claude</Option>
-                  <Option value="wenxin">文心一言</Option>
-                  <Option value="qwen">通义千问</Option>
+                  <Option value="deepseek">DeepSeek</Option>
+                  <Option value="glm-4.5">GLM-4.5</Option>
+                  <Option value="glm-4.6">GLM-4.6</Option>
+                  <Option value="glm-4.7">GLM-4.7</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -597,6 +747,41 @@ const AIAccounts: React.FC = () => {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* AI决策详情模态框 */}
+      <Modal
+        title="AI决策详情"
+        open={decisionDetailVisible}
+        onCancel={() => {
+          setDecisionDetailVisible(false);
+          setDecisionDetail(null);
+          setSelectedAccountId(null);
+        }}
+        width={900}
+        footer={[
+          <Button
+            key="close"
+            onClick={() => {
+              setDecisionDetailVisible(false);
+              setDecisionDetail(null);
+              setSelectedAccountId(null);
+            }}
+          >
+            关闭
+          </Button>,
+        ]}
+      >
+        {decisionDetail && (
+          <AIDecisionDetail
+            decision={decisionDetail}
+            onClose={() => {
+              setDecisionDetailVisible(false);
+              setDecisionDetail(null);
+              setSelectedAccountId(null);
+            }}
+          />
+        )}
       </Modal>
     </div>
   );

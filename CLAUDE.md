@@ -1,442 +1,431 @@
-请始终使用简体中文与我沟通
+# stock-race项目 - 文档导航中心
 
-# stock-race项目 - 项目指南
+## 📋 项目概览
 
-## 📑 详细目录
+**项目简介**：AI股票竞赛平台，支持用户分配虚拟人民币账号给AI大模型进行虚拟股票交易，集成多种数据源和AI模型。
 
-- [项目角色](#项目角色)
-- [项目目标](#项目目标)
-- [技术架构](#技术架构)
-- [项目结构](#项目结构)
-- [开发规范](#开发规范)
-- [命令集](#命令集)
-  - [开发环境启动](#开发环境启动)
-  - [构建和部署](#构建和部署)
-  - [测试命令](#测试命令)
-  - [依赖管理](#依赖管理)
-- [项目规划](#项目规划)
-- [多智能体协作执行方案](#多智能体协作执行方案)
-- [当前状态](#当前状态)
-- [近期工作重点](#近期工作重点)
-- [下一步工作](#下一步工作)
-- [注意事项](#注意事项)
-- [功能验证记录](#功能验证记录)
-- [新会话快速上手](#新会话快速上手)
-- [代码结构地图](#代码结构地图)
+**核心功能**：
+- 用户管理与AI账户管理
+- 多模型AI集成与交易决策
+- 实时股票数据采集与推送
+- 虚拟交易与持仓管理
+- 实时监控与收益分析
+- 多智能体协作架构
 
 ## 🚀 快速导航
 
-- [技术架构模板](docs/architecture/TECH_STACK.md)
-- [需求规格说明书](docs/analysis/REQUIREMENTS.md) - 详细功能需求和非功能需求
-- [技术选型分析](docs/analysis/TECHNOLOGY_EVALUATION.md) - 多个技术栈方案对比和推荐
-- [项目结构模板](docs/architecture/PROJECT_STRUCTURE.md)
-- [**代码结构地图模板**](docs/architecture/CODE_MAP.md) - 关键文件功能说明和调用关系
-- [开发规范模板](docs/development/CODING_STANDARDS.md)
-- [项目实施计划模板](docs/planning/IMPLEMENTATION_PHASES.md)
-- [通用多智能体协作方案](docs/agents/GENERIC_COLLABORATION_PLAN.md)
-  - [通用角色定义](docs/agents/GENERIC_ROLES.md) - 6个功能型智能体角色
-  - [任务分发指南](docs/agents/TASK_DISPATCH_GUIDE.md) - 主智能体任务分发机制
-  - [项目模板配置](docs/agents/PROJECT_TEMPLATE.md) - 模板使用和定制指南
-  - [通用worktree配置](docs/agents/GENERIC_WORKTREE_GUIDE.md) - git-worktree工作空间
-  - [通用状态管理](docs/agents/GENERIC_AGENT_STATUS.md) - 智能体状态跟踪
-- [注意事项模板](docs/usage/IMPORTANT_NOTES.md)
-- [功能验证记录模板](docs/testing/VALIDATION_HISTORY.md)
-- [**新手指南模板**](docs/usage/QUICK_START.md) - 环境搭建和快速上手
-- [**DataService集成指南**](backend/DATA_SERVICE_INTEGRATION.md) - 后端与数据服务集成配置
+### 核心文档
+- [**代码结构地图**](docs/architecture/CODE_MAP.md) - 项目结构与文件功能
+- [**架构文档总入口**](docs/architecture/README.md) - 架构文档导航中心
+- [**六服务架构详细设计**](docs/architecture/CURRENT/SERVICE_ARCHITECTURE.md) - 服务间调用与数据流设计（最新）
+- [**统一数据平台架构**](docs/architecture/CURRENT/DATA_PLATFORM.md) - 四服务数据架构设计
+- [**技术架构**](docs/architecture/CURRENT/TECH_STACK.md) - 技术栈与架构设计
+- [**API规范**](docs/architecture/CURRENT/API_SPECIFICATION.md) - RESTful API与WebSocket设计
+- [**数据库设计**](docs/architecture/CURRENT/DATABASE_DESIGN.md) - 数据库ER图与表结构
 
-## 👨‍💼 项目角色
-**本项目的首席架构师**：负责项目整体架构设计、技术选型、开发规范制定和核心问题解决。作为项目的主要技术负责人，确保代码质量、架构可扩展性和开发效率。
+### 架构决策文档（2026-02-11更新）
+- [**服务依赖冲突分析**](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 五服务外部依赖对接需求分析与6个冲突解决方案
+- [**循环依赖解决方案**](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md) - 三种方案详细对比分析
+- [**事件总线风险分析**](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md) - Redis Streams事件总线的风险点、成本、性能分析
+- [**AI对话服务职责划分**](docs/architecture/CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md) - AI对话功能放在Backend还是Trading AI Service的详细分析
+- [**AI Service双向依赖解耦**](docs/architecture/CURRENT/DECISIONS/004-AI-DECOUPLING.md) - 基于事件总线的完全解耦方案，消除3个双向依赖环
+- [**微信小程序游客模式设计**](docs/architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md) - 三层API架构 + 智能过期策略（24h/72h）设计
+- [**Miniprogram数据流优化方案**](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) - 混合分离方案：行情直连+收益后端计算
+- [**AI决策服务广度查询需求确认**](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
+- [**Redis渐进式部署策略**](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
 
-## 🎯 项目目标
-构建一个AI股票竞赛平台，让用户能够分配虚拟人民币账号给AI大模型进行虚拟股票交易。平台支持：
+### 历史架构文档
+历史架构文档已归档至 [docs/architecture/HISTORICAL/](docs/architecture/HISTORICAL/) 目录：
+- **V2026-02-10-SERVICE_ARCHITECTURE.md** - 六服务架构详细设计初版
+- **V1-SYSTEM_ARCHITECTURE.md** - 早期系统架构（历史版本）
+- **V1-SERVICE_COMMUNICATION.md** - 早期服务通信设计（历史版本）
+- **V1-DATA_FLOW.md** - 早期数据流设计（历史版本）
+- **V1-PROJECT_STRUCTURE.md** - 早期项目结构（历史版本）
+- **V1-DATA_SERVICE_INTEGRATION.md** - 早期集成方案（历史版本）
 
-1. **用户管理**：用户注册登录，创建和管理多个AI炒股账户
-2. **AI集成**：集成多种大模型（如ChatGPT、Claude、国内大模型），根据用户预设提示词和实时股票数据做出交易决策
-3. **实时数据**：获取中国A股实时行情数据，包括价格、成交量、涨跌幅等
-4. **虚拟交易**：模拟股票买卖操作，支持市价单、限价单等交易类型
-5. **实时监控**：用户可实时查看AI操作记录、当前持仓、估算收益、交易逻辑分析
-6. **竞赛功能**：不同AI账户之间的收益排名，支持多种排行榜（日榜、周榜、总榜）
-7. **分析报告**：提供详细的交易分析报告，包括AI决策理由、风险评估、收益曲线等
+### 需求与分析
+- [**需求规格说明书**](docs/analysis/REQUIREMENTS.md) - 详细功能需求
+- [**技术选型分析**](docs/analysis/TECHNOLOGY_EVALUATION.md) - 技术方案对比
 
-项目采用敏捷开发方法，优先实现核心功能的最小可行版本（MVP），逐步迭代完善。
+### 微信小程序
+- [**小程序需求规格**](docs/miniprogram/REQUIREMENTS.md) - 小程序功能需求
+- [**小程序技术栈**](docs/miniprogram/TECH_STACK.md) - 小程序技术方案
+- [**小程序可行性报告**](docs/miniprogram/FEASIBILITY_REPORT.md) - 小程序可行性分析
 
-## 🏗️ 技术架构
+### 开发指南
+- [**开发规范**](docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
+- [**模块化分支开发规范**](docs/development/MODULE_DEVELOPMENT_WORKFLOW.md) - Git Worktree多模块并行开发规范
+- [**产出物管理规范**](docs/development/ARTIFACT_MANAGEMENT.md) - 产出物存储、日志与留痕管理
+- [**当前功能清单**](docs/development/CURRENT_FUNCTIONALITY_INVENTORY.md) - 系统当前业务功能详细清单
+- [**内存持久化优化产出物记录**](docs/development/MEMORY_PERSISTENCE_OPTIMIZATION_ARTIFACTS.md) - 优化功能产出物详细记录
+- [**新手指南**](docs/usage/QUICK_START.md) - 环境搭建与快速上手
 
-详细技术栈信息已移至：[技术架构模板](docs/architecture/TECH_STACK.md)
+### 智能体协作
+- [**通用协作方案**](docs/agents/GENERIC_COLLABORATION_PLAN.md) - 多智能体工作流程
+- [**角色定义**](docs/agents/GENERIC_ROLES.md) - 智能体角色与职责
+- [**任务分发**](docs/agents/TASK_DISPATCH_GUIDE.md) - 任务分配与协调
 
-## 📁 项目结构
+### 部署与运维
+- [**部署指南**](docs/deployment/DEPLOYMENT_GUIDE.md) - 生产环境部署
+- [**生产部署指南**](docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md) - 快速部署流程
+- [**生产就绪测试报告**](docs/deployment/SYSTEM_INTEGRATION_TEST_REPORT_COMPLETE.md) - 完整系统集成测试
+- [**TimescaleDB修复记录**](docs/deployment/TIMESCALEDB_FIX_RECORD.md) - 时序数据库问题修复
+- [**AI服务数据库修复记录**](docs/deployment/AI_SERVICE_DATABASE_FIX_RECORD.md) - AI服务数据库连接修复
+- [**生产检查清单**](docs/deployment/PRODUCTION_CHECKLIST.md) - 部署前检查项
 
-详细项目结构信息已移至：[项目结构模板](docs/architecture/PROJECT_STRUCTURE.md)
+### 代码审查
+- [**数据服务代码审查报告**](docs/reviews/DATA_SERVICE_CODE_REVIEW_REPORT.md) - 数据服务功能审查与修复记录
+- [**故障排除指南**](docs/operations/TROUBLESHOOTING.md) - 系统故障处理手册
+- [**部署文档总结**](docs/deployment/PRODUCTION_DEPLOYMENT_DOCUMENTATION_SUMMARY.md) - 生产环境部署文档完整总结
 
-## 📝 开发规范
+### 数据管理
+- [**多源数据策略**](docs/data_sources/MULTI_SOURCE_STRATEGY.md) - 数据采集方案
+- [**数据流架构**](docs/architecture/DATA_FLOW_ARCHITECTURE.md) - 数据流程设计
 
-详细开发规范信息已移至：[开发规范模板](docs/development/CODING_STANDARDS.md)
+### 测试与验证
+- [**功能验证记录**](docs/testing/VALIDATION_HISTORY.md) - 功能测试结果
 
-## 🚀 命令集
+## 📁 文档分层结构
 
-### Docker Compose一键启动（推荐）
+### 一级文档（概览与导航）
+- **CLAUDE.md** - 项目文档导航中心（本文件）
+- **README.md** - 项目基本信息
+
+### 二级文档（核心信息）
+- **CODE_MAP.md** - 代码结构与文件功能
+- **TECH_STACK.md** - 技术架构与选型
+- **QUICK_START.md** - 快速上手指南
+
+### 三级文档（详细说明）
+- **REQUIREMENTS.md** - 详细需求规格
+- **DEPLOYMENT_GUIDE.md** - 部署详细步骤
+- **CODING_STANDARDS.md** - 编码规范细节
+- **ARTIFACT_MANAGEMENT.md** - 产出物管理规范
+
+## 🎯 核心模块导航
+
+### 前端模块
+- **主要文件**：`frontend/src/`
+- **关键文件**：
+  - `frontend/src/main.tsx` - 应用入口
+  - `frontend/src/App.tsx` - 路由配置
+  - `frontend/src/services/` - API服务
+
+### 后端模块
+- **主要文件**：`backend/src/`
+- **关键文件**：
+  - `backend/src/app.js` - Express应用
+  - `backend/src/routes/` - API路由
+  - `backend/src/controllers/` - 业务逻辑
+
+### 交易AI服务模块
+- **主要文件**：`trading-ai-service/src/ai_service/`
+- **关键文件**：
+  - `trading-ai-service/src/ai_service/main.py` - FastAPI应用
+  - `trading-ai-service/src/ai_service/adapters/` - AI模型适配器
+  - `trading-ai-service/src/ai_service/services/decision_service.py` - 决策服务
+
+### 市场行情数据服务模块
+- **主要文件**：`market-data-service/src/data_service/`
+- **关键文件**：
+  - `market-data-service/src/data_service/main.py` - FastAPI应用
+  - `market-data-service/src/data_service/collectors/` - 数据采集器
+  - `market-data-service/src/data_service/services/data_service.py` - 主数据服务
+
+### 微信小程序模块
+- **主要文件**：`miniprogram/src/`
+- **关键文件**：
+  - `miniprogram/src/pages/` - 页面组件
+  - `miniprogram/src/components/` - 公共组件
+  - `miniprogram/src/stores/` - 状态管理（Pinia）
+  - `miniprogram/src/api/` - API服务层
+  - 📚 **文档**：[小程序需求规格](docs/miniprogram/REQUIREMENTS.md) | [技术栈](docs/miniprogram/TECH_STACK.md)
+
+### 基础设施模块
+- **文档位置**：`docs/modules/infra/`
+- **关键文件**：
+  - **[基础设施TODO](docs/modules/infra/TODO.md)** - 跨服务架构任务跟踪（事件总线、Redis部署、冲突解决方案）
+  - 共享Redis集群部署、统一事件总线SDK、服务解耦实施计划
+
+## 🔧 快速操作指南
+
+### 模块开发命令（module-dev）
+
+使用 `module-dev` 命令快速进入指定模块的开发工作流：
+
 ```bash
-# 启动所有服务（前端、后端、AI服务、数据服务、数据库）
+# 格式：module-dev <服务名>
+module-dev backend              # 后端模块开发
+module-dev frontend             # 前端模块开发
+module-dev market-data-service  # 市场行情数据服务开发
+module-dev trading-ai-service   # 交易AI服务开发
+module-dev news-service         # 新闻服务开发
+module-dev miniprogram          # 微信小程序开发
+```
+
+**命令执行流程**：
+1. 自动执行 `/pro-init` 熟悉项目结构
+2. 读取 `docs/modules/<服务名>/TODO.md` 开发规划
+3. 识别下一个待开发条目（🔲 待开发）
+4. 检查当前git分支，引导切换至正确worktree
+5. 制定具体执行计划，等待你的开发指令
+
+**模块开发规划文档**：
+- [Backend TODO](docs/modules/backend/TODO.md) - 后端开发规划（含架构优化任务C1~C6, O3, O6）
+- [Frontend TODO](docs/modules/frontend/TODO.md) - 前端开发规划
+- [Market Data Service TODO](docs/modules/market-data-service/TODO.md) - 数据服务规划（含架构优化任务C1~C6, O6）
+- [Trading AI Service TODO](docs/modules/trading-ai-service/TODO.md) - AI服务规划（含架构优化任务C1~C4）
+- [News Service TODO](docs/modules/news-service/TODO.md) - 新闻服务规划（含架构优化任务C1~C6）
+- [Miniprogram TODO](docs/modules/miniprogram/TODO.md) - 小程序规划（含架构优化任务C1, C5, O6）
+- **[Infrastructure TODO](docs/modules/infra/TODO.md)** - 基础设施规划（6个冲突解决方案 + 2个优化方案）
+
+---
+
+### 开发环境启动
+```bash
+# 一键启动所有服务
 docker-compose up -d
 
 # 查看服务状态
 docker-compose ps
 
 # 查看服务日志
-docker-compose logs -f [service_name]  # 如: backend, frontend, ai-service, data-service
-
-# 停止所有服务
-docker-compose down
-
-# 停止并清理所有资源（数据卷、网络）
-docker-compose down -v
+docker-compose logs -f [service_name]
 ```
 
-### 开发环境手动启动
+### 服务访问地址
+- **前端**：http://localhost:3000
+- **后端API**：http://localhost:3001
+- **交易AI服务**：http://localhost:8000 (AI账户交易决策)
+- **市场行情数据服务**：http://localhost:8001 (A股实时行情)
 
-#### 后端服务（Node.js，端口3001）
-```bash
-cd backend
-npm install          # 安装依赖
-npm run dev          # 开发模式启动
-# 或
-node src/app.js      # 生产模式启动
-
-# 运行测试
-npm test             # 运行所有测试
-npm test -- --coverage  # 测试覆盖率
-```
-
-#### 前端服务（React，端口3000）
-```bash
-cd frontend
-npm install          # 安装依赖
-npm run dev          # 开发模式启动
-
-# 构建生产版本
-npm run build        # 构建生产版本
-npm run preview      # 预览构建结果
-```
-
-#### AI服务（Python，端口8000）
-```bash
-cd ai-service && source venv/bin/activate && 
-pip install -r requirements.txt  # 安装Python依赖
-python -m ai_service.main        # 启动服务
-
-# 或使用uvicorn（开发模式）
-cd ai-service && source venv/bin/activate && uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-#### 数据服务（Python，端口8001）
-```bash
-cd data-service && source venv/bin/activate && 
-pip install -r requirements.txt  # 安装Python依赖
-
-# 启动服务
-cd data-service && source venv/bin/activate && uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001
-```
-### 数据库管理
-```bash
-# PostgreSQL数据库（端口5432）
-# 使用pgAdmin管理（端口5050）：http://localhost:5050
-# 用户名：admin@stock-race.com，密码：admin123
-
-# Redis缓存（端口6379）
-# 使用Redis Commander管理（端口8081）：http://localhost:8081
-
-# TimescaleDB时序数据库（端口5433）
-```
-
-### 健康检查和API测试
+### 健康检查
 ```bash
 # 后端健康检查
 curl http://localhost:3001/api/health
 
-# AI服务健康检查
+# 交易AI服务健康检查
 curl http://localhost:8000/api/v1/health/
 
-# 数据服务健康检查
+# 市场行情数据服务健康检查
 curl http://localhost:8001/health
-
-# 前端开发服务器
-curl http://localhost:3000
-
-# API文档访问
-# 后端API文档：http://localhost:3001/api-docs
-# AI服务API文档：http://localhost:8000/docs
-# 数据服务API文档：http://localhost:8001/docs
 ```
 
-### 测试命令
-```bash
-# 后端测试
-cd backend && npm test
+## 📝 文档使用建议
 
-# AI服务测试
-cd ai-service && python -m pytest tests/
+1. **新会话快速入门**：
+   - 首先阅读 [新手指南](docs/usage/QUICK_START.md)
+   - 参考 [代码结构地图](docs/architecture/CODE_MAP.md) 了解项目结构
 
-# 数据服务测试
-cd data-service && python -m pytest tests/
+2. **开发流程**：
+   - 遵循 [开发规范](docs/development/CODING_STANDARDS.md)
 
-# 前端测试
-cd frontend && npm test
-```
+3. **部署流程**：
+   - 参考 [部署指南](docs/deployment/DEPLOYMENT_GUIDE.md)
+   - 执行 [生产部署](docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md)
 
-### 依赖管理
-```bash
-# 安装前端依赖（Node.js）
-cd frontend && npm install
+4. **智能体协作**：
+   - 查看 [协作方案](docs/agents/GENERIC_COLLABORATION_PLAN.md)
+   - 了解 [角色定义](docs/agents/GENERIC_ROLES.md)
 
-# 安装后端依赖（Node.js）
-cd backend && npm install
+## 🎨 文档设计原则
 
-# 安装AI服务依赖（Python）
-cd ai-service && source venv/bin/activate && pip install -r requirements.txt
+- **分层组织**：从概览到详细，逐步深入
+- **信息压缩**：核心信息前置，详细信息后置
+- **链接导航**：通过链接减少重复内容
+- **结构清晰**：统一文档格式与命名规范
+- **易于维护**：模块化设计，便于更新
 
-# 安装数据服务依赖（Python）
-cd data-service && pip install -r requirements.txt
+## 🔍 搜索与定位
 
-# 使用虚拟环境（推荐）
-cd ai-service && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
-cd data-service && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+**快速定位文件**：
+- 使用文档导航链接直接访问
+- 按功能模块分类查找
+- 核心文件通过 CODE_MAP.md 统一索引
 
-# 更新特定依赖
-cd frontend && npm update axios
-cd backend && npm update express
-cd ai-service && source venv/bin/activate && pip install --upgrade openai fastapi
-cd data-service && source venv/bin/activate && pip install --upgrade pandas fastapi
-```
+**常用搜索路径**：
+- 架构相关：`docs/architecture/` ([README](docs/architecture/README.md))
+- 开发相关：`docs/development/`
+- 部署相关：`docs/deployment/`
+- 智能体相关：`docs/agents/`
+- 微信小程序：`docs/miniprogram/`
 
+## 📈 近期开发进展
 
-## 📋 项目规划
+### 五服务架构冲突分析与解决方案制定
+**项目状态**：✅ **架构审查完成，6个冲突全部解决（2026-02-11）**
 
-### 第一阶段：MVP开发完成（2026-02-02 至 2026-02-03）
-**目标**：交付最小可行产品，展示核心功能
+**关键成果**：首席架构师完成Backend、Market Data Service、Trading AI Service、News Service、Miniprogram五个服务的TODO.md综合审查，识别6个架构冲突并提供完整解决方案。
 
-**已完成里程碑**：
-1. ✅ **需求分析与技术选型**（2026-02-02）
-   - 完成需求规格说明书
-   - 完成技术选型分析报告
-   - 确定混合架构方案
+**解决的架构冲突**：
+1. ✅ **循环依赖问题** - 采用"共享Redis + 冷启动"混合方案（方案C）
+2. ✅ **事件总线设计不一致** - 统一采用Redis Streams事件总线
+3. ✅ **AI Service双向依赖过多** - 基于事件总线的完全解耦
+4. ✅ **AI对话服务职责分歧** - 确定由Backend实现AI对话功能
+5. ✅ **Miniprogram公开API冲突** - 三层API架构 + 智能游客模式
+6. ✅ **接口定义重复/不一致** - AI决策服务广度查询需求确认
 
-2. ✅ **基础设施搭建**（2026-02-03）
-   - 创建完整项目脚手架
-   - 配置Docker Compose开发环境
-   - 设置CI/CD流水线
+**关键架构决策**：
+- 统一事件总线架构：所有服务通过Redis Streams通信，消除直接依赖
+- AI对话服务：由Backend实现，避免Backend ↔ Trading AI循环依赖
+- Miniprogram游客模式：支持24h/72h智能过期，80%功能无需登录
+- 数据流优化：行情直连Market Data，Backend负载降低90%
+- Redis部署：渐进式策略，从单节点¥0起步到Cluster集群
 
-3. ✅ **架构设计与数据库建模**（2026-02-03）
-   - 完成系统架构设计
-   - 完成数据库ER图和API规范
-   - 更新技术架构文档
-
-4. ✅ **后端核心功能开发**（2026-02-03）
-   - 实现简化用户系统（单用户密码访问）
-   - 实现虚拟交易逻辑（买入/卖出、持仓管理）
-   - 实现RESTful API和WebSocket实时推送
-   - 集成外部服务（AI服务、数据服务）
-
-5. ✅ **前端交易界面开发**（2026-02-03）
-   - 实现React交易界面（登录、交易、持仓、监控）
-   - 实现数据可视化组件（收益曲线、实时行情）
-   - 实现响应式设计和用户体验优化
-
-6. ✅ **AI集成服务开发**（2026-02-03）
-   - 实现多模型AI适配器（OpenAI、DeepSeek、Claude等）
-   - 实现股票交易决策逻辑和提示工程
-   - 实现决策理由生成和风险评估
-
-7. ✅ **数据服务开发**（2026-02-03）
-   - 实现多数据源股票数据采集（新浪、腾讯、东方财富）
-   - 实现实时数据推送和时序数据存储
-   - 实现数据清洗和质量监控
-
-### 第二阶段：集成测试与优化（规划中）
-**目标**：验证系统集成，优化性能，准备演示
-
-**计划工作**：
-1. **集成测试验证**：验证所有服务协同工作
-2. **性能优化**：优化实时数据延迟和API响应
-3. **演示准备**：创建演示脚本和用户指南
-4. **生产部署**：配置生产环境部署方案
-
-### 第三阶段：功能扩展与平台化（规划中）
-**目标**：扩展核心功能，支持多用户和多AI模型
-
-**计划工作**：
-1. **多用户支持**：实现完整的用户管理系统
-2. **多AI账户**：支持用户创建多个AI交易账户
-3. **高级功能**：高级分析工具、社交功能、移动端
-4. **开放平台**：API开放平台、第三方集成
-
-详细实施计划请参考：[项目实施计划模板](docs/planning/IMPLEMENTATION_PHASES.md)
-
-## 🤖 多智能体协作执行方案
-
-通用多智能体协作方案已移至：[通用多智能体协作方案](docs/agents/GENERIC_COLLABORATION_PLAN.md)。另请参考相关文档：[通用角色定义](docs/agents/GENERIC_ROLES.md)、[任务分发指南](docs/agents/TASK_DISPATCH_GUIDE.md)、[项目模板配置](docs/agents/PROJECT_TEMPLATE.md)
-
-## 📊 当前状态
-**真实数据集成完成阶段**（2026-02-03）
-- 已完成混合架构技术选型（Node.js后端 + React前端 + Python AI/数据服务）
-- 已完成项目脚手架和基础设施搭建
-- 已完成系统架构设计和数据库设计
-- 已完成后端核心功能开发（认证、交易、股票、AI集成、持仓管理）
-- 已完成前端React交易界面开发（登录、交易、持仓、监控、图表）
-- 已完成Python AI集成服务开发（多模型适配、决策逻辑、提示工程）
-- 已完成Python数据服务开发（多数据源采集、实时推送、时序存储）
-- 已完成Docker Compose开发环境配置和CI/CD流水线
-- **已完成DataService集成**（API端点适配、数据格式转换、监控健康检查、智能降级策略）
-- **已完成前端真实数据集成**（市场服务、实时行情、交易页面、收益图表、持仓汇总）
-- **已完成多数据源路由器实现**（新浪、腾讯、东方财富数据源负载均衡）
-- 项目已具备演示功能，可进行集成测试和部署验证
-
-**环境部署进展**（2026-02-04 更新）
-- ✅ **Docker安装成功**：使用中国镜像源优化版脚本`install_docker_china.sh`完成安装
-- ✅ **数据库安装成功**：使用优化版脚本`install_databases_china.sh`安装PostgreSQL、Redis
-- ✅ **项目结构探索完成**：已详细分析数据服务和多数据源架构
-- ✅ **数据获取方案完善**：已完成三大免费数据源分析和获取策略（见`docs/data_acquisition_plan.md`）
-- ✅ **安装脚本优化**：创建了中国镜像源优化版脚本解决网络问题
-- ✅ **后端依赖安装完成**：Node.js v18.19.1（要求≥20.0.0，有版本警告但不影响运行）
-- ✅ **前端依赖安装完成**：React应用依赖已就绪
-- 🔄 **Redis服务待启动**：Redis已安装但服务未运行，需启动服务
-- 🔄 **Python pip未安装**：AI和数据服务依赖需要pip包管理器
-- 🔄 **混合部署策略**：当前采用主机服务+容器化混合部署，便于调试验证
-- 🔄 **全容器化支持**：项目完全支持`docker-compose up`一键启动（需要docker组权限）
-- 📋 **环境检查脚本**：已创建`check_environment.sh`用于检查所有依赖和服务状态
-- 📋 **开发进度报告**：已创建详细的功能清单和验证步骤（见`docs/progress_report.md`）
-
-**数据获取方案**
-- 已完成新浪、腾讯、东方财富三大免费数据源分析
-- 已制定多节点分段获取策略和负载均衡方案
-- 计划实施实时数据获取（高频）和历史数据获取（低频）分层策略
-- 设计了数据验证、缓存和故障转移机制
-
-**开发进度报告**
-详细的项目开发进度和已完成功能清单，请参考：[开发进度报告](docs/progress_report.md)
-- 包含所有已完成功能的详细清单
-- 功能验证步骤和检查清单
-- 立即需要执行的操作指南
-- 已知问题和下一步工作计划
-
-## 🔧 近期工作重点（2026-02-04 更新）
-1. **启动Redis服务**：安装并启动Redis缓存服务（当前未运行）
-2. **安装Python依赖**：安装pip包管理器，安装AI和数据服务的Python依赖
-3. **修复AI服务API集成**：根据分析报告修复后端AIService的API端点不匹配问题（`/api/ai/decision` vs `/api/v1/decision/generate`）
-4. **启动所有服务验证**：手动启动4个服务（后端、AI服务、数据服务、前端）进行端到端功能验证
-5. **验证真实数据流**：确认系统使用真实A股数据而非模拟数据，检查数据源指示器
-6. **环境一致性优化**：根据网络条件选择混合部署或全容器化（`docker-compose up`）
-
-## 🎯 下一步工作（立即执行步骤）
-1. **安装缺失组件**：
-   ```bash
-   # 安装Redis和Python pip（需要sudo权限）
-   sudo apt-get install -y redis-server python3-pip
-   sudo systemctl start redis-server
-   sudo systemctl enable redis-server
-   redis-cli ping  # 验证Redis
-   ```
-
-2. **安装Python服务依赖**：
-   ```bash
-   cd ai-service && source venv/bin/activate && pip install -r requirements.txt
-   cd data-service && source venv/bin/activate && pip install -r requirements.txt
-   ```
-
-3. **启动所有服务**（在4个终端分别执行）：
-   ```bash
-   # 终端1：后端服务（端口3001）
-   cd backend && npm run dev
-
-   # 终端2：AI服务（端口8000）
-   cd ai-service && source venv/bin/activate && python -m uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000
-
-   # 终端3：数据服务（端口8001）
-   cd data-service && source venv/bin/activate && python -m uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001
-
-   # 终端4：前端服务（端口3000）
-   cd frontend && npm run dev
-   ```
-
-4. **验证服务健康**：
-   ```bash
-   curl http://localhost:3001/api/health      # 后端
-   curl http://localhost:8000/api/v1/health/  # AI服务
-   curl http://localhost:8001/health          # 数据服务
-   curl http://localhost:3000                 # 前端
-   ```
-
-5. **全容器化选项**（可选）：
-   ```bash
-   # 确保有docker组权限，然后执行
-   docker-compose down && docker-compose up -d
-   docker-compose ps  # 查看状态
-   ```
-
-## ⚠️ 注意事项
-
-项目开发和使用中的注意事项，详细内容请参考：[注意事项模板](docs/usage/IMPORTANT_NOTES.md)
-
-## 📋 功能验证记录
-
-项目功能测试和验证记录，详细内容请参考：[功能验证记录模板](docs/testing/VALIDATION_HISTORY.md)
-
-## 🆕 新会话快速上手
-
-### 快速参考
-- **环境搭建**：
-  ```bash
-  # 方案1：使用中国镜像源（推荐，解决网络问题）
-  # 1. 安装数据库（需要sudo）
-  sudo bash install_databases_china.sh
-
-  # 2. 尝试安装Docker（可选）
-  sudo bash install_docker_china.sh
-
-  # 方案2：如果网络正常使用原始脚本
-  # sudo bash install_databases.sh
-  # sudo bash install_docker.sh
-
-  # 3. 安装应用依赖
-  cd backend && npm install
-  cd frontend && npm install
-  cd ai-service && source venv/bin/activate && pip install -r requirements.txt
-  cd data-service && source venv/bin/activate && pip install -r requirements.txt
-  ```
-- **启动开发**：
-  ```bash
-  # 在4个终端分别启动
-  cd backend && npm run dev           # 端口3001
-  cd ai-service && source venv/bin/activate && python -m uvicorn ai_service.main:app --reload --port 8000
-  cd data-service && source venv/bin/activate && python -m uvicorn data_service.main:app --reload --port 8001
-  cd frontend && npm run dev          # 端口3000
-  ```
-- **核心功能**：用户登录 → 查看实时行情 → AI交易决策 → 查看持仓收益
-- **关键文件**：
-  - 后端：`backend/src/services/DataService.js` (数据服务集成)
-  - 前端：`frontend/src/services/market.service.ts` (市场数据服务)
-  - AI服务：`ai-service/src/ai_service/services/decision_service.py`
-  - 数据服务：`data-service/src/data_service/collectors/router.py` (多数据源路由器)
-
-### 详细指南
-完整的新手指南请参考：[新手指南模板](docs/usage/QUICK_START.md)，包含：
-- 详细的环境搭建步骤
-- 核心功能使用示例
-- 项目结构快速浏览
-- 开发指南和调试技巧
-- 常见问题与解决方案
-- 开发最佳实践
-
-## 🗺️ 代码结构地图
-
-详细的代码结构地图已移至：[代码结构地图模板](docs/architecture/CODE_MAP.md)
-
-**代码结构地图** 包含：
-- 关键文件的功能说明和代码入口点
-- 核心模块的调用关系图
-- 智能体工作目录与具体代码文件的对应表
-- 代码变更历史和重要修改记录
-- 快速导航指南和新会话上手提示
+**详细文档**：
+- 📋 [服务依赖冲突分析](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 主文档，6个冲突完整分析
+- 📋 [六服务架构设计](docs/architecture/CURRENT/SERVICE_ARCHITECTURE.md) - 关键决策更新
+- 📋 [循环依赖解决方案](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md)
+- 📋 [事件总线风险分析](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md)
+- 📋 [AI对话服务职责划分](docs/architecture/CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md)
+- 📋 [Miniprogram游客模式设计](docs/architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md)
+- 📋 [Miniprogram数据流优化](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md)
+- 📋 [AI Service双向依赖解耦](docs/architecture/CURRENT/DECISIONS/004-AI-DECOUPLING.md)
+- 📋 [AI决策广度查询需求](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md)
+- 📋 [Redis渐进式部署策略](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md)
 
 ---
-*本文档最后更新于：2026-02-04*
-*文档维护者：本项目首席架构师*
+
+### Market Data Service 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，测试覆盖率96%。
+
+**审查结论**：
+- 多数据源架构（6源）设计成熟，智能路由与动态权重机制完善
+- 三层缓存策略（Redis/TimescaleDB/内存回退）确保高可用性
+- 数据质量评估与降级策略有效保障数据可靠性
+- 单元测试通过率95.8%，核心功能100%覆盖
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/market-data-service/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/market-data-service/TODO.md)
+- 📋 [测试脚本索引](docs/modules/market-data-service/TEST_SCRIPTS.md)
+
+---
+
+### News Service 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，创建TEST_SCRIPTS.md索引测试脚本。
+
+**审查结论**：
+- 完全符合统一数据平台精简情报架构设计
+- DeepSeek流式处理，Token严格控制（单条<2000 tokens）
+- 分层存储策略合理（Redis 24h + PostgreSQL 7d），节省98%存储空间
+- 采集器、处理器、存储层设计规范，易于扩展
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/news-service/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/news-service/TODO.md)
+- 📋 [测试脚本索引](docs/modules/news-service/TEST_SCRIPTS.md)
+
+---
+
+### Trading AI Service 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，更新TEST_SCRIPTS.md索引测试脚本。
+
+**审查结论**：
+- 多模型适配器架构优秀（6大AI提供商统一接口）
+- Token成本控制精准（预算估算→限额控制→分级告警）
+- 数据融合设计合理（Market Data + News Service双源聚合）
+- 提示词工程成熟（基金经理画像自动提炼）
+- 综合功能测试32项全部通过（100%通过率）
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/trading-ai-service/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/trading-ai-service/TODO.md)
+- 📋 [测试脚本索引](docs/modules/trading-ai-service/TEST_SCRIPTS.md)
+
+---
+
+### Miniprogram 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查。重构TODO.md，创建HAVE_DONE.md记录已完成功能（T-001~T-011），更新TEST_SCRIPTS.md索引测试脚本。
+
+**审查结论**：
+- 游客模式设计优秀，无需登录即可访问公开数据，降低用户使用门槛
+- Pinia状态管理规范，5个Store职责分明，持久化配置合理
+- 代码规范统一，TypeScript类型完善，Vue 3 Composition API使用规范
+- UI设计符合A股习惯（红涨绿跌），西式复古精英风格独特
+- E2E测试覆盖游客模式7个场景（20+子测试全部通过）
+
+**待完成工作**：
+- AI经理详情页（T-007）需要完善收益曲线和持仓列表
+- 排行榜/行情页需等待Backend提供公开API
+- 单元测试待补充（T-001~T-010）
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/miniprogram/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/miniprogram/TODO.md)
+- 📋 [测试脚本索引](docs/modules/miniprogram/TEST_SCRIPTS.md)
+
+---
+
+### Backend 代码审查与文档重构
+**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
+
+**关键成果**：首席架构师完成全面代码审查。重构TODO.md，创建HAVE_DONE.md记录已完成功能（T-001~T-015），更新TEST_SCRIPTS.md索引测试脚本（新增7个测试文件/90个测试用例）。
+
+**审查结论**：
+- 交易规则引擎精准：完整支持A股市场各类规则（主板/创业板/科创板/北交所），涨跌停计算准确，特殊场景（ST/停牌/新股）处理完善
+- 服务通信可靠：SDK封装完善，熔断降级策略合理，服务间调用健壮
+- 动态配置灵活：分层配置架构优雅（默认→会员→账户），支持会员级别和账户级别的灵活控制
+- WebSocket设计成熟：Socket.io使用规范，订阅管理精细化，实时推送稳定
+- 测试覆盖率高：单元测试195个全部通过，新增测试90个，生产就绪度90%
+
+**待完成工作**：
+- 完善集成测试环境（9个测试需完整Docker Compose环境）
+- 对接trading-ai-service对话接口（T-011）
+- 对接market-data-service交易状态接口（T-015）
+
+**详细文档**：
+- 📋 [已完成功能记录](docs/modules/backend/HAVE_DONE.md)
+- 📋 [待办任务追踪](docs/modules/backend/TODO.md)
+- 📋 [测试脚本索引](docs/modules/backend/TEST_SCRIPTS.md)
+
+---
+
+### 六数据源鲁棒性测试项目（分层采集验证）
+**项目状态**：✅ 测试中，v1.1方案已制定（2026-02-10）
+
+**关键成果**：制定中频层（10秒/300只）+ 低频层（60秒/全量）分层采集方案，新浪财经生产就绪（100%成功率/0.33s响应）。
+
+**详细报告**：
+- 📋 [v1.1分层采集方案](data-service/docs/HYBRID_DATA_SOURCE_SOLUTION_v1.1.md)
+- 📋 [六数据源测试报告](data-service/docs/SIX_SOURCES_ROBUSTNESS_TEST_REPORT.md)
+
+---
+
+### 股票数据源采集测试项目（集合竞价专项）
+**项目状态**：✅ 修复完成，连续测试中（2026-02-10）
+
+**关键成果**：修复腾讯财经和东方财富字段解析问题，所有3个数据源在集合竞价时段均正常工作。
+
+**详细报告**：
+- 📋 [混合数据源采集方案](data-service/docs/HYBRID_DATA_SOURCE_SOLUTION.md)
+- 📋 [测试报告](data-service/docs/DATA_SOURCE_TEST_REPORT_20260210.md)
+
+---
+
+### 微信小程序项目
+**项目状态**：✅ **全部完成，等待微信审核（2026-02-09）**
+
+**关键成果**：UniApp + Vue 3小程序全部功能开发完成（P0/P1/P2），ucharts图表集成，西式复古精英风格UI设计，审核材料准备完毕。
+
+**详细文档**：
+- 📋 [隐私保护指引](docs/miniprogram/PRIVACY.md)
+- 📋 [用户服务协议](docs/miniprogram/TERMS.md)
+- 📋 [审核指南](docs/miniprogram/WECHAT_AUDIT_GUIDE.md)
+- 📋 [开发进度](docs/miniprogram/DEVELOPMENT_PROGRESS.md)
+
+---
+
+📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含前端模拟数据改造、紧急系统修复、Docker容器化、内存持久化优化等14个历史项目详细记录。
+
+---
+
+*本文档最后更新于：2026-02-11*

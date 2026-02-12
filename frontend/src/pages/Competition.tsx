@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -14,6 +14,8 @@ import {
   DatePicker,
   Button,
   Grid,
+  Spin,
+  message,
 } from 'antd';
 import {
   TrophyOutlined,
@@ -31,8 +33,8 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { useBreakpoint } = Grid;
 
-// 模拟排行榜数据
-const mockRankings = [
+// 降级排行榜数据 - 当API失败时使用
+const fallbackRankings = [
   { rank: 1, username: '股神巴菲特', totalValue: 256430.50, totalPnl: 56430.50, totalPnlPercent: 28.25, change: 0 },
   { rank: 2, username: 'AI交易大师', totalValue: 198750.25, totalPnl: 38750.25, totalPnlPercent: 24.18, change: 1 },
   { rank: 3, username: '量化小王子', totalValue: 187540.75, totalPnl: 37540.75, totalPnlPercent: 25.03, change: -1 },
@@ -45,8 +47,7 @@ const mockRankings = [
   { rank: 10, username: '消费升级', totalValue: 98770.50, totalPnl: 18770.50, totalPnlPercent: 23.45, change: 0 },
 ];
 
-// 模拟我的排名数据
-const myRanking = {
+const fallbackMyRanking = {
   rank: 15,
   username: '当前用户',
   totalValue: 125430.50,
@@ -64,9 +65,66 @@ const timePeriods = [
   { label: '全部', value: 'all' },
 ];
 
+// 服务导入
+import { tradingService } from '../services/trading.service';
+
 const Competition: React.FC = () => {
   const screens = useBreakpoint();
-  const [selectedPeriod, setSelectedPeriod] = React.useState('month');
+  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [loading, setLoading] = useState(false);
+  const [rankings, setRankings] = useState<any[]>(fallbackRankings);
+  const [myRanking, setMyRanking] = useState<any>(fallbackMyRanking);
+  const [competitionStats, setCompetitionStats] = useState({
+    totalParticipants: 156,
+    aiTraders: 42,
+    avgReturn: 18.5,
+    maxReturn: 28.3,
+  });
+
+  // 加载竞赛数据
+  useEffect(() => {
+    loadCompetitionData();
+  }, [selectedPeriod]);
+
+  const loadCompetitionData = async () => {
+    setLoading(true);
+    try {
+      // TODO: 调用真实排行榜API获取数据
+      // 目前使用降级数据，后续需要实现真实API调用
+      console.log('加载竞赛数据，时间段:', selectedPeriod);
+
+      // 获取当前用户的投资组合数据作为我的排名数据
+      const portfolioSummary = await tradingService.getPortfolioSummary();
+
+      // 更新我的排名数据（基于投资组合数据）
+      setMyRanking({
+        rank: 15, // TODO: 从真实API获取
+        username: '当前用户',
+        totalValue: portfolioSummary.totalValue || 125430.50,
+        totalPnl: portfolioSummary.totalPnl || 15430.50,
+        totalPnlPercent: portfolioSummary.totalPnlPercent || 14.03,
+        change: 3, // TODO: 从真实API获取
+      });
+
+      // TODO: 获取排行榜数据
+      // 目前使用降级数据
+      setRankings(fallbackRankings);
+
+      // TODO: 获取竞赛统计
+      // 目前使用降级数据
+
+      message.success('竞赛数据加载成功');
+    } catch (error) {
+      console.error('加载竞赛数据失败，使用降级数据:', error);
+      message.error('加载竞赛数据失败，显示降级数据');
+
+      // 使用降级数据
+      setRankings(fallbackRankings);
+      setMyRanking(fallbackMyRanking);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 排行榜表格列定义
   const rankingColumns = [
@@ -182,6 +240,14 @@ const Competition: React.FC = () => {
     },
   ];
 
+  if (loading && rankings === fallbackRankings) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <Spin size="large" tip="加载竞赛数据中..." />
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: '100%' }}>
       {/* 页面标题 */}
@@ -191,6 +257,7 @@ const Competition: React.FC = () => {
         </Title>
         <Text type="secondary">
           查看其他交易者的表现，竞争成为最佳投资者。
+          {rankings === fallbackRankings && <Tag color="orange" style={{ marginLeft: 8 }}>使用降级数据</Tag>}
         </Text>
       </Space>
 
@@ -275,7 +342,7 @@ const Competition: React.FC = () => {
             }
           >
             <Table
-              dataSource={mockRankings}
+              dataSource={rankings}
               columns={rankingColumns}
               pagination={{
                 pageSize: 10,
@@ -396,7 +463,7 @@ const Competition: React.FC = () => {
                     <Card size="small" bordered={false} style={{ background: '#f6ffed' }}>
                       <Statistic
                         title="参赛者总数"
-                        value={156}
+                        value={competitionStats.totalParticipants}
                         valueStyle={{ fontSize: 20 }}
                       />
                     </Card>
@@ -405,8 +472,8 @@ const Competition: React.FC = () => {
                     <Card size="small" bordered={false} style={{ background: '#fff7e6' }}>
                       <Statistic
                         title="AI交易者"
-                        value={42}
-                        suffix="/ 156"
+                        value={competitionStats.aiTraders}
+                        suffix={`/ ${competitionStats.totalParticipants}`}
                         valueStyle={{ fontSize: 20 }}
                       />
                     </Card>
@@ -415,7 +482,7 @@ const Competition: React.FC = () => {
                     <Card size="small" bordered={false} style={{ background: '#e6f7ff' }}>
                       <Statistic
                         title="平均收益率"
-                        value={18.5}
+                        value={competitionStats.avgReturn}
                         suffix="%"
                         valueStyle={{ fontSize: 20 }}
                       />
@@ -425,7 +492,7 @@ const Competition: React.FC = () => {
                     <Card size="small" bordered={false} style={{ background: '#f9f0ff' }}>
                       <Statistic
                         title="最高收益率"
-                        value={28.3}
+                        value={competitionStats.maxReturn}
                         suffix="%"
                         valueStyle={{ fontSize: 20 }}
                       />

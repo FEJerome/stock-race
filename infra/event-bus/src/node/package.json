@@ -1,0 +1,20 @@
+{
+  "name": "@stock-race/event-bus",
+  "version": "1.0.0",
+  "description": "Stock Race统一事件总线SDK (Node.js版)",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --verbose",
+    "test:integration": "jest --verbose --testNamePattern='integration'"
+  },
+  "keywords": ["event-bus", "redis", "streams"],
+  "author": "Stock Race Team",
+  "license": "MIT",
+  "dependencies": {
+    "ioredis": "^5.3.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

@@ -18,6 +18,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!.claude/scripts/lib/
 lib64/
 parts/
 sdist/
@@ -290,3 +291,7 @@ Thumbs.db
 
 # Git worktrees for multi-agent development
 worktrees/
+
+
+# claude local settings.local.json
+.claude/settings.local.json

@@ -3,7 +3,7 @@ import { BaseRepository } from './BaseRepository.js';
 export class StockRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'stock';
+    this.modelName = 'Stock';
   }
 
   /**
@@ -163,6 +163,25 @@ export class StockRepository extends BaseRepository {
           }
         }
       }
+    });
+  }
+
+  /**
+   * 获取热门股票（简化版）
+   * @param {Object} options - 选项
+   * @param {number} options.limit - 限制数量
+   * @returns {Promise<Array>}
+   */
+  async getHotStocks(options = {}) {
+    const { limit = 20 } = options;
+    return this.prisma.stock.findMany({
+      where: {
+        status: 'normal'
+      },
+      orderBy: {
+        marketCap: 'desc'
+      },
+      take: limit
     });
   }
 

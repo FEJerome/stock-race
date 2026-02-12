@@ -190,10 +190,8 @@ export class VirtualTradingService {
       const trade = await tradeRepository.findOne(
         { id: tradeId },
         {
-          include: {
-            account: true,
-            stock: true
-          }
+          account: true,
+          stock: true
         }
       );
 
@@ -227,9 +225,9 @@ export class VirtualTradingService {
       // 更新交易状态
       await tradeRepository.executeTrade(tradeId, {
         executedAt: new Date(),
-        executionPrice: executionResult.executionPrice,
-        actualAmount: executionResult.actualAmount,
-        actualFee: executionResult.actualFee
+        price: executionResult.executionPrice, // 使用price字段存储执行价格
+        amount: executionResult.actualAmount,  // 使用amount字段存储实际金额
+        fee: executionResult.actualFee         // 使用fee字段存储实际费用
       });
 
       // 更新账户总价值
@@ -257,7 +255,7 @@ export class VirtualTradingService {
       // 更新交易状态为拒绝
       await tradeRepository.update(tradeId, {
         status: 'rejected',
-        reason: error.message
+        reason: error.message.substring(0, 100) // 截断错误消息，避免超过字段长度限制
       });
 
       throw error;

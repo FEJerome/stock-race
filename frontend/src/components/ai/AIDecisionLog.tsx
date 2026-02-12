@@ -34,7 +34,7 @@ interface AIDecision {
   id: string;
   timestamp: string;
   aiName: string;
-  modelType: 'openai' | 'claude' | 'wenxin' | 'qwen';
+  modelType: 'deepseek' | 'glm-4.5' | 'glm-4.6' | 'glm-4.7';
   stockSymbol: string;
   stockName: string;
   action: 'buy' | 'sell' | 'hold';
@@ -57,7 +57,7 @@ const AIDecisionLog: React.FC = () => {
       id: '1',
       timestamp: '2026-02-03 14:30:25',
       aiName: '量化策略AI',
-      modelType: 'openai',
+      modelType: 'deepseek',
       stockSymbol: 'AAPL',
       stockName: '苹果公司',
       action: 'buy',
@@ -72,7 +72,7 @@ const AIDecisionLog: React.FC = () => {
       id: '2',
       timestamp: '2026-02-03 14:25:10',
       aiName: '价值投资助手',
-      modelType: 'claude',
+      modelType: 'glm-4.5',
       stockSymbol: 'MSFT',
       stockName: '微软公司',
       action: 'hold',
@@ -85,7 +85,7 @@ const AIDecisionLog: React.FC = () => {
       id: '3',
       timestamp: '2026-02-03 14:20:45',
       aiName: '技术分析大师',
-      modelType: 'wenxin',
+      modelType: 'glm-4.6',
       stockSymbol: 'TSLA',
       stockName: '特斯拉',
       action: 'sell',
@@ -99,7 +99,7 @@ const AIDecisionLog: React.FC = () => {
       id: '4',
       timestamp: '2026-02-03 14:15:30',
       aiName: '风险控制专家',
-      modelType: 'qwen',
+      modelType: 'glm-4.7',
       stockSymbol: 'NVDA',
       stockName: '英伟达',
       action: 'buy',
@@ -114,7 +114,7 @@ const AIDecisionLog: React.FC = () => {
       id: '5',
       timestamp: '2026-02-03 14:10:15',
       aiName: '量化策略AI',
-      modelType: 'openai',
+      modelType: 'deepseek',
       stockSymbol: 'GOOGL',
       stockName: '谷歌',
       action: 'buy',
@@ -129,7 +129,7 @@ const AIDecisionLog: React.FC = () => {
       id: '6',
       timestamp: '2026-02-03 14:05:00',
       aiName: '价值投资助手',
-      modelType: 'claude',
+      modelType: 'glm-4.5',
       stockSymbol: 'AMZN',
       stockName: '亚马逊',
       action: 'hold',
@@ -139,12 +139,12 @@ const AIDecisionLog: React.FC = () => {
     },
   ];
 
-  // 模型类型配置
+  // 模型类型配置（仅支持deepseek和GLM模型）
   const modelConfig = {
-    openai: { name: 'OpenAI', color: 'green', icon: '🤖' },
-    claude: { name: 'Claude', color: 'blue', icon: '🧠' },
-    wenxin: { name: '文心一言', color: 'red', icon: '💬' },
-    qwen: { name: '通义千问', color: 'orange', icon: '⚡' },
+    deepseek: { name: 'DeepSeek', color: 'blue', icon: '🤖' },
+    'glm-4.5': { name: 'GLM-4.5', color: 'green', icon: '🧠' },
+    'glm-4.6': { name: 'GLM-4.6', color: 'purple', icon: '⚡' },
+    'glm-4.7': { name: 'GLM-4.7', color: 'orange', icon: '🔥' },
   };
 
   // 状态配置

@@ -38,18 +38,35 @@ export class AIService {
         timestamp: new Date().toISOString()
       };
 
-      const response = await this.client.post('/api/v1/decision/generate', payload);
+      const response = await this.client.post('/api/v1/decision/service-generate', payload);
 
-      return {
-        success: true,
-        decision: response.data.decision,
-        reasoning: response.data.reasoning,
-        confidence: response.data.confidence,
-        risk_level: response.data.risk_level,
-        suggested_quantity: response.data.suggested_quantity,
-        suggested_price: response.data.suggested_price,
-        metadata: response.data.metadata || {}
-      };
+      // AI服务返回DecisionResponse结构：{success, decision, error, warnings, metadata}
+      // decision字段是DecisionResult对象：{action, symbol, quantity, price_target, reasoning, confidence_score, risk_level, ...}
+      if (response.data.success && response.data.decision) {
+        const decisionResult = response.data.decision;
+        return {
+          success: true,
+          decision: decisionResult.action,
+          reasoning: decisionResult.reasoning,
+          confidence: decisionResult.confidence_score,
+          risk_level: decisionResult.risk_level,
+          suggested_quantity: decisionResult.quantity,
+          suggested_price: decisionResult.price_target,
+          metadata: {
+            ...(response.data.metadata || {}),
+            decision_id: decisionResult.decision_id,
+            ai_provider: decisionResult.ai_provider,
+            model_name: decisionResult.model_name,
+            technical_analysis: decisionResult.technical_analysis,
+            fundamental_analysis: decisionResult.fundamental_analysis,
+            risk_assessment: decisionResult.risk_assessment,
+            raw_response: decisionResult.raw_response
+          }
+        };
+      } else {
+        // AI服务返回失败
+        throw new Error(response.data.error || 'AI服务返回失败');
+      }
     } catch (error) {
       console.error('AI决策请求失败:', error.message);
 
@@ -65,29 +82,52 @@ export class AIService {
    */
   async batchRequestDecisions(requests) {
     try {
-      const payload = {
-        requests: requests.map(req => ({
-          account_id: req.accountId,
-          stock_code: req.stockCode,
-          market_data: req.marketData,
-          portfolio_data: req.portfolioData,
-          strategy: req.strategy || 'default'
-        }))
-      };
-
-      const response = await this.client.post('/api/v1/decision/batch-generate', payload);
-
-      return response.data.decisions.map((decision, index) => ({
-        success: true,
-        request_id: requests[index].requestId || `req-${index}`,
-        decision: decision.decision,
-        reasoning: decision.reasoning,
-        confidence: decision.confidence,
-        risk_level: decision.risk_level,
-        suggested_quantity: decision.suggested_quantity,
-        suggested_price: decision.suggested_price,
-        metadata: decision.metadata || {}
+      // AI服务期望DecisionRequest数组，而不是包装对象
+      const payload = requests.map(req => ({
+        account_id: req.accountId,
+        stock_code: req.stockCode,
+        market_data: req.marketData,
+        portfolio_data: req.portfolioData,
+        strategy: req.strategy || 'default'
       }));
+
+      const response = await this.client.post('/api/v1/decision/service-batch-generate', payload);
+
+      // AI服务返回DecisionResponse数组：每个元素{success, decision, error, warnings, metadata}
+      return response.data.map((decisionResponse, index) => {
+        if (decisionResponse.success && decisionResponse.decision) {
+          const decisionResult = decisionResponse.decision;
+          return {
+            success: true,
+            request_id: requests[index].requestId || `req-${index}`,
+            decision: decisionResult.action,
+            reasoning: decisionResult.reasoning,
+            confidence: decisionResult.confidence_score,
+            risk_level: decisionResult.risk_level,
+            suggested_quantity: decisionResult.quantity,
+            suggested_price: decisionResult.price_target,
+            metadata: {
+              ...(decisionResponse.metadata || {}),
+              decision_id: decisionResult.decision_id,
+              ai_provider: decisionResult.ai_provider,
+              model_name: decisionResult.model_name,
+              technical_analysis: decisionResult.technical_analysis,
+              fundamental_analysis: decisionResult.fundamental_analysis,
+              risk_assessment: decisionResult.risk_assessment,
+              raw_response: decisionResult.raw_response
+            }
+          };
+        } else {
+          // 单个决策失败，返回模拟决策
+          return {
+            success: false,
+            request_id: requests[index].requestId || `req-${index}`,
+            ...this.getMockDecision(requests[index]),
+            is_fallback: true,
+            error: decisionResponse.error || 'AI服务返回失败'
+          };
+        }
+      });
     } catch (error) {
       console.error('批量AI决策请求失败:', error.message);
 
@@ -254,16 +294,69 @@ export class AIService {
       confidence = 0.6 + Math.random() * 0.3;
     }
 
+    // 生成模拟分析数据
+    const marketPrice = marketData?.price || 10.0;
+    const technical_analysis = {
+      trend: decision === 'buy' ? 'bullish' : decision === 'sell' ? 'bearish' : 'neutral',
+      rsi: 30 + Math.random() * 40, // 30-70
+      macd: {
+        signal: marketPrice * 0.01 * (Math.random() - 0.5),
+        histogram: marketPrice * 0.005 * (Math.random() - 0.5)
+      },
+      moving_averages: {
+        ma5: marketPrice * (1 + (Math.random() * 0.05 - 0.025)),
+        ma10: marketPrice * (1 + (Math.random() * 0.05 - 0.025)),
+        ma20: marketPrice * (1 + (Math.random() * 0.05 - 0.025))
+      },
+      support_levels: [marketPrice * 0.95, marketPrice * 0.90],
+      resistance_levels: [marketPrice * 1.05, marketPrice * 1.10],
+      volume_trend: Math.random() > 0.5 ? 'increasing' : 'decreasing'
+    };
+
+    const fundamental_analysis = {
+      pe_ratio: 10 + Math.random() * 20, // 10-30
+      pb_ratio: 1 + Math.random() * 2, // 1-3
+      dividend_yield: (1 + Math.random() * 4).toFixed(2), // 1-5%
+      market_cap: (1000000 + Math.random() * 9000000).toFixed(0), // 百万
+      debt_to_equity: (0.3 + Math.random() * 0.7).toFixed(2), // 0.3-1.0
+      roe: (5 + Math.random() * 15).toFixed(2), // 5-20%
+      revenue_growth: (-5 + Math.random() * 20).toFixed(2), // -5 to 15%
+      profit_margin: (5 + Math.random() * 15).toFixed(2) // 5-20%
+    };
+
+    const risk_assessment = {
+      market_risk: decision === 'hold' ? 'low' : 'medium',
+      liquidity_risk: 'low',
+      concentration_risk: 'low',
+      volatility: (20 + Math.random() * 30).toFixed(2), // 20-50%
+      var_95: marketPrice * (0.05 + Math.random() * 0.1), // 5-15%
+      expected_shortfall: marketPrice * (0.08 + Math.random() * 0.12) // 8-20%
+    };
+
     return {
       success: false,
       decision,
-      reasoning: `模拟决策: ${decision.toUpperCase()} ${stockCode}`,
+      reasoning: `模拟决策: ${decision.toUpperCase()} ${stockCode}。技术分析显示${technical_analysis.trend}趋势，RSI ${technical_analysis.rsi.toFixed(1)}。基本面：PE ${fundamental_analysis.pe_ratio}，股息率${fundamental_analysis.dividend_yield}%。风险评估：${risk_assessment.market_risk}风险。`,
       confidence: parseFloat(confidence.toFixed(2)),
       risk_level: decision === 'hold' ? 'low' : 'medium',
       suggested_quantity: decision !== 'hold' ? Math.floor(Math.random() * 1000) + 100 : 0,
       suggested_price: marketData?.price ? marketData.price * (1 + (Math.random() * 0.1 - 0.05)) : 0,
       is_fallback: true,
-      fallback_reason: 'AI服务不可用'
+      fallback_reason: 'AI服务不可用',
+      metadata: {
+        technical_analysis,
+        fundamental_analysis,
+        risk_assessment,
+        market_analysis: {
+          overall_sentiment: decision === 'buy' ? 'positive' : decision === 'sell' ? 'negative' : 'neutral',
+          sector_performance: Math.random() > 0.5 ? 'outperforming' : 'underperforming',
+          market_trend: Math.random() > 0.5 ? 'uptrend' : 'downtrend'
+        },
+        model_name: 'mock-ai-model',
+        ai_provider: 'mock',
+        processing_time: 50 + Math.random() * 100,
+        api_cost: 0
+      }
     };
   }
 
@@ -317,7 +410,7 @@ export class AIService {
         status: 'connected',
         response_time: endTime - startTime,
         service_version: response.data.version || '0.1.0',
-        service: response.data.service || 'ai-service',
+        service: response.data.service || 'trading-ai-service',
         timestamp: new Date().toISOString()
       };
     } catch (error) {

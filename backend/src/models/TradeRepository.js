@@ -1,9 +1,10 @@
 import { BaseRepository } from './BaseRepository.js';
+import { Prisma } from '@prisma/client';
 
 export class TradeRepository extends BaseRepository {
   constructor() {
     super();
-    this.modelName = 'trade';
+    this.modelName = 'Trade';
   }
 
   /**
@@ -139,13 +140,16 @@ export class TradeRepository extends BaseRepository {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const where = {
-      accountId,
       executedAt: {
         gte: today,
         lt: tomorrow
       },
       status: 'executed'
     };
+
+    if (accountId !== null && accountId !== undefined) {
+      where.accountId = accountId;
+    }
 
     const trades = await this.findMany(where);
 
@@ -183,9 +187,12 @@ export class TradeRepository extends BaseRepository {
     const { startDate, endDate } = options;
 
     const where = {
-      accountId,
       status: 'executed'
     };
+
+    if (accountId !== null && accountId !== undefined) {
+      where.accountId = accountId;
+    }
 
     if (startDate) {
       where.executedAt = { ...where.executedAt, gte: startDate };
@@ -277,18 +284,18 @@ export class TradeRepository extends BaseRepository {
     // 按日期分组统计
     const dailyStats = await this.prisma.$queryRaw`
       SELECT
-        DATE(executed_at) as date,
+        DATE("executedAt")::text as date,
         COUNT(*) as trade_count,
-        SUM(CASE WHEN trade_type = 'buy' THEN 1 ELSE 0 END) as buy_count,
-        SUM(CASE WHEN trade_type = 'sell' THEN 1 ELSE 0 END) as sell_count,
+        SUM(CASE WHEN "tradeType" = 'buy' THEN 1 ELSE 0 END) as buy_count,
+        SUM(CASE WHEN "tradeType" = 'sell' THEN 1 ELSE 0 END) as sell_count,
         SUM(amount) as total_volume,
         AVG(price) as avg_price
       FROM "Trade"
-      WHERE executed_at >= ${startDate}
-        AND executed_at <= ${endDate}
+      WHERE "executedAt" >= ${startDate}
+        AND "executedAt" <= ${endDate}
         AND status = 'executed'
-        ${accountId ? Prisma.sql`AND account_id = ${accountId}` : Prisma.sql``}
-      GROUP BY DATE(executed_at)
+        ${accountId ? Prisma.sql`AND "accountId" = ${accountId}` : Prisma.sql``}
+      GROUP BY DATE("executedAt")
       ORDER BY date ASC
     `;
 

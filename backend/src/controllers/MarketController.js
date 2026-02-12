@@ -1027,6 +1027,674 @@ export class MarketController {
       hotTopics: ['AI交易', '量化策略', '价值投资']
     };
   }
+
+  /**
+   * 获取指数数据
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getIndices(req, res) {
+    try {
+      const { indices } = req.query;
+      const indexCodes = indices ? indices.split(',') : ['000001', '399001', '399006'];
+
+      // 模拟指数数据
+      const indexData = {
+        '000001': { name: '上证指数', code: '000001', market: 'sh', price: 3250.50, change: 15.30, changePercent: 0.47 },
+        '399001': { name: '深证成指', code: '399001', market: 'sz', price: 10280.30, change: 45.20, changePercent: 0.44 },
+        '399006': { name: '创业板指', code: '399006', market: 'sz', price: 2150.80, change: 12.60, changePercent: 0.59 },
+        '000016': { name: '上证50', code: '000016', market: 'sh', price: 2680.40, change: 8.90, changePercent: 0.33 },
+        '000300': { name: '沪深300', code: '000300', market: 'sh', price: 3850.20, change: 18.50, changePercent: 0.48 },
+        '000905': { name: '中证500', code: '000905', market: 'sh', price: 5620.10, change: 32.40, changePercent: 0.58 }
+      };
+
+      const result = indexCodes.map(code => ({
+        code: indexData[code]?.code || code,
+        name: indexData[code]?.name || '未知指数',
+        market: indexData[code]?.market || 'sh',
+        price: indexData[code]?.price || 0,
+        change: indexData[code]?.change || 0,
+        changePercent: indexData[code]?.changePercent || 0,
+        timestamp: new Date().toISOString()
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          indices: result,
+          timestamp: new Date().toISOString()
+        },
+        message: '获取指数数据成功'
+      });
+    } catch (error) {
+      console.error('获取指数数据控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取指数数据失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 获取竞赛列表
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getCompetitions(req, res) {
+    try {
+      const { status, page = 1, limit = 10 } = req.query;
+
+      // 模拟竞赛数据
+      const competitions = [
+        {
+          id: 'monthly-challenge',
+          name: '月度挑战赛',
+          description: '每月一度的AI交易竞赛，展示你的交易策略',
+          startDate: '2026-02-01',
+          endDate: '2026-02-28',
+          status: 'active',
+          prizePool: 50000,
+          participants: 150,
+          rules: { minTrades: 10, maxRisk: 'high', allowedMarkets: ['sh', 'sz'] }
+        },
+        {
+          id: 'newbie-cup',
+          name: '新手杯',
+          description: '专为新用户设计的入门级竞赛',
+          startDate: '2026-02-15',
+          endDate: '2026-03-15',
+          status: 'upcoming',
+          prizePool: 10000,
+          participants: 0,
+          rules: { minTrades: 5, maxRisk: 'medium', allowedMarkets: ['sh', 'sz', 'bj'] }
+        },
+        {
+          id: 'quarterly-cup',
+          name: '季度杯',
+          description: '季度交易大赛，角逐最强AI交易员',
+          startDate: '2026-01-01',
+          endDate: '2026-03-31',
+          status: 'active',
+          prizePool: 100000,
+          participants: 280,
+          rules: { minTrades: 30, maxRisk: 'high', allowedMarkets: ['sh', 'sz'] }
+        }
+      ];
+
+      let filtered = competitions;
+      if (status) {
+        filtered = competitions.filter(c => c.status === status);
+      }
+
+      const startIndex = (parseInt(page) - 1) * parseInt(limit);
+      const endIndex = startIndex + parseInt(limit);
+      const paginated = filtered.slice(startIndex, endIndex);
+
+      res.json({
+        success: true,
+        data: {
+          competitions: paginated,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: filtered.length,
+            pages: Math.ceil(filtered.length / parseInt(limit))
+          }
+        },
+        message: '获取竞赛列表成功'
+      });
+    } catch (error) {
+      console.error('获取竞赛列表控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取竞赛列表失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 获取竞赛详情
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getCompetitionDetail(req, res) {
+    try {
+      const { competitionId } = req.params;
+
+      const competition = this.getCompetitionDetails(competitionId);
+      const rules = this.getCompetitionRules(competitionId);
+      const schedule = this.getCompetitionSchedule(competitionId);
+      const participantStats = await this.getParticipantStatistics(competitionId);
+
+      res.json({
+        success: true,
+        data: {
+          competition,
+          rules,
+          schedule,
+          participantStats
+        },
+        message: '获取竞赛详情成功'
+      });
+    } catch (error) {
+      console.error('获取竞赛详情控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取竞赛详情失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 加入竞赛
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async joinCompetition(req, res) {
+    try {
+      const { competitionId } = req.params;
+      const { accountId } = req.body;
+      const userId = req.user?.id;
+
+      if (!accountId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '缺少账户ID'
+          },
+          message: '请选择要参赛的AI账户'
+        });
+      }
+
+      // 验证账户权限
+      const account = await aiAccountRepository.findOne({
+        id: parseInt(accountId),
+        userId
+      });
+
+      if (!account) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTH_003',
+            message: '权限不足'
+          },
+          message: '无权访问该账户'
+        });
+      }
+
+      // 模拟加入竞赛
+      res.json({
+        success: true,
+        data: {
+          competitionId,
+          accountId: parseInt(accountId),
+          joinedAt: new Date().toISOString(),
+          status: 'joined'
+        },
+        message: '成功加入竞赛'
+      });
+    } catch (error) {
+      console.error('加入竞赛控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '加入竞赛失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 退出竞赛
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async leaveCompetition(req, res) {
+    try {
+      const { competitionId } = req.params;
+      const { accountId } = req.body;
+      const userId = req.user?.id;
+
+      if (!accountId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '缺少账户ID'
+          },
+          message: '请选择要退出的账户'
+        });
+      }
+
+      // 验证账户权限
+      const account = await aiAccountRepository.findOne({
+        id: parseInt(accountId),
+        userId
+      });
+
+      if (!account) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTH_003',
+            message: '权限不足'
+          },
+          message: '无权访问该账户'
+        });
+      }
+
+      // 模拟退出竞赛
+      res.json({
+        success: true,
+        data: {
+          competitionId,
+          accountId: parseInt(accountId),
+          leftAt: new Date().toISOString(),
+          status: 'left'
+        },
+        message: '成功退出竞赛'
+      });
+    } catch (error) {
+      console.error('退出竞赛控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '退出竞赛失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 获取账户排名
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getAccountRanking(req, res) {
+    try {
+      const { accountId } = req.params;
+      const { type = 'all_time' } = req.query;
+      const userId = req.user?.id;
+
+      // 验证账户权限
+      const account = await aiAccountRepository.findOne({
+        id: parseInt(accountId)
+      });
+
+      if (!account) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: '账户不存在'
+          },
+          message: '找不到该账户'
+        });
+      }
+
+      // 验证用户权限
+      if (account.userId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTH_003',
+            message: '权限不足'
+          },
+          message: '无权查看该账户排名'
+        });
+      }
+
+      // 模拟排名数据
+      res.json({
+        success: true,
+        data: {
+          accountId: parseInt(accountId),
+          rank: 15,
+          totalParticipants: 150,
+          type,
+          metrics: {
+            totalReturn: 12.5,
+            sharpeRatio: 1.8,
+            winRate: 65.5,
+            maxDrawdown: -8.2
+          },
+          updatedAt: new Date().toISOString()
+        },
+        message: '获取账户排名成功'
+      });
+    } catch (error) {
+      console.error('获取账户排名控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取账户排名失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 获取市场状态
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getMarketStatus(req, res) {
+    try {
+      // 导入DataService
+      const { dataService } = await import('../services/DataService.js');
+
+      // 获取市场状态
+      const marketStatus = await dataService.getEnhancedMarketStatus();
+
+      res.json({
+        success: true,
+        data: {
+          is_trading: marketStatus.isTrading,
+          status: marketStatus.status,
+          description: marketStatus.description,
+          next_trading_time: marketStatus.nextTradingTime,
+          current_time: marketStatus.currentTime,
+          recommended_interval: marketStatus.recommendedInterval,
+          data_service_status: marketStatus.dataServiceStatus,
+          data_quality: marketStatus.dataQuality,
+          data_status: marketStatus.dataStatus,
+          active_sources: marketStatus.activeSources,
+          success_rate: marketStatus.successRate,
+          timestamp: marketStatus.timestamp
+        },
+        message: '市场状态获取成功',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('获取市场状态控制器错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取市场状态失败，请稍后重试'
+      });
+    }
+  }
+
+  /**
+   * 获取实时市场数据
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getRealtime(req, res) {
+    try {
+      const { market } = req.query;
+
+      // 获取市场统计
+      const marketStats = await this.getMarketStatistics(market);
+
+      // 获取涨跌榜
+      const { gainers, losers } = await this.getGainersAndLosers(market, 10);
+
+      // 获取热门行业（简化实现）
+      const hotIndustries = [
+        { name: '科技', changePercent: 2.5 },
+        { name: '金融', changePercent: 1.8 },
+        { name: '医药', changePercent: 1.2 },
+        { name: '消费', changePercent: 0.9 },
+        { name: '能源', changePercent: 0.5 }
+      ];
+
+      res.json({
+        success: true,
+        data: {
+          market: market || 'all',
+          timestamp: new Date().toISOString(),
+          statistics: marketStats,
+          gainers,
+          losers,
+          hotIndustries
+        },
+        message: '获取实时市场数据成功'
+      });
+    } catch (error) {
+      console.error('获取实时市场数据错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取实时市场数据失败'
+      });
+    }
+  }
+
+  /**
+   * 获取市场历史数据
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getHistory(req, res) {
+    try {
+      const { symbol, days = 30 } = req.query;
+
+      if (!symbol) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: '股票代码不能为空'
+          },
+          message: '请提供股票代码'
+        });
+      }
+
+      // 生成模拟历史数据
+      const historyData = [];
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - parseInt(days));
+
+      let currentPrice = 100;
+      for (let i = 0; i < parseInt(days); i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+
+        // 模拟价格波动
+        const change = (Math.random() - 0.5) * 10;
+        currentPrice = Math.max(10, currentPrice + change);
+
+        historyData.push({
+          date: date.toISOString().split('T')[0],
+          open: parseFloat((currentPrice - Math.random() * 5).toFixed(2)),
+          close: parseFloat(currentPrice.toFixed(2)),
+          high: parseFloat((currentPrice + Math.random() * 3).toFixed(2)),
+          low: parseFloat((currentPrice - Math.random() * 3).toFixed(2)),
+          volume: Math.floor(Math.random() * 1000000) + 100000
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          symbol,
+          days: parseInt(days),
+          history: historyData,
+          timestamp: new Date().toISOString()
+        },
+        message: '获取市场历史数据成功'
+      });
+    } catch (error) {
+      console.error('获取市场历史数据错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取市场历史数据失败'
+      });
+    }
+  }
+
+  /**
+   * 获取收益率排行榜
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getReturnsRanking(req, res) {
+    try {
+      const { period = 'total', limit = 20 } = req.query;
+
+      // 获取排行榜数据（简化实现，返回模拟数据）
+      const rankings = await rankingRepository.findMany(
+        { periodType: period },
+        { rank: 'asc' },
+        parseInt(limit)
+      );
+
+      res.json({
+        success: true,
+        data: {
+          period,
+          rankings: rankings.map((r, index) => ({
+            rank: index + 1,
+            accountId: r.accountId,
+            accountName: r.accountName,
+            totalReturn: r.totalReturn,
+            totalReturnRate: r.totalReturnRate,
+            sharpeRatio: r.sharpeRatio,
+            maxDrawdown: r.maxDrawdown,
+            winRate: r.winRate
+          })),
+          timestamp: new Date().toISOString()
+        },
+        message: '获取收益率排行榜成功'
+      });
+    } catch (error) {
+      console.error('获取收益率排行榜错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取收益率排行榜失败'
+      });
+    }
+  }
+
+  /**
+   * 获取综合排行榜
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getComprehensiveRanking(req, res) {
+    try {
+      const { limit = 20 } = req.query;
+
+      // 获取综合排名（基于多维度评分）
+      const rankings = await rankingRepository.findMany(
+        {},
+        { rank: 'asc' },
+        parseInt(limit)
+      );
+
+      // 计算综合得分
+      const comprehensiveRankings = rankings.map((r, index) => ({
+        rank: index + 1,
+        accountId: r.accountId,
+        accountName: r.accountName,
+        compositeScore: this.calculateCompositeScore(r),
+        metrics: {
+          totalReturn: r.totalReturn,
+          sharpeRatio: r.sharpeRatio,
+          maxDrawdown: r.maxDrawdown,
+          winRate: r.winRate,
+          tradeFrequency: r.tradeFrequency
+        },
+        timestamp: new Date().toISOString()
+      }));
+
+      // 按综合得分排序
+      comprehensiveRankings.sort((a, b) => b.compositeScore - a.compositeScore);
+
+      // 重新排名
+      comprehensiveRankings.forEach((r, index) => {
+        r.rank = index + 1;
+      });
+
+      res.json({
+        success: true,
+        data: {
+          rankings: comprehensiveRankings.slice(0, parseInt(limit)),
+          timestamp: new Date().toISOString()
+        },
+        message: '获取综合排行榜成功'
+      });
+    } catch (error) {
+      console.error('获取综合排行榜错误:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '服务器内部错误'
+        },
+        message: '获取综合排行榜失败'
+      });
+    }
+  }
+
+  /**
+   * 计算综合得分
+   * @param {Object} ranking - 排名数据
+   * @returns {number} 综合得分
+   */
+  calculateCompositeScore(ranking) {
+    const weights = {
+      return: 0.3,
+      sharpe: 0.25,
+      drawdown: 0.25,
+      winRate: 0.2
+    };
+
+    // 收益得分 (0-100)
+    const returnScore = Math.min(100, Math.max(0, (ranking.totalReturnRate || 0) * 2));
+
+    // 夏普比率得分 (0-100)
+    const sharpeScore = Math.min(100, Math.max(0, (ranking.sharpeRatio || 0) * 20));
+
+    // 回撤得分 (越低越好，0-100)
+    const drawdownScore = Math.min(100, Math.max(0, 100 - Math.abs(ranking.maxDrawdown || 0) * 2));
+
+    // 胜率得分 (0-100)
+    const winRateScore = (ranking.winRate || 0) * 100;
+
+    return (
+      returnScore * weights.return +
+      sharpeScore * weights.sharpe +
+      drawdownScore * weights.drawdown +
+      winRateScore * weights.winRate
+    );
+  }
 }
 
 // 创建控制器实例

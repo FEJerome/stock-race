@@ -5,6 +5,11 @@ import stocksRoutes from './stocks.js';
 import tradesRoutes from './trades.js';
 import portfoliosRoutes from './portfolios.js';
 import marketRoutes from './market.js';
+import rankingsRoutes from './rankings.js';
+import adminRoutes from './admin.js';
+import guestRoutes from './guest.js';
+import dialogueRoutes from './dialogue.js';
+import adminDialogueRoutes from './admin-dialogue.js';
 import { authenticate, optionalAuthenticate, checkPermission, checkRole } from '../middleware/auth.js';
 import { healthService } from '../services/HealthService.js';
 
@@ -153,6 +158,9 @@ router.use('/auth', authRoutes);
 // AI账户路由
 router.use('/ai-accounts', aiAccountsRoutes);
 
+// AI对话路由
+router.use('/ai-accounts', dialogueRoutes);
+
 // 股票路由
 router.use('/stocks', stocksRoutes);
 
@@ -164,6 +172,18 @@ router.use('/portfolios', portfoliosRoutes);
 
 // 市场路由
 router.use('/market', marketRoutes);
+
+// 排行榜路由
+router.use('/rankings', rankingsRoutes);
+
+// 游客路由（无需认证）
+router.use('/guest', guestRoutes);
+
+// 管理员路由（需要管理员权限）
+router.use('/admin', adminRoutes);
+
+// AI对话管理路由（管理员）
+router.use('/admin/dialogue', adminDialogueRoutes);
 
 // 受保护的路由示例（需要认证）
 router.get('/protected', authenticate, (req, res) => {

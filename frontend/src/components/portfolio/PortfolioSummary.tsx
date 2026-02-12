@@ -62,7 +62,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
   // 使用React Query获取持仓数据
   const { data: positionsData, isLoading, error, refetch } = useQuery(
     ['portfolioPositions', accountId],
-    () => tradingService.getPositions(),
+    () => tradingService.getPositions(accountId),
     {
       enabled: true,
       refetchInterval: 30000, // 每30秒自动刷新

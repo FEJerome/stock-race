@@ -12,12 +12,14 @@ import {
   Flex,
   Layout,
   theme,
+  Tabs,
 } from 'antd';
 import {
   UserOutlined,
   LockOutlined,
   StockOutlined,
   ArrowRightOutlined,
+  UserAddOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../store/auth.store';
 
@@ -30,9 +32,10 @@ const Login: React.FC = () => {
   const location = useLocation();
   const { token } = theme.useToken();
 
-  const { login, isLoading, error, clearError, isAuthenticated } = useAuthStore();
+  const { login, register, isLoading, error, clearError, isAuthenticated } = useAuthStore();
 
   const [rememberMe, setRememberMe] = useState(false);
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
 
   // 如果已经登录，重定向到首页
   useEffect(() => {
@@ -42,21 +45,36 @@ const Login: React.FC = () => {
     }
   }, [isAuthenticated, navigate, location]);
 
-  const handleSubmit = async (values: { username: string; password: string }) => {
+  const handleSubmit = async (values: { username: string; password: string; confirmPassword?: string }) => {
     try {
       clearError();
-      await login(values.username, values.password);
-      // 登录成功后，useEffect会处理重定向
+
+      if (activeTab === 'login') {
+        await login(values.username, values.password);
+        // 登录成功后，useEffect会处理重定向
+      } else {
+        // 注册逻辑
+        if (!values.confirmPassword) {
+          throw new Error('请确认密码');
+        }
+        if (values.password !== values.confirmPassword) {
+          throw new Error('密码和确认密码不一致');
+        }
+        await register(values.username, values.password, values.confirmPassword);
+        // 注册成功后，useEffect会处理重定向
+      }
     } catch (error) {
       // 错误已经在store中处理
-      console.error('登录失败:', error);
+      console.error(`${activeTab === 'login' ? '登录' : '注册'}失败:`, error);
     }
   };
 
   const handleDemoLogin = () => {
+    setActiveTab('login');
     form.setFieldsValue({
       username: 'admin',
       password: 'admin123',
+      confirmPassword: '',
     });
   };
 
@@ -92,7 +110,7 @@ const Login: React.FC = () => {
                     Stock Race
                   </Title>
                   <Text type="secondary">
-                    AI股票竞赛平台 - 登录您的账户
+                    AI股票竞赛平台 - {activeTab === 'login' ? '登录您的账户' : '创建新账户'}
                   </Text>
                 </Space>
               </div>
@@ -100,7 +118,7 @@ const Login: React.FC = () => {
               {/* 错误提示 */}
               {error && (
                 <Alert
-                  message="登录失败"
+                  message={activeTab === 'login' ? '登录失败' : '注册失败'}
                   description={error}
                   type="error"
                   showIcon
@@ -109,96 +127,182 @@ const Login: React.FC = () => {
                 />
               )}
 
-              {/* 登录表单 */}
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                initialValues={{ username: '', password: '' }}
-              >
-                <Form.Item
-                  name="username"
-                  label="用户名"
-                  rules={[
-                    { required: true, message: '请输入用户名' },
-                    { min: 3, message: '用户名至少3个字符' },
-                    { max: 20, message: '用户名最多20个字符' },
-                  ]}
-                >
-                  <Input
-                    prefix={<UserOutlined />}
-                    placeholder="请输入用户名"
-                    size="large"
-                    disabled={isLoading}
-                  />
-                </Form.Item>
+              {/* 登录/注册切换 */}
+              <Tabs
+                activeKey={activeTab}
+                onChange={(key) => {
+                  setActiveTab(key as 'login' | 'register');
+                  clearError();
+                  form.resetFields();
+                }}
+                items={[
+                  {
+                    key: 'login',
+                    label: '登录',
+                    children: (
+                      <Form
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleSubmit}
+                        initialValues={{ username: '', password: '' }}
+                      >
+                        <Form.Item
+                          name="username"
+                          label="用户名"
+                          rules={[
+                            { required: true, message: '请输入用户名' },
+                            { min: 3, message: '用户名至少3个字符' },
+                            { max: 20, message: '用户名最多20个字符' },
+                          ]}
+                        >
+                          <Input
+                            prefix={<UserOutlined />}
+                            placeholder="请输入用户名"
+                            size="large"
+                            disabled={isLoading}
+                          />
+                        </Form.Item>
 
-                <Form.Item
-                  name="password"
-                  label="密码"
-                  rules={[
-                    { required: true, message: '请输入密码' },
-                    { min: 6, message: '密码至少6个字符' },
-                  ]}
-                >
-                  <Input.Password
-                    prefix={<LockOutlined />}
-                    placeholder="请输入密码"
-                    size="large"
-                    disabled={isLoading}
-                  />
-                </Form.Item>
+                        <Form.Item
+                          name="password"
+                          label="密码"
+                          rules={[
+                            { required: true, message: '请输入密码' },
+                            { min: 6, message: '密码至少6个字符' },
+                          ]}
+                        >
+                          <Input.Password
+                            prefix={<LockOutlined />}
+                            placeholder="请输入密码"
+                            size="large"
+                            disabled={isLoading}
+                          />
+                        </Form.Item>
 
-                {/* <Form.Item>
-                  <Flex justify="space-between" align="center">
-                    <Checkbox
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      disabled={isLoading}
-                    >
-                      记住我
-                    </Checkbox>
-                    <Button type="link" size="small" disabled={isLoading}>
-                      忘记密码？
-                    </Button>
-                  </Flex>
-                </Form.Item> */}
+                        <Form.Item>
+                          <Button
+                            type="primary"
+                            htmlType="submit"
+                            size="large"
+                            loading={isLoading}
+                            block
+                            icon={<ArrowRightOutlined />}
+                          >
+                            {isLoading ? '登录中...' : '登录'}
+                          </Button>
+                        </Form.Item>
+                      </Form>
+                    ),
+                  },
+                  {
+                    key: 'register',
+                    label: '注册',
+                    children: (
+                      <Form
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleSubmit}
+                        initialValues={{ username: '', password: '', confirmPassword: '' }}
+                      >
+                        <Form.Item
+                          name="username"
+                          label="用户名"
+                          rules={[
+                            { required: true, message: '请输入用户名' },
+                            { min: 3, message: '用户名至少3个字符' },
+                            { max: 20, message: '用户名最多20个字符' },
+                          ]}
+                        >
+                          <Input
+                            prefix={<UserOutlined />}
+                            placeholder="请输入用户名（3-20个字符）"
+                            size="large"
+                            disabled={isLoading}
+                          />
+                        </Form.Item>
 
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    size="large"
-                    loading={isLoading}
-                    block
-                    icon={<ArrowRightOutlined />}
-                  >
-                    {isLoading ? '登录中...' : '登录'}
-                  </Button>
-                </Form.Item>
-              </Form>
+                        <Form.Item
+                          name="password"
+                          label="密码"
+                          rules={[
+                            { required: true, message: '请输入密码' },
+                            { min: 6, message: '密码至少6个字符' },
+                          ]}
+                        >
+                          <Input.Password
+                            prefix={<LockOutlined />}
+                            placeholder="请输入密码（至少6个字符）"
+                            size="large"
+                            disabled={isLoading}
+                          />
+                        </Form.Item>
 
-              {/* 演示账户提示 */}
-              <Divider plain>演示账户</Divider>
-              <Card size="small" bordered style={{ background: token.colorFillAlter }}>
-                <Paragraph type="secondary" style={{ margin: 0 }}>
-                  <Space direction="vertical" size="small">
-                    <Text strong>用户名:</Text>
-                    <Text code>admin</Text>
-                    <Text strong>密码:</Text>
-                    <Text code>admin123</Text>
-                    <Button
-                      type="dashed"
-                      size="small"
-                      onClick={handleDemoLogin}
-                      block
-                      style={{ marginTop: 8 }}
-                    >
-                      使用演示账户登录
-                    </Button>
-                  </Space>
-                </Paragraph>
-              </Card>
+                        <Form.Item
+                          name="confirmPassword"
+                          label="确认密码"
+                          rules={[
+                            { required: true, message: '请确认密码' },
+                            ({ getFieldValue }) => ({
+                              validator(_, value) {
+                                if (!value || getFieldValue('password') === value) {
+                                  return Promise.resolve();
+                                }
+                                return Promise.reject(new Error('两次输入的密码不一致'));
+                              },
+                            }),
+                          ]}
+                        >
+                          <Input.Password
+                            prefix={<LockOutlined />}
+                            placeholder="请再次输入密码"
+                            size="large"
+                            disabled={isLoading}
+                          />
+                        </Form.Item>
+
+                        <Form.Item>
+                          <Button
+                            type="primary"
+                            htmlType="submit"
+                            size="large"
+                            loading={isLoading}
+                            block
+                            icon={<UserAddOutlined />}
+                          >
+                            {isLoading ? '注册中...' : '注册'}
+                          </Button>
+                        </Form.Item>
+                      </Form>
+                    ),
+                  },
+                ]}
+              />
+
+              {/* 演示账户提示（仅在登录模式下显示） */}
+              {activeTab === 'login' && (
+                <>
+                  <Divider plain>演示账户</Divider>
+                  <Card size="small" bordered style={{ background: token.colorFillAlter }}>
+                    <Paragraph type="secondary" style={{ margin: 0 }}>
+                      <Space direction="vertical" size="small">
+                        <Text strong>用户名:</Text>
+                        <Text code>admin</Text>
+                        <Text strong>密码:</Text>
+                        <Text code>admin123</Text>
+                        <Button
+                          type="dashed"
+                          size="small"
+                          onClick={handleDemoLogin}
+                          block
+                          style={{ marginTop: 8 }}
+                        >
+                          使用演示账户登录
+                        </Button>
+                      </Space>
+                    </Paragraph>
+                  </Card>
+                </>
+              )}
 
               {/* 平台介绍 */}
               <Divider plain>平台功能</Divider>
@@ -215,6 +319,11 @@ const Login: React.FC = () => {
                 <Text type="secondary">
                   <StockOutlined /> 收益排行榜
                 </Text>
+                {activeTab === 'register' && (
+                  <Text type="secondary" style={{ marginTop: 8 }}>
+                    注册后即可获得干净的测试账号，无前置数据
+                  </Text>
+                )}
               </Space>
             </Space>
           </Card>

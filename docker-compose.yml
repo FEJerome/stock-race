@@ -83,8 +83,8 @@ services:
       - DB_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379
       - FRONTEND_URL=http://localhost:3000
-      - AI_SERVICE_URL=http://ai-service:8000
-      - DATA_SERVICE_URL=http://data-service:8001
+      - AI_SERVICE_URL=http://trading-ai-service:8000
+      - DATA_SERVICE_URL=http://market-data-service:8001
     ports:
       - "3001:3001"
     volumes:
@@ -94,12 +94,12 @@ services:
       - stock-race-network
     command: npm run dev
 
-  # AI Service
-  ai-service:
+  # Trading AI Service (交易决策AI服务)
+  trading-ai-service:
     build:
-      context: ./ai-service
+      context: ./trading-ai-service
       dockerfile: Dockerfile.dev
-    container_name: stock-race-ai-service
+    container_name: stock-race-trading-ai-service
     restart: unless-stopped
     depends_on:
       postgres:
@@ -117,26 +117,24 @@ services:
       - DB_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379
       - BACKEND_URL=http://backend:3001
-      - DATA_SERVICE_URL=http://data-service:8001
+      - MARKET_DATA_SERVICE_URL=http://market-data-service:8001
     ports:
       - "8000:8000"
     volumes:
-      - ./ai-service:/app
+      - ./trading-ai-service:/app
     networks:
       - stock-race-network
     command: python -m uvicorn ai_service.main:app --host 0.0.0.0 --port 8000 --reload
 
-  # Data Service
-  data-service:
+  # Market Data Service (市场行情数据服务)
+  market-data-service:
     build:
-      context: ./data-service
+      context: ./market-data-service
       dockerfile: Dockerfile.dev
-    container_name: stock-race-data-service
+    container_name: stock-race-market-data-service
     restart: unless-stopped
     depends_on:
       timescaledb:
-        condition: service_healthy
-      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -149,18 +147,13 @@ services:
       - TSDB_NAME=stock_race_tsdb
       - TSDB_USER=timescale
       - TSDB_PASSWORD=password
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=stock_race
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379
       - BACKEND_URL=http://backend:3001
-      - AI_SERVICE_URL=http://ai-service:8000
+      - TRADING_AI_SERVICE_URL=http://trading-ai-service:8000
     ports:
       - "8001:8001"
     volumes:
-      - ./data-service:/app
+      - ./market-data-service:/app
     networks:
       - stock-race-network
     command: python -m uvicorn data_service.main:app --host 0.0.0.0 --port 8001 --reload
@@ -174,8 +167,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-      - ai-service
-      - data-service
+      - trading-ai-service
+      - market-data-service
     ports:
       - "3000:3000"
     volumes:

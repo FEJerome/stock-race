@@ -13,6 +13,7 @@ export interface PaginationParams {
   pageSize?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  accountId?: string; // AI账户ID，用于过滤特定账户的数据
 }
 
 // 分页响应
@@ -45,6 +46,20 @@ export interface LoginResponse {
   expiresIn: number;
 }
 
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface RegisterResponse {
+  user: User;
+  token: string;
+  sessionId: string;
+  expiresAt: string;
+  expiresIn: number;
+}
+
 // 股票相关类型
 export interface Stock {
   code: string;           // 股票代码，如 "000001"
@@ -68,6 +83,11 @@ export interface Stock {
   low?: number;           // 最低价
   open?: number;          // 开盘价
   previousClose?: number; // 前收盘价
+  // 后端API返回字段兼容
+  stockCode?: string;     // 兼容后端stockCode字段
+  stockName?: string;     // 兼容后端stockName字段
+  price?: number;         // 兼容后端price字段
+  prevClose?: number;     // 兼容后端prevClose字段
 }
 
 // 实时行情数据
@@ -161,7 +181,7 @@ export interface AIAccount {
   id: string;
   userId: string;
   name: string;
-  modelType: 'openai' | 'claude' | 'wenxin' | 'qwen';
+  modelType: 'deepseek' | 'glm-4.5' | 'glm-4.6' | 'glm-4.7';
   apiKey?: string;
   isActive: boolean;
   createdAt: string;
@@ -178,6 +198,13 @@ export interface AIDecision {
   suggestedPrice?: number;
   suggestedQuantity?: number;
   createdAt: string;
+  // 新增字段：完整提示词相关
+  promptTemplate?: string;
+  fullPrompt?: string;
+  tokenCount?: number;
+  userPreferences?: Record<string, any>;
+  promptVariables?: Record<string, any>;
+  modelContext?: Record<string, any>;
 }
 
 // 排行榜相关类型

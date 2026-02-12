@@ -1,0 +1,463 @@
+/* 管理员监控面板样式 */
+
+.admin-dashboard {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: 100vh;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.admin-header h1 .anticon {
+  margin-right: 12px;
+  font-size: 28px;
+}
+
+/* 卡片样式增强 */
+.admin-dashboard .ant-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.admin-dashboard .ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.admin-dashboard .ant-card-head {
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 8px 8px 0 0;
+}
+
+.admin-dashboard .ant-card-head-title {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* 统计卡片样式 */
+.admin-dashboard .ant-statistic {
+  text-align: center;
+}
+
+.admin-dashboard .ant-statistic-title {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+}
+
+.admin-dashboard .ant-statistic-content {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.admin-dashboard .ant-statistic-content-value {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 表格样式 */
+.admin-dashboard .ant-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-dashboard .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e8e8e8;
+}
+
+.admin-dashboard .ant-table-tbody > tr:hover > td {
+  background: #f5f7fa;
+}
+
+/* 标签样式 */
+.admin-dashboard .ant-tag {
+  border-radius: 12px;
+  padding: 2px 12px;
+  font-weight: 500;
+  border: none;
+}
+
+/* 进度条样式 */
+.admin-dashboard .ant-progress {
+  margin: 8px 0;
+}
+
+.admin-dashboard .ant-progress-bg {
+  border-radius: 10px;
+}
+
+/* 时间线样式 */
+.admin-dashboard .ant-timeline {
+  padding: 20px;
+}
+
+.admin-dashboard .ant-timeline-item {
+  padding-bottom: 20px;
+}
+
+.admin-dashboard .ant-timeline-item-tail {
+  border-left: 2px solid #e8e8e8;
+}
+
+.admin-dashboard .ant-timeline-item-head {
+  width: 16px;
+  height: 16px;
+  border-width: 3px;
+}
+
+/* 描述列表样式 */
+.admin-dashboard .ant-descriptions {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.admin-dashboard .ant-descriptions-item-label {
+  font-weight: 600;
+  color: #2c3e50;
+  background: #f8f9fa;
+  padding: 8px 16px;
+}
+
+.admin-dashboard .ant-descriptions-item-content {
+  padding: 8px 16px;
+  color: #34495e;
+}
+
+/* 标签页样式 */
+.admin-dashboard .ant-tabs-nav {
+  margin-bottom: 24px;
+  background: white;
+  padding: 0 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-dashboard .ant-tabs-tab {
+  padding: 16px 24px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.admin-dashboard .ant-tabs-tab:hover {
+  color: #1890ff;
+}
+
+.admin-dashboard .ant-tabs-tab-active {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.admin-dashboard .ant-tabs-ink-bar {
+  height: 3px;
+  border-radius: 3px;
+}
+
+/* 按钮样式 */
+.admin-dashboard .ant-btn {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.admin-dashboard .ant-btn-primary {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+}
+
+.admin-dashboard .ant-btn-primary:hover {
+  background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+/* 警告框样式 */
+.admin-dashboard .ant-alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-dashboard .ant-alert-info {
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  border-left: 4px solid #1890ff;
+}
+
+/* 模态框样式 */
+.admin-dashboard .ant-modal {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.admin-dashboard .ant-modal-header {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-bottom: 2px solid #e8e8e8;
+}
+
+.admin-dashboard .ant-modal-title {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.admin-dashboard .ant-modal-body {
+  padding: 32px;
+}
+
+/* 表单样式 */
+.admin-dashboard .ant-form-item-label > label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.admin-dashboard .ant-input,
+.admin-dashboard .ant-select-selector {
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.admin-dashboard .ant-input:focus,
+.admin-dashboard .ant-select-focused .ant-select-selector {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 12px;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 16px;
+  }
+
+  .admin-header h1 {
+    font-size: 20px;
+  }
+
+  .admin-dashboard .ant-tabs-nav {
+    padding: 0 12px;
+  }
+
+  .admin-dashboard .ant-tabs-tab {
+    padding: 12px 16px;
+  }
+
+  .admin-dashboard .ant-statistic-content {
+    font-size: 24px;
+  }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-dashboard .ant-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.admin-dashboard .ant-table {
+  animation: fadeIn 0.7s ease-out;
+}
+
+/* 加载状态 */
+.admin-dashboard .ant-skeleton {
+  padding: 20px;
+  border-radius: 8px;
+  background: white;
+}
+
+/* 自定义滚动条 */
+.admin-dashboard ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-dashboard ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.admin-dashboard ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.admin-dashboard ::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 状态指示器 */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-healthy {
+  background-color: #52c41a;
+  box-shadow: 0 0 8px rgba(82, 196, 26, 0.5);
+}
+
+.status-warning {
+  background-color: #faad14;
+  box-shadow: 0 0 8px rgba(250, 173, 20, 0.5);
+}
+
+.status-critical {
+  background-color: #ff4d4f;
+  box-shadow: 0 0 8px rgba(255, 77, 79, 0.5);
+}
+
+/* 图表容器 */
+.chart-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* 工具提示 */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* 数据卡片 */
+.data-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.data-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.data-card-title {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.data-card-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.data-card-change {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.data-card-change.positive {
+  color: #52c41a;
+}
+
+.data-card-change.negative {
+  color: #ff4d4f;
+}
+
+/* 网格布局 */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* 打印样式 */
+@media print {
+  .admin-dashboard {
+    padding: 0;
+    background: white;
+  }
+
+  .admin-header,
+  .ant-btn,
+  .ant-tabs-nav {
+    display: none;
+  }
+
+  .ant-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    break-inside: avoid;
+  }
+}

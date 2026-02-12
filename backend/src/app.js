@@ -6,25 +6,33 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import { config } from './config.js'; // 加载环境变量和配置
 import routes from './routes/index.js';
 import internalRoutes from './routes/internal.js';
 import { requestLogger } from './middleware/auth.js';
 import { sessionService } from './services/SessionService.js';
 import { webSocketService } from './services/WebSocketService.js';
 import { responseFormatterMiddleware } from './utils/responseFormatter.js';
+import { setupJobs } from './jobs/index.js';
 import {
   globalErrorHandler,
   notFoundHandler,
   handleUncaughtExceptions
 } from './middleware/errorHandler.js';
+import {
+  metricsMiddleware,
+  systemMetricsMiddleware,
+  userActivityMiddleware,
+  errorMonitoringMiddleware
+} from './middleware/metrics.js';
 
 // 创建Express应用
 const app = express();
 
 // 环境变量配置
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const PORT = process.env.PORT || 3001;
-const API_PREFIX = process.env.API_PREFIX || '/api';
+const NODE_ENV = config.nodeEnv;
+const PORT = config.port;
+const API_PREFIX = config.apiPrefix;
 
 // Swagger配置
 const swaggerOptions = {
@@ -136,6 +144,11 @@ if (NODE_ENV === 'development') {
 // 自定义请求日志
 app.use(requestLogger);
 
+// 监控中间件
+app.use(metricsMiddleware); // API性能指标
+app.use(systemMetricsMiddleware()); // 系统资源监控
+app.use(userActivityMiddleware); // 用户活动监控
+
 // 响应格式化中间件
 app.use(responseFormatterMiddleware);
 
@@ -165,6 +178,9 @@ app.use(API_PREFIX + '/internal', internalRoutes);
 // 404处理
 app.use(notFoundHandler);
 
+// 错误监控中间件
+app.use(errorMonitoringMiddleware);
+
 // 全局错误处理中间件
 app.use(globalErrorHandler);
 
@@ -177,6 +193,10 @@ const startServer = async () => {
     // 初始化会话服务
     await sessionService.init();
     console.log('✅ 会话服务初始化完成');
+
+    // 启动后台任务
+    await setupJobs();
+    console.log('✅ 后台任务启动完成');
 
     // 启动服务器
     const server = app.listen(PORT, () => {
