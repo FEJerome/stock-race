@@ -16,7 +16,44 @@
 
 ---
 
-## 一、联调冲刺任务 (2026-02-12)
+## 一、联调准备阶段 (2026-02-12)
+
+> Backend服务已达到**联调准备就绪状态**（95%完成度）。以下任务为联调验证和文档完善工作项。
+
+### 联调就绪状态
+
+| 模块 | 状态 | 说明 |
+|------|------|------|
+| 三层API架构 | ✅ 就绪 | O3-001~O3-004 公开/游客/认证API全部实现 |
+| 游客模式 | ✅ 就绪 | C5-001~C5-006 Redis持久化，32个测试通过 |
+| 事件总线 | ✅ 就绪 | C2-BE-001~006 SDK集成，15个测试通过 |
+| 健康检查 | ✅ 就绪 | C1-BE-001~003 SDK集成，18个测试通过 |
+| AI对话服务 | ✅ 就绪 | C4-001~C4-008 Backend实现，58个测试通过 |
+| 性能优化 | ✅ 就绪 | O6-003收益接口增强，O6-004缓存服务 |
+| 测试系统 | ✅ 就绪 | P0-001~P0-003 ESM修复，398个单元测试通过 |
+
+### 联调就绪确认
+
+> Backend服务已达到**联调准备就绪状态**，所有核心功能完成，无阻塞其他服务的未完成任务。
+>
+> 统一测试文档和流程将由架构团队统一制定，Backend团队无需单独编写。
+
+| 就绪项 | 状态 | 说明 |
+|--------|------|------|
+| API接口 | ✅ 就绪 | 公开/游客/认证三层API全部实现 |
+| 事件总线 | ✅ 就绪 | 可发布/订阅所有约定事件 |
+| 健康检查 | ✅ 就绪 | `/api/v1/public/health` 端点可用 |
+| 降级策略 | ✅ 就绪 | Market Data依赖有降级方案 |
+
+### 阻塞其他服务的任务（Backend提供）
+
+| 编号 | 任务 | 状态 | 被阻塞服务 | 说明 |
+|------|------|------|----------|------|
+| C3-004B | 订阅AI绩效报告事件 | ✅ | Trading AI | Backend已实现`subscribeToAIPerformanceReports`，等待对方发布`ai.performance.report`事件 |
+
+---
+
+## 二、联调冲刺历史记录 (2026-02-12)
 
 ### P0-001: 修复ESM/CommonJS混用问题 ✅ 已完成
 
@@ -648,25 +685,43 @@ it('should calculate limit prices correctly', () => {
 
 ---
 
-## 五、外部依赖跟踪（更新）
+## 六、联调依赖矩阵
+
+### Backend作为被依赖方（已就绪）
+
+| 消费方 | 依赖功能 | 状态 | 接口/事件 |
+|--------|---------|------|----------|
+| Miniprogram | 排行榜API | ✅ | `GET /api/v1/public/rankings` |
+| Miniprogram | 行情API | ✅ | `GET /api/v1/public/market/quotes` |
+| Miniprogram | 游客Token | ✅ | `POST /api/v1/guest/token` |
+| Miniprogram | 游客AI账户 | ✅ | `POST /api/v1/guest/ai-accounts` |
+| Miniprogram | 收益查询 | ✅ | `GET /api/ai-accounts/:id/performance` |
+| Trading AI | 交易执行结果 | ✅ | `backend:trade:executed` 事件 |
+| Trading AI | AI账户更新 | ✅ | `backend:account:updated` 事件 |
+
+### Backend作为依赖方（等待其他服务）
+
+| 提供方 | 所需功能 | 状态 | 阻塞影响 |
+|--------|---------|------|----------|
+| Market Data | 交易状态API | ⏸️ | Backend使用TradingRulesEngine降级方案，无阻塞 |
+| Market Data | 市场规则API | ⏸️ | Backend使用本地规则引擎，无阻塞 |
+| News Service | 情报查询API | ⏸️ | 功能预留，联调阶段可选 |
+| News Service | 情报事件 | ⏸️ | Backend事件总线已就绪，可即时消费 |
+| Trading AI | 绩效报告事件 | ⏸️ | C3-004B已实现，等待对方发布事件 |
+
+**结论**: Backend核心功能全部就绪，无阻塞联调的硬性依赖。
+
+---
+
+## 七、外部依赖跟踪（归档）
 
 | 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 备注 |
 |----------|---------|---------|---------|------|
-| trading-ai-service | `POST /api/v1/dialogue/session` | ❌ 取消 | 2026-02-11 | 架构变更：由Backend实现，见C4-001~C4-008 |
-| trading-ai-service | `POST /api/v1/dialogue/preference` | ❌ 取消 | 2026-02-11 | 架构变更：由Backend实现，见C4-003 |
-| market-data-service | `GET /api/v1/stocks/{symbol}/trading-status` | ⏸️ 阻塞 | 2026-02-12 | Backend已实现T-015，等待对方提供实际接口 |
-| market-data-service | `WS /ws/market/stock-status` | 🔄 方案变更 | 2026-02-11 | 替换为事件总线订阅 `market:alert:*` |
-| market-data-service | `GET /api/v1/market/rules` | ⏸️ 阻塞 | 2026-02-12 | Backend已实现T-011，等待对方提供实际接口 |
-| news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 阻塞 | 2026-02-12 | Backend预留接口，等待对方实现 |
-| news-service | `SUBSCRIBE news:breaking` | ⏸️ 阻塞 | 2026-02-12 | Backend事件总线已就绪，等待对方发布事件 |
-| infra | 事件总线Node.js SDK | ✅ 已完成 | 2026-02-11 | C2-BE-001~006已完成，15个测试通过 |
-| infra | 健康检查SDK | ✅ 已完成 | 2026-02-12 | C1-BE-001~003已完成，HealthService已实现 |
-
-**新增：AI绩效报告事件订阅**
-
-| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 备注 |
-|----------|---------|---------|---------|------|
-| trading-ai-service | `SUBSCRIBE ai:performance:report` | ✅ 已完成 | 2026-02-12 | C3-004B已完成，EventBusService添加subscribeToAIPerformanceReports方法 |
+| market-data-service | `GET /api/v1/stocks/{symbol}/trading-status` | ⏸️ 降级运行 | 2026-02-12 | Backend已实现T-015，使用降级方案 |
+| market-data-service | `GET /api/v1/market/rules` | ⏸️ 降级运行 | 2026-02-12 | Backend已实现T-011，使用降级方案 |
+| news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 预留 | 2026-02-12 | 功能预留，联调阶段可选 |
+| news-service | `SUBSCRIBE news:breaking` | ✅ 就绪 | 2026-02-12 | Backend事件总线已就绪 |
+| trading-ai-service | `SUBSCRIBE ai:performance:report` | ✅ 就绪 | 2026-02-12 | C3-004B已实现，等待对方发布 |
 
 ---
 

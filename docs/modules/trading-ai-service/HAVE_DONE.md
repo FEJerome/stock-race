@@ -569,6 +569,26 @@ $ python test_ai_service_comprehensive.py
 >
 > —— 首席架构师，2026-02-11
 
+### 联调准备阶段评估 (2026-02-12)
+
+| 检查项 | 状态 | 备注 |
+|--------|------|------|
+| 事件总线发布 | ✅ 就绪 | C3-004 `ai:decision:made` 事件已就绪 |
+| 绩效事件发布 | ✅ 就绪 | C3-004B `ai:performance:report` 事件已就绪 |
+| 行情事件订阅 | ✅ 就绪 | C3-003 可消费Market Data行情事件 |
+| 新闻事件订阅 | ✅ 就绪 | C3-003B 可消费News Service情报事件 |
+| 健康检查SDK | ✅ 就绪 | C1-TAI-001~003 已接入infra SDK |
+| 广度查询服务 | ✅ 就绪 | C6-TAI-001~003 板块/行业/批量决策 |
+| Token防抖 | ✅ 就绪 | C3-009 DebounceKey机制 |
+| HTTP降级方案 | ✅ 就绪 | Market Data/News Service HTTP客户端可用 |
+
+**联调就绪结论**: Trading AI Service已达到**联调准备就绪状态**，可作为事件提供方（Backend订阅其决策事件）和事件消费方（订阅行情/新闻事件）参与端到端联调。
+
+**阻塞解除说明**:
+- ✅ Backend可通过订阅`ai:decision:made`接收决策（C3-004已就绪）
+- ✅ Backend可通过订阅`ai:performance:report`接收绩效报告（C3-004B已就绪）
+- ⏸️ HTTP客户端移除任务（C3-006/007/008）为联调后优化，当前HTTP降级方案可用
+
 ---
 
 ## 八、相关文档链接
@@ -580,6 +600,6 @@ $ python test_ai_service_comprehensive.py
 
 ---
 
-*文档版本: v1.0*
-*最后更新: 2026-02-11*
+*文档版本: v1.1（联调就绪版）*
+*最后更新: 2026-02-12*
 *维护者: 首席架构师*
