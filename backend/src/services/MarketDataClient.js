@@ -219,6 +219,38 @@ export class MarketDataClient extends ServiceClient {
   }
 
   /**
+   * 获取行情数据（public API使用）
+   * @param {Array<string>} symbols - 股票代码数组
+   * @returns {Promise<Array<Object>>} 行情数据数组
+   */
+  async getQuotes(symbols) {
+    return this.getBatchQuotes(symbols);
+  }
+
+  /**
+   * 获取市场快照
+   * @returns {Promise<Object>} 市场快照数据
+   */
+  async getMarketSnapshot() {
+    try {
+      const response = await this.get(this.buildPath('/market/snapshot'));
+      return {
+        indices: response.data.indices || [],
+        hotStocks: response.data.hot_stocks || response.data.hotStocks || [],
+        timestamp: response.data.timestamp || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('获取市场快照失败:', error.message);
+      // 返回空数据，不抛异常
+      return {
+        indices: [],
+        hotStocks: [],
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  /**
    * 测试数据服务连接
    * @returns {Promise<Object>} 连接测试结果
    */

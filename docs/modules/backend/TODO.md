@@ -43,6 +43,136 @@
 
 ---
 
+### P0 - 阻塞Miniprogram联调（最高优先级）
+
+| 编号 | 任务 | 状态 | 预估工时 | 验收标准 |
+|------|------|------|----------|----------|
+| O3-001 | 公开API - 排行榜接口 | ✅ | 0.5天 | GET /api/v1/public/rankings，无需认证，支持分页排序 |
+| O3-002 | 公开API - 行情数据接口 | ✅ | 0.5天 | GET /api/v1/public/market/quotes，无需认证，批量查询 |
+| O3-003 | 游客API - 游客认证中间件 | ✅ | 1天 | POST /api/v1/guest/token，24h过期，设备指纹绑定 |
+| O3-004 | 三层API路由架构 | ✅ | 0.5天 | /api/public/*, /api/guest/*, /api/* 分层路由 |
+
+**阻塞关系**:
+- O3-001/O3-002 阻塞 Miniprogram T-008/T-009（排行榜/行情页）✅ 已完成
+- O3-003 阻塞 Miniprogram C5-007（游客Token获取）✅ 已完成
+
+**完成详情**:
+1. **O3-004 三层API路由架构**: 创建 `src/routes/api-layers.js`
+   - `/api/v1/public/*` - 公开API，无需认证
+   - `/api/v1/guest/*` - 游客API，需要guest-token
+   - `/api/v1/*` - 认证API，需要JWT
+
+2. **O3-001 排行榜接口**: `GET /api/v1/public/rankings`
+   - 支持分页 (page, limit)
+   - 支持排序 (by_return, by_sharpe, by_win_rate)
+   - 速率限制 100 req/min
+
+3. **O3-002 行情数据接口**: `GET /api/v1/public/market/quotes`
+   - 批量查询 (最多50只)
+   - 从Market Data Service获取数据
+   - 速率限制 200 req/min
+
+4. **O3-003 游客Token接口**: `POST /api/v1/guest/token`
+   - 设备指纹绑定
+   - 24h过期
+   - 支持Token刷新
+
+5. **新增文件**:
+   - `src/routes/public.js` - 公开API路由
+   - `src/middleware/guestAuth.js` - 游客认证中间件
+   - `src/routes/guest-token.js` - 游客Token路由
+   - `src/routes/api-layers.js` - 三层路由整合
+   - `tests/unit/routes/api-layers.test.js` - 单元测试
+
+6. **修改文件**:
+   - `src/app.js` - 挂载三层路由 `/api/v1`
+   - `src/models/RankingRepository.js` - 添加 `getPublicRankings()`
+   - `src/services/MarketDataClient.js` - 添加 `getQuotes()`, `getMarketSnapshot()`
+
+**接口规格**:
+
+**1. 排行榜接口** (`GET /api/v1/public/rankings`)
+```typescript
+// 请求
+GET /api/v1/public/rankings?page=1&limit=20&sort=by_return
+
+// 响应
+{
+  "data": [
+    {
+      "rank": 1,
+      "ai_manager_name": "量化先锋",
+      "total_return": 0.256,
+      "sharpe_ratio": 1.85,
+      "win_rate": 0.72
+    }
+  ],
+  "pagination": { "page": 1, "limit": 20, "total": 150 }
+}
+```
+
+**2. 行情数据接口** (`GET /api/v1/public/market/quotes`)
+```typescript
+// 请求
+GET /api/v1/public/market/quotes?symbols=000001.SZ,600000.SH
+
+// 响应
+{
+  "data": [
+    {
+      "symbol": "000001.SZ",
+      "name": "平安银行",
+      "price": 12.58,
+      "change": 0.35,
+      "change_percent": 2.86,
+      "volume": 1250000
+    }
+  ]
+}
+```
+
+**3. 游客Token接口** (`POST /api/v1/guest/token`)
+```typescript
+// 请求
+POST /api/v1/guest/token
+{ "device_fingerprint": "abc123..." }
+
+// 响应
+{ "guest_token": "g_xxx", "expires_at": "2026-02-13T12:00:00Z" }
+```
+
+---
+
+### P1 - 服务间联调（高优先级）
+
+| 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
+|------|------|------|----------|------|----------|
+| T-015 | 对接Market Data交易状态 | 🔲 | 0.5天 | Market Data C3-001 | 实时交易状态查询，熔断降级 |
+| T-011 | 对接Market Data市场规则 | 🔲 | 0.5天 | Market Data C6-004~006 | 涨跌停限制查询，规则验证 |
+| C3-004B | 订阅AI绩效报告事件 | 🔲 | 0.5天 | Trading AI C3-004B | 消费 ai.performance.report 事件 |
+
+---
+
+### P2 - 性能优化（中优先级）
+
+| 编号 | 任务 | 状态 | 预估工时 | 验收标准 |
+|------|------|------|----------|----------|
+| O6-003 | 优化收益接口 | 🔲 | 1天 | 含持仓成本，支持实时收益计算 |
+| O6-004 | 缓存Market Data数据 | 🔲 | 0.5天 | 5秒TTL缓存，减少外部依赖 |
+
+---
+
+### 联调验收 checklist
+
+- [ ] 公开API无需认证可访问
+- [ ] 游客Token生成与验证正常
+- [ ] 排行榜数据正确返回
+- [ ] 行情数据实时更新
+- [ ] 事件总线收发正常
+- [ ] 所有集成测试通过
+
+---
+
 ## 二、未完成工作项
 
 ### 2.1 集成测试环境完善
@@ -155,7 +285,7 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试要求 |
 |------|------|------|--------|----------|
-| P0-001 | 修复 ESM/CommonJS 混合问题 | 🔲 | P0 | 所有测试文件通过 `npm test` 运行 |
+| P0-001 | 修复 ESM/CommonJS 混合问题 | ✅ | P0 | 所有测试文件通过 `npm test` 运行。已完成：package.json配置、jest.config.cjs、18个测试文件转换 |
 | P0-002 | 整合 test/ 和 tests/ 目录 | 🔲 | P0 | Jest 配置统一指向 tests/ 目录 |
 | P0-003 | 替换 Chai/Sinon 为 Jest 断言 | 🔲 | P0 | 测试使用 Jest 内置 `expect` 和 `jest.fn()` |
 
@@ -552,53 +682,7 @@ class TradeExecutor {
 
 ---
 
-## 六、联调冲刺任务（2026-02-12新增）
-
-> 基于架构审查报告，以下任务为联调前必须完成的工作项。
-
-### 6.1 🔴 P0 - 阻塞Miniprogram联调（最高优先级）
-
-| 编号 | 任务 | 状态 | 预估工时 | 验收标准 |
-|------|------|------|----------|----------|
-| O3-001 | 公开API - 排行榜接口 | 🔲 | 0.5天 | GET /api/v1/public/rankings，无需认证，支持分页排序 |
-| O3-002 | 公开API - 行情数据接口 | 🔲 | 0.5天 | GET /api/v1/public/market/quotes，无需认证，批量查询 |
-| O3-003 | 游客API - 游客认证中间件 | 🔲 | 1天 | POST /api/v1/guest/token，24h过期，设备指纹绑定 |
-| O3-004 | 三层API路由架构 | 🔲 | 0.5天 | /api/public/*, /api/guest/*, /api/* 分层路由 |
-| P0-001~007 | 测试系统修复 | 🔲 | 1天 | 修复ESM/CommonJS混用，9个集成测试可运行 |
-
-**阻塞关系**:
-- O3-001/O3-002 阻塞 Miniprogram T-008/T-009
-- O3-003 阻塞 Miniprogram C5-007
-- P0-001~007 阻塞 集成测试验证
-
-### 6.2 🟡 P1 - 服务间联调（高优先级）
-
-| 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
-|------|------|------|----------|------|----------|
-| T-015 | 对接Market Data交易状态 | 🔲 | 0.5天 | Market Data C3-001 | 实时交易状态查询，熔断降级 |
-| T-011 | 对接Market Data市场规则 | 🔲 | 0.5天 | Market Data C6-004~006 | 涨跌停限制查询，规则验证 |
-| C3-004B | 订阅AI绩效报告事件 | 🔲 | 0.5天 | Trading AI C3-004B | 消费 ai.performance.report 事件 |
-| I-001 | Docker Compose测试环境 | 🔲 | 1天 | Infra I-001 | 完整环境，9个集成测试通过 |
-
-### 6.3 🟢 P2 - 性能优化（中优先级）
-
-| 编号 | 任务 | 状态 | 预估工时 | 验收标准 |
-|------|------|------|----------|----------|
-| O6-003 | 优化收益接口 | 🔲 | 1天 | 含持仓成本，支持实时收益计算 |
-| O6-004 | 缓存Market Data数据 | 🔲 | 0.5天 | 5秒TTL缓存，减少外部依赖 |
-
-### 6.4 联调验收 checklist
-
-- [ ] 公开API无需认证可访问
-- [ ] 游客Token生成与验证正常
-- [ ] 排行榜数据正确返回
-- [ ] 行情数据实时更新
-- [ ] 事件总线收发正常
-- [ ] 所有集成测试通过
-
----
-
-*文档版本: v2.1（联调冲刺版）*
+*文档版本: v2.2（联调冲刺修正版）*
 *最后更新: 2026-02-12*
 *维护者: 首席架构师*
 
