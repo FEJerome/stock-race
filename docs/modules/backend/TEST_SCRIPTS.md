@@ -4,6 +4,29 @@
 
 ---
 
+## 测试系统状态 (P0-001 修复后)
+
+### 2026-02-12 测试系统修复
+
+**修复内容**:
+- ✅ ESM/CommonJS混用问题已修复
+- ✅ Jest配置支持ESM模式 (`NODE_OPTIONS='--experimental-vm-modules'`)
+- ✅ Babel配置支持ESM转换和顶层await
+- ✅ 所有测试文件使用统一ESM语法
+- ✅ Chai/Sinon断言替换为Jest断言
+
+**当前测试结果**:
+```
+Test Suites: 20 passed, 27 failed, 47 total
+Tests:       422 passed, 97 failed, 519 total
+```
+
+**说明**:
+- 27个失败的测试套件主要是集成测试，需要外部服务（Redis、PostgreSQL、Trading AI Service等）
+- 所有ESM语法错误已修复，`npm test` 可正常运行
+
+---
+
 ## 测试目录结构
 
 ```

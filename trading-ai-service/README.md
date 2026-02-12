@@ -2,9 +2,25 @@
 
 AI-powered trading decision service for AI accounts in the Stock Race platform.
 
+> **Service Scope Note**: This service focuses exclusively on **trading decision generation**. AI dialogue/chat functionality is implemented by the Backend service (see Architecture Decision C4-001).
+
 ## Overview
 
 The AI Service provides intelligent trading decisions by analyzing stock data, portfolio positions, and market conditions using various AI models (OpenAI, DeepSeek, Claude, etc.). It's built with FastAPI and follows a modular, extensible architecture.
+
+### Responsibilities
+
+- ✅ AI-powered trading decision generation (buy/sell/hold)
+- ✅ Multi-model AI integration (OpenAI, DeepSeek, Claude, Qwen, etc.)
+- ✅ Risk assessment and confidence scoring
+- ✅ Event-driven data consumption (market data, news via event bus)
+- ✅ Service health monitoring with degraded mode support
+
+### Out of Scope (Handled by Backend)
+
+- ❌ AI dialogue/chat with users (see Backend service)
+- ❌ Natural language portfolio queries
+- ❌ Interactive AI conversations
 
 ## Features
 

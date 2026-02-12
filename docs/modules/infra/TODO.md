@@ -106,7 +106,7 @@ events:
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
 | C3-001 | Market Data发布行情事件 | ✅ | P0 | 1天 | 发布`market:quote:realtime`到事件总线。已完成：MarketDataEventPublisher.publish_quote |
-| C3-002 | News Service发布新闻事件 | ⏸️ | P0 | 1天 | 发布`news:intelligence:extracted`到事件总线。阻塞：等待News Service开发 |
+| C3-001B | Market Data发布技术指标事件 | 🔲 | P1 | 0.5天 | 发布`market:indicator:updated`到事件总线。可立即开始开发 |
 | C3-003 | Trading AI订阅行情和新闻事件 | ⏸️ | P0 | 2天 | 从事件总线订阅行情和新闻，不再HTTP轮询。阻塞：等待C3-001, C3-002完成 |
 | C3-004 | Trading AI发布决策事件 | ⏸️ | P0 | 1天 | 发布`ai:decision:made`到事件总线。阻塞：等待Trading AI Service开发 |
 | C3-005 | Backend订阅决策事件 | ⏸️ | P0 | 1天 | 从事件总线订阅AI决策，不再HTTP回调。阻塞：等待C3-004完成 |
