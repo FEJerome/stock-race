@@ -332,6 +332,215 @@ class MarketDataEventPublisher:
             return False
         return self._client.health_check()
 
+    async def publish_indicator_update_with_calculation(
+        self,
+        symbol: str,
+        historical_prices: list,
+        highs: list,
+        lows: list,
+        **kwargs
+    ) -> Optional[str]:
+        """
+        Publish technical indicator update event with RSI/MACD/KDJ calculation (C3-001C).
+
+        Args:
+            symbol: Stock symbol
+            historical_prices: List of historical closing prices
+            highs: List of historical high prices
+            lows: List of historical low prices
+            **kwargs: Additional data
+
+        Returns:
+            Event message ID if published successfully
+        """
+        if not self._is_initialized:
+            logger.warning("Event publisher not initialized")
+            return None
+
+        try:
+            # Calculate indicators
+            rsi = calculate_rsi(historical_prices)
+            macd_line, signal_line, histogram = calculate_macd(historical_prices)
+            k, d, j = calculate_kdj(highs, lows, historical_prices)
+
+            # Build payload according to TODO.md specification
+            payload = {
+                "symbol": symbol,
+                "indicators": {
+                    "rsi": rsi,
+                    "macd": {
+                        "macd_line": macd_line,
+                        "signal_line": signal_line,
+                        "histogram": histogram
+                    },
+                    "kdj": {
+                        "k": k,
+                        "d": d,
+                        "j": j
+                    }
+                },
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                **kwargs
+            }
+
+            message_id = self._producer.publish_event(
+                EventType.MARKET_INDICATOR_UPDATED,
+                payload
+            )
+
+            logger.debug(f"Published indicator update for {symbol}: RSI={rsi}, MACD={macd_line}, KDJ_K={k}")
+            return message_id
+
+        except PublishError as e:
+            logger.error(f"Failed to publish indicator update for {symbol}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error publishing indicator update: {e}")
+            return None
+
+
+def calculate_rsi(prices: list, period: int = 14) -> Optional[float]:
+    """
+    Calculate RSI (Relative Strength Index).
+
+    Args:
+        prices: List of closing prices
+        period: RSI period (default 14)
+
+    Returns:
+        RSI value (0-100) or None if insufficient data
+    """
+    if len(prices) < period + 1:
+        return None
+
+    # Calculate price changes
+    deltas = [prices[i] - prices[i-1] for i in range(1, len(prices))]
+
+    # Get gains and losses
+    gains = [d if d > 0 else 0 for d in deltas[-period:]]
+    losses = [-d if d < 0 else 0 for d in deltas[-period:]]
+
+    # Calculate average gain and loss
+    avg_gain = sum(gains) / period
+    avg_loss = sum(losses) / period
+
+    if avg_loss == 0:
+        return 100.0
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+
+    return round(rsi, 2)
+
+
+def calculate_macd(prices: list, fast: int = 12, slow: int = 26, signal: int = 9) -> tuple:
+    """
+    Calculate MACD (Moving Average Convergence Divergence).
+
+    Args:
+        prices: List of closing prices
+        fast: Fast EMA period (default 12)
+        slow: Slow EMA period (default 26)
+        signal: Signal line period (default 9)
+
+    Returns:
+        Tuple of (macd_line, signal_line, histogram) or (None, None, None) if insufficient data
+    """
+    # Minimum data required: at least slow period for basic calculation
+    if len(prices) < slow:
+        return None, None, None
+
+    def ema(data: list, period: int) -> float:
+        """Calculate Exponential Moving Average."""
+        multiplier = 2 / (period + 1)
+        ema_value = sum(data[:period]) / period
+        for price in data[period:]:
+            ema_value = (price - ema_value) * multiplier + ema_value
+        return ema_value
+
+    # Calculate EMAs
+    ema_fast = ema(prices, fast)
+    ema_slow = ema(prices, slow)
+
+    # Calculate MACD line
+    macd_line = ema_fast - ema_slow
+
+    # Calculate signal line (EMA of MACD)
+    # We need historical MACD values, approximate using recent prices
+    macd_values = []
+    for i in range(slow, len(prices)):
+        slice_fast = prices[i-fast:i] if i >= fast else prices[:i]
+        slice_slow = prices[i-slow:i] if i >= slow else prices[:i]
+        if len(slice_fast) >= fast and len(slice_slow) >= slow:
+            ema_f = ema(prices[i-fast+1:i+1], fast)
+            ema_s = ema(prices[i-slow+1:i+1], slow)
+            macd_values.append(ema_f - ema_s)
+
+    # Calculate signal line if we have enough MACD values
+    if len(macd_values) >= signal:
+        signal_line = ema(macd_values, signal)
+    elif len(macd_values) > 0:
+        # Use simple average as approximation if not enough data
+        signal_line = sum(macd_values) / len(macd_values)
+    else:
+        signal_line = macd_line  # Use MACD line as approximation
+
+    # Calculate histogram
+    histogram = macd_line - signal_line
+
+    return round(macd_line, 4), round(signal_line, 4), round(histogram, 4)
+
+
+def calculate_kdj(highs: list, lows: list, closes: list, n: int = 9, m1: int = 3, m2: int = 3) -> tuple:
+    """
+    Calculate KDJ (Stochastic Oscillator).
+
+    Args:
+        highs: List of high prices
+        lows: List of low prices
+        closes: List of closing prices
+        n: RSV period (default 9)
+        m1: K smoothing factor (default 3)
+        m2: D smoothing factor (default 3)
+
+    Returns:
+        Tuple of (k, d, j) values or (None, None, None) if insufficient data
+    """
+    if len(highs) < n or len(lows) < n or len(closes) < n:
+        return None, None, None
+
+    # Get last n periods
+    recent_highs = highs[-n:]
+    recent_lows = lows[-n:]
+    recent_closes = closes[-n:]
+
+    # Calculate RSV (Raw Stochastic Value)
+    highest_high = max(recent_highs)
+    lowest_low = min(recent_lows)
+    current_close = recent_closes[-1]
+
+    if highest_high == lowest_low:
+        rsv = 50.0
+    else:
+        rsv = 100 * (current_close - lowest_low) / (highest_high - lowest_low)
+
+    # Calculate K and D (using simple smoothing)
+    # For first calculation, use RSV as initial K and D
+    k = rsv
+    d = rsv
+
+    # Apply smoothing
+    for i in range(1, min(m1, len(recent_closes))):
+        k = (2 * k + rsv) / 3
+
+    for i in range(1, min(m2, len(recent_closes))):
+        d = (2 * d + k) / 3
+
+    # Calculate J
+    j = 3 * k - 2 * d
+
+    return round(k, 2), round(d, 2), round(j, 2)
+
 
 # Global event publisher instance
 event_publisher = MarketDataEventPublisher()
