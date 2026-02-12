@@ -1,3 +1,4 @@
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { tradeController } from '../../src/controllers/TradeController.js';
 import { tradeRepository } from '../../src/models/index.js';
 import { aiAccountRepository } from '../../src/models/index.js';

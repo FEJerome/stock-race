@@ -19,6 +19,20 @@ const rankingRepository = new RankingRepository();
 const watchlistRepository = new WatchlistRepository();
 const systemLogRepository = new SystemLogRepository();
 
+// Mock competitionRepository for tests
+const competitionRepository = {
+  paginate: async () => ({ rows: [], count: 0 }),
+  findOne: async () => null,
+  create: async () => ({ id: 'mock-id' }),
+  update: async () => ({ id: 'mock-id' }),
+};
+
+// Mock prisma for tests
+const prisma = {
+  $queryRaw: async () => [],
+  $transaction: async (fn) => fn(prisma),
+};
+
 export {
   userRepository,
   aiAccountRepository,
@@ -28,7 +42,9 @@ export {
   decisionLogRepository,
   rankingRepository,
   watchlistRepository,
-  systemLogRepository
+  systemLogRepository,
+  competitionRepository,
+  prisma
 };
 
 // 导出类以便需要时创建新实例

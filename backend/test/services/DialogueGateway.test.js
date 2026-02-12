@@ -9,9 +9,8 @@
  * - 降级处理
  */
 
-const { expect } = require('chai');
-const sinon = require('sinon');
-const DialogueGateway = require('../../../src/services/DialogueGateway');
+import { expect, jest, describe, it, beforeEach, afterEach } from '@jest/globals';
+import DialogueGateway from '../../../src/services/DialogueGateway.js';
 
 describe('DialogueGateway', () => {
   let gateway;
@@ -20,14 +19,14 @@ describe('DialogueGateway', () => {
 
   beforeEach(() => {
     aiServiceClientStub = {
-      createDialogueSession: sinon.stub(),
-      extractPreference: sinon.stub()
+      createDialogueSession: jest.fn(),
+      extractPreference: jest.fn()
     };
 
     wsStub = {
-      send: sinon.stub(),
-      close: sinon.stub(),
-      on: sinon.stub(),
+      send: jest.fn(),
+      close: jest.fn(),
+      on: jest.fn(),
       readyState: 1 // OPEN
     };
 
@@ -37,7 +36,7 @@ describe('DialogueGateway', () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    jest.restoreAllMocks();
   });
 
   describe('handleConnection', () => {
@@ -52,8 +51,8 @@ describe('DialogueGateway', () => {
 
       await gateway.handleConnection(wsStub, accountId, userPreferences);
 
-      expect(gateway.sessions.has(accountId)).to.be.true;
-      expect(gateway.sessions.get(accountId)).to.deep.include({
+      expect(gateway.sessions.has(accountId)).toBe(true);
+      expect(gateway.sessions.get(accountId)).toMatchObject({
         accountId,
         sessionId: 'sess-456',
         roundCount: 0,
@@ -68,13 +67,13 @@ describe('DialogueGateway', () => {
       await gateway.handleConnection(wsStub, accountId, {});
 
       // 第二个连接应该被拒绝
-      const ws2Stub = { send: sinon.stub(), close: sinon.stub() };
+      const ws2Stub = { send: jest.fn(), close: jest.fn() };
       await gateway.handleConnection(ws2Stub, accountId, {});
 
-      expect(ws2Stub.send.called).to.be.true;
+      expect(ws2Stub.send.toHaveBeenCalled()).toBe(true);
       const message = JSON.parse(ws2Stub.send.firstCall.args[0]);
       expect(message.error).to.include('已有活跃对话');
-      expect(ws2Stub.close.called).to.be.true;
+      expect(ws2Stub.close.toHaveBeenCalled()).toBe(true);
     });
   });
 
@@ -105,7 +104,7 @@ describe('DialogueGateway', () => {
       await gateway.handleMessage(accountId, userMessage);
 
       // 验证消息被转发给用户
-      expect(wsStub.send.called).to.be.true;
+      expect(wsStub.send.toHaveBeenCalled()).toBe(true);
     });
 
     it('应该维护对话轮数', async () => {
@@ -120,7 +119,7 @@ describe('DialogueGateway', () => {
 
       await gateway.handleMessage(accountId, '测试消息');
 
-      expect(gateway.sessions.get(accountId).roundCount).to.equal(6);
+      expect(gateway.sessions.get(accountId).roundCount).toBe(6);
     });
 
     it('应该在达到最大轮数时拒绝新消息', async () => {
@@ -135,7 +134,7 @@ describe('DialogueGateway', () => {
 
       await gateway.handleMessage(accountId, '新消息');
 
-      expect(wsStub.send.called).to.be.true;
+      expect(wsStub.send.toHaveBeenCalled()).toBe(true);
       const message = JSON.parse(wsStub.send.firstCall.args[0]);
       expect(message.error).to.include('已达到最大对话轮数');
     });
@@ -153,7 +152,7 @@ describe('DialogueGateway', () => {
 
       await gateway.handleMessage(accountId, '新消息');
 
-      expect(wsStub.send.called).to.be.true;
+      expect(wsStub.send.toHaveBeenCalled()).toBe(true);
       const message = JSON.parse(wsStub.send.firstCall.args[0]);
       expect(message.error).to.include('冷却中');
     });
@@ -182,12 +181,12 @@ describe('DialogueGateway', () => {
       await gateway.processStreamResponse(accountId, streamEvents);
 
       // 验证所有消息都被转发
-      expect(wsStub.send.callCount).to.equal(5);
+      expect(wsStub.send.callCount).toBe(5);
 
       // 验证最后一条消息包含剩余轮数
       const lastMessage = JSON.parse(wsStub.send.lastCall.args[0]);
-      expect(lastMessage.type).to.equal('complete');
-      expect(lastMessage.remainingRounds).to.equal(9);
+      expect(lastMessage.type).toBe('complete');
+      expect(lastMessage.remainingRounds).toBe(9);
     });
 
     it('应该提取并保存投资偏好更新', async () => {
@@ -207,7 +206,7 @@ describe('DialogueGateway', () => {
 
       await gateway.processStreamResponse(accountId, streamEvents);
 
-      expect(gateway.sessions.get(accountId).preferences).to.deep.equal({
+      expect(gateway.sessions.get(accountId).preferences).toEqual({
         riskTolerance: 'conservative'
       });
     });
@@ -224,7 +223,7 @@ describe('DialogueGateway', () => {
 
       await gateway.handleDisconnection(accountId);
 
-      expect(gateway.sessions.has(accountId)).to.be.false;
+      expect(gateway.sessions.has(accountId)).toBe(false);
     });
 
     it('应该清理1小时无活动的会话', async () => {
@@ -244,8 +243,8 @@ describe('DialogueGateway', () => {
 
       await gateway.cleanupInactiveSessions(60 * 60 * 1000); // 1小时阈值
 
-      expect(gateway.sessions.has('acc-old')).to.be.false;
-      expect(gateway.sessions.has('acc-active')).to.be.true;
+      expect(gateway.sessions.has('acc-old')).toBe(false);
+      expect(gateway.sessions.has('acc-active')).toBe(true);
     });
   });
 
@@ -266,10 +265,10 @@ describe('DialogueGateway', () => {
 
       await gateway.handleMessage(accountId, '测试消息');
 
-      expect(wsStub.send.called).to.be.true;
+      expect(wsStub.send.toHaveBeenCalled()).toBe(true);
       const message = JSON.parse(wsStub.send.firstCall.args[0]);
       expect(message.error).to.include('AI服务暂时不可用');
-      expect(message.fallback).to.be.true;
+      expect(message.fallback).toBe(true);
     });
 
     it('应该在超时时返回超时提示', async () => {
@@ -315,12 +314,12 @@ describe('DialogueGateway', () => {
 
       await gateway.sendToUser(accountId, message);
 
-      expect(wsStub.send.calledOnce).to.be.true;
+      expect(wsStub.send.toHaveBeenCalled()Once).toBe(true);
       const sentMessage = JSON.parse(wsStub.send.firstCall.args[0]);
-      expect(sentMessage).to.have.property('type');
-      expect(sentMessage).to.have.property('content');
-      expect(sentMessage).to.have.property('roundCount');
-      expect(sentMessage).to.have.property('remainingRounds');
+      expect(sentMessage).toHaveProperty('type');
+      expect(sentMessage).toHaveProperty('content');
+      expect(sentMessage).toHaveProperty('roundCount');
+      expect(sentMessage).toHaveProperty('remainingRounds');
     });
   });
 });

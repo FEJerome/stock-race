@@ -9,10 +9,9 @@
  * - 错误信息聚合
  */
 
-const { expect } = require('chai');
-const sinon = require('sinon');
-const TradeValidator = require('../../../src/services/TradeValidator');
-const TradingRulesEngine = require('../../../src/services/TradingRulesEngine');
+import { expect, jest, describe, it, beforeEach, afterEach } from '@jest/globals';
+import TradeValidator from '../../../src/services/TradeValidator.js';
+import TradingRulesEngine from '../../../src/services/TradingRulesEngine.js';
 
 describe('TradeValidator', () => {
   let validator;
@@ -22,18 +21,18 @@ describe('TradeValidator', () => {
 
   beforeEach(() => {
     rulesEngineStub = {
-      getTradingRestrictions: sinon.stub(),
-      validateTradingTime: sinon.stub(),
-      validateQuantity: sinon.stub()
+      getTradingRestrictions: jest.fn(),
+      validateTradingTime: jest.fn(),
+      validateQuantity: jest.fn()
     };
 
     stockStateCacheStub = {
-      getStockState: sinon.stub()
+      getStockState: jest.fn()
     };
 
     portfolioServiceStub = {
-      getBalance: sinon.stub(),
-      getPosition: sinon.stub()
+      getBalance: jest.fn(),
+      getPosition: jest.fn()
     };
 
     validator = new TradeValidator({
@@ -44,7 +43,7 @@ describe('TradeValidator', () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    jest.restoreAllMocks();
   });
 
   describe('买入交易校验', () => {
@@ -78,7 +77,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.true;
+      expect(result.valid).toBe(true);
       expect(result.errors).to.have.length(0);
     });
 
@@ -107,7 +106,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.errors).to.include('买入价格超出涨停限制');
     });
 
@@ -136,7 +135,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.errors).to.include('资金不足');
     });
 
@@ -160,7 +159,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.errors).to.include('股票已停牌');
     });
   });
@@ -192,7 +191,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.true;
+      expect(result.valid).toBe(true);
     });
 
     it('应该拒绝持仓不足的卖出', async () => {
@@ -221,7 +220,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.errors).to.include('持仓不足');
     });
 
@@ -251,7 +250,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.errors).to.include('未持有该股票');
     });
 
@@ -280,7 +279,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.errors).to.include('卖出价格低于跌停限制');
     });
   });
@@ -316,7 +315,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.errors).to.have.length.at.least(2);
       expect(result.errors).to.include('交易数量不足100股');
       expect(result.errors).to.include('买入价格超出涨停限制');
@@ -334,7 +333,7 @@ describe('TradeValidator', () => {
 
       const result = await validator.validateTrade(decision, 'acc-123');
 
-      expect(result.valid).to.be.true;
+      expect(result.valid).toBe(true);
     });
   });
 });

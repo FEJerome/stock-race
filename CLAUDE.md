@@ -22,6 +22,7 @@
 - [**技术架构**](docs/architecture/CURRENT/TECH_STACK.md) - 技术栈与架构设计
 - [**API规范**](docs/architecture/CURRENT/API_SPECIFICATION.md) - RESTful API与WebSocket设计
 - [**数据库设计**](docs/architecture/CURRENT/DATABASE_DESIGN.md) - 数据库ER图与表结构
+- [**配置中心架构设计**](docs/architecture/CURRENT/CONFIG_CENTER/README.md) - 配置中心规划与各服务配置设计（持续更新）
 
 ### 架构决策文档（2026-02-11更新）
 - [**服务依赖冲突分析**](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 五服务外部依赖对接需求分析与6个冲突解决方案

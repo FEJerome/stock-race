@@ -5,7 +5,8 @@
  * 对应需求: C5-001 ~ C5-006
  */
 
-const GuestService = require('../../../src/services/GuestService');
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import GuestService from '../../../src/services/GuestService.js';
 
 describe('GuestService (C5-001~006)', () => {
   beforeEach(() => {

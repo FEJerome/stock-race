@@ -249,6 +249,7 @@ const startServer = async () => {
 
 // 导出应用和启动函数
 export { app, startServer };
+export default app;
 
 // 如果直接运行此文件，则启动服务器
 if (import.meta.url === `file://${process.argv[1]}`) {

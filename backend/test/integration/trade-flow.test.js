@@ -1,3 +1,4 @@
+import { jest, describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import app from '../../src/app.js';
 import { tradeRepository } from '../../src/models/index.js';

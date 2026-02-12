@@ -5,13 +5,14 @@
  * 对应需求: C2-BE-001 ~ C2-BE-006
  */
 
-const {
+import { jest, describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import {
   EventBusClient,
   EventProducer,
   EventConsumer,
   EventType,
   EventSchema,
-} = require('@stock-race/event-bus');
+} from '@stock-race/event-bus';
 
 // 模拟Redis连接
 const TEST_REDIS_CONFIG = {

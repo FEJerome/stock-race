@@ -370,4 +370,5 @@ class TradingCalendarService {
   }
 }
 
-module.exports = TradingCalendarService;
+export { TradingCalendarService };
+export default TradingCalendarService;

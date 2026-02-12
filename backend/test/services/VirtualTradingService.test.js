@@ -1,3 +1,4 @@
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { VirtualTradingService } from '../../src/services/VirtualTradingService.js';
 import { tradeRepository } from '../../src/models/index.js';
 import { aiAccountRepository } from '../../src/models/index.js';

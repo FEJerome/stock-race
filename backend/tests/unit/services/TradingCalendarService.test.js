@@ -10,9 +10,8 @@
  * - 日历数据导入
  */
 
-const { expect } = require('chai');
-const sinon = require('sinon');
-const TradingCalendarService = require('../../../src/services/TradingCalendarService');
+import { expect, jest, describe, it, beforeEach, afterEach } from '@jest/globals';
+import TradingCalendarService from '../../../src/services/TradingCalendarService.js';
 
 describe('TradingCalendarService', () => {
   let service;
@@ -42,7 +41,7 @@ describe('TradingCalendarService', () => {
 
   beforeEach(() => {
     dbStub = {
-      query: sinon.stub()
+      query: jest.fn()
     };
 
     service = new TradingCalendarService({ db: dbStub });
@@ -50,103 +49,103 @@ describe('TradingCalendarService', () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    jest.restoreAllMocks();
   });
 
   describe('交易日判断', () => {
     it('应该正确识别交易日', async () => {
       const result = await service.isTradingDay('2026-01-05');
-      expect(result).to.be.true;
+      expect(result).toBe(true);
     });
 
     it('应该正确识别非交易日（周末）', async () => {
       // 2026-01-03 是周六
       const result = await service.isTradingDay('2026-01-03');
-      expect(result).to.be.false;
+      expect(result).toBe(false);
     });
 
     it('应该正确识别节假日', async () => {
       const result = await service.isTradingDay('2026-01-01'); // 元旦
-      expect(result).to.be.false;
+      expect(result).toBe(false);
     });
 
     it('应该正确识别春节休市', async () => {
       const result = await service.isTradingDay('2026-02-17'); // 春节
-      expect(result).to.be.false;
+      expect(result).toBe(false);
     });
 
     it('应该正确识别调休交易日（周末上班）', async () => {
       // 2026-02-14 是周六，但春节调休上班
       const result = await service.isTradingDay('2026-02-14');
-      expect(result).to.be.true;
+      expect(result).toBe(true);
     });
   });
 
   describe('下一个交易日计算', () => {
     it('应该返回下一个交易日', async () => {
       const nextDay = await service.getNextTradingDay('2026-01-05');
-      expect(nextDay).to.equal('2026-01-06');
+      expect(nextDay).toBe('2026-01-06');
     });
 
     it('应该跳过周末', async () => {
       // 2026-01-09 是周五
       const nextDay = await service.getNextTradingDay('2026-01-09');
       // 跳过周末，返回下周一
-      expect(nextDay).to.equal('2026-01-12');
+      expect(nextDay).toBe('2026-01-12');
     });
 
     it('应该跳过节假日', async () => {
       // 2026-02-05 是春节后第一个交易日
       const nextDay = await service.getNextTradingDay('2026-02-05');
-      expect(nextDay).to.equal('2026-02-06');
+      expect(nextDay).toBe('2026-02-06');
     });
 
     it('应该处理跨节假日的情况', async () => {
       // 2026-02-04 是春节前最后一个交易日
       const nextDay = await service.getNextTradingDay('2026-02-04');
       // 跳过春节假期，返回 2026-02-05
-      expect(nextDay).to.equal('2026-02-05');
+      expect(nextDay).toBe('2026-02-05');
     });
 
     it('应该支持获取第N个交易日', async () => {
       const fifthDay = await service.getNextTradingDay('2026-01-05', 5);
       // 1/5, 1/6, 1/7, 1/8, 1/9 -> 第5个交易日是 1/12 (跳过周末)
-      expect(fifthDay).to.equal('2026-01-12');
+      expect(fifthDay).toBe('2026-01-12');
     });
   });
 
   describe('交易时间判断', () => {
     it('应该正确识别交易时间（上午）', async () => {
       const result = await service.isTradingTime('2026-01-05', '10:30');
-      expect(result.valid).to.be.true;
-      expect(result.phase).to.equal('continuous');
+      expect(result.valid).toBe(true);
+      expect(result.phase).toBe('continuous');
     });
 
     it('应该正确识别交易时间（下午）', async () => {
       const result = await service.isTradingTime('2026-01-05', '14:30');
-      expect(result.valid).to.be.true;
+      expect(result.valid).toBe(true);
     });
 
     it('应该拒绝午休时间', async () => {
       const result = await service.isTradingTime('2026-01-05', '12:00');
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
     });
 
     it('应该拒绝非交易日的时间', async () => {
       const result = await service.isTradingTime('2026-01-01', '10:00');
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.reason).to.include('非交易日');
     });
 
     it('应该识别集合竞价时间', async () => {
       const result = await service.isTradingTime('2026-01-05', '09:20');
-      expect(result.valid).to.be.true;
-      expect(result.phase).to.equal('auction');
+      expect(result.valid).toBe(true);
+      expect(result.phase).toBe('auction');
     });
 
     it('应该识别半日市的提前收盘', async () => {
       const result = await service.isTradingTime('2026-12-31', '13:00');
-      expect(result.valid).to.be.false;
+      expect(result.valid).toBe(false);
       expect(result.reason).to.include('半日市');
     });
   });
@@ -156,7 +155,7 @@ describe('TradingCalendarService', () => {
       const days = await service.getTradingDaysOfMonth(2026, 1);
 
       expect(days).to.be.an('array');
-      expect(days.length).to.be.greaterThan(15); // 1月通常有20+交易日
+      expect(days.length).toBeGreaterThan(15); // 1月通常有20+交易日
       expect(days).to.include('2026-01-05');
       expect(days).to.not.include('2026-01-01'); // 元旦
       expect(days).to.not.include('2026-01-03'); // 周末
@@ -179,8 +178,8 @@ describe('TradingCalendarService', () => {
 
       await service.loadCalendar(2026);
 
-      expect(loadCalendar.calledWith(2026)).to.be.true;
-      expect(service.calendarData).to.deep.equal(mockCalendar2026);
+      expect(loadCalendar.toHaveBeenCalledWith(2026)).toBe(true);
+      expect(service.calendarData).toEqual(mockCalendar2026);
     });
 
     it('应该从数据库加载日历数据', async () => {
@@ -208,9 +207,9 @@ describe('TradingCalendarService', () => {
 
       const result = await service.importCalendarFromCSV(csvData, 2026);
 
-      expect(result.success).to.be.true;
-      expect(result.imported).to.equal(4);
-      expect(dbStub.query.callCount).to.be.greaterThan(0);
+      expect(result.success).toBe(true);
+      expect(result.imported).toBe(4);
+      expect(dbStub.query.callCount).toBeGreaterThan(0);
     });
 
     it('应该验证导入数据的日期格式', async () => {
@@ -231,9 +230,9 @@ invalid-date,true`;
 
       const result = await service.importCalendarFromCSV(csvData, 2026, { preview: true });
 
-      expect(result.preview).to.be.true;
-      expect(result.wouldImport).to.equal(1);
-      expect(dbStub.query.called).to.be.false; // 不应该写入数据库
+      expect(result.preview).toBe(true);
+      expect(result.wouldImport).toBe(1);
+      expect(dbStub.query.toHaveBeenCalled()).toBe(false); // 不应该写入数据库
     });
 
     it('应该处理重复导入的情况', async () => {
@@ -244,8 +243,8 @@ invalid-date,true`;
 
       const result = await service.importCalendarFromCSV(csvData, 2026, { onDuplicate: 'skip' });
 
-      expect(result.success).to.be.true;
-      expect(result.skipped).to.equal(1);
+      expect(result.success).toBe(true);
+      expect(result.skipped).toBe(1);
     });
   });
 
@@ -257,7 +256,7 @@ invalid-date,true`;
       // 第二次查询应该使用缓存
       const result = await service.isTradingDay('2026-01-05');
 
-      expect(result).to.be.true;
+      expect(result).toBe(true);
     });
 
     it('应该在导入新数据后清除缓存', async () => {

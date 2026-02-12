@@ -5,8 +5,8 @@
  * 对应需求: C5-001 ~ C5-006
  */
 
-const crypto = require('crypto');
-const { EventBusService } = require('./EventBusService');
+import crypto from 'crypto';
+import { EventBusService } from './EventBusService.js';
 
 /**
  * 游客服务错误
@@ -483,5 +483,5 @@ class GuestService {
 }
 
 // 导出单例
-module.exports = new GuestService();
-module.exports.GuestServiceError = GuestServiceError;
+const guestService = new GuestService();
+export { guestService as default, GuestService, GuestServiceError };

@@ -5,12 +5,12 @@
  * 对应需求: C2-BE-001 ~ C2-BE-006
  */
 
-const {
+import {
   EventBusClient,
   EventProducer,
   EventConsumer,
   EventType,
-} = require('@stock-race/event-bus');
+} from '@stock-race/event-bus';
 
 class EventBusService {
   constructor() {
@@ -211,4 +211,5 @@ class EventBusService {
 }
 
 // 导出单例
-module.exports = new EventBusService();
+const eventBusService = new EventBusService();
+export { eventBusService as default, EventBusService };

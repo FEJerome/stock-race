@@ -331,4 +331,5 @@ class DynamicLimitService {
   }
 }
 
-module.exports = DynamicLimitService;
+export { DynamicLimitService };
+export default DynamicLimitService;
