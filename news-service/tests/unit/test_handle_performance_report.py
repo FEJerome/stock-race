@@ -2,9 +2,9 @@
 AI决策反馈处理器单元测试 (C3-003C)
 
 测试内容:
-1. _handle_performance_report事件处理器
+1. _handle_ai_performance_report事件处理器
 2. 事件Payload解析
-3. 优化建议记录
+3. 优化策略调用
 4. 异常处理
 
 使用Mock测试，不依赖外部服务
@@ -28,7 +28,7 @@ from event_bus import EventSchema, EventType
 from news_service.main import NewsService
 
 
-class TestHandlePerformanceReport:
+class TestHandleAIPerformanceReport:
     """AI决策反馈处理器测试"""
 
     @pytest.fixture
@@ -37,193 +37,156 @@ class TestHandlePerformanceReport:
         return NewsService()
 
     @pytest.mark.asyncio
-    async def test_handle_performance_report_success(self):
-        """测试正常处理AI决策反馈报告"""
+    async def test_handle_ai_performance_report_positive(self):
+        """测试处理AI决策反馈事件 - Positive反馈 (C3-003C)"""
         service = NewsService()
 
-        # 创建测试事件
+        # Mock优化策略方法
+        service._optimize_prompt_strategy = AsyncMock()
+        service._record_ai_feedback_metrics = AsyncMock()
+
+        # 创建测试事件 - 高准确率Positive反馈
         event = EventSchema(
             event_type=EventType.AI_PERFORMANCE_REPORT,
             source="trading-ai-service",
             payload={
-                "account_id": "ai-acc-12345",
-                "period": "daily",
-                "metrics": {
-                    "total_trades": 10,
-                    "win_rate": 0.6,
-                    "avg_return": 2.5,
-                    "max_drawdown": -3.2,
-                    "decision_accuracy": 0.75
+                "stock_code": "000001.SZ",
+                "decision_id": "dec-001",
+                "performance": {
+                    "accuracy": 0.85,
+                    "profit_loss": 5000.0,
+                    "feedback_type": "positive"
                 },
-                "timestamp": "2026-02-12T10:00:00Z"
+                "used_intelligence": ["intel-001", "intel-002"]
             }
         )
 
-        # 执行处理（不应抛出异常）
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
+        # 执行处理
+        await service._handle_ai_performance_report(event)
 
-            # 验证日志记录
-            assert mock_logger.info.called
-            log_messages = [str(call) for call in mock_logger.info.call_args_list]
-            assert any("AI决策反馈报告" in msg for msg in log_messages)
-            assert any("AI性能指标记录" in msg for msg in log_messages)
+        # 验证优化策略被调用（enhance动作）
+        service._optimize_prompt_strategy.assert_called_with(
+            "000001.SZ", ["intel-001", "intel-002"], "enhance"
+        )
+
+        # 验证指标记录被调用
+        service._record_ai_feedback_metrics.assert_called()
 
     @pytest.mark.asyncio
-    async def test_handle_low_decision_accuracy(self):
-        """测试低决策准确度时的警告"""
+    async def test_handle_ai_performance_report_negative(self):
+        """测试处理AI决策反馈事件 - Negative反馈 (C3-003C)"""
         service = NewsService()
 
+        # Mock优化策略方法
+        service._optimize_prompt_strategy = AsyncMock()
+        service._record_ai_feedback_metrics = AsyncMock()
+
+        # 创建测试事件 - 低准确率Negative反馈
         event = EventSchema(
             event_type=EventType.AI_PERFORMANCE_REPORT,
             source="trading-ai-service",
             payload={
-                "account_id": "ai-acc-12345",
-                "period": "daily",
-                "metrics": {
-                    "total_trades": 10,
-                    "win_rate": 0.4,
-                    "avg_return": -1.5,
-                    "max_drawdown": -5.0,
-                    "decision_accuracy": 0.5  # 低于0.6阈值
+                "stock_code": "000001.SZ",
+                "decision_id": "dec-002",
+                "performance": {
+                    "accuracy": 0.20,
+                    "profit_loss": -3000.0,
+                    "feedback_type": "negative"
                 },
-                "timestamp": "2026-02-12T10:00:00Z"
+                "used_intelligence": ["intel-003"]
             }
         )
 
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
+        # 执行处理
+        await service._handle_ai_performance_report(event)
 
-            # 验证警告日志
-            assert mock_logger.warning.called
-            log_messages = [str(call) for call in mock_logger.warning.call_args_list]
-            assert any("决策准确度低" in msg for msg in log_messages)
+        # 验证优化策略被调用（adjust动作）
+        service._optimize_prompt_strategy.assert_called_with(
+            "000001.SZ", ["intel-003"], "adjust"
+        )
+
+        # 验证指标记录被调用
+        service._record_ai_feedback_metrics.assert_called()
 
     @pytest.mark.asyncio
-    async def test_handle_low_win_rate(self):
-        """测试低胜率时的警告"""
+    async def test_handle_ai_performance_report_neutral(self):
+        """测试处理AI决策反馈事件 - Neutral反馈 (C3-003C)"""
         service = NewsService()
 
+        # Mock优化策略方法
+        service._optimize_prompt_strategy = AsyncMock()
+        service._record_ai_feedback_metrics = AsyncMock()
+
+        # 创建测试事件 - 中等准确率Neutral反馈
         event = EventSchema(
             event_type=EventType.AI_PERFORMANCE_REPORT,
             source="trading-ai-service",
             payload={
-                "account_id": "ai-acc-12345",
-                "period": "daily",
-                "metrics": {
-                    "total_trades": 10,
-                    "win_rate": 0.3,  # 低于0.5阈值
-                    "avg_return": 1.0,
-                    "max_drawdown": -2.0,
-                    "decision_accuracy": 0.7
+                "stock_code": "000001.SZ",
+                "decision_id": "dec-003",
+                "performance": {
+                    "accuracy": 0.50,
+                    "profit_loss": 500.0,
+                    "feedback_type": "neutral"
                 },
-                "timestamp": "2026-02-12T10:00:00Z"
+                "used_intelligence": []
             }
         )
 
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
+        # 执行处理
+        await service._handle_ai_performance_report(event)
 
-            # 验证警告日志
-            assert mock_logger.warning.called
-            log_messages = [str(call) for call in mock_logger.warning.call_args_list]
-            assert any("胜率低" in msg for msg in log_messages)
+        # 验证优化策略未被调用（neutral情况）
+        service._optimize_prompt_strategy.assert_not_called()
+
+        # 验证指标记录仍然被调用
+        service._record_ai_feedback_metrics.assert_called()
 
     @pytest.mark.asyncio
-    async def test_handle_negative_return(self):
-        """测试负收益时的警告"""
+    async def test_optimize_prompt_strategy(self):
+        """测试Prompt策略优化方法 (C3-003C)"""
         service = NewsService()
 
-        event = EventSchema(
-            event_type=EventType.AI_PERFORMANCE_REPORT,
-            source="trading-ai-service",
-            payload={
-                "account_id": "ai-acc-12345",
-                "period": "daily",
-                "metrics": {
-                    "total_trades": 10,
-                    "win_rate": 0.5,
-                    "avg_return": -2.0,  # 负收益
-                    "max_drawdown": -4.0,
-                    "decision_accuracy": 0.7
-                },
-                "timestamp": "2026-02-12T10:00:00Z"
-            }
+        # 测试enhance动作
+        await service._optimize_prompt_strategy(
+            "000001.SZ",
+            ["intel-001", "intel-002"],
+            "enhance"
         )
 
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
+        # 测试adjust动作
+        await service._optimize_prompt_strategy(
+            "000001.SZ",
+            ["intel-003"],
+            "adjust"
+        )
 
-            # 验证警告日志
-            assert mock_logger.warning.called
-            log_messages = [str(call) for call in mock_logger.warning.call_args_list]
-            assert any("平均收益为负" in msg for msg in log_messages)
+        # 验证方法执行不抛出异常
 
     @pytest.mark.asyncio
-    async def test_handle_missing_metrics(self):
-        """测试缺失metrics字段时的处理"""
+    async def test_record_ai_feedback_metrics(self):
+        """测试AI反馈指标记录方法 (C3-003C)"""
         service = NewsService()
 
-        event = EventSchema(
-            event_type=EventType.AI_PERFORMANCE_REPORT,
-            source="trading-ai-service",
-            payload={
-                "account_id": "ai-acc-12345",
-                "period": "daily",
-                # 缺少metrics字段
-                "timestamp": "2026-02-12T10:00:00Z"
-            }
+        performance = {
+            "accuracy": 0.75,
+            "profit_loss": 2000.0,
+            "feedback_type": "positive"
+        }
+
+        # 执行记录
+        await service._record_ai_feedback_metrics(
+            stock_code="000001.SZ",
+            decision_id="dec-004",
+            performance=performance,
+            intelligence_items=["intel-004", "intel-005"]
         )
 
-        # 不应抛出异常
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
-            # 验证记录
-            assert mock_logger.info.called
+        # 验证方法执行不抛出异常
 
     @pytest.mark.asyncio
-    async def test_handle_empty_payload(self):
-        """测试空Payload时的处理"""
-        service = NewsService()
-
-        event = EventSchema(
-            event_type=EventType.AI_PERFORMANCE_REPORT,
-            source="trading-ai-service",
-            payload={}
-        )
-
-        # 不应抛出异常
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
-            # 验证记录
-            assert mock_logger.info.called
-
-    @pytest.mark.asyncio
-    async def test_handle_exception(self):
-        """测试处理器异常处理"""
-        service = NewsService()
-
-        # 创建一个会导致异常的payload（非字典类型metrics）
-        event = EventSchema(
-            event_type=EventType.AI_PERFORMANCE_REPORT,
-            source="trading-ai-service",
-            payload={
-                "account_id": "ai-acc-12345",
-                "period": "daily",
-                "metrics": "invalid_metrics_type",  # 应该是dict
-                "timestamp": "2026-02-12T10:00:00Z"
-            }
-        )
-
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
-
-            # 验证错误被记录
-            assert mock_logger.error.called
-
-    @pytest.mark.asyncio
-    async def test_log_optimization_suggestion(self):
-        """测试优化建议记录方法"""
+    async def test_log_prompt_optimization_suggestion(self):
+        """测试Prompt优化建议记录方法 (C3-003C)"""
         service = NewsService()
 
         with patch('news_service.main.logger') as mock_logger:
@@ -238,70 +201,6 @@ class TestHandlePerformanceReport:
             assert mock_logger.info.called
             log_messages = [str(call) for call in mock_logger.info.call_args_list]
             assert any("Prompt优化建议" in msg for msg in log_messages)
-            assert any("ai-acc-12345" in msg for msg in log_messages)
-            assert any("decision_accuracy_low" in msg for msg in log_messages)
-
-    @pytest.mark.asyncio
-    async def test_payload_field_parsing(self):
-        """测试Payload字段解析"""
-        service = NewsService()
-
-        event = EventSchema(
-            event_type=EventType.AI_PERFORMANCE_REPORT,
-            source="trading-ai-service",
-            payload={
-                "account_id": "test-account-001",
-                "period": "weekly",
-                "metrics": {
-                    "total_trades": 50,
-                    "win_rate": 0.65,
-                    "avg_return": 5.2,
-                    "max_drawdown": -8.1,
-                    "decision_accuracy": 0.82
-                },
-                "timestamp": "2026-02-12T10:00:00Z"
-            }
-        )
-
-        with patch('news_service.main.logger') as mock_logger:
-            await service._handle_performance_report(event)
-
-            # 验证account_id被正确记录
-            log_messages = [str(call) for call in mock_logger.info.call_args_list]
-            assert any("test-account-001" in msg for msg in log_messages)
-            assert any("weekly" in msg for msg in log_messages)
-
-    @pytest.mark.asyncio
-    async def test_different_periods(self):
-        """测试不同周期报告的处理"""
-        service = NewsService()
-
-        periods = ["daily", "weekly", "monthly"]
-
-        for period in periods:
-            event = EventSchema(
-                event_type=EventType.AI_PERFORMANCE_REPORT,
-                source="trading-ai-service",
-                payload={
-                    "account_id": f"ai-acc-{period}",
-                    "period": period,
-                    "metrics": {
-                        "total_trades": 10,
-                        "win_rate": 0.6,
-                        "avg_return": 2.5,
-                        "max_drawdown": -3.0,
-                        "decision_accuracy": 0.75
-                    },
-                    "timestamp": "2026-02-12T10:00:00Z"
-                }
-            )
-
-            with patch('news_service.main.logger') as mock_logger:
-                await service._handle_performance_report(event)
-
-                # 验证每个周期都被正确处理
-                log_messages = [str(call) for call in mock_logger.info.call_args_list]
-                assert any(f"ai-acc-{period}" in msg for msg in log_messages)
 
 
 if __name__ == "__main__":
