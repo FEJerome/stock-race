@@ -17,6 +17,7 @@ class EventBusService {
     this.client = null;
     this.producer = null;
     this.consumer = null;
+    this.performanceConsumer = null; // C3-004B: AI绩效报告消费者
     this.isConnected = false;
     this.messageHandlers = new Map();
   }
@@ -159,11 +160,79 @@ class EventBusService {
   }
 
   /**
+   * C3-004B: 订阅AI绩效报告事件
+   * @param {Function} handler - 事件处理器
+   * @param {Object} options - 消费者配置
+   */
+  async subscribeToAIPerformanceReports(handler, options = {}) {
+    this._ensureConnected();
+
+    const consumerGroup = options.consumerGroup || 'backend-performance-processor';
+    const consumerName = options.consumerName || null;
+
+    // 如果没有消费者，创建新的消费者
+    if (!this.performanceConsumer) {
+      this.performanceConsumer = new EventConsumer({
+        client: this.client,
+        serviceName: 'backend',
+        consumerGroup: consumerGroup,
+        consumerName: consumerName,
+        retryCount: options.retryCount || 3,
+        retryDelay: options.retryDelay || 1000,
+      });
+    }
+
+    // 包装处理器，添加日志和错误处理
+    const wrappedHandler = async (event) => {
+      try {
+        console.log(`[EventBusService] Received AI performance report: ${event.eventId}`);
+        await handler(event);
+        console.log(`[EventBusService] Processed AI performance report: ${event.eventId}`);
+      } catch (error) {
+        console.error(`[EventBusService] Error processing AI performance report: ${error.message}`);
+        throw error; // 抛出错误以触发重试
+      }
+    };
+
+    // 订阅AI绩效报告事件
+    this.performanceConsumer.subscribe('ai:performance:report', wrappedHandler);
+
+    // 启动消费者
+    this.performanceConsumer.start();
+
+    console.log(`[EventBusService] Subscribed to AI performance reports (group: ${consumerGroup})`);
+  }
+
+  /**
+   * C3-004B: 处理AI绩效报告事件
+   * 更新排行榜数据
+   * @param {Object} event - 绩效报告事件
+   */
+  async processAIPerformanceReport(event) {
+    const { accountId, performance, timestamp } = event.payload;
+
+    console.log(`[EventBusService] Processing performance report for account: ${accountId}`);
+
+    // 这里可以添加更新排行榜的逻辑
+    // 例如：更新Redis中的排行榜数据、通知订阅者等
+
+    return {
+      success: true,
+      accountId,
+      processedAt: new Date().toISOString()
+    };
+  }
+
+  /**
    * 停止事件总线服务
    */
   async stop() {
     if (this.consumer) {
       await this.consumer.stop();
+    }
+
+    if (this.performanceConsumer) {
+      await this.performanceConsumer.stop();
     }
 
     if (this.client) {

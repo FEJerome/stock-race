@@ -3,10 +3,12 @@
  * Backend游客模式服务
  *
  * 对应需求: C5-001 ~ C5-006
+ * P0-004: Redis持久化改造完成
  */
 
 import crypto from 'crypto';
 import { EventBusService } from './EventBusService.js';
+import { getRedisClientSafe, isRedisConnected } from '../database/redis.js';
 
 /**
  * 游客服务错误
@@ -24,19 +26,45 @@ class GuestServiceError extends Error {
 /**
  * 游客服务
  * 管理游客会话、AI账户和数据迁移
+ * P0-004: 支持Redis持久化，服务重启数据不丢失
  */
 class GuestService {
   constructor() {
-    // 游客会话映射: Map<openidHash, GuestSession>
+    // 内存缓存（作为Redis的本地缓存）
     this.sessions = new Map();
-    // AI账户映射: Map<accountId, GuestAIAccount>
     this.aiAccounts = new Map();
-    // 对话会话映射: Map<accountId, DialogueSession>
     this.dialogues = new Map();
+
     // 清理定时器
     this.cleanupInterval = null;
 
+    // Redis键前缀
+    this.redisPrefix = {
+      session: 'guest:session:',
+      account: 'guest:account:',
+      dialogue: 'guest:dialogue:',
+      index: 'guest:index:'
+    };
+
     this.startCleanupTask();
+  }
+
+  /**
+   * 获取Redis客户端
+   * @private
+   * @returns {RedisClient|null}
+   */
+  _getRedis() {
+    return getRedisClientSafe();
+  }
+
+  /**
+   * 检查是否使用Redis
+   * @private
+   * @returns {boolean}
+   */
+  _useRedis() {
+    return isRedisConnected();
   }
 
   /**
@@ -74,20 +102,47 @@ class GuestService {
   }
 
   /**
+   * 计算TTL（秒）
+   * @private
+   * @param {number} accountCount - AI账户数量
+   * @returns {number} TTL秒数
+   */
+  _calculateTTL(accountCount) {
+    // 无AI账户24h，有AI账户72h
+    const hours = accountCount > 0 ? 72 : 24;
+    return hours * 60 * 60;
+  }
+
+  /**
    * C5-001: 创建游客Token
+   * P0-004: 支持Redis持久化
    * @param {string} openid - 微信openid
    * @returns {Promise<Object>} token信息
    */
   async createGuestToken(openid) {
     const openidHash = this._hashOpenid(openid);
 
-    // 检查是否已存在会话
+    // 检查是否已存在会话（先查内存，再查Redis）
     let session = this.sessions.get(openidHash);
+
+    if (!session && this._useRedis()) {
+      // 从Redis恢复会话
+      const redis = this._getRedis();
+      const sessionData = await redis.get(`${this.redisPrefix.session}${openidHash}`);
+      if (sessionData) {
+        session = JSON.parse(sessionData);
+        this.sessions.set(openidHash, session);
+      }
+    }
 
     if (session) {
       // 更新过期时间
       const accountCount = this._getGuestAccountCount(openidHash);
       session.expiresAt = this._calculateExpiry(accountCount).toISOString();
+
+      // 持久化到Redis
+      await this._persistSession(openidHash, session, accountCount);
+
       return {
         token: session.token,
         expiresAt: session.expiresAt,
@@ -108,7 +163,11 @@ class GuestService {
       migratedTo: null,
     };
 
+    // 保存到内存
     this.sessions.set(openidHash, session);
+
+    // 持久化到Redis
+    await this._persistSession(openidHash, session, 0);
 
     console.log(`[GuestService] Created guest token: ${token.substring(0, 20)}...`);
 
@@ -119,12 +178,83 @@ class GuestService {
   }
 
   /**
+   * 持久化会话到Redis
+   * @private
+   * @param {string} openidHash - openid hash
+   * @param {Object} session - 会话对象
+   * @param {number} accountCount - 账户数量
+   */
+  async _persistSession(openidHash, session, accountCount) {
+    if (!this._useRedis()) return;
+
+    try {
+      const redis = this._getRedis();
+      const ttl = this._calculateTTL(accountCount);
+      await redis.setEx(
+        `${this.redisPrefix.session}${openidHash}`,
+        ttl,
+        JSON.stringify(session)
+      );
+    } catch (error) {
+      console.error('[GuestService] Failed to persist session to Redis:', error.message);
+    }
+  }
+
+  /**
+   * 持久化AI账户到Redis
+   * @private
+   * @param {string} accountId - 账户ID
+   * @param {Object} account - 账户对象
+   */
+  async _persistAccount(accountId, account) {
+    if (!this._useRedis()) return;
+
+    try {
+      const redis = this._getRedis();
+      const ttl = this._calculateTTL(1); // 至少有一个账户，使用72h TTL
+      await redis.setEx(
+        `${this.redisPrefix.account}${accountId}`,
+        ttl,
+        JSON.stringify(account)
+      );
+
+      // 更新索引
+      await redis.sAdd(`${this.redisPrefix.index}accounts:${account.guestId}`, accountId);
+      await redis.expire(`${this.redisPrefix.index}accounts:${account.guestId}`, ttl);
+    } catch (error) {
+      console.error('[GuestService] Failed to persist account to Redis:', error.message);
+    }
+  }
+
+  /**
+   * 持久化对话到Redis
+   * @private
+   * @param {string} accountId - 账户ID
+   * @param {Object} dialogue - 对话对象
+   */
+  async _persistDialogue(accountId, dialogue) {
+    if (!this._useRedis()) return;
+
+    try {
+      const redis = this._getRedis();
+      const ttl = this._calculateTTL(1);
+      await redis.setEx(
+        `${this.redisPrefix.dialogue}${accountId}`,
+        ttl,
+        JSON.stringify(dialogue)
+      );
+    } catch (error) {
+      console.error('[GuestService] Failed to persist dialogue to Redis:', error.message);
+    }
+  }
+
+  /**
    * 验证token并获取会话
    * @private
    * @param {string} token - 游客token
    * @returns {Object} 会话对象
    */
-  _validateToken(token) {
+  async _validateToken(token) {
     // 从token提取openidHash
     const parts = token.split('_');
     if (parts.length !== 3 || parts[0] !== 'guest') {
@@ -132,7 +262,19 @@ class GuestService {
     }
 
     const openidHash = parts[1];
-    const session = this.sessions.get(openidHash);
+
+    // 先查内存
+    let session = this.sessions.get(openidHash);
+
+    // 再查Redis
+    if (!session && this._useRedis()) {
+      const redis = this._getRedis();
+      const sessionData = await redis.get(`${this.redisPrefix.session}${openidHash}`);
+      if (sessionData) {
+        session = JSON.parse(sessionData);
+        this.sessions.set(openidHash, session);
+      }
+    }
 
     if (!session) {
       throw new GuestServiceError('SESSION_NOT_FOUND', 'Session not found');
@@ -148,6 +290,7 @@ class GuestService {
 
     if (new Date(session.expiresAt) < new Date()) {
       session.status = 'expired';
+      await this._persistSession(openidHash, session, 0);
       throw new GuestServiceError('TOKEN_EXPIRED', 'Token has expired');
     }
 
@@ -172,12 +315,13 @@ class GuestService {
 
   /**
    * C5-002: 创建游客AI账户
+   * P0-004: 支持Redis持久化
    * @param {string} token - 游客token
    * @param {Object} options - 账户选项
    * @returns {Promise<Object>} AI账户
    */
   async createAIAccount(token, options = {}) {
-    const session = this._validateToken(token);
+    const session = await this._validateToken(token);
     const openidHash = session.openidHash;
 
     // 检查账户数量限制
@@ -201,11 +345,16 @@ class GuestService {
       dialogues: [],
     };
 
+    // 保存到内存
     this.aiAccounts.set(accountId, account);
+
+    // 持久化到Redis
+    await this._persistAccount(accountId, account);
 
     // 更新会话过期时间（72h）
     session.aiAccountCount = accountCount + 1;
     session.expiresAt = this._calculateExpiry(session.aiAccountCount).toISOString();
+    await this._persistSession(openidHash, session, session.aiAccountCount);
 
     console.log(`[GuestService] Created AI account: ${accountId} for guest`);
 
@@ -214,17 +363,43 @@ class GuestService {
 
   /**
    * 获取游客的所有AI账户
+   * P0-004: 支持从Redis恢复
    * @param {string} token - 游客token
    * @returns {Promise<Array>} AI账户列表
    */
   async getGuestAccounts(token) {
-    const session = this._validateToken(token);
+    const session = await this._validateToken(token);
     const openidHash = session.openidHash;
 
     const accounts = [];
+
+    // 从内存获取
     for (const account of this.aiAccounts.values()) {
       if (account.guestId === openidHash && account.status !== 'migrated') {
         accounts.push(account);
+      }
+    }
+
+    // 从Redis获取（补充）
+    if (this._useRedis() && accounts.length === 0) {
+      try {
+        const redis = this._getRedis();
+        const accountIds = await redis.sMembers(`${this.redisPrefix.index}accounts:${openidHash}`);
+
+        for (const accountId of accountIds) {
+          if (!this.aiAccounts.has(accountId)) {
+            const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+            if (accountData) {
+              const account = JSON.parse(accountData);
+              if (account.status !== 'migrated') {
+                this.aiAccounts.set(accountId, account);
+                accounts.push(account);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[GuestService] Failed to load accounts from Redis:', error.message);
       }
     }
 
@@ -233,20 +408,42 @@ class GuestService {
 
   /**
    * C5-003: 开始AI对话
+   * P0-004: 支持Redis持久化
    * @param {string} token - 游客token
    * @param {string} accountId - AI账户ID
    * @returns {Promise<Object>} 对话会话
    */
   async startDialogue(token, accountId) {
-    const session = this._validateToken(token);
-    const account = this.aiAccounts.get(accountId);
+    const session = await this._validateToken(token);
+
+    // 先查内存，再查Redis
+    let account = this.aiAccounts.get(accountId);
+
+    if (!account && this._useRedis()) {
+      const redis = this._getRedis();
+      const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+      if (accountData) {
+        account = JSON.parse(accountData);
+        this.aiAccounts.set(accountId, account);
+      }
+    }
 
     if (!account || account.guestId !== session.openidHash) {
       throw new GuestServiceError('ACCOUNT_NOT_FOUND', 'AI account not found');
     }
 
     // 检查是否已有活跃对话
-    const existingDialogue = this.dialogues.get(accountId);
+    let existingDialogue = this.dialogues.get(accountId);
+
+    if (!existingDialogue && this._useRedis()) {
+      const redis = this._getRedis();
+      const dialogueData = await redis.get(`${this.redisPrefix.dialogue}${accountId}`);
+      if (dialogueData) {
+        existingDialogue = JSON.parse(dialogueData);
+        this.dialogues.set(accountId, existingDialogue);
+      }
+    }
+
     if (existingDialogue && existingDialogue.status === 'active') {
       return existingDialogue;
     }
@@ -263,8 +460,15 @@ class GuestService {
       createdAt: new Date().toISOString(),
     };
 
+    // 保存到内存
     this.dialogues.set(accountId, dialogue);
+
+    // 持久化到Redis
+    await this._persistDialogue(accountId, dialogue);
+
+    // 更新账户的对话列表
     account.dialogues.push(dialogue.sessionId);
+    await this._persistAccount(accountId, account);
 
     console.log(`[GuestService] Started dialogue: ${dialogue.sessionId}`);
 
@@ -273,14 +477,26 @@ class GuestService {
 
   /**
    * 发送对话消息
+   * P0-004: 支持Redis持久化
    * @param {string} token - 游客token
    * @param {string} accountId - AI账户ID
    * @param {string} message - 用户消息
    * @returns {Promise<Object>} AI响应
    */
   async sendMessage(token, accountId, message) {
-    const session = this._validateToken(token);
-    const dialogue = this.dialogues.get(accountId);
+    const session = await this._validateToken(token);
+
+    // 先查内存，再查Redis
+    let dialogue = this.dialogues.get(accountId);
+
+    if (!dialogue && this._useRedis()) {
+      const redis = this._getRedis();
+      const dialogueData = await redis.get(`${this.redisPrefix.dialogue}${accountId}`);
+      if (dialogueData) {
+        dialogue = JSON.parse(dialogueData);
+        this.dialogues.set(accountId, dialogue);
+      }
+    }
 
     if (!dialogue || dialogue.guestId !== session.openidHash) {
       throw new GuestServiceError('DIALOGUE_NOT_FOUND', 'Dialogue not found');
@@ -320,26 +536,25 @@ class GuestService {
       timestamp: new Date().toISOString(),
     });
 
+    // 持久化到Redis
+    await this._persistDialogue(accountId, dialogue);
+
     return response;
   }
 
   /**
    * C5-004: 迁移游客数据到正式用户
+   * P0-004: 支持Redis持久化
    * @param {string} token - 游客token
    * @param {string} formalUserId - 正式用户ID
    * @returns {Promise<Object>} 迁移结果
    */
   async migrateToFormalUser(token, formalUserId) {
-    const session = this._validateToken(token);
+    const session = await this._validateToken(token);
     const openidHash = session.openidHash;
 
     // 获取所有AI账户
-    const accounts = [];
-    for (const account of this.aiAccounts.values()) {
-      if (account.guestId === openidHash && account.status !== 'migrated') {
-        accounts.push(account);
-      }
-    }
+    const accounts = await this.getGuestAccounts(token);
 
     const migratedAccounts = [];
     const errors = [];
@@ -360,6 +575,9 @@ class GuestService {
       session.status = 'migrated';
       session.migratedTo = formalUserId;
       session.migratedAt = new Date().toISOString();
+
+      // 持久化到Redis
+      await this._persistSession(openidHash, session, 0);
 
       // 发布账户迁移事件
       if (EventBusService.isConnected) {
@@ -385,6 +603,7 @@ class GuestService {
         if (account) {
           account.status = 'initializing';
           account.migratedTo = null;
+          await this._persistAccount(migrated.originalId, account);
         }
       }
 
@@ -412,6 +631,9 @@ class GuestService {
     account.migratedAt = new Date().toISOString();
     account.newAccountId = newAccountId;
 
+    // 持久化到Redis
+    await this._persistAccount(account.id, account);
+
     return {
       originalId: account.id,
       newAccountId,
@@ -423,11 +645,13 @@ class GuestService {
 
   /**
    * C5-005: 清理过期会话
+   * P0-004: 支持Redis清理
    */
   async cleanupExpiredSessions() {
     const now = new Date();
     let cleanedCount = 0;
 
+    // 清理内存中的过期会话
     for (const [openidHash, session] of this.sessions.entries()) {
       if (session.status === 'active' && new Date(session.expiresAt) < now) {
         session.status = 'expired';
@@ -437,12 +661,18 @@ class GuestService {
         for (const [accountId, dialogue] of this.dialogues.entries()) {
           if (dialogue.guestId === openidHash) {
             dialogue.status = 'expired';
+            await this._persistDialogue(accountId, dialogue);
           }
         }
+
+        // 持久化过期状态到Redis
+        await this._persistSession(openidHash, session, 0);
 
         console.log(`[GuestService] Expired session: ${openidHash.substring(0, 16)}...`);
       }
     }
+
+    // Redis中的数据会通过TTL自动过期，无需手动清理
 
     return { cleanedCount };
   }
@@ -469,16 +699,102 @@ class GuestService {
 
   /**
    * C5-006: 获取会话信息
+   * P0-004: 支持从Redis恢复
    * @param {string} token - 游客token
    * @returns {Promise<Object|null>} 会话信息
    */
   async getSession(token) {
     try {
-      const session = this._validateToken(token);
-      return session;
+      return await this._validateToken(token);
     } catch (error) {
       return null;
     }
+  }
+
+  /**
+   * P0-004: 从Redis恢复所有数据（服务启动时调用）
+   * @returns {Promise<Object>} 恢复统计
+   */
+  async restoreFromRedis() {
+    if (!this._useRedis()) {
+      return { restored: 0, message: 'Redis not available' };
+    }
+
+    try {
+      const redis = this._getRedis();
+      let restoredSessions = 0;
+      let restoredAccounts = 0;
+      let restoredDialogues = 0;
+
+      // 恢复会话
+      const sessionKeys = await redis.keys(`${this.redisPrefix.session}*`);
+      for (const key of sessionKeys) {
+        const sessionData = await redis.get(key);
+        if (sessionData) {
+          const session = JSON.parse(sessionData);
+          if (session.status === 'active' && new Date(session.expiresAt) > new Date()) {
+            this.sessions.set(session.openidHash, session);
+            restoredSessions++;
+          }
+        }
+      }
+
+      // 恢复账户
+      const accountKeys = await redis.keys(`${this.redisPrefix.account}*`);
+      for (const key of accountKeys) {
+        const accountData = await redis.get(key);
+        if (accountData) {
+          const account = JSON.parse(accountData);
+          if (account.status !== 'migrated') {
+            this.aiAccounts.set(account.id, account);
+            restoredAccounts++;
+          }
+        }
+      }
+
+      // 恢复对话
+      const dialogueKeys = await redis.keys(`${this.redisPrefix.dialogue}*`);
+      for (const key of dialogueKeys) {
+        const dialogueData = await redis.get(key);
+        if (dialogueData) {
+          const dialogue = JSON.parse(dialogueData);
+          if (dialogue.status === 'active') {
+            this.dialogues.set(dialogue.accountId, dialogue);
+            restoredDialogues++;
+          }
+        }
+      }
+
+      console.log(`[GuestService] Restored from Redis: ${restoredSessions} sessions, ${restoredAccounts} accounts, ${restoredDialogues} dialogues`);
+
+      return {
+        restored: restoredSessions + restoredAccounts + restoredDialogues,
+        sessions: restoredSessions,
+        accounts: restoredAccounts,
+        dialogues: restoredDialogues
+      };
+    } catch (error) {
+      console.error('[GuestService] Failed to restore from Redis:', error.message);
+      return { restored: 0, error: error.message };
+    }
+  }
+
+  /**
+   * P0-004: 获取持久化统计
+   * @returns {Object}
+   */
+  getPersistenceStats() {
+    return {
+      memory: {
+        sessions: this.sessions.size,
+        accounts: this.aiAccounts.size,
+        dialogues: this.dialogues.size
+      },
+      redis: {
+        available: this._useRedis(),
+        prefix: this.redisPrefix
+      }
+    };
   }
 }
 

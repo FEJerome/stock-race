@@ -11,6 +11,7 @@
 import { MarketDataClient } from './MarketDataClient.js';
 import { TradingRulesEngine } from './TradingRulesEngine.js';
 import { ServiceUnavailableError } from './ServiceClient.js';
+import { tradingStatusCache } from './CacheService.js';
 
 class TradingStatusService {
   constructor() {
@@ -28,9 +29,8 @@ class TradingStatusService {
       lastFailureTime: null
     };
 
-    // 本地缓存
-    this.cache = new Map();
-    this.cacheTTL = 30000; // 30秒缓存
+    // 缓存TTL: 30秒
+    this.cacheTTL = 30000;
   }
 
   /**
@@ -46,20 +46,18 @@ class TradingStatusService {
         return this.getFallbackTradingStatus(symbol);
       }
 
-      // 检查缓存
-      const cached = this.getFromCache(`status:${symbol}`);
-      if (cached) {
-        return cached;
-      }
-
-      // 从Market Data Service获取
-      const status = await this.marketDataClient.getTradingStatus(symbol);
-
-      // 记录成功
-      this.recordSuccess();
-
-      // 缓存结果
-      this.setCache(`status:${symbol}`, status);
+      // 使用缓存或获取新数据
+      const status = await tradingStatusCache.getOrSet(
+        `status:${symbol}`,
+        async () => {
+          // 从Market Data Service获取
+          const data = await this.marketDataClient.getTradingStatus(symbol);
+          // 记录成功
+          this.recordSuccess();
+          return data;
+        },
+        this.cacheTTL
+      );
 
       return status;
     } catch (error) {
@@ -108,20 +106,18 @@ class TradingStatusService {
         return this.getFallbackMarketRules(market);
       }
 
-      // 检查缓存
-      const cached = this.getFromCache(`rules:${market}`);
-      if (cached) {
-        return cached;
-      }
-
-      // 从Market Data Service获取
-      const rules = await this.marketDataClient.getMarketRules(market);
-
-      // 记录成功
-      this.recordSuccess();
-
-      // 缓存结果
-      this.setCache(`rules:${market}`, rules);
+      // 使用缓存或获取新数据
+      const rules = await tradingStatusCache.getOrSet(
+        `rules:${market}`,
+        async () => {
+          // 从Market Data Service获取
+          const data = await this.marketDataClient.getMarketRules(market);
+          // 记录成功
+          this.recordSuccess();
+          return data;
+        },
+        this.cacheTTL
+      );
 
       return rules;
     } catch (error) {
@@ -282,43 +278,30 @@ class TradingStatusService {
   }
 
   /**
-   * 从缓存获取
+   * 从缓存获取 (使用统一的CacheService)
    * @private
    * @param {string} key - 缓存键
-   * @returns {Object|null}
+   * @returns {Promise<Object|null>}
    */
-  getFromCache(key) {
-    const cached = this.cache.get(key);
-    if (!cached) {
-      return null;
-    }
-
-    if (Date.now() > cached.expiry) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return cached.data;
+  async getFromCache(key) {
+    return await tradingStatusCache.get(key);
   }
 
   /**
-   * 设置缓存
+   * 设置缓存 (使用统一的CacheService)
    * @private
    * @param {string} key - 缓存键
    * @param {Object} data - 缓存数据
    */
-  setCache(key, data) {
-    this.cache.set(key, {
-      data,
-      expiry: Date.now() + this.cacheTTL
-    });
+  async setCache(key, data) {
+    await tradingStatusCache.set(key, data, this.cacheTTL);
   }
 
   /**
    * 清除缓存
    */
-  clearCache() {
-    this.cache.clear();
+  async clearCache() {
+    await tradingStatusCache.clear('trading-status:*');
   }
 
   /**
@@ -343,7 +326,7 @@ class TradingStatusService {
         successCount: this.circuitBreaker.successCount
       },
       cache: {
-        size: this.cache.size,
+        stats: tradingStatusCache.getStats(),
         ttl: this.cacheTTL
       },
       timestamp: new Date().toISOString()

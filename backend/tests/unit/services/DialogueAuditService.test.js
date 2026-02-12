@@ -3,8 +3,7 @@
  * 内容审计服务测试
  */
 
-import { expect } from 'chai';
-import sinon from 'sinon';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { DialogueAuditService } from '../../../src/services/DialogueAuditService.js';
 
 describe('DialogueAuditService', () => {
@@ -14,14 +13,14 @@ describe('DialogueAuditService', () => {
 
   beforeEach(() => {
     mockRedis = {
-      get: sinon.stub(),
-      setEx: sinon.stub().resolves(),
-      del: sinon.stub().resolves(),
-      publish: sinon.stub().resolves()
+      get: jest.fn(),
+      setEx: jest.fn().mockResolvedValue(),
+      del: jest.fn().mockResolvedValue(),
+      publish: jest.fn().mockResolvedValue()
     };
 
     mockDb = {
-      query: sinon.stub().resolves({ rows: [] })
+      query: jest.fn().mockResolvedValue({ rows: [] })
     };
 
     auditService = new DialogueAuditService({
@@ -31,13 +30,13 @@ describe('DialogueAuditService', () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    jest.restoreAllMocks();
   });
 
   describe('初始化', () => {
     it('应该成功初始化服务', async () => {
       await auditService.initialize();
-      expect(auditService.redis).to.equal(mockRedis);
+      expect(auditService.redis).toBe(mockRedis);
     });
   });
 
@@ -57,10 +56,10 @@ describe('DialogueAuditService', () => {
 
       const result = await auditService.recordMessage(messageData);
 
-      expect(result).to.have.property('auditStatus', 'approved');
-      expect(result).to.have.property('isBlocked', false);
-      expect(result).to.have.property('isFlagged', false);
-      expect(result).to.have.property('sessionId', 'dlg_123');
+      expect(result).toHaveProperty('auditStatus', 'approved');
+      expect(result).toHaveProperty('isBlocked', false);
+      expect(result).toHaveProperty('isFlagged', false);
+      expect(result).toHaveProperty('sessionId', 'dlg_123');
     });
 
     it('应该检测敏感内容并标记为flagged', async () => {
@@ -76,10 +75,10 @@ describe('DialogueAuditService', () => {
 
       const result = await auditService.recordMessage(messageData);
 
-      expect(result.auditStatus).to.equal('flagged');
-      expect(result.isFlagged).to.be.true;
-      expect(result.flaggedKeywords).to.include('赌博');
-      expect(result.sensitivityScore).to.be.greaterThan(0);
+      expect(result.auditStatus).toBe('flagged');
+      expect(result.isFlagged).toBe(true);
+      expect(result.flaggedKeywords).toContain('赌博');
+      expect(result.sensitivityScore).toBeGreaterThan(0);
     });
 
     it('应该拦截高敏感度内容', async () => {
@@ -95,9 +94,9 @@ describe('DialogueAuditService', () => {
 
       const result = await auditService.recordMessage(messageData);
 
-      expect(result.auditStatus).to.equal('blocked');
-      expect(result.isBlocked).to.be.true;
-      expect(result.sensitivityScore).to.be.at.least(0.6);
+      expect(result.auditStatus).toBe('blocked');
+      expect(result.isBlocked).toBe(true);
+      expect(result.sensitivityScore).toBeGreaterThanOrEqual(0.6);
     });
 
     it('应该保存记录到数据库', async () => {
@@ -113,7 +112,7 @@ describe('DialogueAuditService', () => {
 
       await auditService.recordMessage(messageData);
 
-      expect(mockDb.query.calledOnce).to.be.true;
+      expect(mockDb.query).toHaveBeenCalledTimes(1);
     });
 
     it('拦截内容应该发送告警', async () => {
@@ -130,68 +129,88 @@ describe('DialogueAuditService', () => {
       const result = await auditService.recordMessage(messageData);
 
       // 验证结果被拦截（需要4个敏感词达到0.6分阈值）
-      expect(result.isBlocked).to.be.true;
+      expect(result.isBlocked).toBe(true);
       // 验证告警被触发
-      expect(result.auditStatus).to.equal('blocked');
+      expect(result.auditStatus).toBe('blocked');
     });
   });
 
   describe('查询审计日志', () => {
     it('应该支持按会话ID查询', async () => {
-      mockDb.query.onFirstCall().resolves({ rows: [{ count: '5' }] });
-      mockDb.query.onSecondCall().resolves({ rows: [] });
+      mockDb.query.mockImplementation((query, params) => {
+        if (query.includes('COUNT')) {
+          return Promise.resolve({ rows: [{ count: '5' }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
 
       await auditService.queryAuditLogs({ sessionId: 'dlg_123' });
 
-      const queryCall = mockDb.query.secondCall;
-      expect(queryCall.args[0]).to.include('session_id = $1');
-      expect(queryCall.args[1]).to.include('dlg_123');
+      const queryCall = mockDb.query.mock.calls[1];
+      expect(queryCall[0]).toContain('session_id = $1');
+      expect(queryCall[1]).toContain('dlg_123');
     });
 
     it('应该支持按账户ID查询', async () => {
-      mockDb.query.onFirstCall().resolves({ rows: [{ count: '10' }] });
-      mockDb.query.onSecondCall().resolves({ rows: [] });
+      mockDb.query.mockImplementation((query, params) => {
+        if (query.includes('COUNT')) {
+          return Promise.resolve({ rows: [{ count: '10' }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
 
       await auditService.queryAuditLogs({ accountId: 'acc_123' });
 
-      const queryCall = mockDb.query.secondCall;
-      expect(queryCall.args[0]).to.include('account_id = $1');
+      const queryCall = mockDb.query.mock.calls[1];
+      expect(queryCall[0]).toContain('account_id = $1');
     });
 
     it('应该支持按审计状态查询', async () => {
-      mockDb.query.onFirstCall().resolves({ rows: [{ count: '3' }] });
-      mockDb.query.onSecondCall().resolves({ rows: [] });
+      mockDb.query.mockImplementation((query, params) => {
+        if (query.includes('COUNT')) {
+          return Promise.resolve({ rows: [{ count: '3' }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
 
       await auditService.queryAuditLogs({ auditStatus: 'blocked' });
 
-      const queryCall = mockDb.query.secondCall;
-      expect(queryCall.args[0]).to.include('audit_status = $1');
+      const queryCall = mockDb.query.mock.calls[1];
+      expect(queryCall[0]).toContain('audit_status = $1');
     });
 
     it('应该支持日期范围查询', async () => {
-      mockDb.query.onFirstCall().resolves({ rows: [{ count: '100' }] });
-      mockDb.query.onSecondCall().resolves({ rows: [] });
+      mockDb.query.mockImplementation((query, params) => {
+        if (query.includes('COUNT')) {
+          return Promise.resolve({ rows: [{ count: '100' }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
 
       await auditService.queryAuditLogs({
         startDate: '2024-01-01',
         endDate: '2024-01-31'
       });
 
-      const queryCall = mockDb.query.secondCall;
-      expect(queryCall.args[0]).to.include('created_at >= $1');
-      expect(queryCall.args[0]).to.include('created_at <= $2');
+      const queryCall = mockDb.query.mock.calls[1];
+      expect(queryCall[0]).toContain('created_at >= $1');
+      expect(queryCall[0]).toContain('created_at <= $2');
     });
 
     it('应该返回分页信息', async () => {
-      mockDb.query.onFirstCall().resolves({ rows: [{ count: '100' }] });
-      mockDb.query.onSecondCall().resolves({ rows: [{ id: 1, message_content: 'test' }] });
+      mockDb.query.mockImplementation((query, params) => {
+        if (query.includes('COUNT')) {
+          return Promise.resolve({ rows: [{ count: '100' }] });
+        }
+        return Promise.resolve({ rows: [{ id: 1, message_content: 'test' }] });
+      });
 
       const result = await auditService.queryAuditLogs({ limit: 10, offset: 20 });
 
-      expect(result).to.have.property('total', 100);
-      expect(result).to.have.property('limit', 10);
-      expect(result).to.have.property('offset', 20);
-      expect(result.data).to.be.an('array');
+      expect(result).toHaveProperty('total', 100);
+      expect(result).toHaveProperty('limit', 10);
+      expect(result).toHaveProperty('offset', 20);
+      expect(Array.isArray(result.data)).toBe(true);
     });
   });
 
@@ -199,27 +218,27 @@ describe('DialogueAuditService', () => {
     it('应该支持通过审核', async () => {
       await auditService.reviewMessage(1, 1, 'approve', '内容正常');
 
-      expect(mockDb.query.calledOnce).to.be.true;
-      const queryCall = mockDb.query.firstCall;
-      expect(queryCall.args[0]).to.include('UPDATE dialogue_audit');
-      expect(queryCall.args[1]).to.include('approved');
+      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      const queryCall = mockDb.query.mock.calls[0];
+      expect(queryCall[0]).toContain('UPDATE dialogue_audit');
+      expect(queryCall[1]).toContain('approved');
     });
 
     it('应该支持拒绝审核', async () => {
       await auditService.reviewMessage(1, 1, 'block', '违规内容');
 
-      expect(mockDb.query.calledOnce).to.be.true;
-      const queryCall = mockDb.query.firstCall;
-      expect(queryCall.args[1]).to.include('blocked');
+      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      const queryCall = mockDb.query.mock.calls[0];
+      expect(queryCall[1]).toContain('blocked');
     });
 
     it('应该记录审核信息', async () => {
       const result = await auditService.reviewMessage(1, 1, 'approve', '审核通过');
 
-      expect(result).to.have.property('success', true);
-      expect(result).to.have.property('auditId', 1);
-      expect(result).to.have.property('reviewedBy', 1);
-      expect(result).to.have.property('reviewedAt');
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('auditId', 1);
+      expect(result).toHaveProperty('reviewedBy', 1);
+      expect(result).toHaveProperty('reviewedAt');
     });
   });
 
@@ -228,30 +247,30 @@ describe('DialogueAuditService', () => {
       const newWords = ['新词1', '新词2'];
       await auditService.updateSensitiveWords(newWords, 1);
 
-      expect(auditService.sensitiveWords).to.deep.equal(newWords);
+      expect(auditService.sensitiveWords).toEqual(newWords);
     });
 
     it('应该保存敏感词到数据库', async () => {
-      mockDb.query.resolves({ rows: [] });
+      mockDb.query.mockResolvedValue({ rows: [] });
       const words = ['测试词1', '测试词2'];
 
       await auditService.updateSensitiveWords(words, 1);
 
-      expect(mockDb.query.calledOnce).to.be.true;
+      expect(mockDb.query).toHaveBeenCalledTimes(1);
     });
 
     it('应该清除敏感词缓存', async () => {
-      mockDb.query.resolves({ rows: [] });
+      mockDb.query.mockResolvedValue({ rows: [] });
 
       await auditService.updateSensitiveWords(['测试'], 1);
 
-      expect(mockRedis.del.calledOnce).to.be.true;
+      expect(mockRedis.del).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('会话审查检查', () => {
     it('应该检查会话是否需要审查', async () => {
-      mockDb.query.resolves({
+      mockDb.query.mockResolvedValue({
         rows: [{
           flagged_count: '2',
           blocked_count: '1',
@@ -261,15 +280,15 @@ describe('DialogueAuditService', () => {
 
       const result = await auditService.checkSessionForReview('dlg_123');
 
-      expect(result).to.have.property('flagged_count', '2');
-      expect(result).to.have.property('blocked_count', '1');
-      expect(result).to.have.property('max_sensitivity', '0.75');
+      expect(result).toHaveProperty('flagged_count', '2');
+      expect(result).toHaveProperty('blocked_count', '1');
+      expect(result).toHaveProperty('max_sensitivity', '0.75');
     });
   });
 
   describe('统计查询', () => {
     it('应该获取审计统计', async () => {
-      mockDb.query.resolves({
+      mockDb.query.mockResolvedValue({
         rows: [{
           date: new Date(),
           total_messages: '100',
@@ -282,8 +301,8 @@ describe('DialogueAuditService', () => {
 
       const result = await auditService.getAuditStats('2024-01-01', '2024-01-31');
 
-      expect(result).to.be.an('array');
-      expect(result[0]).to.have.property('total_messages', '100');
+      expect(Array.isArray(result)).toBe(true);
+      expect(result[0]).toHaveProperty('total_messages', '100');
     });
   });
 
@@ -291,29 +310,29 @@ describe('DialogueAuditService', () => {
     it('应该检测单个敏感词', () => {
       const result = auditService._checkSensitiveContent('我想了解赌博');
 
-      expect(result.hasSensitive).to.be.true;
-      expect(result.matchedWords).to.include('赌博');
+      expect(result.hasSensitive).toBe(true);
+      expect(result.matchedWords).toContain('赌博');
     });
 
     it('应该检测多个敏感词', () => {
       const result = auditService._checkSensitiveContent('赌博和色情内容');
 
-      expect(result.matchedWords).to.have.lengthOf(2);
-      expect(result.sensitivityScore).to.be.greaterThan(0.2);
+      expect(result.matchedWords).toHaveLength(2);
+      expect(result.sensitivityScore).toBeGreaterThan(0.2);
     });
 
     it('应该不标记正常内容', () => {
       const result = auditService._checkSensitiveContent('你好，我想投资股票');
 
-      expect(result.hasSensitive).to.be.false;
-      expect(result.matchedWords).to.have.lengthOf(0);
-      expect(result.sensitivityScore).to.equal(0);
+      expect(result.hasSensitive).toBe(false);
+      expect(result.matchedWords).toHaveLength(0);
+      expect(result.sensitivityScore).toBe(0);
     });
 
     it('敏感度分数应该封顶1.0', () => {
       const result = auditService._checkSensitiveContent('赌博色情暴力恐怖主义毒品洗钱诈骗传销非法集资');
 
-      expect(result.sensitivityScore).to.equal(1.0);
+      expect(result.sensitivityScore).toBe(1.0);
     });
   });
 
@@ -323,15 +342,15 @@ describe('DialogueAuditService', () => {
       const hash1 = auditService._calculateHash(content);
       const hash2 = auditService._calculateHash(content);
 
-      expect(hash1).to.equal(hash2);
-      expect(hash1).to.have.lengthOf(64); // SHA256 hex length
+      expect(hash1).toBe(hash2);
+      expect(hash1).toHaveLength(64); // SHA256 hex length
     });
 
     it('不同内容应该生成不同哈希', () => {
       const hash1 = auditService._calculateHash('内容1');
       const hash2 = auditService._calculateHash('内容2');
 
-      expect(hash1).to.not.equal(hash2);
+      expect(hash1).not.toBe(hash2);
     });
   });
 });

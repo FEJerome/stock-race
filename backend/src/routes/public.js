@@ -8,6 +8,7 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { rankingRepository } from '../models/index.js';
 import { MarketDataClient } from '../services/MarketDataClient.js';
+import { marketDataCache } from '../services/CacheService.js';
 
 const router = express.Router();
 const marketDataClient = new MarketDataClient();
@@ -247,8 +248,13 @@ router.get('/market/quotes', marketLimiter, async (req, res) => {
       });
     }
 
-    // 从Market Data Service获取行情
-    const quotes = await marketDataClient.getQuotes(symbolList);
+    // 从缓存获取行情，5秒TTL
+    const cacheKey = `quotes:${symbolList.sort().join(',')}`;
+    const quotes = await marketDataCache.getOrSet(
+      cacheKey,
+      () => marketDataClient.getQuotes(symbolList),
+      5000 // 5秒TTL
+    );
 
     res.json({
       success: true,
@@ -319,8 +325,12 @@ router.get('/market/quotes', marketLimiter, async (req, res) => {
  */
 router.get('/market/snapshot', marketLimiter, async (req, res) => {
   try {
-    // 获取市场快照数据
-    const snapshot = await marketDataClient.getMarketSnapshot();
+    // 从缓存获取市场快照，5秒TTL
+    const snapshot = await marketDataCache.getOrSet(
+      'market:snapshot',
+      () => marketDataClient.getMarketSnapshot(),
+      5000 // 5秒TTL
+    );
 
     res.json({
       success: true,
