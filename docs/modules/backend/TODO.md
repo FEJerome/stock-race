@@ -16,9 +16,36 @@
 
 ---
 
-## 一、未完成工作项
+## 一、联调冲刺任务 (2026-02-12)
 
-### 1.1 集成测试环境完善
+### P0-001: 修复ESM/CommonJS混用问题 ✅ 已完成
+
+**完成内容**:
+1. 修改 `package.json` - 使用 `NODE_OPTIONS='--experimental-vm-modules'` 运行Jest
+2. 重命名 `jest.config.js` → `jest.config.cjs`，使用CommonJS导出语法
+3. 配置 `babel.config.cjs` - 支持ESM转换和顶层await
+4. 安装依赖 `@babel/preset-env`, `chai`, `sinon`, `socket.io-client`
+5. 转换源文件为ESM格式:
+   - `src/services/GuestService.js` - ESM导入导出
+   - `src/services/EventBusService.js` - ESM导入导出
+   - `src/services/TradeValidator.js` - ESM导入导出
+   - `src/models/index.js` - 添加 `competitionRepository` 和 `prisma` mock导出
+   - `src/app.js` - 添加默认导出
+6. 批量转换测试文件（18个文件）- 将Chai/Sinon语法转换为Jest语法
+
+**测试结果**:
+- 测试套件: 20通过, 27失败, 共47个
+- 测试用例: 422通过, 97失败, 共519个
+- 所有ESM/CommonJS混用语法错误已修复
+- 测试系统可正常运行 `npm test`
+
+**备注**: 27个失败的测试套件主要是集成测试，需要外部服务（Redis、PostgreSQL、Trading AI Service等），属于I-001任务范畴
+
+---
+
+## 二、未完成工作项
+
+### 2.1 集成测试环境完善
 
 | 编号 | 任务 | 状态 | 优先级 | 说明 |
 |------|------|------|--------|------|
