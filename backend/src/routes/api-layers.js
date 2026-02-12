@@ -24,6 +24,7 @@ import marketRoutes from './market.js';
 import rankingsRoutes from './rankings.js';
 import adminRoutes from './admin.js';
 import adminDialogueRoutes from './admin-dialogue.js';
+import tradingStatusRoutes from './trading-status.js';
 import { authenticate, optionalAuthenticate } from '../middleware/auth.js';
 import { guestAuthenticate } from '../middleware/guestAuth.js';
 import { healthService } from '../services/HealthService.js';
@@ -171,6 +172,7 @@ router.use('/trades', authenticate, tradesRoutes);
 router.use('/portfolios', authenticate, portfoliosRoutes);
 router.use('/market', authenticate, marketRoutes);
 router.use('/rankings', authenticate, rankingsRoutes);
+router.use('/trading-status', authenticate, tradingStatusRoutes);
 router.use('/admin', authenticate, adminRoutes);
 router.use('/admin/dialogue', authenticate, adminDialogueRoutes);
 

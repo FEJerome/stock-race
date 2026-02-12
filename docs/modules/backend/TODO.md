@@ -147,9 +147,28 @@ POST /api/v1/guest/token
 
 | 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
 |------|------|------|----------|------|----------|
-| T-015 | 对接Market Data交易状态 | 🔲 | 0.5天 | Market Data C3-001 | 实时交易状态查询，熔断降级 |
+| T-015 | 对接Market Data交易状态 | ✅ | 0.5天 | Market Data C3-001 | 实时交易状态查询，熔断降级 |
 | T-011 | 对接Market Data市场规则 | 🔲 | 0.5天 | Market Data C6-004~006 | 涨跌停限制查询，规则验证 |
 | C3-004B | 订阅AI绩效报告事件 | 🔲 | 0.5天 | Trading AI C3-004B | 消费 ai.performance.report 事件 |
+
+**T-015 完成详情**:
+1. **MarketDataClient扩展**: 添加 `getTradingStatus()` 和 `getMarketRules()` 方法
+2. **TradingStatusService创建**:
+   - 封装交易状态查询逻辑
+   - 实现熔断器机制（失败5次后开启，60秒后尝试恢复）
+   - 30秒本地缓存
+   - Market Data不可用时降级到TradingRulesEngine
+3. **API路由**: `GET /api/v1/trading-status/:symbol`, `POST /api/v1/trading-status/batch`, `GET /api/v1/trading-status/market/:market/rules`
+4. **单元测试**: `tests/unit/services/TradingStatusService.test.js`
+
+**新增文件**:
+- `src/services/TradingStatusService.js` - 交易状态服务
+- `src/routes/trading-status.js` - 交易状态API路由
+- `tests/unit/services/TradingStatusService.test.js` - 单元测试
+
+**修改文件**:
+- `src/services/MarketDataClient.js` - 添加getTradingStatus, getMarketRules
+- `src/routes/api-layers.js` - 挂载交易状态路由
 
 ---
 
