@@ -9,9 +9,8 @@
  * - 配置优先级
  */
 
-const { expect } = require('chai');
-const sinon = require('sinon');
-const DynamicLimitService = require('../../../src/services/DynamicLimitService');
+import { expect, jest, describe, it, beforeEach, afterEach } from '@jest/globals';
+import DynamicLimitService from '../../../src/services/DynamicLimitService.js';
 
 describe('DynamicLimitService', () => {
   let service;
@@ -21,13 +20,13 @@ describe('DynamicLimitService', () => {
 
   beforeEach(() => {
     dbStub = {
-      query: sinon.stub()
+      query: jest.fn()
     };
 
     redisStub = {
-      get: sinon.stub().resolves(null),
-      setex: sinon.stub().resolves('OK'),
-      del: sinon.stub().resolves(1)
+      get: jest.fn().resolves(null),
+      setex: jest.fn().resolves('OK'),
+      del: jest.fn().resolves(1)
     };
 
     cacheStub = new Map();
@@ -40,14 +39,14 @@ describe('DynamicLimitService', () => {
   });
 
   afterEach(() => {
-    sinon.restore();
+    jest.restoreAllMocks();
   });
 
   describe('分层配置解析', () => {
     it('应该正确解析默认配置', async () => {
       const limits = await service.getLimits('acc-123', { skipCache: true });
 
-      expect(limits).to.deep.include({
+      expect(limits).toMatchObject({
         dailyWakeupLimit: 10,
         cooldownMinutes: 5,
         tokenBudget: 10000
@@ -70,9 +69,9 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(30);
-      expect(limits.cooldownMinutes).to.equal(2);
-      expect(limits.tokenBudget).to.equal(50000);
+      expect(limits.dailyWakeupLimit).toBe(30);
+      expect(limits.cooldownMinutes).toBe(2);
+      expect(limits.tokenBudget).toBe(50000);
     });
 
     it('应该将账户级别配置覆盖会员级别配置', async () => {
@@ -101,17 +100,17 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(50);  // 账户级别覆盖
-      expect(limits.cooldownMinutes).to.equal(5);    // 会员级别继承
-      expect(limits.tokenBudget).to.equal(10000);    // 会员级别继承
+      expect(limits.dailyWakeupLimit).toBe(50);  // 账户级别覆盖
+      expect(limits.cooldownMinutes).toBe(5);    // 会员级别继承
+      expect(limits.tokenBudget).toBe(10000);    // 会员级别继承
     });
 
     it('应该返回配置来源信息', async () => {
       const limits = await service.getLimits('acc-123', { skipCache: true });
 
-      expect(limits).to.have.property('configSource', 'default');
-      expect(limits).to.have.property('membershipTier', null);
-      expect(limits).to.have.property('accountOverride', false);
+      expect(limits).toHaveProperty('configSource', 'default');
+      expect(limits).toHaveProperty('membershipTier', null);
+      expect(limits).toHaveProperty('accountOverride', false);
     });
   });
 
@@ -130,8 +129,8 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(5);
-      expect(limits.cooldownMinutes).to.equal(10);
+      expect(limits.dailyWakeupLimit).toBe(5);
+      expect(limits.cooldownMinutes).toBe(10);
     });
 
     it('应该正确返回vip会员限制', async () => {
@@ -148,8 +147,8 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(100);
-      expect(limits.cooldownMinutes).to.equal(1);
+      expect(limits.dailyWakeupLimit).toBe(100);
+      expect(limits.cooldownMinutes).toBe(1);
     });
 
     it('对未知会员级别应该使用默认配置', async () => {
@@ -159,8 +158,8 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(10);
-      expect(limits.configSource).to.equal('default');
+      expect(limits.dailyWakeupLimit).toBe(10);
+      expect(limits.configSource).toBe('default');
     });
   });
 
@@ -182,14 +181,14 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(100);
-      expect(limits.accountOverride).to.be.true;
+      expect(limits.dailyWakeupLimit).toBe(100);
+      expect(limits.accountOverride).toBe(true);
     });
 
     it('应该忽略已过期的账户级别配置', async () => {
       const pastDate = new Date(Date.now() - 86400000); // 昨天
 
-      dbStub.query.withArgs(sinon.match(/ai_account_limits/))
+      dbStub.query.withArgs(expect.stringContaining("ai_account_limits"))
         .resolves({
           rows: [{
             account_id: 'acc-123',
@@ -202,7 +201,7 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.accountOverride).to.be.false;
+      expect(limits.accountOverride).toBe(false);
     });
 
     it('应该支持为特定账户设置永久覆盖', async () => {
@@ -220,8 +219,8 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(200);
-      expect(limits.accountOverride).to.be.true;
+      expect(limits.dailyWakeupLimit).toBe(200);
+      expect(limits.accountOverride).toBe(true);
     });
   });
 
@@ -237,25 +236,25 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(redisStub.get.calledWith('limits:account:acc-123')).to.be.true;
-      expect(limits.dailyWakeupLimit).to.equal(50);
-      expect(dbStub.query.called).to.be.false; // 不应该查询数据库
+      expect(redisStub.get.toHaveBeenCalledWith('limits:account:acc-123')).toBe(true);
+      expect(limits.dailyWakeupLimit).toBe(50);
+      expect(dbStub.query.toHaveBeenCalled()).toBe(false); // 不应该查询数据库
     });
 
     it('应该在缓存未命中时查询数据库并写入缓存', async () => {
       redisStub.get.resolves(null);
 
-      dbStub.query.withArgs(sinon.match(/membership_limits/))
+      dbStub.query.withArgs(expect.stringContaining("membership_limits"))
         .resolves({ rows: [{ tier: 'premium', daily_wakeup_limit: 30, cooldown_minutes: 2, token_budget: 50000 }] });
 
       sinon.stub(service, 'getUserMembershipTier').resolves('premium');
 
       await service.getLimits('acc-123');
 
-      expect(redisStub.setex.called).to.be.true;
+      expect(redisStub.setex.toHaveBeenCalled()).toBe(true);
       const [key, ttl, value] = redisStub.setex.firstCall.args;
-      expect(key).to.equal('limits:account:acc-123');
-      expect(ttl).to.equal(300); // 5分钟缓存
+      expect(key).toBe('limits:account:acc-123');
+      expect(ttl).toBe(300); // 5分钟缓存
     });
 
     it('应该支持本地缓存作为二级缓存', async () => {
@@ -264,8 +263,8 @@ describe('DynamicLimitService', () => {
 
       const limits = await service.getLimits('acc-123');
 
-      expect(limits.dailyWakeupLimit).to.equal(50);
-      expect(redisStub.get.called).to.be.false; // 不应该查询Redis
+      expect(limits.dailyWakeupLimit).toBe(50);
+      expect(redisStub.get.toHaveBeenCalled()).toBe(false); // 不应该查询Redis
     });
   });
 
@@ -273,13 +272,13 @@ describe('DynamicLimitService', () => {
     it('应该支持手动清除缓存', async () => {
       await service.invalidateCache('acc-123');
 
-      expect(redisStub.del.calledWith('limits:account:acc-123')).to.be.true;
+      expect(redisStub.del.toHaveBeenCalledWith('limits:account:acc-123')).toBe(true);
     });
 
     it('应该支持批量清除缓存', async () => {
       await service.invalidateCacheByPattern('limits:account:*');
 
-      expect(redisStub.del.called).to.be.true;
+      expect(redisStub.del.toHaveBeenCalled()).toBe(true);
     });
 
     it('应该在配置更新后自动清除相关缓存', async () => {
@@ -289,7 +288,7 @@ describe('DynamicLimitService', () => {
       });
 
       // 应该清除所有premium用户的缓存
-      expect(redisStub.del.called).to.be.true;
+      expect(redisStub.del.toHaveBeenCalled()).toBe(true);
     });
   });
 
@@ -302,8 +301,8 @@ describe('DynamicLimitService', () => {
         effectiveDays: 30
       }, { adminId: 'admin-1' });
 
-      expect(result.success).to.be.true;
-      expect(dbStub.query.called).to.be.true;
+      expect(result.success).toBe(true);
+      expect(dbStub.query.toHaveBeenCalled()).toBe(true);
     });
 
     it('应该记录配置变更审计日志', async () => {
@@ -317,7 +316,7 @@ describe('DynamicLimitService', () => {
       const auditCall = dbStub.query.getCalls().find(
         call => call.args[0].includes('audit_log')
       );
-      expect(auditCall).to.exist;
+      expect(auditCall).toBeDefined();
     });
   });
 });

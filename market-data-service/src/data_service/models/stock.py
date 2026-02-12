@@ -4,7 +4,7 @@ Stock data models.
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from enum import Enum
 
 
@@ -46,10 +46,11 @@ class StockSymbol(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class StockQuote(BaseModel):
@@ -70,17 +71,19 @@ class StockQuote(BaseModel):
     ask_volume: Optional[int] = Field(None, description="Best ask volume")
     timestamp: datetime = Field(..., description="Quote timestamp")
 
-    @validator('change_percent')
+    @field_validator('change_percent')
+    @classmethod
     def validate_change_percent(cls, v):
         """Validate change percentage is reasonable."""
         if abs(v) > 1000:  # More than 1000% change is unrealistic
             raise ValueError(f"Change percentage {v}% is unrealistic")
         return v
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class StockData(BaseModel):
@@ -96,10 +99,11 @@ class StockData(BaseModel):
     adj_close: Optional[float] = Field(None, description="Adjusted close price")
     vwap: Optional[float] = Field(None, description="Volume weighted average price")
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class StockHistory(BaseModel):
@@ -111,10 +115,11 @@ class StockHistory(BaseModel):
     end_date: datetime = Field(..., description="End date")
     count: int = Field(..., description="Number of data points")
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class TechnicalIndicator(BaseModel):
@@ -124,10 +129,11 @@ class TechnicalIndicator(BaseModel):
     timestamps: List[datetime] = Field(..., description="Corresponding timestamps")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Indicator parameters")
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class MarketIndex(BaseModel):
@@ -139,10 +145,11 @@ class MarketIndex(BaseModel):
     change_percent: float = Field(..., description="Price change percentage")
     timestamp: datetime = Field(..., description="Quote timestamp")
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class DataQualityMetrics(BaseModel):
@@ -158,10 +165,11 @@ class DataQualityMetrics(BaseModel):
     invalid_records: int = Field(..., description="Invalid records")
     last_update: datetime = Field(..., description="Last update timestamp")
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class RealtimeMessage(BaseModel):
@@ -170,10 +178,11 @@ class RealtimeMessage(BaseModel):
     data: Dict[str, Any] = Field(..., description="Message data")
     timestamp: datetime = Field(default_factory=datetime.now)
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class CollectionResult(BaseModel):
@@ -185,10 +194,11 @@ class CollectionResult(BaseModel):
     error: Optional[str] = Field(None, description="Error message if failed")
     timestamp: datetime = Field(default_factory=datetime.now)
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )
 
 
 class MonitoringMetrics(BaseModel):
@@ -202,7 +212,8 @@ class MonitoringMetrics(BaseModel):
     active_sources: List[str] = Field(..., description="Active data sources")
     data_coverage: Dict[str, float] = Field(..., description="Data coverage by symbol")
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat()
         }
+    )

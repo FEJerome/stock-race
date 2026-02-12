@@ -7,6 +7,44 @@
 
 ## 一、功能完成清单
 
+### 架构优化任务（C2-TAI-001 ~ C3-009）- 2026-02-11完成
+
+| 编号 | 功能模块 | 完成状态 | 关键文件 | 测试覆盖 |
+|------|---------|---------|---------|---------|
+| C2-TAI-001 | Python事件总线SDK集成 | ✅ | `services/event_bus_manager.py` | 100% (5测试) |
+| C3-003 | 实时行情事件订阅 | ✅ | `services/event_handlers.py` MarketDataHandler | 100% (10测试) |
+| C3-003B | 新闻情报事件订阅 | ✅ | `services/event_handlers.py` NewsHandler | 100% (13测试) |
+| C3-004 | AI决策事件发布 | ✅ | `services/decision_event_publisher.py` | 100% (8测试) |
+| C3-009 | Token防抖机制 | ✅ | `services/token_debouncer.py` | 100% (17测试) |
+
+**架构优化实现详情：**
+
+**C2-TAI-001 EventBusManager:**
+- 单例模式管理事件总线连接
+- 封装EventBusClient/Consumer/Producer生命周期
+- 支持订阅、发布、健康检查
+- 与infra/event-bus SDK集成
+
+**C3-003/C3-003B 事件处理器:**
+- `MarketDataHandler`: 订阅`market:quote:realtime`，本地缓存行情数据
+- `NewsHandler`: 订阅`news:intelligence:extracted`，缓存情感分析结果
+- `EventHandlerManager`: 统一接口管理所有处理器
+- 支持缓存统计、数据查询、情感分布汇总
+
+**C3-004 决策事件发布:**
+- `DecisionEventPublisher`: 发布`ai:decision:made`事件
+- 支持单条/批量决策发布
+- 完整的决策payload结构（含可选字段）
+- 支持上下文传递
+
+**C3-009 Token防抖:**
+- `TokenDebouncer`: 单例防抖器，默认5分钟间隔
+- `DebounceKey`: 复合键（account_id + symbol + provider）
+- `DebouncedDecisionService`: 决策服务包装器
+- 支持统计、清理、自定义间隔
+
+---
+
 ### Phase 1: 基础设施（T-001 ~ T-003）
 
 | 编号 | 功能模块 | 完成状态 | 关键文件 | 测试覆盖 |
@@ -273,6 +311,27 @@
 
 ### 3.3 测试验证结果
 
+**架构优化测试（2026-02-11新增）**
+
+```bash
+# 事件总线/防抖机制测试
+$ pytest tests/unit/services/test_event_bus_manager.py \
+         tests/unit/services/test_event_handlers.py \
+         tests/unit/services/test_decision_event_publisher.py \
+         tests/unit/services/test_token_debouncer.py -v
+
+测试类别:
+- EventBusManager: 5/5 ✅
+- MarketDataHandler: 10/10 ✅
+- NewsHandler: 13/13 ✅
+- DecisionEventPublisher: 8/8 ✅
+- TokenDebouncer: 17/17 ✅
+
+架构优化总计: 53/53 通过 (100%)
+```
+
+**综合功能测试**
+
 ```bash
 # 综合测试结果（来自 test_ai_service_comprehensive.py）
 $ python test_ai_service_comprehensive.py
@@ -290,9 +349,40 @@ $ python test_ai_service_comprehensive.py
 
 ---
 
-## 四、潜在优化空间
+## 四、架构师审查标注
 
-### 4.1 短期优化（P2优先级）
+### 架构优化任务审查（2026-02-11）
+
+**总体评价：⭐⭐⭐⭐⭐ (优秀)**
+
+| 检查项 | 评分 | 说明 |
+|--------|------|------|
+| 架构一致性 | 95/100 | 完全符合事件总线解耦架构设计 |
+| 代码质量 | 93/100 | 单例模式正确，异常处理完善 |
+| 测试覆盖 | 100/100 | 53个测试全部通过 |
+| 文档完整 | 90/100 | 代码注释充分，测试说明清晰 |
+
+**架构亮点：**
+1. **事件总线集成规范**：正确使用infra/event-bus SDK，封装层次清晰
+2. **防抖机制精准**：5分钟默认间隔，复合键设计防止不同账户/股票间干扰
+3. **缓存策略合理**：内存缓存行情和新闻，支持统计和清理
+4. **错误处理完善**：未初始化时抛出ProviderError，边界情况考虑充分
+
+**优化建议：**
+1. **内存管理**：考虑为缓存添加TTL或最大容量限制，防止长时间运行内存膨胀
+2. **时区处理**：使用timezone-aware datetime替代utcnow()（Python 3.12已弃用）
+3. **监控增强**：建议添加防抖统计指标（被拦截请求数、平均等待时间）
+4. **配置外置**：防抖间隔、缓存大小等建议移至配置文件
+
+**风险评估：**
+- ⚠️ **低风险**：缓存无TTL，长时间运行可能累积大量数据
+- ⚠️ **低风险**：事件处理器无自动重连机制，Redis断开后需重启服务
+
+---
+
+## 五、潜在优化空间
+
+### 5.1 短期优化（P2优先级）
 
 | 优化项 | 说明 | 预估工作量 |
 |--------|------|-----------|
@@ -309,7 +399,17 @@ $ python test_ai_service_comprehensive.py
 | AI账户粒度Token记录 | 支持会员制计费 | 商业化基础能力 |
 | 流式响应支持 | SSE方式返回AI响应 | 提升用户体验 |
 
-### 4.3 长期规划（P0优先级 - 与整体架构演进相关）
+### 5.3 架构优化后续任务（P1优先级）
+
+| 优化项 | 说明 | 依赖条件 |
+|--------|------|---------|
+| C3-003C 订阅技术指标事件 | 订阅`market:indicator:updated` | Market Data Service发布事件 |
+| C3-004B 发布绩效报告事件 | 定期发布`ai:performance:report` | Backend订阅事件 |
+| C3-006 移除Market Data HTTP客户端 | 删除行情查询HTTP调用 | 事件订阅稳定运行 |
+| C3-007 移除News Service HTTP客户端 | 删除新闻查询HTTP调用 | 事件订阅稳定运行 |
+| C3-008 移除Backend HTTP回调 | 删除决策通知HTTP回调 | Backend订阅决策事件 |
+
+### 5.4 长期规划（P0优先级 - 与整体架构演进相关）
 
 | 优化项 | 说明 | 依赖条件 |
 |--------|------|---------|
@@ -319,7 +419,7 @@ $ python test_ai_service_comprehensive.py
 
 ---
 
-## 五、生产就绪检查清单
+## 六、生产就绪检查清单
 
 | 检查项 | 状态 | 备注 |
 |--------|------|------|

@@ -196,23 +196,35 @@ async def get_data_quality(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# @router.websocket("/ws/realtime")
-# async def websocket_realtime(
-#     websocket: WebSocket,
-#     realtime_service: RealtimeService = Depends()
-# ):
-#     """
-#     WebSocket endpoint for real-time data.
-#     """
-#     await realtime_service.connect(websocket)
-#     try:
-#         while True:
-#             data = await websocket.receive_json()
-#             await realtime_service.handle_message(websocket, data)
-#     except WebSocketDisconnect:
-#         await realtime_service.disconnect(websocket)
-#     except Exception as e:
-#         await websocket.close(code=1011, reason=str(e))
+@router.websocket("/ws/public/quotes")
+async def websocket_public_quotes(
+    websocket: WebSocket,
+    realtime_service: RealtimeService = Depends()
+):
+    """
+    Public WebSocket endpoint for real-time stock quotes (O6-001).
+
+    No authentication required. Supports subscribing to stock symbols
+    for real-time updates.
+
+    Message types:
+    - subscribe: {"type": "subscribe", "data": {"symbols": ["000001.SZ"]}}
+    - unsubscribe: {"type": "unsubscribe", "data": {"symbols": ["000001.SZ"]}}
+    - ping: {"type": "ping"}
+    - get_subscriptions: {"type": "get_subscriptions"}
+    - get_stats: {"type": "get_stats"}
+
+    Subscription limit: 50 symbols per connection (O6-008)
+    """
+    await realtime_service.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            await realtime_service.handle_message(websocket, data)
+    except WebSocketDisconnect:
+        await realtime_service.disconnect(websocket)
+    except Exception as e:
+        await websocket.close(code=1011, reason=str(e))
 
 
 @router.post("/collect/manual")
@@ -342,3 +354,235 @@ async def clear_data_cache(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Sector/Industry/Index API endpoints (C6-004, C6-005, C6-006, C6-008)
+
+@router.get("/market/sector/{sector}/quotes")
+async def get_sector_quotes(
+    sector: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    sort_by: str = Query("market_cap", pattern="^(market_cap|price|change_percent|volume)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
+    data_service: DataService = Depends()
+):
+    """
+    Get real-time quotes for stocks in a specific sector (C6-004).
+
+    Args:
+        sector: Sector code (e.g., financial, technology, consumer)
+        skip: Number of records to skip (pagination)
+        limit: Maximum number of records to return (1-100)
+        sort_by: Field to sort by
+        sort_order: Sort order (asc or desc)
+    """
+    try:
+        quotes = await data_service.get_sector_quotes(
+            sector=sector,
+            skip=skip,
+            limit=limit,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+        return {
+            "sector": sector,
+            "quotes": quotes,
+            "count": len(quotes),
+            "skip": skip,
+            "limit": limit,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/market/industry/{industry}/quotes")
+async def get_industry_quotes(
+    industry: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    sort_by: str = Query("market_cap", pattern="^(market_cap|price|change_percent|volume)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
+    data_service: DataService = Depends()
+):
+    """
+    Get real-time quotes for stocks in a specific industry (C6-005).
+
+    Args:
+        industry: Industry code (e.g., banking, software, retail)
+        skip: Number of records to skip (pagination)
+        limit: Maximum number of records to return (1-100)
+        sort_by: Field to sort by
+        sort_order: Sort order (asc or desc)
+    """
+    try:
+        quotes = await data_service.get_industry_quotes(
+            industry=industry,
+            skip=skip,
+            limit=limit,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+        return {
+            "industry": industry,
+            "quotes": quotes,
+            "count": len(quotes),
+            "skip": skip,
+            "limit": limit,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/market/index/{index}/components")
+async def get_index_components(
+    index: str,
+    include_quotes: bool = Query(True),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    data_service: DataService = Depends()
+):
+    """
+    Get component stocks for a specific market index (C6-006).
+
+    Args:
+        index: Index code (e.g., 000001.SH for Shanghai Composite)
+        include_quotes: Whether to include real-time quotes
+        skip: Number of records to skip (pagination)
+        limit: Maximum number of records to return (1-100)
+    """
+    try:
+        components = await data_service.get_index_components(
+            index=index,
+            include_quotes=include_quotes,
+            skip=skip,
+            limit=limit
+        )
+        return {
+            "index": index,
+            "components": components,
+            "count": len(components),
+            "skip": skip,
+            "limit": limit,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/market/sectors")
+async def get_sector_list(
+    data_service: DataService = Depends()
+):
+    """
+    Get list of available sectors (C6-007).
+    """
+    try:
+        sectors = await data_service.get_sector_list()
+        return {
+            "sectors": sectors,
+            "count": len(sectors),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/market/industries")
+async def get_industry_list(
+    sector: Optional[str] = Query(None, description="Filter by sector code"),
+    data_service: DataService = Depends()
+):
+    """
+    Get list of available industries (C6-007).
+    """
+    try:
+        industries = await data_service.get_industry_list(sector=sector)
+        return {
+            "industries": industries,
+            "count": len(industries),
+            "sector_filter": sector,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/stocks/{symbol}/classification")
+async def get_stock_classification(
+    symbol: str,
+    data_service: DataService = Depends()
+):
+    """
+    Get classification information for a stock (C6-007).
+
+    Returns sector, industry, and concept tags for the stock.
+    """
+    try:
+        classification = await data_service.get_stock_classification(symbol)
+        if not classification:
+            raise HTTPException(status_code=404, detail=f"Classification not found for {symbol}")
+        return classification
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# AI决策服务批量查询API
+from ..models.ai_query import AIQueryRequest, AIQueryResponse
+from ..services.ai_query_service import AIQueryService
+
+@router.post("/ai/batch-query", response_model=AIQueryResponse)
+async def ai_batch_query(
+    request: AIQueryRequest,
+    data_service: DataService = Depends()
+):
+    """
+    AI决策服务智能批量行情查询API。
+
+    专为AI决策优化的聚合查询接口，支持：
+    - 多维度并集查询（板块+行业+概念+指数+个股）
+    - 智能数据压缩和采样
+    - 多级缓存机制
+    - 批量并行查询
+
+    ## 请求示例
+
+    ```json
+    {
+        "scope": {
+            "sectors": ["financial", "technology"],
+            "industries": ["banking", "software"],
+            "symbols": ["000001.SZ", "000002.SZ"]
+        },
+        "filter": {
+            "min_market_cap": 100,
+            "exclude_st": true,
+            "exclude_suspended": true
+        },
+        "data_types": ["quote", "kline"],
+        "time_range": "recent_1w",
+        "info_density": "medium",
+        "max_stocks": 200,
+        "include_market_summary": true,
+        "request_id": "ai_decision_001"
+    }
+    ```
+
+    ## 信息密度级别
+
+    - `ultra_low`: 极端压缩（3-5字段，10%采样）
+    - `low`: 高度压缩（5-8字段，25%采样）
+    - `medium`: 适中（8-12字段，50%采样）
+    - `high`: 详细（12-18字段，75%采样）
+    - `full`: 完整（所有字段，100%采样）
+    """
+    try:
+        ai_service = AIQueryService(data_service, data_service.redis_cache)
+        response = await ai_service.query(request)
+        return response
+    except Exception as e:
+        logger.error(f"AI batch query failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")

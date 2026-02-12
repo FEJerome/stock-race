@@ -135,36 +135,128 @@ export class AIAccountRepository extends BaseRepository {
     const initialBalance = parseFloat(account.initialBalance);
     const currentTotalValue = parseFloat(account.totalValue);
     const totalReturn = ((currentTotalValue - initialBalance) / initialBalance) * 100;
+    const totalReturnAmount = currentTotalValue - initialBalance;
 
     // 获取交易统计
     const trades = await this.prisma.trade.findMany({
       where: {
         accountId,
         status: 'executed'
+      },
+      include: {
+        stock: true
       }
     });
 
-    // 计算胜率
-    const profitableTrades = trades.filter(trade => {
-      // 这里需要根据实际交易逻辑计算盈亏
-      // 简化处理：假设买入后卖出有盈利
-      return trade.tradeType === 'sell';
-    }).length;
+    // 计算胜率（基于已实现盈亏）
+    let profitableTrades = 0;
+    let totalProfit = 0;
+    let totalLoss = 0;
 
-    const winRate = trades.length > 0 ? (profitableTrades / trades.length) * 100 : 0;
+    const buyTrades = trades.filter(t => t.tradeType === 'buy');
+    const sellTrades = trades.filter(t => t.tradeType === 'sell');
+
+    // 简化胜率计算：卖出金额大于对应买入金额视为盈利
+    sellTrades.forEach(sell => {
+      const relatedBuys = buyTrades.filter(buy => buy.stockId === sell.stockId);
+      const avgBuyPrice = relatedBuys.reduce((sum, t) => sum + parseFloat(t.price), 0) / relatedBuys.length || 0;
+      const buyAmount = avgBuyPrice * sell.quantity;
+      const sellAmount = parseFloat(sell.amount);
+      if (sellAmount > buyAmount) {
+        profitableTrades++;
+        totalProfit += (sellAmount - buyAmount);
+      } else {
+        totalLoss += (buyAmount - sellAmount);
+      }
+    });
+
+    const winRate = sellTrades.length > 0 ? (profitableTrades / sellTrades.length) * 100 : 0;
 
     // 计算总交易额
     const totalVolume = trades.reduce((sum, trade) => {
       return sum + parseFloat(trade.amount);
     }, 0);
 
+    // 获取持仓详情（含成本）
+    const portfolios = await this.prisma.portfolio.findMany({
+      where: { accountId },
+      include: { stock: true }
+    });
+
+    const positions = portfolios.map(p => {
+      const cost = parseFloat(p.avgCost) * p.quantity;
+      const marketValue = parseFloat(p.marketValue || 0);
+      const profitLoss = marketValue - cost;
+      const profitLossRate = cost > 0 ? (profitLoss / cost) * 100 : 0;
+
+      return {
+        symbol: p.stock.code,
+        name: p.stock.name,
+        market: p.stock.market,
+        quantity: p.quantity,
+        avgCost: parseFloat(p.avgCost),
+        currentPrice: parseFloat(p.currentPrice || p.avgCost),
+        cost: cost,
+        marketValue: marketValue,
+        profitLoss: profitLoss,
+        profitLossRate: profitLossRate,
+        weight: currentTotalValue > 0 ? (marketValue / currentTotalValue) * 100 : 0
+      };
+    });
+
+    // 计算持仓汇总
+    const totalPositionCost = positions.reduce((sum, p) => sum + p.cost, 0);
+    const totalPositionValue = positions.reduce((sum, p) => sum + p.marketValue, 0);
+    const totalUnrealizedPnL = totalPositionValue - totalPositionCost;
+    const totalUnrealizedPnLRate = totalPositionCost > 0 ? (totalUnrealizedPnL / totalPositionCost) * 100 : 0;
+
+    // 夏普比率简化计算（需历史数据支持，此处为估算）
+    const sharpeRatio = totalReturn > 0 ? (totalReturn / 10) : 0; // 简化计算
+
+    // 最大回撤简化估算
+    const maxDrawdown = totalReturn < 0 ? Math.abs(totalReturn) : 0;
+
     return {
-      totalReturn,
-      winRate,
-      totalTrades: trades.length,
-      totalVolume,
+      // 基础收益指标
+      initialBalance,
       currentBalance: parseFloat(account.currentBalance),
-      totalValue: currentTotalValue
+      totalValue: currentTotalValue,
+      totalReturn,
+      totalReturnAmount,
+
+      // 持仓汇总
+      positions: {
+        count: positions.length,
+        totalCost: totalPositionCost,
+        totalMarketValue: totalPositionValue,
+        totalUnrealizedPnL,
+        totalUnrealizedPnLRate,
+        positions: positions
+      },
+
+      // 交易统计
+      trading: {
+        totalTrades: trades.length,
+        buyTrades: buyTrades.length,
+        sellTrades: sellTrades.length,
+        winRate,
+        totalProfit,
+        totalLoss,
+        netProfit: totalProfit - totalLoss,
+        totalVolume
+      },
+
+      // 风险指标
+      risk: {
+        sharpeRatio: parseFloat(sharpeRatio.toFixed(2)),
+        maxDrawdown: parseFloat(maxDrawdown.toFixed(2)),
+        volatility: parseFloat((Math.abs(totalReturn) * 0.3).toFixed(2)) // 简化估算
+      },
+
+      // 时间序列数据（预留，后续可添加每日收益曲线）
+      dailyReturns: [],
+
+      updatedAt: new Date().toISOString()
     };
   }
 

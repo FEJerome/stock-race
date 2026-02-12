@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { config } from './config.js'; // 加载环境变量和配置
 import routes from './routes/index.js';
+import apiLayerRoutes from './routes/api-layers.js';
 import internalRoutes from './routes/internal.js';
 import { requestLogger } from './middleware/auth.js';
 import { sessionService } from './services/SessionService.js';
@@ -169,11 +170,17 @@ app.use(`${API_PREFIX}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'Stock Race API文档'
 }));
 
-// API路由
+// 三层API路由 (v1版本) - 推荐新客户端使用
+// /api/v1/public/* - 公开API，无需认证
+// /api/v1/guest/*  - 游客API，需要guest-token
+// /api/v1/*        - 认证API，需要JWT
+app.use(`${API_PREFIX}/v1`, apiLayerRoutes);
+
+// 向后兼容的旧版API路由
 app.use(API_PREFIX, routes);
 
 // 内部API路由（服务间通信）
-app.use(API_PREFIX + '/internal', internalRoutes);
+app.use(`${API_PREFIX}/internal`, internalRoutes);
 
 // 404处理
 app.use(notFoundHandler);
@@ -249,6 +256,7 @@ const startServer = async () => {
 
 // 导出应用和启动函数
 export { app, startServer };
+export default app;
 
 // 如果直接运行此文件，则启动服务器
 if (import.meta.url === `file://${process.argv[1]}`) {

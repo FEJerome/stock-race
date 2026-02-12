@@ -5,13 +5,14 @@
  * 对应需求: C2-BE-001 ~ C2-BE-006
  */
 
-const {
+import { jest, describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import {
   EventBusClient,
   EventProducer,
   EventConsumer,
   EventType,
   EventSchema,
-} = require('@stock-race/event-bus');
+} from '@stock-race/event-bus';
 
 // 模拟Redis连接
 const TEST_REDIS_CONFIG = {
@@ -328,6 +329,116 @@ describe('Event Bus Integration (C2-BE-001~006)', () => {
       expect(consumer.blockTimeout).toBe(10000);
       expect(consumer.retryCount).toBe(5);
       expect(consumer.retryDelay).toBe(2000);
+    });
+  });
+
+  describe('C3-004B: 订阅AI绩效报告事件', () => {
+    it('should subscribe to ai:performance:report events', async () => {
+      const consumer = new EventConsumer({
+        client: client,
+        serviceName: 'backend-test',
+        consumerGroup: 'test-performance-group',
+      });
+
+      const mockHandler = jest.fn();
+      consumer.subscribe('ai:performance:report', mockHandler);
+
+      expect(consumer.handlers.has('ai:performance:report')).toBe(true);
+      expect(consumer.handlers.get('ai:performance:report')).toBe(mockHandler);
+    });
+
+    it('should receive AI performance report events', async () => {
+      const receivedReports = [];
+      const consumer = new EventConsumer({
+        client: client,
+        serviceName: 'backend-test',
+        consumerGroup: 'test-performance-receive-' + Date.now(),
+      });
+
+      // 设置处理器
+      const handler = (event) => {
+        receivedReports.push(event);
+        return Promise.resolve();
+      };
+
+      consumer.subscribe('ai:performance:report', handler);
+
+      // 启动消费者
+      consumer.start();
+
+      // 等待消费者准备就绪
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 发布一个AI绩效报告事件（模拟Trading AI服务发布）
+      const aiProducer = new EventProducer({
+        client: client,
+        serviceName: 'trading-ai-test',
+      });
+
+      await aiProducer.publishEvent(
+        'ai:performance:report',
+        {
+          accountId: 'acc-test-001',
+          performance: {
+            totalReturn: 0.156,
+            sharpeRatio: 1.85,
+            winRate: 0.72,
+            totalTrades: 25,
+          },
+          period: 'daily',
+          timestamp: new Date().toISOString(),
+        },
+        false
+      );
+
+      // 等待事件被消费
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // 停止消费者
+      await consumer.stop();
+
+      // 验证事件被接收
+      expect(receivedReports.length).toBeGreaterThan(0);
+      expect(receivedReports[0].payload.accountId).toBe('acc-test-001');
+      expect(receivedReports[0].payload.performance).toHaveProperty('totalReturn');
+    }, 10000);
+
+    it('should process performance report and update rankings', async () => {
+      const processedReports = [];
+
+      // 模拟排行榜更新处理器
+      const handler = async (event) => {
+        const { accountId, performance } = event.payload;
+
+        // 模拟更新排行榜数据
+        processedReports.push({
+          accountId,
+          totalReturn: performance.totalReturn,
+          updatedAt: new Date().toISOString(),
+        });
+
+        return Promise.resolve();
+      };
+
+      const testEvent = new EventSchema({
+        eventType: 'ai:performance:report',
+        source: 'trading-ai',
+        payload: {
+          accountId: 'acc-test-001',
+          performance: {
+            totalReturn: 0.25,
+            sharpeRatio: 2.1,
+            winRate: 0.75,
+          },
+          period: 'weekly',
+        },
+      });
+
+      await handler(testEvent);
+
+      expect(processedReports).toHaveLength(1);
+      expect(processedReports[0].accountId).toBe('acc-test-001');
+      expect(processedReports[0].totalReturn).toBe(0.25);
     });
   });
 

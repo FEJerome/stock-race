@@ -41,7 +41,7 @@
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
 | C2-001 | 实现事件总线SDK（Python版） | ✅ | P0 | 2天 | 封装Redis Streams操作，支持发布/订阅/消费者组。已完成：EventSchema、EventProducer、EventConsumer、异常处理、单元测试（7 passed）、集成测试（2/2 passed） |
-| C2-002 | 实现事件总线SDK（Node.js版） | ✅ | P0 | 2天 | Backend和Frontend使用的Node.js SDK。已完成：EventSchema、EventProducer、EventConsumer、单元测试+集成测试（22 passed），使用指南已创建 |
+| C2-002 | 实现事件总线SDK（Node.js版） | ✅ | P0 | 2天 | Backend和Frontend使用的Node.js SDK。已完成：EventSchema、EventProducer、EventConsumer、单元测试+集成测试（23 passed），使用指南已创建 |
 | C2-003 | 定义事件Schema和消息格式 | ✅ | P0 | 0.5天 | 统一事件字段：eventId, eventType, timestamp, source, payload。已完成：schema.js已定义 |
 | C2-004 | 实现消息持久化和ACK机制 | ✅ | P1 | 0.5天 | 确保消息不丢失，支持手动ACK。已完成：Consumer自动ACK，Pending消息查询接口已实现 |
 | C2-005 | 配置监控和告警 | ✅ | P1 | 1天 | 消息堆积、消费延迟、错误率监控。已完成：EventBusMonitor类、4种告警规则、告警去重、13个测试通过 |
@@ -218,10 +218,10 @@ events:
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
 | O4-001 | 编写阶段一单节点Docker Compose | ✅ | P0 | 0.5天 | 单节点1GB，无持久化，开发环境。已完成：docker-compose.redis.yml、README.md，Redis已运行 |
-| O4-002 | 编写阶段二主从+Sentinel配置 | ✅ | P1 | 1天 | Master-Slave+Sentinel，生产可用。已完成：docker-compose.redis-sentinel.yml、3个Sentinel节点、自动故障转移 |
-| O4-003 | 编写阶段三Cluster集群配置 | ✅ | P2 | 1天 | 3主3从Cluster，大规模生产。已完成：docker-compose.redis-cluster.yml、6节点Cluster、自动分片 |
+| O4-002 | 编写阶段二主从+Sentinel配置 | ✅ | P1 | 1天 | Master-Slave+Sentinel，生产可用。已完成：docker-compose.redis-sentinel.yml、Master+Slave+3个Sentinel |
+| O4-003 | 编写阶段三Cluster集群配置 | ✅ | P2 | 1天 | 3主3从Cluster，大规模生产。已完成：docker-compose.redis-cluster.yml、3Master+3Slave+自动Cluster初始化 |
 | O4-004 | 编写平滑迁移脚本 | ✅ | P2 | 1天 | 阶段一→阶段二→阶段三迁移指南。已完成：migration-guide.md、零停机迁移方案、双写方案、回滚方案 |
-| O4-005 | 配置Redis监控告警 | ✅ | P1 | 0.5天 | 内存使用率、连接数、命中率。已完成：prometheus-redis.yml、redis_alerts.yml、7个告警规则 |
+| O4-005 | 配置Redis监控告警 | ✅ | P1 | 0.5天 | 内存使用率、连接数、命中率。已完成：prometheus-redis.yml、redis_alerts.yml、7种告警规则 |
 
 **测试描述**:
 - 测试场景1：单节点部署（docker-compose up -d）
@@ -322,7 +322,7 @@ events:
 | SDK | 语言 | 测试状态 | 使用指南 |
 |-----|------|----------|----------|
 | Python SDK | Python 3.10+ | ✅ 9个测试通过 | `infra/event-bus/USAGE_GUIDE.md` |
-| Node.js SDK | Node.js 18+ | ✅ 22个测试通过 | `infra/event-bus/src/node/USAGE_GUIDE.md` |
+| Node.js SDK | Node.js 18+ | ✅ 23个测试通过 | `infra/event-bus/src/node/USAGE_GUIDE.md` |
 
 ### 5.2 各服务接入状态
 
@@ -386,10 +386,46 @@ await producer.publishEvent(EventType.BACKEND_TRADE_EXECUTED, {...});
 | 2026-02-11 | 创建基础设施TODO.md，整合6个冲突解决方案和2个优化方案 | 首席架构师 |
 | 2026-02-11 | Node.js SDK开发完成（C2-002），22个测试通过 | Claude |
 | 2026-02-11 | Python SDK测试通过（C2-001），9个测试通过 | Claude |
-| 2026-02-12 | C1-001完成：共享Redis阶段一部署，更新docker-compose.yml配置，创建部署测试脚本 | Claude |
 
 ---
 
-*文档版本: v1.0*
-*最后更新: 2026-02-11*
+## 九、联调冲刺任务（2026-02-12新增）
+
+> 基于架构审查报告，以下任务为联调前必须完成的工作项。
+
+### 9.1 🔴 P0 - 阻塞Trading AI Service（最高优先级）
+
+| 编号 | 任务 | 状态 | 预估工时 | 阻塞服务 | 验收标准 |
+|------|------|------|----------|----------|----------|
+| C1-003 | Health Check SDK | ✅ | 1天 | Trading AI C1-TAI-001~003 | Python SDK，支持Redis/DB健康检查。已完成：HealthChecker、HealthStatus、HealthReporter、装饰器，16个测试通过 |
+
+**SDK要求**:
+- 统一接口检查Redis连接
+- 统一接口检查PostgreSQL连接
+- 统一接口检查外部HTTP服务
+- 返回标准格式健康状态
+- 支持降级模式状态上报
+
+### 9.2 🟡 P1 - 测试环境（高优先级）
+
+| 编号 | 任务 | 状态 | 预估工时 | 阻塞服务 | 验收标准 |
+|------|------|------|----------|----------|----------|
+| I-001 | Docker Compose测试环境 | ✅ | 1天 | Backend I-001 | 完整环境，9个集成测试通过。已完成：docker-compose.yml包含5个服务+PostgreSQL+TimescaleDB+Redis |
+
+**环境要求**:
+- 包含5个服务（Backend、Market Data、Trading AI、News、PostgreSQL、Redis）
+- 自动初始化测试数据
+- 自动运行集成测试套件
+- 支持CI/CD流水线
+
+### 9.3 联调验收 checklist
+
+- [ ] Health Check SDK所有服务可用
+- [ ] Docker Compose环境一键启动
+- [ ] 集成测试全部通过
+
+---
+
+*文档版本: v1.1（联调冲刺版）*
+*最后更新: 2026-02-12*
 *维护者: 首席架构师*

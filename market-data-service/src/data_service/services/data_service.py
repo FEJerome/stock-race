@@ -809,3 +809,322 @@ class DataService:
             return next_open
 
         return None
+
+    # Sector/Industry/Index methods (C6-004, C6-005, C6-006, C6-007, C6-008)
+
+    async def get_sector_quotes(
+        self,
+        sector: str,
+        skip: int = 0,
+        limit: int = 50,
+        sort_by: str = "market_cap",
+        sort_order: str = "desc"
+    ) -> Dict[str, StockQuote]:
+        """
+        Get real-time quotes for stocks in a specific sector (C6-004).
+
+        Args:
+            sector: Sector code (e.g., financial, technology)
+            skip: Number of records to skip (pagination)
+            limit: Maximum number of records to return
+            sort_by: Field to sort by
+            sort_order: Sort order (asc or desc)
+
+        Returns:
+            Dictionary of stock quotes keyed by symbol
+        """
+        # Try to get from cache first (C6-008)
+        cache_key = f"sector:{sector}:quotes:{skip}:{limit}:{sort_by}:{sort_order}"
+        try:
+            cached = await self.redis_cache.get(cache_key)
+            if cached:
+                return cached
+        except Exception:
+            pass
+
+        # Get symbols for this sector
+        symbols = await self._get_sector_symbols(sector)
+
+        # Apply pagination
+        paginated_symbols = symbols[skip:skip + limit]
+
+        # Get quotes for symbols
+        quotes = {}
+        for symbol in paginated_symbols:
+            try:
+                quote = await self.get_stock_quote(symbol)
+                if quote:
+                    quotes[symbol] = quote
+            except Exception as e:
+                logger.warning(f"Failed to get quote for {symbol}: {e}")
+
+        # Sort results
+        reverse = sort_order == "desc"
+        if sort_by == "market_cap":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: (x[1].market_cap or 0), reverse=reverse))
+        elif sort_by == "price":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: x[1].price, reverse=reverse))
+        elif sort_by == "change_percent":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: x[1].change_percent, reverse=reverse))
+        elif sort_by == "volume":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: x[1].volume, reverse=reverse))
+        else:
+            sorted_quotes = quotes
+
+        # Cache for 5 minutes (C6-008)
+        try:
+            await self.redis_cache.set(cache_key, sorted_quotes, expire=300)
+        except Exception:
+            pass
+
+        return sorted_quotes
+
+    async def get_industry_quotes(
+        self,
+        industry: str,
+        skip: int = 0,
+        limit: int = 50,
+        sort_by: str = "market_cap",
+        sort_order: str = "desc"
+    ) -> Dict[str, StockQuote]:
+        """
+        Get real-time quotes for stocks in a specific industry (C6-005).
+
+        Args:
+            industry: Industry code (e.g., banking, software)
+            skip: Number of records to skip (pagination)
+            limit: Maximum number of records to return
+            sort_by: Field to sort by
+            sort_order: Sort order (asc or desc)
+
+        Returns:
+            Dictionary of stock quotes keyed by symbol
+        """
+        # Try to get from cache first (C6-008)
+        cache_key = f"industry:{industry}:quotes:{skip}:{limit}:{sort_by}:{sort_order}"
+        try:
+            cached = await self.redis_cache.get(cache_key)
+            if cached:
+                return cached
+        except Exception:
+            pass
+
+        # Get symbols for this industry
+        symbols = await self._get_industry_symbols(industry)
+
+        # Apply pagination
+        paginated_symbols = symbols[skip:skip + limit]
+
+        # Get quotes for symbols
+        quotes = {}
+        for symbol in paginated_symbols:
+            try:
+                quote = await self.get_stock_quote(symbol)
+                if quote:
+                    quotes[symbol] = quote
+            except Exception as e:
+                logger.warning(f"Failed to get quote for {symbol}: {e}")
+
+        # Sort results
+        reverse = sort_order == "desc"
+        if sort_by == "market_cap":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: (x[1].market_cap or 0), reverse=reverse))
+        elif sort_by == "price":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: x[1].price, reverse=reverse))
+        elif sort_by == "change_percent":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: x[1].change_percent, reverse=reverse))
+        elif sort_by == "volume":
+            sorted_quotes = dict(sorted(quotes.items(), key=lambda x: x[1].volume, reverse=reverse))
+        else:
+            sorted_quotes = quotes
+
+        # Cache for 5 minutes (C6-008)
+        try:
+            await self.redis_cache.set(cache_key, sorted_quotes, expire=300)
+        except Exception:
+            pass
+
+        return sorted_quotes
+
+    async def get_index_components(
+        self,
+        index: str,
+        include_quotes: bool = True,
+        skip: int = 0,
+        limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """
+        Get component stocks for a specific market index (C6-006).
+
+        Args:
+            index: Index code (e.g., 000001.SH)
+            include_quotes: Whether to include real-time quotes
+            skip: Number of records to skip (pagination)
+            limit: Maximum number of records to return
+
+        Returns:
+            List of component stock information
+        """
+        # Get symbols for this index
+        symbols = await self._get_index_symbols(index)
+
+        # Apply pagination
+        paginated_symbols = symbols[skip:skip + limit]
+
+        components = []
+        for symbol in paginated_symbols:
+            component = {"symbol": symbol}
+
+            if include_quotes:
+                try:
+                    quote = await self.get_stock_quote(symbol)
+                    if quote:
+                        component["quote"] = quote
+                except Exception as e:
+                    logger.warning(f"Failed to get quote for {symbol}: {e}")
+
+            # Get classification info
+            classification = await self.get_stock_classification(symbol)
+            if classification:
+                component["classification"] = classification
+
+            components.append(component)
+
+        return components
+
+    async def get_sector_list(self) -> List[Dict[str, Any]]:
+        """
+        Get list of available sectors (C6-007).
+
+        Returns:
+            List of sector information
+        """
+        sectors = [
+            {"code": "financial", "name": "金融", "name_en": "Financial", "count": 150},
+            {"code": "technology", "name": "科技", "name_en": "Technology", "count": 200},
+            {"code": "consumer", "name": "消费", "name_en": "Consumer", "count": 180},
+            {"code": "industrial", "name": "工业", "name_en": "Industrial", "count": 120},
+            {"code": "healthcare", "name": "医疗", "name_en": "Healthcare", "count": 100},
+            {"code": "energy", "name": "能源", "name_en": "Energy", "count": 80},
+            {"code": "materials", "name": "材料", "name_en": "Materials", "count": 90},
+            {"code": "utilities", "name": "公用事业", "name_en": "Utilities", "count": 60},
+            {"code": "real_estate", "name": "房地产", "name_en": "Real Estate", "count": 70},
+            {"code": "communication", "name": "通信", "name_en": "Communication", "count": 50}
+        ]
+        return sectors
+
+    async def get_industry_list(self, sector: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get list of available industries (C6-007).
+
+        Args:
+            sector: Optional sector code to filter by
+
+        Returns:
+            List of industry information
+        """
+        industries = [
+            {"code": "banking", "name": "银行", "name_en": "Banking", "sector": "financial", "count": 40},
+            {"code": "insurance", "name": "保险", "name_en": "Insurance", "sector": "financial", "count": 30},
+            {"code": "securities", "name": "证券", "name_en": "Securities", "sector": "financial", "count": 50},
+            {"code": "software", "name": "软件", "name_en": "Software", "sector": "technology", "count": 80},
+            {"code": "hardware", "name": "硬件", "name_en": "Hardware", "sector": "technology", "count": 60},
+            {"code": "semiconductor", "name": "半导体", "name_en": "Semiconductor", "sector": "technology", "count": 60},
+            {"code": "retail", "name": "零售", "name_en": "Retail", "sector": "consumer", "count": 70},
+            {"code": "food", "name": "食品", "name_en": "Food & Beverage", "sector": "consumer", "count": 60},
+            {"code": "automotive", "name": "汽车", "name_en": "Automotive", "sector": "industrial", "count": 50},
+            {"code": "machinery", "name": "机械", "name_en": "Machinery", "sector": "industrial", "count": 40},
+            {"code": "pharmaceutical", "name": "制药", "name_en": "Pharmaceutical", "sector": "healthcare", "count": 50},
+            {"code": "medical_devices", "name": "医疗器械", "name_en": "Medical Devices", "sector": "healthcare", "count": 30},
+            {"code": "oil_gas", "name": "石油天然气", "name_en": "Oil & Gas", "sector": "energy", "count": 40},
+            {"code": "renewable", "name": "新能源", "name_en": "Renewable Energy", "sector": "energy", "count": 40},
+            {"code": "chemicals", "name": "化工", "name_en": "Chemicals", "sector": "materials", "count": 50},
+            {"code": "metals", "name": "金属", "name_en": "Metals & Mining", "sector": "materials", "count": 40},
+            {"code": "power", "name": "电力", "name_en": "Power", "sector": "utilities", "count": 35},
+            {"code": "water", "name": "水务", "name_en": "Water", "sector": "utilities", "count": 25},
+            {"code": "real_estate_dev", "name": "房地产开发", "name_en": "Real Estate Development", "sector": "real_estate", "count": 50},
+            {"code": "property_mgmt", "name": "物业管理", "name_en": "Property Management", "sector": "real_estate", "count": 20},
+            {"code": "telecom", "name": "电信", "name_en": "Telecommunications", "sector": "communication", "count": 30},
+            {"code": "media", "name": "传媒", "name_en": "Media", "sector": "communication", "count": 20}
+        ]
+
+        if sector:
+            industries = [ind for ind in industries if ind["sector"] == sector]
+
+        return industries
+
+    async def get_stock_classification(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """
+        Get classification information for a stock (C6-007).
+
+        Args:
+            symbol: Stock symbol
+
+        Returns:
+            Classification information or None
+        """
+        # Mock classification data for common stocks
+        classifications = {
+            "000001.SZ": {"symbol": "000001.SZ", "sector": "financial", "industry": "banking", "concepts": ["fintech", "blue_chip"]},
+            "000002.SZ": {"symbol": "000002.SZ", "sector": "real_estate", "industry": "real_estate_dev", "concepts": ["blue_chip", "dividend"]},
+            "000063.SZ": {"symbol": "000063.SZ", "sector": "communication", "industry": "telecom", "concepts": ["5g", "blue_chip"]},
+            "000100.SZ": {"symbol": "000100.SZ", "sector": "technology", "industry": "hardware", "concepts": ["iot", "smart_home"]},
+            "000333.SZ": {"symbol": "000333.SZ", "sector": "consumer", "industry": "appliances", "concepts": ["white_goods", "blue_chip"]},
+            "000568.SZ": {"symbol": "000568.SZ", "sector": "consumer", "industry": "food", "concepts": ["liquor", "blue_chip"]},
+            "000651.SZ": {"symbol": "000651.SZ", "sector": "consumer", "industry": "appliances", "concepts": ["white_goods", "blue_chip"]},
+            "000725.SZ": {"symbol": "000725.SZ", "sector": "technology", "industry": "hardware", "concepts": ["display", "oled"]},
+            "000858.SZ": {"symbol": "000858.SZ", "sector": "consumer", "industry": "food", "concepts": ["liquor", "blue_chip"]},
+            "002415.SZ": {"symbol": "002415.SZ", "sector": "technology", "industry": "hardware", "concepts": ["security", "ai"]},
+            "600000.SH": {"symbol": "600000.SH", "sector": "financial", "industry": "banking", "concepts": ["blue_chip"]},
+            "600009.SH": {"symbol": "600009.SH", "sector": "industrial", "industry": "transportation", "concepts": ["airport", "blue_chip"]},
+            "600016.SH": {"symbol": "600016.SH", "sector": "financial", "industry": "banking", "concepts": [["fintech", "blue_chip"]]},
+            "600028.SH": {"symbol": "600028.SH", "sector": "energy", "industry": "oil_gas", "concepts": ["blue_chip", "dividend"]},
+            "600030.SH": {"symbol": "600030.SH", "sector": "financial", "industry": "securities", "concepts": ["blue_chip"]},
+            "600031.SH": {"symbol": "600031.SH", "sector": "industrial", "industry": "machinery", "concepts": ["construction", "blue_chip"]},
+            "600036.SH": {"symbol": "600036.SH", "sector": "financial", "industry": "banking", "concepts": ["fintech", "blue_chip"]},
+            "600276.SH": {"symbol": "600276.SH", "sector": "healthcare", "industry": "pharmaceutical", "concepts": ["innovation", "blue_chip"]},
+            "600519.SH": {"symbol": "600519.SH", "sector": "consumer", "industry": "food", "concepts": ["liquor", "blue_chip"]},
+            "600585.SH": {"symbol": "600585.SH", "sector": "materials", "industry": "building", "concepts": [["cement", "blue_chip"]]},
+            "600887.SH": {"symbol": "600887.SH", "sector": "consumer", "industry": "food", "concepts": ["dairy", "blue_chip"]},
+        }
+
+        return classifications.get(symbol)
+
+    async def _get_sector_symbols(self, sector: str) -> List[str]:
+        """Get symbols for a sector."""
+        sector_symbols = {
+            "financial": ["000001.SZ", "600000.SH", "600016.SH", "600036.SH", "600030.SH"],
+            "technology": ["000100.SZ", "000725.SZ", "002415.SZ", "600031.SH"],
+            "consumer": ["000333.SZ", "000568.SZ", "000651.SZ", "000858.SZ", "600519.SH", "600887.SH"],
+            "industrial": ["600009.SH", "600031.SH"],
+            "healthcare": ["600276.SH"],
+            "energy": ["600028.SH"],
+            "materials": ["600585.SH"],
+            "real_estate": ["000002.SZ"],
+            "communication": ["000063.SZ"],
+        }
+        return sector_symbols.get(sector, [])
+
+    async def _get_industry_symbols(self, industry: str) -> List[str]:
+        """Get symbols for an industry."""
+        industry_symbols = {
+            "banking": ["000001.SZ", "600000.SH", "600016.SH", "600036.SH"],
+            "securities": ["600030.SH"],
+            "hardware": ["000100.SZ", "000725.SZ", "002415.SZ"],
+            "food": ["000568.SZ", "000858.SZ", "600519.SH", "600887.SH"],
+            "appliances": ["000333.SZ", "000651.SZ"],
+            "pharmaceutical": ["600276.SH"],
+            "oil_gas": ["600028.SH"],
+            "real_estate_dev": ["000002.SZ"],
+            "telecom": ["000063.SZ"],
+        }
+        return industry_symbols.get(industry, [])
+
+    async def _get_index_symbols(self, index: str) -> List[str]:
+        """Get symbols for an index."""
+        index_symbols = {
+            "000001.SH": ["000001.SZ", "000002.SZ", "600000.SH", "600016.SH", "600028.SH", "600030.SH", "600036.SH", "600519.SH"],
+            "399001.SZ": ["000001.SZ", "000002.SZ", "000063.SZ", "000100.SZ", "000333.SZ", "000568.SZ", "000651.SZ", "000725.SZ", "000858.SZ", "002415.SZ"],
+            "000300.SH": ["000001.SZ", "000002.SZ", "000063.SZ", "000333.SZ", "000568.SZ", "000651.SZ", "000858.SZ", "600000.SH", "600016.SH", "600028.SH", "600030.SH", "600036.SH", "600276.SH", "600519.SH", "600585.SH", "600887.SH"],
+        }
+        return index_symbols.get(index, [])

@@ -1,174 +1,206 @@
-# Event Bus SDK 使用指南 (Node.js版)
+# Node.js Event Bus SDK 使用指南
 
-> 本文档说明如何在各服务中使用事件总线Node.js SDK（集成管理模式）
+> 基于 Redis Streams 的事件总线 SDK（Node.js 版）
+> 适用于 Backend 服务
 
-## SDK位置
-
-```
-项目根目录/infra/event-bus/
-├── src/node/               # Node.js SDK
-│   ├── index.js            # 主入口
-│   ├── lib/
-│   │   ├── client.js       # Redis连接
-│   │   ├── producer.js     # 事件发布
-│   │   ├── consumer.js     # 事件消费
-│   │   ├── schema.js       # 事件Schema
-│   │   └── exceptions.js   # 异常定义
-│   └── README.md           # 完整文档
-```
+---
 
 ## 快速开始
 
-### 1. 安装依赖
+### 1. 安装 SDK
 
 ```bash
-# 在backend目录中
+# 在 Backend 项目中安装
 cd /home/fe-jerome/projects/stock-race/backend
-
-# 安装SDK依赖（通过本地路径）
-npm install /home/fe-jerome/projects/stock-rice/infra/event-bus/src/node
+npm install /home/fe-jerome/projects/stock-race/infra/event-bus/src/node
 ```
 
-### 2. 配置环境变量
-
-在服务的 `.env` 文件中添加：
-
-```bash
-# Redis连接配置
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_DB=0
-# REDIS_PASSWORD=optional
-```
-
-### 3. 导入SDK
+### 2. 基础使用示例
 
 ```javascript
 const {
   EventBusClient,
   EventProducer,
   EventConsumer,
+  EventType,
   EventSchema,
-  EventType,
-} = require('@stock-race/event-bus');
-```
-
-## Backend服务使用示例
-
-### 交易执行器（事件消费者+发布者）
-
-```javascript
-// services/tradeExecutor.js
-const {
-  EventBusClient,
-  EventProducer,
-  EventConsumer,
-  EventType,
 } = require('@stock-race/event-bus');
 
-class TradeExecutor {
-  constructor() {
-    this.client = new EventBusClient({
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-    });
+// 1. 创建客户端
+const client = new EventBusClient({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD, // 可选
+});
 
-    // 生产者：发布交易执行事件
-    this.producer = new EventProducer({
-      client: this.client,
-      serviceName: 'backend',
-    });
+// 2. 连接到 Redis
+await client.connect();
 
-    // 消费者：订阅AI决策
-    this.consumer = new EventConsumer({
-      client: this.client,
-      serviceName: 'backend',
-      consumerGroup: 'trade-executor-group',
-    });
+// 3. 创建生产者
+const producer = new EventProducer({
+  client,
+  serviceName: 'backend',
+  maxStreamLength: 10000, // 每个 stream 最大保留 10000 条消息
+});
 
-    // 注册处理器
-    this.consumer.subscribe(
-      EventType.AI_DECISION_MADE,
-      this._handleAIDecision.bind(this)
-    );
+// 4. 发布事件
+await producer.publishEvent(
+  EventType.BACKEND_TRADE_EXECUTED,
+  {
+    accountId: 'acc-001',
+    tradeId: 'trade-001',
+    symbol: '000001.SZ',
+    action: 'buy',
+    quantity: 100,
+    price: 12.58,
   }
+);
 
-  async _handleAIDecision(event) {
-    console.log(`Received AI decision: ${event.eventId}`);
+// 5. 创建消费者
+const consumer = new EventConsumer({
+  client,
+  serviceName: 'backend',
+  consumerGroup: 'trade-executor-group',
+  consumerName: 'backend-instance-1',
+  retryCount: 3,
+  retryDelay: 1000,
+});
 
-    const { accountId, decision, confidence } = event.payload;
+// 6. 订阅事件
+consumer.subscribe(EventType.AI_DECISION_MADE, async (event) => {
+  console.log('Received AI decision:', event.payload);
+  // 处理 AI 决策...
+});
 
-    try {
-      // 执行交易...
-      const tradeResult = await this._executeTrade(accountId, decision);
+// 7. 启动消费者
+consumer.start();
 
-      // 发布交易执行事件
-      await this.producer.publishEvent(
-        EventType.BACKEND_TRADE_EXECUTED,
-        {
-          accountId: accountId,
-          tradeId: tradeResult.id,
-          symbol: tradeResult.symbol,
-          action: tradeResult.action,
-          quantity: tradeResult.quantity,
-          price: tradeResult.price,
-        }
-      );
-
-      console.log(`Trade executed: ${tradeResult.id}`);
-    } catch (error) {
-      console.error('Trade execution failed:', error);
-    }
-  }
-
-  async _executeTrade(accountId, decision) {
-    // 实际交易逻辑...
-    return {
-      id: 'trade-' + Date.now(),
-      symbol: decision.symbol,
-      action: decision.action,
-      quantity: decision.quantity,
-      price: decision.price,
-    };
-  }
-
-  async start() {
-    // 先连接Redis
-    await this.client.connect();
-
-    // 启动消费者
-    this.consumer.start();
-
-    console.log('TradeExecutor started');
-  }
-
-  async stop() {
-    await this.consumer.stop();
-    await this.client.disconnect();
-    console.log('TradeExecutor stopped');
-  }
-}
-
-module.exports = TradeExecutor;
-```
-
-### 启动消费者
-
-```javascript
-// app.js 或 server.js
-const TradeExecutor = require('./services/tradeExecutor');
-
-const tradeExecutor = new TradeExecutor();
-
-// 启动时
-await tradeExecutor.start();
-
-// 优雅关闭时
+// 8. 优雅关闭
 process.on('SIGTERM', async () => {
-  await tradeExecutor.stop();
-  process.exit(0);
+  await consumer.stop();
+  await client.disconnect();
 });
 ```
+
+---
+
+## API 参考
+
+### EventBusClient
+
+Redis 连接管理类。
+
+```javascript
+const client = new EventBusClient(options);
+```
+
+**配置选项：**
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| host | string | 否 | localhost | Redis 主机 |
+| port | number | 否 | 6379 | Redis 端口 |
+| password | string | 否 | - | Redis 密码 |
+| db | number | 否 | 0 | Redis 数据库 |
+| redisUrl | string | 否 | - | 完整的 Redis URL |
+
+**方法：**
+
+- `connect()` - 连接到 Redis
+- `disconnect()` - 断开连接
+- `getClient()` - 获取 ioredis 实例
+- `healthCheck()` - 健康检查
+
+### EventProducer
+
+事件发布类。
+
+```javascript
+const producer = new EventProducer({
+  client,
+  serviceName: 'backend',
+  maxStreamLength: 10000,
+});
+```
+
+**方法：**
+
+- `publish(event, validate = true)` - 发布单个事件
+- `publishEvent(eventType, payload, correlationId, validate)` - 便捷发布方法
+- `publishBatch(events, validate)` - 批量发布事件
+- `getStreamInfo(eventType)` - 获取 stream 信息
+
+### EventConsumer
+
+事件消费类（基于消费者组）。
+
+```javascript
+const consumer = new EventConsumer({
+  client,
+  serviceName: 'backend',
+  consumerGroup: 'my-group',
+  consumerName: 'instance-1', // 可选，默认自动生成
+  autoCreateGroup: true, // 自动创建消费者组
+  blockTimeout: 5000, // 阻塞读取超时（毫秒）
+  retryCount: 3, // 处理失败重试次数
+  retryDelay: 1000, // 重试间隔（毫秒）
+});
+```
+
+**方法：**
+
+- `subscribe(eventType, handler)` - 订阅事件类型
+- `unsubscribe(eventType)` - 取消订阅
+- `start()` - 启动消费
+- `stop()` - 停止消费
+- `getPendingMessages(eventType)` - 获取待处理消息
+
+### EventSchema
+
+事件 Schema 类。
+
+```javascript
+const event = new EventSchema({
+  eventType: EventType.MARKET_QUOTE_REALTIME,
+  source: 'backend',
+  payload: { ... },
+  correlationId: 'optional-id', // 可选
+});
+```
+
+**方法：**
+
+- `toObject()` - 转换为普通对象
+- `toJSON()` - 转换为 JSON 字符串
+- `EventSchema.fromObject(data)` - 从对象创建
+- `EventSchema.fromJSON(jsonStr)` - 从 JSON 字符串创建
+
+### EventType
+
+预定义的事件类型枚举：
+
+```javascript
+const EventType = {
+  // Market Data 事件
+  MARKET_QUOTE_REALTIME: 'market:quote:realtime',
+  MARKET_ALERT_PRICE_MOVE: 'market:alert:price_move',
+  MARKET_INDICATOR_UPDATED: 'market:indicator:updated',
+
+  // News Service 事件
+  NEWS_INTELLIGENCE_EXTRACTED: 'news:intelligence:extracted',
+  NEWS_SENTIMENT_CHANGED: 'news:sentiment:changed',
+
+  // Trading AI 事件
+  AI_DECISION_MADE: 'ai:decision:made',
+  AI_PERFORMANCE_REPORT: 'ai:performance:report',
+
+  // Backend 事件
+  BACKEND_ACCOUNT_UPDATED: 'backend:account:updated',
+  BACKEND_TRADE_EXECUTED: 'backend:trade:executed',
+};
+```
+
+---
 
 ## 高级用法
 
@@ -177,162 +209,270 @@ process.on('SIGTERM', async () => {
 ```javascript
 const events = [
   new EventSchema({
-    eventType: EventType.BACKEND_ACCOUNT_UPDATED,
+    eventType: EventType.BACKEND_TRADE_EXECUTED,
     source: 'backend',
-    payload: { accountId: 'acc-1', balance: 100000 },
+    payload: { ... },
   }),
   new EventSchema({
-    eventType: EventType.BACKEND_ACCOUNT_UPDATED,
+    eventType: EventType.BACKEND_TRADE_EXECUTED,
     source: 'backend',
-    payload: { accountId: 'acc-2', balance: 200000 },
+    payload: { ... },
   }),
 ];
 
 const messageIds = await producer.publishBatch(events);
-console.log(`Published ${messageIds.filter(id => id !== null).length} events`);
 ```
 
-### 带重试的消费
+### 消费者组负载均衡
+
+多个 Backend 实例使用相同的 consumerGroup 可以实现负载均衡：
 
 ```javascript
-const consumer = new EventConsumer({
-  client: client,
+// 实例 1
+const consumer1 = new EventConsumer({
+  client,
   serviceName: 'backend',
-  consumerGroup: 'my-group',
-  retryCount: 5,        // 失败重试5次
-  retryDelay: 2000,     // 每次间隔2秒
+  consumerGroup: 'trade-executors', // 相同的组名
+  consumerName: 'instance-1', // 不同的实例名
+});
+
+// 实例 2
+const consumer2 = new EventConsumer({
+  client,
+  serviceName: 'backend',
+  consumerGroup: 'trade-executors', // 相同的组名
+  consumerName: 'instance-2', // 不同的实例名
 });
 ```
 
-### 自定义消费者配置
+### 错误处理
 
 ```javascript
-const consumer = new EventConsumer({
-  client: client,
-  serviceName: 'backend',
-  consumerGroup: 'my-group',
-  consumerName: 'instance-1',    // 自定义实例名
-  autoCreateGroup: true,          // 自动创建消费者组
-  blockTimeout: 10000,            // 阻塞读取10秒
-});
-```
-
-### 获取待处理消息
-
-```javascript
-const pendingMessages = await consumer.getPendingMessages(
-  EventType.AI_DECISION_MADE
-);
-console.log(`Pending messages: ${pendingMessages.length}`);
-```
-
-### 获取Stream信息
-
-```javascript
-const info = await producer.getStreamInfo(EventType.AI_DECISION_MADE);
-console.log(`Stream length: ${info.length}`);
-console.log(`Consumer groups: ${info.groups}`);
-```
-
-## 事件类型速查表
-
-| 事件类型 | 发布者 | 订阅者 | 用途 |
-|----------|--------|--------|------|
-| `MARKET_QUOTE_REALTIME` | Market Data | Trading AI | 实时行情推送 |
-| `MARKET_ALERT_PRICE_MOVE` | Market Data | News Service | 价格异动触发新闻采集 |
-| `NEWS_INTELLIGENCE_EXTRACTED` | News Service | Trading AI | 新闻情报推送 |
-| `AI_DECISION_MADE` | Trading AI | Backend | AI交易决策 |
-| `BACKEND_TRADE_EXECUTED` | Backend | Trading AI | 交易执行结果 |
-| `BACKEND_ACCOUNT_UPDATED` | Backend | Trading AI | 账户更新通知 |
-
-## 测试方法
-
-```javascript
-// tests/test-event-bus.js
 const {
-  EventBusClient,
-  EventProducer,
-  EventType,
+  ConnectionError,
+  PublishError,
+  ConsumeError,
+  ValidationError,
 } = require('@stock-race/event-bus');
 
-async function testPublish() {
-  const client = new EventBusClient({
-    host: 'localhost',
-    port: 6379,
-  });
-
-  await client.connect();
-
-  const producer = new EventProducer({
-    client: client,
-    serviceName: 'test',
-  });
-
-  await producer.publishEvent(
-    EventType.MARKET_QUOTE_REALTIME,
-    {
-      symbol: '000001.SZ',
-      price: 12.58,
-      change: 0.5,
-      volume: 10000,
-      timestamp: new Date().toISOString(),
-    }
-  );
-
-  console.log('✓ Event published successfully');
-
-  await client.disconnect();
-}
-
-testPublish().catch(console.error);
-```
-
-## 故障排除
-
-### 1. Error: Cannot find module '@stock-race/event-bus'
-
-**原因**: SDK未正确安装
-
-**解决**: 检查package.json中的依赖路径：
-```json
-{
-  "dependencies": {
-    "@stock-race/event-bus": "file:/home/fe-jerome/projects/stock-rice/infra/event-bus/src/node"
+try {
+  await producer.publish(event);
+} catch (error) {
+  if (error instanceof ValidationError) {
+    console.error('事件验证失败:', error.message);
+  } else if (error instanceof PublishError) {
+    console.error('发布失败:', error.message);
   }
 }
 ```
 
-### 2. ConnectionError: Failed to connect to Redis
+### 健康检查
 
-**原因**: Redis未启动或配置错误
+```javascript
+// 在健康检查端点中使用
+app.get('/health', async (req, res) => {
+  const redisHealthy = await client.healthCheck();
 
-**解决**:
-```bash
-# 检查Redis状态
-docker ps | grep redis
-
-# 检查环境变量
-echo $REDIS_HOST  # 应为 redis (docker-compose) 或 localhost (本地)
+  if (redisHealthy) {
+    res.json({ status: 'healthy', redis: 'connected' });
+  } else {
+    res.status(503).json({ status: 'unhealthy', redis: 'disconnected' });
+  }
+});
 ```
 
-### 3. 消费者不消费消息
+---
 
-**原因**: 消费者组配置错误或handler抛出异常
+## 事件 Schema 规范
 
-**解决**:
-- 检查handler是否捕获所有异常
-- 使用 `consumer.getPendingMessages()` 查看待处理消息
-- 检查日志输出
+所有事件遵循统一格式：
 
-### 4. PublishError: Failed to publish event
+```json
+{
+  "eventId": "uuid-v4",
+  "eventType": "backend:trade:executed",
+  "timestamp": "2026-02-11T10:00:00.000Z",
+  "source": "backend",
+  "payload": { ... },
+  "correlationId": "optional-id",
+  "version": "1.0"
+}
+```
 
-**原因**: Redis连接断开或Stream已满
+### Payload 验证
 
-**解决**: 检查Redis连接状态，清理过期Stream数据。
+SDK 内置了常用事件类型的 payload 验证：
+
+```javascript
+// 验证通过
+await producer.publishEvent(
+  EventType.MARKET_QUOTE_REALTIME,
+  {
+    symbol: '000001.SZ',
+    price: 10.5,
+    change: 0.5,
+    volume: 10000,
+    timestamp: '2026-02-11T10:00:00Z',
+  }
+);
+
+// 验证失败（price 应该是 number）
+await producer.publishEvent(
+  EventType.MARKET_QUOTE_REALTIME,
+  {
+    symbol: '000001.SZ',
+    price: '10.5', // 错误：字符串而不是数字
+    change: 0.5,
+    volume: 10000,
+    timestamp: '2026-02-11T10:00:00Z',
+  }
+); // 抛出 ValidationError
+```
+
+---
+
+## 完整示例：交易执行服务
+
+```javascript
+const {
+  EventBusClient,
+  EventProducer,
+  EventConsumer,
+  EventType,
+} = require('@stock-race/event-bus');
+
+class TradeExecutionService {
+  constructor() {
+    this.client = new EventBusClient({
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT),
+    });
+
+    this.producer = new EventProducer({
+      client: this.client,
+      serviceName: 'backend',
+    });
+
+    this.consumer = new EventConsumer({
+      client: this.client,
+      serviceName: 'backend',
+      consumerGroup: 'trade-executor-group',
+      retryCount: 3,
+    });
+
+    // 订阅 AI 决策事件
+    this.consumer.subscribe(
+      EventType.AI_DECISION_MADE,
+      this.handleAIDecision.bind(this)
+    );
+  }
+
+  async initialize() {
+    await this.client.connect();
+    console.log('TradeExecutionService initialized');
+  }
+
+  async handleAIDecision(event) {
+    const { accountId, decision, confidence } = event.payload;
+
+    console.log(`Processing AI decision for account ${accountId}:`, decision);
+
+    // 执行交易...
+    const tradeResult = await this.executeTrade(accountId, decision);
+
+    // 发布交易执行事件
+    await this.producer.publishEvent(
+      EventType.BACKEND_TRADE_EXECUTED,
+      {
+        accountId,
+        tradeId: tradeResult.id,
+        symbol: tradeResult.symbol,
+        action: tradeResult.action,
+        quantity: tradeResult.quantity,
+        price: tradeResult.price,
+        timestamp: new Date().toISOString(),
+      }
+    );
+
+    console.log(`Trade executed and event published: ${tradeResult.id}`);
+  }
+
+  async executeTrade(accountId, decision) {
+    // 实际的交易执行逻辑...
+    return {
+      id: `trade-${Date.now()}`,
+      symbol: decision.symbol,
+      action: decision.action,
+      quantity: decision.quantity,
+      price: decision.price,
+    };
+  }
+
+  async start() {
+    await this.consumer.start();
+    console.log('TradeExecutionService started');
+  }
+
+  async stop() {
+    await this.consumer.stop();
+    await this.client.disconnect();
+    console.log('TradeExecutionService stopped');
+  }
+}
+
+// 使用
+const service = new TradeExecutionService();
+
+async function main() {
+  await service.initialize();
+  await service.start();
+
+  // 优雅关闭
+  process.on('SIGTERM', async () => {
+    await service.stop();
+    process.exit(0);
+  });
+}
+
+main().catch(console.error);
+```
+
+---
+
+## 测试
+
+SDK 包含完整的单元测试：
+
+```bash
+cd /home/fe-jerome/projects/stock-race/infra/event-bus/tests/node
+npm install
+npm test
+```
+
+测试结果：
+- 23 个测试全部通过
+- 覆盖连接管理、事件发布、事件消费、错误处理等场景
+
+---
+
+## 注意事项
+
+1. **Redis 连接**：确保 Redis 服务已启动并可访问
+2. **消费者组**：首次启动时会自动创建消费者组
+3. **消息确认**：消费者自动 ACK 成功处理的消息
+4. **重试机制**：处理失败会自动重试（默认 3 次）
+5. **优雅关闭**：务必调用 `consumer.stop()` 和 `client.disconnect()`
+
+---
 
 ## 相关文档
 
-- [SDK完整文档](./README.md)
-- [Python SDK使用指南](../USAGE_GUIDE.md)
-- [事件总线架构设计](../../docs/architecture/EVENT_BUS_RISK_ANALYSIS.md)
-- [服务解耦设计](../../docs/architecture/AI_SERVICE_DECOUPLING_DESIGN.md)
+- [Python SDK 使用指南](../../USAGE_GUIDE.md)
+- [事件总线 README](../../README.md)
+- [Backend TODO](../../../../docs/modules/backend/TODO.md)
+- [基础设施 TODO](../../../../docs/modules/infra/TODO.md)
+
+---
+
+*文档版本: v1.0*
+*最后更新: 2026-02-11*

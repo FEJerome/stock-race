@@ -9,9 +9,11 @@
  * - 市场状态校验
  */
 
+import { TradingRulesEngine } from './TradingRulesEngine.js';
+
 class TradeValidator {
   constructor(options = {}) {
-    this.rulesEngine = options.rulesEngine || new (require('./TradingRulesEngine'))();
+    this.rulesEngine = options.rulesEngine || new TradingRulesEngine();
     this.stockStateCache = options.stockStateCache;
     this.portfolioService = options.portfolioService;
   }
@@ -191,4 +193,5 @@ class TradeValidator {
   }
 }
 
-module.exports = TradeValidator;
+export { TradeValidator };
+export default TradeValidator;

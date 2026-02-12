@@ -60,6 +60,11 @@ class AuthorizationError(AIError):
     pass
 
 
+class DebounceError(AIError):
+    """Exception for debounced requests."""
+    pass
+
+
 def handle_ai_error(error: AIError) -> HTTPException:
     """Convert AIError to HTTPException."""
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -89,6 +94,9 @@ def handle_ai_error(error: AIError) -> HTTPException:
     elif isinstance(error, AuthorizationError):
         status_code = status.HTTP_403_FORBIDDEN
         error_type = "authorization_error"
+    elif isinstance(error, DebounceError):
+        status_code = status.HTTP_429_TOO_MANY_REQUESTS
+        error_type = "debounce_error"
 
     return HTTPException(
         status_code=status_code,

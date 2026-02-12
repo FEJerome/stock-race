@@ -12,7 +12,8 @@ const {
   ConnectionError,
   PublishError,
   ConsumeError,
-  ValidationError
+  ValidationError,
+  ConsumerGroupError,
 } = require('./lib/exceptions');
 
 module.exports = {
@@ -27,4 +28,5 @@ module.exports = {
   PublishError,
   ConsumeError,
   ValidationError,
+  ConsumerGroupError,
 };

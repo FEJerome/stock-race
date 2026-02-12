@@ -39,5 +39,22 @@ const getRedisClient = () => {
   return redisClient;
 };
 
+/**
+ * 检查Redis是否已连接
+ * @returns {boolean}
+ */
+const isRedisConnected = () => {
+  return redisClient !== null && redisClient.isReady;
+};
+
+/**
+ * 获取Redis客户端（可能返回null）
+ * @returns {RedisClient|null}
+ */
+const getRedisClientSafe = () => {
+  return redisClient;
+};
+
 export default connectRedis;
-export { getRedisClient };
+export { getRedisClient, getRedisClientSafe, isRedisConnected };
+export { redisClient };

@@ -5,7 +5,8 @@
  * 对应需求: C2-BE-001 ~ C2-BE-006
  */
 
-const EventBusService = require('../../../src/services/EventBusService');
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import EventBusService from '../../../src/services/EventBusService.js';
 
 // Mock Event Bus SDK before importing
 jest.mock('@stock-race/event-bus', () => ({
@@ -20,12 +21,12 @@ jest.mock('@stock-race/event-bus', () => ({
   EventSchema: jest.fn(),
 }));
 
-const {
+import {
   EventBusClient,
   EventProducer,
   EventConsumer,
   EventType,
-} = require('@stock-race/event-bus');
+} from '@stock-race/event-bus';
 
 describe('EventBusService (C2-BE-001~006)', () => {
   beforeEach(() => {

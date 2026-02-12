@@ -183,6 +183,154 @@ class TestEventBusIntegration:
         # 验证不抛出异常即可
 
     @pytest.mark.asyncio
+    async def test_handle_ai_performance_report_positive(self):
+        """测试处理AI决策反馈事件 - Positive反馈 (C3-003C)"""
+        service = NewsService()
+
+        # Mock优化策略方法
+        service._optimize_prompt_strategy = AsyncMock()
+        service._record_ai_feedback_metrics = AsyncMock()
+
+        # 创建测试事件 - 高准确率Positive反馈
+        event = EventSchema(
+            event_type=EventType.AI_PERFORMANCE_REPORT,
+            source="trading-ai-service",
+            payload={
+                "stock_code": "000001.SZ",
+                "decision_id": "dec-001",
+                "performance": {
+                    "accuracy": 0.85,
+                    "profit_loss": 5000.0,
+                    "feedback_type": "positive"
+                },
+                "used_intelligence": ["intel-001", "intel-002"]
+            }
+        )
+
+        # 执行处理
+        await service._handle_ai_performance_report(event)
+
+        # 验证优化策略被调用（enhance动作）
+        service._optimize_prompt_strategy.assert_called_with(
+            "000001.SZ", ["intel-001", "intel-002"], "enhance"
+        )
+
+        # 验证指标记录被调用
+        service._record_ai_feedback_metrics.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_handle_ai_performance_report_negative(self):
+        """测试处理AI决策反馈事件 - Negative反馈 (C3-003C)"""
+        service = NewsService()
+
+        # Mock优化策略方法
+        service._optimize_prompt_strategy = AsyncMock()
+        service._record_ai_feedback_metrics = AsyncMock()
+
+        # 创建测试事件 - 低准确率Negative反馈
+        event = EventSchema(
+            event_type=EventType.AI_PERFORMANCE_REPORT,
+            source="trading-ai-service",
+            payload={
+                "stock_code": "000001.SZ",
+                "decision_id": "dec-002",
+                "performance": {
+                    "accuracy": 0.20,
+                    "profit_loss": -3000.0,
+                    "feedback_type": "negative"
+                },
+                "used_intelligence": ["intel-003"]
+            }
+        )
+
+        # 执行处理
+        await service._handle_ai_performance_report(event)
+
+        # 验证优化策略被调用（adjust动作）
+        service._optimize_prompt_strategy.assert_called_with(
+            "000001.SZ", ["intel-003"], "adjust"
+        )
+
+        # 验证指标记录被调用
+        service._record_ai_feedback_metrics.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_handle_ai_performance_report_neutral(self):
+        """测试处理AI决策反馈事件 - Neutral反馈 (C3-003C)"""
+        service = NewsService()
+
+        # Mock优化策略方法
+        service._optimize_prompt_strategy = AsyncMock()
+        service._record_ai_feedback_metrics = AsyncMock()
+
+        # 创建测试事件 - 中等准确率Neutral反馈
+        event = EventSchema(
+            event_type=EventType.AI_PERFORMANCE_REPORT,
+            source="trading-ai-service",
+            payload={
+                "stock_code": "000001.SZ",
+                "decision_id": "dec-003",
+                "performance": {
+                    "accuracy": 0.50,
+                    "profit_loss": 500.0,
+                    "feedback_type": "neutral"
+                },
+                "used_intelligence": []
+            }
+        )
+
+        # 执行处理
+        await service._handle_ai_performance_report(event)
+
+        # 验证优化策略未被调用（neutral情况）
+        service._optimize_prompt_strategy.assert_not_called()
+
+        # 验证指标记录仍然被调用
+        service._record_ai_feedback_metrics.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_optimize_prompt_strategy(self):
+        """测试Prompt策略优化方法 (C3-003C)"""
+        service = NewsService()
+
+        # 测试enhance动作
+        await service._optimize_prompt_strategy(
+            "000001.SZ",
+            ["intel-001", "intel-002"],
+            "enhance"
+        )
+
+        # 测试adjust动作
+        await service._optimize_prompt_strategy(
+            "000001.SZ",
+            ["intel-003"],
+            "adjust"
+        )
+
+        # 验证方法执行不抛出异常
+
+    @pytest.mark.asyncio
+    async def test_record_ai_feedback_metrics(self):
+        """测试AI反馈指标记录方法 (C3-003C)"""
+        service = NewsService()
+
+        performance = {
+            "accuracy": 0.75,
+            "profit_loss": 2000.0,
+            "feedback_type": "positive"
+        }
+
+        # 执行记录
+        await service._record_ai_feedback_metrics(
+            stock_code="000001.SZ",
+            decision_id="dec-004",
+            performance=performance,
+            intelligence_items=["intel-004", "intel-005"]
+        )
+
+        # 验证方法执行不抛出异常
+
+    @pytest.mark.asyncio
     async def test_service_start_stop(self):
         """测试服务启动和停止"""
         service = NewsService()

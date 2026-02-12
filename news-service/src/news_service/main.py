@@ -207,8 +207,15 @@ class NewsService:
             self._handle_price_alert
         )
 
+        # 订阅AI决策反馈事件 (C3-003C)
+        self.event_consumer.subscribe(
+            EventType.AI_PERFORMANCE_REPORT,
+            self._handle_ai_performance_report
+        )
+
         logger.info(f"事件总线连接: {host}:{port}")
         logger.info(f"已订阅事件: {EventType.MARKET_ALERT_PRICE_MOVE.value}")
+        logger.info(f"已订阅事件: {EventType.AI_PERFORMANCE_REPORT.value}")
 
     def _check_redis(self) -> bool:
         """检查Redis连接"""
@@ -317,6 +324,82 @@ class NewsService:
 
         except Exception as e:
             logger.error(f"处理行情异动事件失败: {e}")
+
+    async def _handle_ai_performance_report(self, event: EventSchema):
+        """
+        处理AI决策反馈事件 (C3-003C)
+
+        接收AI决策性能报告，根据反馈优化新闻情报提取Prompt
+        例如：如果AI决策基于某类情报获得成功，增强该类情报的提取权重
+        """
+        try:
+            payload = event.payload
+            stock_code = payload.get("stock_code")
+            decision_id = payload.get("decision_id")
+            performance = payload.get("performance", {})
+            used_intelligence = payload.get("used_intelligence", [])
+
+            logger.info(f"收到AI决策反馈: {stock_code}, 决策ID: {decision_id}")
+
+            # 提取性能指标
+            accuracy = performance.get("accuracy", 0.0)
+            profit_loss = performance.get("profit_loss", 0.0)
+            feedback_type = performance.get("feedback_type", "neutral")
+
+            # 根据反馈优化Prompt策略
+            if feedback_type == "positive" and accuracy > 0.7:
+                logger.info(f"AI决策表现良好(准确率:{accuracy:.2f})，强化相关情报提取策略")
+                await self._optimize_prompt_strategy(stock_code, used_intelligence, "enhance")
+            elif feedback_type == "negative" and accuracy < 0.3:
+                logger.warning(f"AI决策表现不佳(准确率:{accuracy:.2f})，调整情报提取策略")
+                await self._optimize_prompt_strategy(stock_code, used_intelligence, "adjust")
+            else:
+                logger.debug(f"AI决策表现正常，保持当前策略")
+
+            # 记录性能指标用于后续分析
+            await self._record_ai_feedback_metrics(stock_code, decision_id, performance, used_intelligence)
+
+        except Exception as e:
+            logger.error(f"处理AI决策反馈事件失败: {e}")
+
+    async def _optimize_prompt_strategy(self, stock_code: str, intelligence_items: list, action: str):
+        """
+        优化Prompt策略
+
+        Args:
+            stock_code: 股票代码
+            intelligence_items: 被使用的 intelligence IDs
+            action: 'enhance' 或 'adjust'
+        """
+        # 实际实现中，这里会调整DeepSeek处理器的Prompt模板
+        # 例如：增强某些关键词的权重，调整情感分析的阈值等
+        logger.info(f"优化Prompt策略: {stock_code}, 动作: {action}, 情报数: {len(intelligence_items)}")
+
+        # TODO: 实现具体的Prompt优化逻辑
+        # 1. 分析 successful/failed intelligence 的特征
+        # 2. 调整 deepseek_processor 的 prompt 模板
+        # 3. 更新情报质量评分权重
+
+    async def _record_ai_feedback_metrics(self, stock_code: str, decision_id: str,
+                                          performance: dict, intelligence_items: list):
+        """
+        记录AI反馈指标
+
+        用于后续的情报质量模型训练和策略优化
+        """
+        metrics = {
+            "stock_code": stock_code,
+            "decision_id": decision_id,
+            "accuracy": performance.get("accuracy"),
+            "profit_loss": performance.get("profit_loss"),
+            "intelligence_count": len(intelligence_items),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+        logger.debug(f"记录AI反馈指标: {metrics}")
+
+        # TODO: 存储到数据库或发送给监控系统
+        # 可用于训练情报质量评分模型
 
     async def _trigger_news_collection(self, symbol: str, alert_type: str, severity: str):
         """

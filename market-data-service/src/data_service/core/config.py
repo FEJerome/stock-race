@@ -5,7 +5,7 @@ Configuration settings for Data Service.
 import os
 import json
 from typing import List, Optional
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -73,10 +73,11 @@ class Settings(BaseSettings):
     # Stock Symbols (default Chinese A-share stocks)
     DEFAULT_STOCK_SYMBOLS: List[str] = ["000001.SZ", "000002.SZ", "000858.SZ", "600036.SH", "600519.SH"]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore"
+    )
 
 
 settings = Settings()

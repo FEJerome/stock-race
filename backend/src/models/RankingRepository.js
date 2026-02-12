@@ -380,4 +380,72 @@ export class RankingRepository extends BaseRepository {
       }
     });
   }
+
+  /**
+   * 获取公开排行榜数据（无需认证）
+   * @param {Object} options - 选项
+   * @param {number} options.page - 页码
+   * @param {number} options.limit - 每页数量
+   * @param {string} options.sort - 排序方式
+   * @returns {Promise<Object>}
+   */
+  async getPublicRankings(options = {}) {
+    const { page = 1, limit = 20, sort = 'by_return' } = options;
+    const offset = (page - 1) * limit;
+
+    // 映射排序字段
+    const sortMap = {
+      'by_return': { totalReturn: 'desc' },
+      'by_sharpe': { sharpeRatio: 'desc' },
+      'by_win_rate': { winRate: 'desc' }
+    };
+    const orderBy = sortMap[sort] || sortMap['by_return'];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 获取排行榜数据
+    const [rankings, total] = await Promise.all([
+      this.prisma.ranking.findMany({
+        where: {
+          periodType: 'total',
+          periodDate: {
+            gte: today
+          }
+        },
+        orderBy: [
+          orderBy,
+          { rank: 'asc' }
+        ],
+        skip: offset,
+        take: limit,
+        include: {
+          account: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      }),
+      this.prisma.ranking.count({
+        where: {
+          periodType: 'total',
+          periodDate: {
+            gte: today
+          }
+        }
+      })
+    ]);
+
+    return {
+      data: rankings.map(r => ({
+        aiManagerName: r.account?.name || '未命名AI',
+        totalReturn: parseFloat(r.totalReturn) / 100, // 转换为小数
+        sharpeRatio: parseFloat(r.sharpeRatio || 0),
+        winRate: parseFloat(r.winRate || 0) / 100 // 转换为小数
+      })),
+      total
+    };
+  }
 }

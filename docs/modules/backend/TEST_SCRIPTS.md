@@ -298,6 +298,52 @@ backend/
 
 ---
 
+## 新增测试 (2026-02-12 联调冲刺)
+
+### 12. GuestService.test.js
+- **位置**: `tests/unit/services/GuestService.test.js`
+- **功能**: 游客服务单元测试（C5-001~C5-006 + P0-004 + P0-005）
+- **测试内容**:
+  - 游客Token生成与过期验证（C5-001）
+  - AI账户创建与限制，最多2个（C5-002）
+  - AI对话与轮数限制，最多10轮（C5-003）
+  - 数据迁移到正式用户（C5-004）
+  - 过期清理任务（C5-005）
+  - 会话查询（C5-006）
+  - Redis持久化（P0-004）：会话/账户/对话持久化、从Redis恢复、降级处理
+- **对应需求**: C5-001 ~ C5-006, P0-004, P0-005
+- **测试数量**: 32 个
+
+### 13. EventBusIntegration.test.js (更新)
+- **位置**: `tests/unit/services/EventBusIntegration.test.js`
+- **功能**: 事件总线SDK集成测试（C2-BE-001~C2-BE-006 + C3-004B）
+- **测试内容**:
+  - Redis连接和SDK集成（C2-BE-001）
+  - 发布账户更新事件（C2-BE-002）
+  - 发布交易执行事件（C2-BE-003）
+  - 订阅AI决策事件（C2-BE-004）
+  - 事件处理器实现（C2-BE-005）
+  - 消费者组配置（C2-BE-006）
+  - **AI绩效报告事件订阅（C3-004B）**：订阅ai:performance:report事件、处理绩效报告、更新排行榜
+  - 端到端事件流
+- **对应需求**: C2-BE-001 ~ C2-BE-006, C3-004B
+- **测试数量**: 18 个（新增3个C3-004B测试）
+
+### 14. HealthService.test.js (更新)
+- **位置**: `tests/unit/services/HealthService.test.js`
+- **功能**: 健康检查服务测试（T-010 + C1-BE-001~C1-BE-003）
+- **测试内容**:
+  - 基本健康信息（T-010）
+  - 依赖状态计算：Redis、PostgreSQL、Market Data、Trading AI、News Service、EventBus（C1-BE-001）
+  - NORMAL/DEGRADED/OFFLINE模式切换（C1-BE-002）
+  - 自动恢复机制（C1-BE-003）
+  - 服务统计
+  - 运行时间格式化
+- **对应需求**: T-010, C1-BE-001 ~ C1-BE-003
+- **测试数量**: 22 个（新增4个C1-BE测试）
+
+---
+
 ## 集成测试 (Integration Tests)
 
 ### 1. service-communication.test.js

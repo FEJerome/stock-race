@@ -101,7 +101,55 @@
 
 ---
 
-## 五、架构优化任务（2026-02-11新增）
+## 五、联调冲刺任务（2026-02-12新增）
+
+> 基于架构审查报告，Market Data Service已达到**联调就绪状态**（98%完成度）。
+> 以下任务为联调验证和等待其他服务接入的工作项。
+
+### 5.1 🟢 联调就绪 - 等待验证（高优先级）
+
+| 编号 | 任务 | 状态 | 说明 | 验证方式 |
+|------|------|------|------|----------|
+| C2-MD-001 | 事件总线联调验证 | 🔄 | 验证Backend能正确订阅行情事件 | 端到端测试：Backend订阅 → Market Data发布 → 事件接收确认 |
+| C3-001 | 实时行情事件验证 | 🔄 | 验证每10秒发布`market:quote:realtime` | 检查Redis Streams消息，确认事件格式正确 |
+| C3-001B | 价格异动事件验证 | 🔄 | 验证涨跌幅>7%时发布告警事件 | 模拟价格异动，确认News Service能接收事件 |
+| O6-001 | 公开WebSocket联调 | 🔄 | 验证Miniprogram能直连WebSocket | Miniprogram连接测试：订阅、接收、取消订阅 |
+
+**联调环境要求**:
+- Redis运行（事件总线）
+- Market Data Service:8001
+- Backend接入事件总线
+- Miniprogram WebSocket客户端
+
+### 5.2 ⏸️ 阻塞任务（等待其他服务）
+
+| 编号 | 任务 | 状态 | 阻塞服务 | 说明 |
+|------|------|------|----------|------|
+| T-007 | WebSocket实时推送启用 | ⏸️ | Frontend/Miniprogram | 接口已预留，需前端WebSocket客户端就绪 |
+| C3-003 | Trading AI行情订阅验证 | ⏸️ | Trading AI C3-003 | 验证AI Service能订阅并处理行情事件 |
+
+### 5.3 联调验收 checklist
+
+- [ ] 实时行情事件正常发布到Redis Streams
+- [ ] Backend能成功订阅并消费行情事件
+- [ ] 价格异动事件正常触发并广播
+- [ ] 公开WebSocket连接无需认证可访问
+- [ ] Miniprogram能正确订阅股票并接收推送
+- [ ] 板块/行业/指数广度查询API正常返回
+- [ ] 所有集成测试通过（9个待验证）
+
+### 5.4 联调问题处理
+
+**发现问题时的处理流程**:
+1. 检查Market Data Service日志：`docker-compose logs market-data-service`
+2. 检查Redis Streams状态：`XINFO STREAM event-bus:market:quote:realtime`
+3. 验证事件格式是否符合schema规范
+4. 检查网络连通性：Backend能否访问Redis和Market Data
+5. 更新本文档记录问题和解决方案
+
+---
+
+## 六、架构优化任务（2026-02-11新增）
 
 ### 5.1 冲突解决方案
 
@@ -318,8 +366,8 @@ python3 tests/integration_test.py
 
 ---
 
-*文档版本: v2.1（架构师审查版）*
-*最后更新: 2026-02-11*
+*文档版本: v2.2（联调冲刺版）*
+*最后更新: 2026-02-12*
 *维护者: 首席架构师*
 
 **提示：已完成功能详情和代码审查报告请查阅 [HAVE_DONE.md](./HAVE_DONE.md)**

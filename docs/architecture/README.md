@@ -14,6 +14,9 @@ docs/architecture/
 │   ├── TECH_STACK.md                # 技术架构与选型
 │   ├── API_SPECIFICATION.md         # RESTful API与WebSocket设计
 │   ├── DATABASE_DESIGN.md           # 数据库ER图与表结构
+│   ├── CONFIG_CENTER/               # 配置中心架构设计（规划中）
+│   │   ├── README.md                    # 配置中心文档总入口
+│   │   └── MODEL_VISIBILITY_CONFIG.md   # 模型可见性配置化方案
 │   └── DECISIONS/                   # 架构决策记录(ADR)
 │       ├── 001-CIRCULAR-DEPENDENCY.md    # 循环依赖解决方案
 │       ├── 002-EVENT-BUS.md              # 事件总线风险分析
@@ -60,6 +63,17 @@ docs/architecture/
 | [006](./CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) | 小程序数据流 - 混合分离方案 | ✅ 已决策 |
 | [007](./CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) | AI决策查询需求 - 广度数据查询确认 | ✅ 已决策 |
 | [008](./CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) | Redis部署策略 - 渐进式从单节点到Cluster | ✅ 已决策 |
+
+### 配置中心设计（规划中）
+
+配置中心是未来基础设施的核心组件，用于集中管理各服务的动态配置。
+
+| 文档 | 说明 | 状态 |
+|------|------|------|
+| [CONFIG_CENTER/README.md](./CURRENT/CONFIG_CENTER/README.md) | 配置中心架构设计文档总入口 | 🔄 设计中 |
+| [MODEL_VISIBILITY_CONFIG.md](./CURRENT/CONFIG_CENTER/MODEL_VISIBILITY_CONFIG.md) | Trading AI Service - 模型可见性配置化方案 | 🔄 待评审 |
+
+> **说明**: 配置中心相关文档会持续增加，几乎每个服务都会涉及配置中心的设计。详见 [CONFIG_CENTER/README.md](./CURRENT/CONFIG_CENTER/README.md) 中的文档清单。
 
 ### 分析报告
 | 文档 | 说明 |

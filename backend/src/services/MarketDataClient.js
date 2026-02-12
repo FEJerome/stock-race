@@ -219,6 +219,89 @@ export class MarketDataClient extends ServiceClient {
   }
 
   /**
+   * 获取行情数据（public API使用）
+   * @param {Array<string>} symbols - 股票代码数组
+   * @returns {Promise<Array<Object>>} 行情数据数组
+   */
+  async getQuotes(symbols) {
+    return this.getBatchQuotes(symbols);
+  }
+
+  /**
+   * 获取市场快照
+   * @returns {Promise<Object>} 市场快照数据
+   */
+  async getMarketSnapshot() {
+    try {
+      const response = await this.get(this.buildPath('/market/snapshot'));
+      return {
+        indices: response.data.indices || [],
+        hotStocks: response.data.hot_stocks || response.data.hotStocks || [],
+        timestamp: response.data.timestamp || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('获取市场快照失败:', error.message);
+      // 返回空数据，不抛异常
+      return {
+        indices: [],
+        hotStocks: [],
+        timestamp: new Date().toISOString()
+      };
+    }
+  }
+
+  /**
+   * 获取股票交易状态 [T-015]
+   * @param {string} symbol - 股票代码
+   * @returns {Promise<Object>} 交易状态
+   */
+  async getTradingStatus(symbol) {
+    try {
+      const response = await this.get(this.buildPath(`/stocks/${symbol}/trading-status`));
+      return {
+        success: true,
+        symbol: response.data.symbol || symbol,
+        status: response.data.status || 'unknown',
+        priceLimits: response.data.priceLimits || response.data.price_limits || null,
+        tradingPhase: response.data.tradingPhase || response.data.trading_phase || 'unknown',
+        isST: response.data.isST || response.data.is_st || false,
+        isSuspended: response.data.isSuspended || response.data.is_suspended || false,
+        timestamp: response.data.timestamp || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error(`获取股票交易状态失败 (${symbol}):`, error.message);
+      throw new ServiceUnavailableError('market-data-service', `获取${symbol}交易状态失败`, error);
+    }
+  }
+
+  /**
+   * 获取市场规则 [T-011]
+   * @param {string} market - 市场代码 (SH/SZ/CYB/KCB/BJ)
+   * @returns {Promise<Object>} 市场规则
+   */
+  async getMarketRules(market) {
+    try {
+      const response = await this.get(this.buildPath('/market/rules'), {
+        params: { market }
+      });
+      return {
+        success: true,
+        market: market,
+        priceLimit: response.data.price_limit || response.data.priceLimit || 0.10,
+        minQuantity: response.data.min_quantity || response.data.minQuantity || 100,
+        maxQuantityPerOrder: response.data.max_quantity_per_order || response.data.maxQuantityPerOrder || 1000000,
+        tradingHours: response.data.trading_hours || response.data.tradingHours || [
+          { start: '09:30', end: '11:30' },
+          { start: '13:00', end: '15:00' }
+        ]
+      };
+    } catch (error) {
+      console.error(`获取市场规则失败 (${market}):`, error.message);
+      throw new ServiceUnavailableError('market-data-service', `获取${market}市场规则失败`, error);
+    }
+  }
+
+  /**
    * 测试数据服务连接
    * @returns {Promise<Object>} 连接测试结果
    */
