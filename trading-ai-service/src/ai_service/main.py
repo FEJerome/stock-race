@@ -24,7 +24,7 @@ from .core.database import init_db
 from .core.redis import init_redis
 from .utils.logger import setup_logging
 from .api.routes import router as api_router
-from .services.health_check_service import get_health_check_service, HealthCheckService
+from .services.health_service import get_health_service, TradingAIHealthService
 from .services.event_bus_manager import EventBusManager
 from .services.event_handlers import EventHandlerManager
 
@@ -34,8 +34,7 @@ setup_logging()
 # Global service instances
 event_bus: EventBusManager = None
 event_handlers: EventHandlerManager = None
-health_service: HealthCheckService = None
-monitoring_task: asyncio.Task = None
+health_service: TradingAIHealthService = None
 
 
 @asynccontextmanager
@@ -47,7 +46,7 @@ async def lifespan(app: FastAPI):
     - INITIALIZING → check dependencies → DEGRADED/NORMAL
     - Automatic recovery when dependencies become available
     """
-    global event_bus, event_handlers, health_service, monitoring_task
+    global event_bus, event_handlers, health_service
 
     # Startup
     logger.info("🚀 Starting AI Service...")
@@ -66,7 +65,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ Redis initialization failed: {e}")
 
     # Initialize health check service (C1-TAI-001)
-    health_service = get_health_check_service()
+    health_service = get_health_service()
     try:
         await health_service.initialize()
         logger.info(f"✅ Health check service initialized (mode: {health_service.mode.value})")
@@ -86,15 +85,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️ Event bus initialization failed: {e}. Service will run in degraded mode.")
 
-    # Start health monitoring (C1-TAI-003)
-    try:
-        monitoring_task = asyncio.create_task(
-            health_service.start_monitoring(interval_seconds=30)
-        )
-        logger.info("🔄 Health monitoring started")
-    except Exception as e:
-        logger.error(f"❌ Failed to start health monitoring: {e}")
-
     # Register callbacks for mode transitions (C1-TAI-002, C1-TAI-003)
     health_service.on_degradation(lambda: logger.warning(
         "⚠️ Service entered degraded mode. Limited functionality available."
@@ -109,14 +99,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("🛑 Shutting down AI Service...")
 
-    # Stop monitoring
-    if monitoring_task:
-        monitoring_task.cancel()
-        try:
-            await monitoring_task
-        except asyncio.CancelledError:
-            pass
-
     # Stop event handlers
     if event_handlers:
         event_handlers.stop()
@@ -124,6 +106,10 @@ async def lifespan(app: FastAPI):
     # Close event bus
     if event_bus:
         await event_bus.close()
+
+    # Stop health checker
+    if health_service:
+        health_service.checker.stop_periodic_checks()
 
     logger.info("✅ AI Service shutdown complete")
 
@@ -151,24 +137,24 @@ async def health_check():
     """
     Health check endpoint with comprehensive status.
 
-    Implements C1-TAI-001: Service health check endpoint
+    Implements C1-TAI-001: Service health check endpoint using Infra SDK
     Returns service mode and dependency status for load balancer health checks.
     """
     global health_service, event_bus, event_handlers
 
-    # Get health check results
-    health_results = await health_service.perform_health_check() if health_service else {
-        "overall": "unknown",
-        "checks": {}
-    }
+    # Get health check results from Infra SDK
+    if health_service:
+        result = await health_service.checker.check_health()
+        health_dict = health_service.get_health_dict()
+    else:
+        health_dict = {
+            "service": "trading-ai-service",
+            "status": "unknown",
+            "message": "Health service not initialized"
+        }
 
     # Build response
-    status_code = "healthy"
-    if health_service:
-        if health_service.is_offline:
-            status_code = "unhealthy"
-        elif health_service.is_degraded:
-            status_code = "degraded"
+    status_code = health_dict.get("status", "unknown")
 
     # Get event handler stats if available
     handler_stats = {}
@@ -180,9 +166,9 @@ async def health_check():
         "service": "trading-ai-service",
         "version": "0.1.0",
         "mode": health_service.mode.value if health_service else "unknown",
-        "checks": health_results.get("checks", {}),
+        "checks": health_dict.get("dependencies", {}),
         "event_handlers": handler_stats,
-        "timestamp": health_results.get("timestamp"),
+        "timestamp": health_dict.get("timestamp"),
     }
 
 
@@ -195,10 +181,15 @@ async def detailed_health_check():
     """
     global health_service, event_bus, event_handlers
 
+    # Get detailed health from Infra SDK
+    health_dict = health_service.get_health_dict() if health_service else None
+
     return {
         "service": "trading-ai-service",
         "version": "0.1.0",
-        "health_service": health_service.get_status() if health_service else None,
+        "health_service": health_dict,
+        "service_mode": health_service.mode.value if health_service else "unknown",
+        "is_degraded": health_service.is_degraded if health_service else False,
         "event_bus": {
             "initialized": event_bus.is_initialized if event_bus else False,
             "healthy": await event_bus.health_check() if event_bus else False,

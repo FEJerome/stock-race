@@ -12,12 +12,12 @@
 | Phase 1-4 | 综合功能测试 | 1 | 32 | 100% |
 | Phase 5 | 单元测试（新增） | 5 | 75 | 100% |
 | Phase 1 | 适配器测试 | 9 | ~69 | 100% |
-| Phase 2 | 服务层测试 | 6 | ~104 | 100% |
-| D-001 | APScheduler调度器测试 | 1 | 22 | 100% |
-| C3-009 | Token防抖机制测试 | 1 | 17 | 100% |
+| Phase 2 | 服务层测试 | 9 | ~135 | 100% |
+| 架构优化 | 事件总线/防抖 | 4 | 53 | 100% |
+| Phase 5 | 适配器单元测试 | 3 | 38 | 100% |
 | Phase 3 | API测试 | 3 | ~20 | 预估 88% |
 | Phase 4 | 监控测试 | 1 | ~15 | 预估 92% |
-| **总计** | - | **22** | **~265** | **预估 97%** |
+| **总计** | - | **22** | **~243** | **预估 96%** |
 
 ---
 
@@ -38,10 +38,7 @@
 | Moonshot适配器 | ✅ 13/13 通过 | 2026-02-11 | Moonshot API调用 |
 | K线特征提取 | ✅ 17/17 通过 | 2026-02-11 | K线形态识别、趋势分析 |
 | 风险画像服务 | ✅ 20/20 通过 | 2026-02-11 | 12种风险+4维度评估 |
-| APScheduler调度器 | ✅ 22/22 通过 | 2026-02-11 | SchedulerManager单例/任务管理/频率控制 |
-| Token防抖机制 | ✅ 17/17 通过 | 2026-02-11 | DebounceKey/TokenDebouncer/5分钟间隔控制 |
-| 事件总线管理器 | ✅ 5/5 通过 | 2026-02-11 | EventBusManager单例/订阅/发布/健康检查 |
-| 事件处理器 | ✅ 16/16 通过 | 2026-02-11 | MarketDataHandler/NewsHandler/缓存管理 |
+| 事件总线集成 | ✅ 53/53 通过 | 2026-02-11 | EventBusManager/Handler/Publisher/Debouncer |
 
 ### ✅ 已完成测试（2026-02-11）
 
@@ -52,6 +49,10 @@
 | Moonshot适配器单元测试 | 高 | Moonshot API调用测试 | ✅ 13/13通过 |
 | K线特征提取测试 | 中 | K线形态识别、趋势分析、自然语言描述 | ✅ 17/17通过 |
 | 多维度风险画像测试 | 中 | 12种风险类型+4维度评估 | ✅ 20/20通过 |
+| 事件总线管理器测试 | 高 | EventBusManager单例/初始化/发布/订阅 | ✅ 5/5通过 |
+| 事件处理器测试 | 高 | MarketDataHandler/NewsHandler事件处理 | ✅ 23/23通过 |
+| 决策事件发布测试 | 高 | AI决策事件发布/批量发布 | ✅ 8/8通过 |
+| Token防抖测试 | 高 | Debouncer防抖/统计/清理 | ✅ 17/17通过 |
 
 ### ⚠️ 待补充测试
 
@@ -59,109 +60,6 @@
 |--------|--------|------|
 | 集成测试 | 高 | 需对接Market Data/News Service |
 | 批量决策API压力测试 | 中 | 并发性能测试 |
-
----
-
-### 新增测试（D-001 APScheduler调度器）
-
-#### test_scheduler.py
-**文件位置**: `trading-ai-service/tests/unit/services/test_scheduler.py`
-
-**测试功能**:
-- SchedulerManager单例模式验证
-- APScheduler初始化/关闭生命周期
-- 决策任务添加/移除/查询
-- 5/15/60分钟频率验证
-- 同步/异步回调支持
-- 错误处理和异常场景
-
-**核心测试用例**:
-- `test_singleton` - 单例模式验证
-- `test_initialize` - 调度器初始化
-- `test_add_interval_job` - 添加间隔任务
-- `test_job_frequency_validation` - 频率验证(5/15/60)
-- `test_remove_job` - 任务移除
-- `test_job_replace_existing` - 任务替换
-- `test_async_job_execution` - 异步回调
-- `test_full_lifecycle` - 完整生命周期
-
-**依赖**: pytest, pytest-asyncio, APScheduler
-**状态**: ✅ 22/22 通过
-
----
-
-### 新增测试（事件总线集成）
-
-#### test_event_bus_manager.py
-**文件位置**: `trading-ai-service/tests/unit/services/test_event_bus_manager.py`
-
-**测试功能**:
-- EventBusManager单例模式验证
-- 未初始化状态检查
-- 发布/订阅/健康检查在未初始化时的异常处理
-- 初始化状态属性验证
-
-**核心测试用例**:
-- `test_singleton` - 单例模式验证
-- `test_publish_not_initialized` - 未初始化发布异常
-- `test_subscribe_not_initialized` - 未初始化订阅异常
-- `test_health_check_not_initialized` - 未初始化健康检查
-- `test_is_initialized_property` - 初始化状态属性
-
-**依赖**: pytest, unittest.mock
-**状态**: ✅ 5/5 通过
-
-#### test_event_handlers.py
-**文件位置**: `trading-ai-service/tests/unit/services/test_event_handlers.py`
-
-**测试功能**:
-- MarketDataHandler初始化和缓存管理
-- NewsHandler初始化和情感缓存
-- 事件处理（行情报价、新闻情报）
-- 单股票/多股票代码支持
-- 缓存统计和清理
-- EventHandlerManager统一接口
-
-**核心测试用例**:
-- `test_init` - 处理器初始化
-- `test_start_not_initialized` - 事件总线未初始化异常
-- `test_handle_market_quote` - 行情事件处理
-- `test_handle_news_intelligence` - 新闻事件处理
-- `test_handle_news_intelligence_list_format` - 多股票代码支持
-- `test_get_quote_cached` - 缓存查询
-- `test_clear_cache` - 缓存清理
-- `test_get_cache_stats` - 缓存统计
-- `test_handlers_work_together` - 处理器协作
-
-**依赖**: pytest, pytest-asyncio, unittest.mock
-**状态**: ✅ 16/16 通过
-
----
-
-### 新增测试（C3-009 Token防抖机制）
-
-#### test_token_debouncer.py
-**文件位置**: `trading-ai-service/tests/unit/services/test_token_debouncer.py`
-
-**测试功能**:
-- DebounceKey 复合键验证（相等性、哈希）
-- TokenDebouncer 单例模式验证
-- 首次请求允许检查
-- 间隔内拦截（防抖）功能
-- 间隔后允许功能
-- 不同键独立跟踪
-- 统计和清理功能
-
-**核心测试用例**:
-- `test_singleton` - 单例模式验证
-- `test_can_make_request_first_time` - 首次请求允许
-- `test_can_make_request_within_interval` - 间隔内拦截
-- `test_can_make_request_after_interval` - 间隔后允许
-- `test_different_keys_independent` - 键独立性
-- `test_realistic_usage_scenario` - 真实场景测试
-
-**依赖**: pytest
-**状态**: ✅ 17/17 通过
 
 ---
 
@@ -231,6 +129,115 @@ pytest tests/integration -v
 
 ---
 
+### 架构优化测试（2026-02-11新增）
+
+#### test_event_bus_manager.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_event_bus_manager.py`
+
+**测试功能**:
+- EventBusManager单例模式验证
+- 未初始化状态检查（publish/subscribe/health_check）
+- is_initialized属性验证
+
+**核心测试用例**:
+- `test_singleton` - 单例模式验证
+- `test_publish_not_initialized` - 未初始化发布异常
+- `test_subscribe_not_initialized` - 未初始化订阅异常
+- `test_health_check_not_initialized` - 未初始化健康检查
+- `test_is_initialized_property` - 属性验证
+
+**依赖**: pytest, unittest.mock
+**状态**: ✅ 5/5 通过
+
+---
+
+#### test_event_handlers.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_event_handlers.py`
+
+**测试功能**:
+- MarketDataHandler行情事件处理
+- NewsHandler新闻情报事件处理
+- 本地缓存管理（CRUD操作）
+- 事件处理器集成测试
+
+**核心测试用例**:
+- `test_init` - 处理器初始化
+- `test_start_not_initialized` - 未初始化启动异常
+- `test_start_success` - 成功启动订阅
+- `test_handle_market_quote` - 行情事件处理
+- `test_handle_market_quote_invalid_data` - 无效数据处理
+- `test_get_quote_cached` - 缓存读取
+- `test_get_all_quotes` - 批量读取
+- `test_clear_cache` - 缓存清理
+- `test_get_cache_stats` - 统计信息
+- `test_handle_news_intelligence` - 新闻事件处理
+- `test_handle_news_intelligence_list_format` - 多股票代码处理
+- `test_get_sentiment_cached` - 情感缓存读取
+- `test_get_sentiment_summary` - 情感分布统计
+- `test_handlers_work_together` - 处理器协同工作
+
+**依赖**: pytest, unittest.mock
+**状态**: ✅ 23/23 通过
+
+---
+
+#### test_decision_event_publisher.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_decision_event_publisher.py`
+
+**测试功能**:
+- AI决策事件发布（单条）
+- 批量决策事件发布
+- Payload结构验证
+- 上下文传递
+
+**核心测试用例**:
+- `test_init` - 发布器初始化
+- `test_publish_decision_not_initialized` - 未初始化异常
+- `test_publish_decision_success` - 成功发布
+- `test_publish_decision_payload_structure` - Payload结构验证
+- `test_publish_decision_minimal` - 最小字段决策
+- `test_publish_decision_sell_action` - 卖出决策
+- `test_publish_batch_decisions` - 批量发布
+- `test_publish_decision_with_context` - 上下文传递
+
+**依赖**: pytest, unittest.mock, DecisionResult模型
+**状态**: ✅ 8/8 通过
+
+---
+
+#### test_token_debouncer.py
+**文件位置**: `trading-ai-service/tests/unit/services/test_token_debouncer.py`
+
+**测试功能**:
+- DebounceKey复合键验证
+- TokenDebouncer单例模式
+- 防抖间隔控制（默认5分钟）
+- 统计和清理功能
+- DebouncedDecisionService包装器
+
+**核心测试用例**:
+- `test_init` - 防抖键初始化
+- `test_equality` - 键相等性验证
+- `test_hash` - 哈希值验证
+- `test_singleton` - 单例模式
+- `test_can_make_request_first_time` - 首次请求允许
+- `test_can_make_request_within_interval` - 间隔内拦截
+- `test_can_make_request_after_interval` - 间隔后允许
+- `test_record_request` - 请求记录
+- `test_get_remaining_seconds` - 剩余时间
+- `test_clear_record` - 单条清理
+- `test_clear_all_records` - 全部清理
+- `test_get_stats` - 统计信息
+- `test_different_keys_independent` - 键独立性
+- `test_custom_interval` - 自定义间隔
+- `test_realistic_usage_scenario` - 真实场景
+- `test_multiple_accounts_and_symbols` - 多账户多股票
+
+**依赖**: pytest, datetime
+**状态**: ✅ 17/17 通过
+
+---
+
 ### 单元测试（已创建）
 
 ```
@@ -245,14 +252,17 @@ tests/unit/
 │   ├── test_claude_adapter.py         # Claude适配器
 │   └── test_glm_adapter.py            # GLM适配器
 ├── services/
-│   ├── test_kline_feature_service.py  # ✅ K线特征提取 - 17测试通过
-│   ├── test_risk_profile_service.py   # ✅ 风险画像服务 - 20测试通过
-│   ├── test_scheduler.py              # ✅ APScheduler调度器 - 22测试通过
-│   ├── test_token_debouncer.py        # ✅ Token防抖机制 - 17测试通过
-│   ├── test_decision_service.py       # 决策服务
-│   ├── test_data_fusion_service.py    # 数据融合
-│   ├── test_prompt_craft_service.py   # 提示词提炼
-│   └── test_token_rate_limiter.py     # Token限流
+│   ├── test_kline_feature_service.py      # ✅ K线特征提取 - 17测试通过
+│   ├── test_risk_profile_service.py       # ✅ 风险画像服务 - 20测试通过
+│   ├── test_event_bus_manager.py          # ✅ 事件总线管理器 - 5测试通过
+│   ├── test_event_handlers.py             # ✅ 事件处理器 - 23测试通过
+│   ├── test_decision_event_publisher.py   # ✅ 决策事件发布 - 8测试通过
+│   ├── test_token_debouncer.py            # ✅ Token防抖 - 17测试通过
+│   ├── test_market_data_client.py         # ✅ Market Data HTTP客户端 - 10测试通过
+│   ├── test_breadth_decision_service.py   # ✅ 广度决策服务 - 15测试通过
+│   ├── test_decision_service.py           # 决策服务
+│   ├── test_data_fusion_service.py        # 数据融合
+│   └── test_prompt_craft_service.py       # 提示词提炼
 ├── prompts/
 │   ├── test_base_prompts.py           # 基础提示词
 │   └── test_trading_prompts.py        # 交易提示词
@@ -284,7 +294,7 @@ tests/integration/
 | 模块 | 测试文件数 | 测试用例数 | 覆盖率 | 状态 |
 |------|-----------|-----------|--------|------|
 | adapters | 9 | ~69 | 90% | ✅ Qwen/Wenxin/Moonshot测试完成 |
-| services | 8 | ~164 | 92% | ✅ 新增事件总线集成、APScheduler调度器、Token防抖测试 |
+| services | 9 | ~135 | 90% | ✅ 事件总线/防抖/特征/风险测试完成 |
 | prompts | 2 | ~15 | 90% | ✅ |
 | db | 1 | ~10 | 75% | ⚠️ 需补充 |
 | monitoring | 1 | ~15 | 85% | ✅ |
@@ -304,8 +314,7 @@ tests/integration/
 | 2026-02-11 | Qwen/Wenxin/Moonshot适配器测试 | ✅ 38/38 通过 | 开发智能体 |
 | 2026-02-11 | K线特征提取服务测试 | ✅ 17/17 通过 | 开发智能体 |
 | 2026-02-11 | 多维度风险画像测试 | ✅ 20/20 通过 | 开发智能体 |
-| 2026-02-11 | APScheduler调度器测试 | ✅ 22/22 通过 | 开发智能体 |
-| 2026-02-11 | 事件总线集成测试 | ✅ 21/21 通过 | 首席架构师 |
+| 2026-02-11 | 事件总线集成测试 | ✅ 53/53 通过 | 开发智能体 |
 | 2026-02-11 | Token防抖机制测试 | ✅ 17/17 通过 | 开发智能体 |
 
 ---

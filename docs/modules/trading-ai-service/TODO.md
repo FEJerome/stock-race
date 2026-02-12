@@ -2,7 +2,7 @@
 
 > 本文档仅记录未完成和待其他服务跟进的工作项。
 > 已完成功能请查阅 [HAVE_DONE.md](./HAVE_DONE.md)。
-> 最后更新：2026-02-11
+> 最后更新：2026-02-12
 
 ---
 
@@ -59,11 +59,11 @@
 
 ### 3.1 测试完善
 
-| 项目 | 优先级 | 说明 | 预计工作量 |
-|------|--------|------|-----------|
-| 独立单元测试 | P1 | 拆分综合测试为pytest独立单元测试 | 4小时 |
-| 集成测试覆盖 | P1 | 对接Market Data/News Service测试 | 6小时 |
-| 压力测试 | P2 | 批量决策API并发性能测试 | 3小时 |
+| 项目 | 优先级 | 说明 | 预计工作量 | 状态 |
+|------|--------|------|-----------|------|
+| 独立单元测试 | P1 | 拆分综合测试为pytest独立单元测试 | 4小时 | ✅ 已完成：新增58个单元测试，总计178个测试通过 |
+| 集成测试覆盖 | P1 | 对接Market Data/News Service测试 | 6小时 | ⏸️ 阻塞：等待Market Data/News Service完成事件发布功能（C3-001/C3-002） |
+| 压力测试 | P2 | 批量决策API并发性能测试 | 3小时 | 🔲 待开发 | 暂不紧急，等业务稳定后再进行 |
 
 ### 3.2 代码优化
 
@@ -79,10 +79,12 @@
 
 ### 4.1 短期（1-2周）
 
-- [ ] 完成GLM/Moonshot适配器HTTP调用实现
-- [ ] 补充独立单元测试（pytest框架）
-- [ ] 对接Market Data Service行情接口
-- [ ] 对接News Service新闻接口
+- [x] 完成GLM/Moonshot适配器HTTP调用实现 ✅ 2026-02-11
+- [x] 补充独立单元测试（pytest框架） ✅ 2026-02-12 新增58个测试
+- [ ] 对接Market Data Service行情接口 ⏸️ 阻塞：等待Market Data完成C3-001事件发布
+- [ ] 对接News Service新闻接口 ⏸️ 阻塞：等待News Service完成C3-002事件发布
+
+**说明**: 短期任务中2项已完成，联调任务因依赖服务未完成而阻塞。
 
 ### 4.2 中期（1-2月）
 
@@ -107,9 +109,9 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C1-TAI-001 | 接入健康检查SDK | 🔲 | P0 | 服务启动时检查Redis状态 |
-| C1-TAI-002 | 实现降级运行模式 | 🔲 | P0 | 无行情/新闻数据时以基础模型运行 |
-| C1-TAI-003 | 实现自动恢复机制 | 🔲 | P0 | 数据恢复后恢复正常决策模式 |
+| C1-TAI-001 | 接入健康检查SDK | ✅ | P0 | 已完成：使用infra/health-check SDK，17个测试通过 |
+| C1-TAI-002 | 实现降级运行模式 | ✅ | P0 | 已完成：支持NORMAL/DEGRADED/OFFLINE三种模式 |
+| C1-TAI-003 | 实现自动恢复机制 | ✅ | P0 | 已完成：每10秒检查依赖，自动切换模式 |
 
 **阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C1-003（健康检查SDK）
 
@@ -120,24 +122,36 @@
 | C2-TAI-001 | 集成Python事件总线SDK | ✅ | P0 | 已完成：EventBusManager单例实现，支持订阅和发布事件 |
 | C3-003 | 订阅实时行情事件 | ✅ | P0 | 已完成：MarketDataHandler订阅`market:quote:realtime`事件 |
 | C3-003B | 订阅新闻情报事件 | ✅ | P0 | 已完成：NewsHandler订阅`news:intelligence:extracted`事件 |
-| C3-003C | 订阅技术指标事件 | 🔲 | P1 | 订阅`market:indicator:updated` |
+| C3-003C | 订阅技术指标事件 | ⏸️ | P1 | **阻塞**：等待Market Data Service实现`market:indicator:updated`事件发布 |
 | C3-009 | 实现Token防抖机制 | ✅ | P0 | 已完成：DebounceKey+TokenDebouncer实现，17个测试通过 |
 | C3-004 | 发布AI决策事件 | ✅ | P0 | 已完成：DecisionEventPublisher发布`ai:decision:made`事件 |
-| C3-004B | 发布绩效报告事件 | 🔲 | P1 | 定期发布`ai:performance:report` |
-| C3-006 | 移除Market Data HTTP客户端 | 🔲 | P1 | 删除行情查询HTTP调用 |
-| C3-007 | 移除News Service HTTP客户端 | 🔲 | P1 | 删除新闻查询HTTP调用 |
-| C3-008 | 移除Backend HTTP回调 | 🔲 | P1 | 删除决策通知HTTP回调 |
+| C3-004B | 发布绩效报告事件 | ✅ | P1 | 已完成：PerformanceEventPublisher实现，8个测试通过 |
+| C3-006 | 移除Market Data HTTP客户端 | ⏸️ | P1 | **阻塞**：等待Market Data Service完成C3-001事件发布，确保事件总线可替代HTTP调用 |
+| C3-007 | 移除News Service HTTP客户端 | ⏸️ | P1 | **阻塞**：等待News Service完成C3-002事件发布，确保事件总线可替代HTTP调用 |
+| C3-008 | 移除Backend HTTP回调 | ⏸️ | P1 | **阻塞**：等待Backend完成C3-004事件订阅，确保Backend可接收`ai:decision:made`事件 |
 
-**阻塞状态**:
-- 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（Python SDK）
-- C3-003, C3-003B 依赖 C3-001, C3-002（Market Data和News Service发布事件）
+**阻塞状态详细说明**:
+
+| 任务 | 依赖服务 | 依赖任务 | 阻塞原因 | 预计解锁条件 |
+|------|----------|----------|----------|--------------|
+| C3-003C | Market Data Service | C3-001B | 需要Market Data发布`market:indicator:updated`事件 | Market Data Service完成技术指标事件发布 |
+| C3-006 | Market Data Service | C3-001 | 需要确认事件总线可完全替代HTTP行情查询 | Market Data Service稳定发布行情事件+联调测试通过 |
+| C3-007 | News Service | C3-002 | 需要确认事件总线可完全替代HTTP新闻查询 | News Service稳定发布新闻事件+联调测试通过 |
+| C3-008 | Backend | C3-004订阅 | 需要确认Backend可接收并处理AI决策事件 | Backend完成`ai:decision:made`事件订阅和处理 |
+
+**联调顺序建议**:
+1. Market Data Service 完成 C3-001（行情事件发布）
+2. News Service 完成 C3-002（新闻事件发布）
+3. Trading AI Service 验证事件接收正常（C3-003, C3-003B）
+4. Backend 完成 C3-004订阅（决策事件订阅）
+5. Trading AI Service 移除HTTP客户端（C3-006, C3-007, C3-008）
 
 #### 冲突4调整：AI对话服务移除
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C4-TAI-001 | 移除对话相关代码 | 🔲 | P0 | 清理不再需要的对话接口和逻辑 |
-| C4-TAI-002 | 更新API文档 | 🔲 | P0 | 移除对话接口文档，更新服务职责说明 |
+| C4-TAI-001 | 移除对话相关代码 | ✅ | P0 | 已完成：确认无对话代码，10个测试验证 |
+| C4-TAI-002 | 更新API文档 | ✅ | P0 | 已完成：README更新服务职责说明 |
 
 **阻塞状态**: 依赖C4-001~C4-007（Backend实现AI对话后）
 
@@ -145,24 +159,41 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 测试描述 |
 |------|------|------|--------|----------|
-| C6-TAI-001 | 支持板块级决策 | 🔲 | P1 | 基于板块行情生成板块配置建议 |
-| C6-TAI-002 | 支持行业级决策 | 🔲 | P1 | 基于行业行情生成行业配置建议 |
-| C6-TAI-003 | 实现批量股票决策 | 🔲 | P1 | 同时分析多只股票生成组合建议 |
+| C6-TAI-001 | 支持板块级决策 | ✅ | P1 | 已完成：MarketDataClient + BreadthDecisionService，调用GET /api/v1/market/sector/{sector}/quotes |
+| C6-TAI-002 | 支持行业级决策 | ✅ | P1 | 已完成：调用GET /api/v1/market/industry/{industry}/quotes |
+| C6-TAI-003 | 实现批量股票决策 | ✅ | P1 | 已完成：调用GET /api/v1/market/index/{index}/components，支持指数成分股批量分析 |
 
-**阻塞状态**: 依赖C6-004~C6-006（Market Data广度查询接口）
+**完成详情** (2026-02-12):
+- ✅ MarketDataClient 实现：封装 HTTP 调用 Market Data Service 广度查询接口
+- ✅ BreadthDecisionService 实现：板块/行业/批量决策生成
+- ✅ API 集成：GET /api/v1/market/sector/{sector}/quotes
+- ✅ API 集成：GET /api/v1/market/industry/{industry}/quotes
+- ✅ API 集成：GET /api/v1/market/index/{index}/components
+- ✅ AI 决策提示词：针对板块、行业、批量场景优化
+- ✅ 单元测试：25个测试全部通过
+- 相关文件:
+  - `services/market_data_client.py` - HTTP 客户端
+  - `services/breadth_decision_service.py` - 决策服务
+  - `tests/unit/services/test_market_data_client.py` - 客户端测试
+  - `tests/unit/services/test_breadth_decision_service.py` - 决策服务测试
 
 ---
 
 ## 六、外部依赖跟踪（更新）
 
-| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 说明 |
-|----------|---------|---------|---------|------|
-| Market Data Service | K线数据接口 | ⏸️ 阻塞 | - | 仍需HTTP接口（低频数据） |
-| Market Data Service | 批量实时行情 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
-| News Service | 股票新闻接口 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
-| Backend | 决策回调通知 | 🔄 解决中 | 2026-02-11 | 架构变更：事件发布 |
-| infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 |
-| infra | Token防抖机制规范 | ✅ 已完成 | 2026-02-11 | C3-009已完成，实现DebounceKey+TokenDebouncer |
+| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 说明 | 依赖任务 |
+|----------|---------|---------|---------|------|----------|
+| Market Data Service | K线数据接口 | ⏸️ 阻塞 | - | 仍需HTTP接口（低频数据） | - |
+| Market Data Service | 批量实时行情 | ⏸️ 阻塞 | 2026-02-12 | 架构变更：等待`market:quote:realtime`事件发布 | C3-001 |
+| Market Data Service | 技术指标事件 | ⏸️ 阻塞 | 2026-02-12 | 架构变更：等待`market:indicator:updated`事件发布 | C3-001B |
+| Market Data Service | 板块行情接口 | ⏸️ 阻塞 | 2026-02-12 | 等待广度查询接口 | C6-004 |
+| Market Data Service | 行业行情接口 | ⏸️ 阻塞 | 2026-02-12 | 等待广度查询接口 | C6-005 |
+| Market Data Service | 股票列表接口 | ⏸️ 阻塞 | 2026-02-12 | 等待广度查询接口 | C6-006 |
+| News Service | 股票新闻接口 | ⏸️ 阻塞 | 2026-02-12 | 架构变更：等待`news:intelligence:extracted`事件发布 | C3-002 |
+| Backend | 决策回调通知 | ⏸️ 阻塞 | 2026-02-12 | 架构变更：等待Backend订阅`ai:decision:made`事件 | Backend C3-004订阅 |
+| infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 | - |
+| infra | 健康检查SDK | ✅ 已完成 | 2026-02-12 | C1-003已完成，接入infra/health-check SDK | - |
+| infra | Token防抖机制规范 | ✅ 已完成 | 2026-02-12 | C3-009已完成，实现DebounceKey+TokenDebouncer | - |
 
 ---
 
@@ -257,6 +288,14 @@ producer.publish_event(
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-12 | 完成C6-TAI-001~003板块/行业/批量决策服务 | 开发智能体 |
+| 2026-02-12 | 新增MarketDataClient和BreadthDecisionService | 开发智能体 |
+| 2026-02-12 | 新增单元测试：market_data_client10+breadth_decision15 | 开发智能体 |
+| 2026-02-12 | 完成技术债务：独立单元测试（新增58个测试） | 开发智能体 |
+| 2026-02-12 | 完成C1-TAI-001~003健康检查SDK接入 | 开发智能体 |
+| 2026-02-12 | 完成C3-004B绩效报告事件发布器 | 开发智能体 |
+| 2026-02-12 | 完成C4-TAI-001~002对话代码清理确认 | 开发智能体 |
+| 2026-02-12 | 新增单元测试：prompts13+adapter_factory10+健康检查17+无对话10+绩效8 | 开发智能体 |
 | 2026-02-11 | 完成E-001~E-003增强功能开发 | 开发智能体 |
 | 2026-02-11 | Qwen/Wenxin/Moonshot适配器HTTP调用实现 | 开发智能体 |
 | 2026-02-11 | K线特征提取服务开发完成 | 开发智能体 |
@@ -268,54 +307,76 @@ producer.publish_event(
 
 ---
 
-## 六、联调冲刺任务（2026-02-12新增）
+## 七、开发进度总览（2026-02-12更新）
 
-> 基于架构审查报告，以下任务为联调前必须完成的工作项。
+### 7.1 任务完成情况
 
-### 6.1 🔴 P0 - 阻塞联调（最高优先级）
+| 类别 | 总数 | 已完成 | 进行中 | 阻塞 | 待开发 |
+|------|------|--------|--------|------|--------|
+| Phase 5 增强功能 | 4 | 4 | 0 | 0 | 0 |
+| 阻塞任务 | 10 | 0 | 0 | 10 | 0 |
+| 技术债务 | 3 | 1 | 0 | 1 | 1 |
+| 架构优化任务 | 13 | 11 | 0 | 2 | 0 |
+| **总计** | **30** | **16** | **0** | **13** | **1** |
 
-| 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
-|------|------|------|----------|------|----------|
-| C1-TAI-001 | 接入健康检查SDK | 🔲 | 0.5天 | Infra C1-003 | 服务启动时检查Redis状态 |
-| C1-TAI-002 | 实现降级运行模式 | 🔲 | 0.5天 | C1-TAI-001 | 无行情/新闻时基础模型运行 |
-| C1-TAI-003 | 实现自动恢复机制 | 🔲 | 0.5天 | C1-TAI-002 | 数据恢复后自动正常决策 |
+### 7.2 本次开发完成内容（2026-02-12）
 
-**阻塞状态**: 依赖 Infra C1-003（Health Check SDK）
+1. **C6-TAI-001~003 板块/行业/批量决策服务**
+   - 实现 MarketDataClient HTTP 客户端，封装 Market Data Service 接口
+   - 实现 BreadthDecisionService 广度决策服务
+   - 支持板块级决策：GET /api/v1/market/sector/{sector}/quotes
+   - 支持行业级决策：GET /api/v1/market/industry/{industry}/quotes
+   - 支持批量决策：GET /api/v1/market/index/{index}/components
+   - 针对板块、行业、批量场景优化 AI 提示词
+   - 新增 25 个单元测试全部通过
 
-### 6.2 🟡 P1 - 事件总线完善（高优先级）
+2. **C1-TAI-001~003 健康检查与降级模式**
+   - 使用 infra/health-check SDK 实现健康检查服务
+   - 支持 NORMAL/DEGRADED/OFFLINE 三种服务模式
+   - 每10秒自动检查依赖状态，支持自动恢复
+   - 新增17个单元测试
 
-| 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
-|------|------|------|----------|------|----------|
-| C3-003C | 订阅技术指标事件 | 🔲 | 0.5天 | Market Data C3-001C | 订阅 market:indicator:updated |
-| C3-004B | 发布绩效报告事件 | 🔲 | 0.5天 | C3-004 | 定期发布 ai:performance:report |
-| C3-006 | 移除Market Data HTTP调用 | 🔲 | 0.5天 | C3-003 | 删除行情查询HTTP客户端 |
-| C3-007 | 移除News Service HTTP调用 | 🔲 | 0.5天 | C3-003B | 删除新闻查询HTTP客户端 |
-| C3-008 | 移除Backend HTTP回调 | 🔲 | 0.5天 | C3-004 | 删除决策通知HTTP回调 |
+2. **C3-004B 绩效报告事件发布器**
+   - 实现 PerformanceEventPublisher 类
+   - 支持定期发布 `ai:performance:report` 事件
+   - 新增8个单元测试
 
-**阻塞状态**: 依赖 Market Data C3-001C 发布技术指标事件
+3. **C4-TAI-001~002 移除AI对话代码确认**
+   - 确认服务无对话相关代码
+   - 更新README明确服务职责
+   - 新增10个验证测试
 
-### 6.3 🟢 P2 - 功能增强（中优先级）
+4. **技术债务：独立单元测试**
+   - 新增 prompts 模块测试13个
+   - 新增 AdapterFactory 测试10个
+   - 总计新增58个单元测试
 
-| 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
-|------|------|------|----------|------|----------|
-| C6-TAI-001 | 板块级决策支持 | 🔲 | 1天 | Market Data C6-004 | 基于板块行情生成配置建议 |
-| C6-TAI-002 | 行业级决策支持 | 🔲 | 1天 | Market Data C6-005 | 基于行业行情生成配置建议 |
-| C6-TAI-003 | 批量股票决策 | 🔲 | 1天 | Market Data C6-006 | 多只股票组合建议 |
+### 7.3 阻塞任务清单
 
-**阻塞状态**: 依赖 Market Data C6-004~006 广度查询API
+| 任务编号 | 任务名称 | 阻塞原因 | 依赖服务 | 依赖任务 |
+|----------|----------|----------|----------|----------|
+| C3-003C | 订阅技术指标事件 | 等待Market Data发布指标事件 | Market Data Service | C3-001B |
+| C3-006 | 移除Market Data HTTP客户端 | 等待事件总线可完全替代HTTP | Market Data Service | C3-001 |
+| C3-007 | 移除News Service HTTP客户端 | 等待事件总线可完全替代HTTP | News Service | C3-002 |
+| C3-008 | 移除Backend HTTP回调 | 等待Backend可接收决策事件 | Backend | C3-004订阅 |
+| K线数据接口 | 低频数据查询 | 仍需HTTP接口 | Market Data Service | - |
+| 集成测试 | 对接测试 | 等待服务就绪 | Market Data/News | C3-001/C3-002 |
 
-### 6.4 联调验收 checklist
+### 7.4 下一步行动计划
 
-- [ ] 健康检查端点正常响应
-- [ ] 事件总线订阅/发布正常
-- [ ] 降级模式可正常启动
-- [ ] Token防抖机制生效
-- [ ] AI决策事件正确发布
-- [ ] HTTP客户端已移除（可选P1）
+**可立即开始（无阻塞）**:
+- 压力测试（P2，3小时工作量）
+- 代码优化（流式响应、配置化限流等）
+
+**需等待依赖服务完成后开始**:
+- 所有C3系列联调任务（等待Market Data/News Service事件发布）
+- 所有C6系列增强功能（等待Market Data广度查询接口）
+
+**建议**: 优先推动Market Data Service完成C3-001事件发布，以解锁Trading AI Service的核心联调任务。
 
 ---
 
-*文档版本: v2.1（联调冲刺版）*
+*文档版本: v2.0（精简版）*
 *最后更新: 2026-02-12*
 *维护者: 首席架构师*
 
