@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root / "infra" / "health-check" / "src"))
 
 import asyncio
 import signal
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from enum import Enum
 import logging
@@ -207,8 +207,15 @@ class NewsService:
             self._handle_price_alert
         )
 
+        # 订阅AI决策反馈事件 (C3-003C)
+        self.event_consumer.subscribe(
+            EventType.AI_PERFORMANCE_REPORT,
+            self._handle_performance_report
+        )
+
         logger.info(f"事件总线连接: {host}:{port}")
         logger.info(f"已订阅事件: {EventType.MARKET_ALERT_PRICE_MOVE.value}")
+        logger.info(f"已订阅事件: {EventType.AI_PERFORMANCE_REPORT.value}")
 
     def _check_redis(self) -> bool:
         """检查Redis连接"""
@@ -318,6 +325,117 @@ class NewsService:
         except Exception as e:
             logger.error(f"处理行情异动事件失败: {e}")
 
+    async def _handle_performance_report(self, event: EventSchema):
+        """
+        处理AI决策反馈报告事件 (C3-003C)
+
+        当收到Trading AI的决策性能报告时，根据metrics优化Prompt策略。
+        当前阶段仅实现框架，不执行实际优化逻辑，等待统一联调。
+
+        Args:
+            event: 包含account_id, period, metrics, timestamp的事件
+
+        Payload字段:
+            - account_id: AI账户ID
+            - period: 报告周期 (daily/weekly/monthly)
+            - metrics: 性能指标对象
+                - total_trades: 总交易次数
+                - win_rate: 胜率 (0-1)
+                - avg_return: 平均收益率 (%)
+                - max_drawdown: 最大回撤 (%)
+                - decision_accuracy: 决策准确度评分 (0-1)
+            - timestamp: 报告时间 (ISO 8601)
+        """
+        try:
+            payload = event.payload
+            account_id = payload.get("account_id")
+            period = payload.get("period")
+            metrics = payload.get("metrics", {})
+
+            logger.info(f"收到AI决策反馈报告: account_id={account_id}, period={period}")
+
+            # 解析metrics
+            decision_accuracy = metrics.get("decision_accuracy", 0.0)
+            win_rate = metrics.get("win_rate", 0.0)
+            avg_return = metrics.get("avg_return", 0.0)
+
+            # 根据metrics评估是否需要优化
+            if decision_accuracy < 0.6:
+                logger.warning(
+                    f"AI账户 {account_id} 决策准确度低 ({decision_accuracy:.2f})，"
+                    f"建议优化情报筛选策略"
+                )
+                # TODO: 实现Prompt优化逻辑（联调阶段实现）
+                # 当前仅记录日志，不执行实际优化
+                self._log_prompt_optimization_suggestion(
+                    account_id=account_id,
+                    reason="decision_accuracy_low",
+                    current_value=decision_accuracy,
+                    threshold=0.6
+                )
+
+            if win_rate < 0.5:
+                logger.warning(
+                    f"AI账户 {account_id} 胜率低 ({win_rate:.2f})，"
+                    f"建议调整情感分析阈值"
+                )
+                self._log_prompt_optimization_suggestion(
+                    account_id=account_id,
+                    reason="win_rate_low",
+                    current_value=win_rate,
+                    threshold=0.5
+                )
+
+            if avg_return < 0:
+                logger.warning(
+                    f"AI账户 {account_id} 平均收益为负 ({avg_return:.2f}%)，"
+                    f"建议检查情报时效性"
+                )
+                self._log_prompt_optimization_suggestion(
+                    account_id=account_id,
+                    reason="negative_return",
+                    current_value=avg_return,
+                    threshold=0.0
+                )
+
+            # 记录性能指标（用于后续分析）
+            logger.info(
+                f"AI性能指标记录: account_id={account_id}, "
+                f"accuracy={decision_accuracy:.2f}, win_rate={win_rate:.2f}, "
+                f"avg_return={avg_return:.2f}%"
+            )
+
+        except Exception as e:
+            logger.error(f"处理AI决策反馈报告失败: {e}")
+
+    def _log_prompt_optimization_suggestion(
+        self,
+        account_id: str,
+        reason: str,
+        current_value: float,
+        threshold: float
+    ):
+        """
+        记录Prompt优化建议（框架方法）
+
+        当前仅记录日志，实际优化逻辑在联调阶段实现。
+
+        Args:
+            account_id: AI账户ID
+            reason: 优化原因
+            current_value: 当前指标值
+            threshold: 阈值
+        """
+        logger.info(
+            f"[Prompt优化建议] account_id={account_id}, reason={reason}, "
+            f"current={current_value:.2f}, threshold={threshold:.2f}"
+        )
+        # TODO: 联调阶段实现实际优化逻辑
+        # 1. 分析低性能原因
+        # 2. 调整情报筛选参数
+        # 3. 优化DeepSeek Prompt模板
+        # 4. 发布配置更新事件
+
     async def _trigger_news_collection(self, symbol: str, alert_type: str, severity: str):
         """
         触发新闻采集
@@ -386,7 +504,7 @@ class NewsService:
                     "sentiment": sentiment,
                     "confidence": confidence,
                     "source": source,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -419,7 +537,7 @@ class NewsService:
                     "old_sentiment": old_sentiment,
                     "new_sentiment": new_sentiment,
                     "change_reason": change_reason,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 

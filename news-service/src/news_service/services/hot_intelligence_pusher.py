@@ -6,7 +6,7 @@ NS-D-002: 每2分钟发布`news:hot_intelligence_update`事件到事件总线
 
 import logging
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -349,7 +349,7 @@ class HotIntelligencePusher:
             event_data = {
                 "event_id": str(uuid.uuid4()),
                 "event_type": event_type,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "source": "news-service",
                 "payload": payload,
                 "version": "1.0",
