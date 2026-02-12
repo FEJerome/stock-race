@@ -5,3 +5,5 @@
 
 export { default as KLineChart } from './KLineChart.vue'
 export { default as LineChart } from './LineChart.vue'
+export { default as ProfitCurveChart } from './ProfitCurveChart.vue'
+export { default as HoldingPieChart } from './HoldingPieChart.vue'

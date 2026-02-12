@@ -25,6 +25,12 @@ const WS_CONFIG = {
   MAX_RECONNECT_ATTEMPTS: 3,
   // 连接超时（毫秒）
   CONNECTION_TIMEOUT: 10000,
+  // HTTP 降级轮询配置 (O6-007)
+  HTTP_FALLBACK: {
+    ENABLED: true,
+    INTERVAL: 30000,  // 30秒轮询一次
+    URL: '/api/market/quotes',  // HTTP 行情接口
+  },
 }
 
 // 订阅消息类型
@@ -61,6 +67,13 @@ interface HeartbeatMessage {
 
 type WebSocketMessage = SubscribeMessage | UnsubscribeMessage | QuoteMessage | HeartbeatMessage
 
+// HTTP 降级状态
+export enum FallbackStatus {
+  DISABLED = 'disabled',     // 未降级
+  ENABLED = 'enabled',       // 降级中
+  FAILED = 'failed',         // 降级也失败
+}
+
 // WebSocket 服务类
 class WebSocketService {
   private ws: UniApp.SocketTask | null = null
@@ -72,6 +85,11 @@ class WebSocketService {
   private subscribedSymbols: Set<string> = new Set()
   private messageHandlers: Map<string, ((data: any) => void)[]> = new Map()
   private lastError: Error | null = null
+
+  // HTTP 降级相关 (O6-007)
+  private fallbackStatus: FallbackStatus = FallbackStatus.DISABLED
+  private httpPollTimer: number | null = null
+  private isHttpPolling = false
 
   // 获取当前状态
   getStatus(): WebSocketStatus {
@@ -86,6 +104,16 @@ class WebSocketService {
   // 获取已订阅股票
   getSubscribedSymbols(): string[] {
     return Array.from(this.subscribedSymbols)
+  }
+
+  // 获取降级状态 (O6-007)
+  getFallbackStatus(): FallbackStatus {
+    return this.fallbackStatus
+  }
+
+  // 是否处于降级模式
+  isFallbackMode(): boolean {
+    return this.fallbackStatus === FallbackStatus.ENABLED
   }
 
   // 注册消息处理器
@@ -211,6 +239,9 @@ class WebSocketService {
     console.log('[WebSocket] Disconnecting...')
     this.clearTimers()
     this.status = WebSocketStatus.DISCONNECTED
+
+    // 停止 HTTP 降级轮询
+    this.stopHttpFallback()
 
     if (this.ws) {
       try {
@@ -387,10 +418,13 @@ class WebSocketService {
   }
 
   // 尝试重连
-  private attemptReconnect(): void {
+  private async attemptReconnect(): Promise<void> {
     if (this.reconnectAttempts >= WS_CONFIG.MAX_RECONNECT_ATTEMPTS) {
-      console.error('[WebSocket] Max reconnection attempts reached')
+      console.error('[WebSocket] Max reconnection attempts reached, switching to HTTP fallback')
       this.emitMessage('maxReconnectReached', { attempts: this.reconnectAttempts })
+
+      // 启动 HTTP 降级轮询 (O6-007)
+      await this.startHttpFallback()
       return
     }
 
@@ -450,6 +484,128 @@ class WebSocketService {
       this.connectionTimer = null
     }
   }
+
+  // ============ HTTP 降级轮询 (O6-007) ============
+
+  /**
+   * 启动 HTTP 降级轮询
+   * 当 WebSocket 连接失败时，切换到 HTTP 轮询模式
+   */
+  async startHttpFallback(): Promise<boolean> {
+    if (!WS_CONFIG.HTTP_FALLBACK.ENABLED) {
+      console.log('[WebSocket] HTTP fallback disabled')
+      return false
+    }
+
+    if (this.isHttpPolling) {
+      console.log('[WebSocket] HTTP polling already active')
+      return true
+    }
+
+    console.log('[WebSocket] Starting HTTP fallback polling...')
+    this.fallbackStatus = FallbackStatus.ENABLED
+    this.isHttpPolling = true
+    this.emitMessage('fallbackStatusChange', { status: FallbackStatus.ENABLED })
+
+    // 立即执行一次
+    await this.executeHttpPoll()
+
+    // 启动定时轮询
+    this.httpPollTimer = setInterval(() => {
+      this.executeHttpPoll()
+    }, WS_CONFIG.HTTP_FALLBACK.INTERVAL) as unknown as number
+
+    return true
+  }
+
+  /**
+   * 停止 HTTP 降级轮询
+   */
+  stopHttpFallback(): void {
+    console.log('[WebSocket] Stopping HTTP fallback polling')
+
+    if (this.httpPollTimer) {
+      clearInterval(this.httpPollTimer)
+      this.httpPollTimer = null
+    }
+
+    this.isHttpPolling = false
+    this.fallbackStatus = FallbackStatus.DISABLED
+    this.emitMessage('fallbackStatusChange', { status: FallbackStatus.DISABLED })
+  }
+
+  /**
+   * 执行一次 HTTP 轮询
+   */
+  private async executeHttpPoll(): Promise<void> {
+    if (!this.isHttpPolling) return
+
+    try {
+      const symbols = Array.from(this.subscribedSymbols)
+
+      // 如果没有订阅任何股票，跳过
+      if (symbols.length === 0) {
+        console.log('[WebSocket] HTTP poll skipped - no symbols subscribed')
+        return
+      }
+
+      console.log('[WebSocket] HTTP polling for symbols:', symbols)
+
+      // 调用 HTTP 行情接口
+      const { marketApi } = await import('@/api/market')
+      const quotes = await marketApi.getStockQuotes(symbols)
+
+      // 将 HTTP 数据转换为 WebSocket 消息格式并触发更新
+      quotes.forEach((quote: any) => {
+        this.emitMessage('quoteUpdate', {
+          code: quote.code,
+          name: quote.name,
+          price: quote.price,
+          change: quote.change,
+          changeRate: quote.changeRate,
+          volume: quote.volume,
+          timestamp: new Date().toISOString(),
+        })
+      })
+
+      console.log('[WebSocket] HTTP poll successful, updated', quotes.length, 'quotes')
+    } catch (error) {
+      console.error('[WebSocket] HTTP poll failed:', error)
+      this.fallbackStatus = FallbackStatus.FAILED
+      this.emitMessage('fallbackStatusChange', {
+        status: FallbackStatus.FAILED,
+        error: error instanceof Error ? error.message : 'HTTP poll failed'
+      })
+    }
+  }
+
+  /**
+   * 尝试从降级恢复
+   * 检查 WebSocket 是否可用，可用时切换回 WebSocket
+   */
+  async tryRecoverFromFallback(): Promise<boolean> {
+    if (!this.isFallbackMode()) {
+      return true
+    }
+
+    console.log('[WebSocket] Trying to recover from fallback...')
+
+    // 停止 HTTP 轮询
+    this.stopHttpFallback()
+
+    // 尝试重新连接 WebSocket
+    const connected = await this.connect()
+
+    if (connected) {
+      console.log('[WebSocket] Successfully recovered to WebSocket')
+      this.reconnectAttempts = 0
+    } else {
+      console.log('[WebSocket] Recovery failed, restarting HTTP fallback')
+      await this.startHttpFallback()
+    }
+
+    return connected
+  }
 }
 
 // 导出单例实例
@@ -457,4 +613,4 @@ export const websocketService = new WebSocketService()
 
 // 导出类型
 export type { SubscribeMessage, UnsubscribeMessage, QuoteMessage, HeartbeatMessage }
-export { WS_CONFIG }
+export { WS_CONFIG, FallbackStatus }
