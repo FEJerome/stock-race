@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root / "news-service" / "src"))
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch, AsyncMock
 
 from event_bus import EventBusClient, EventProducer, EventConsumer, EventSchema, EventType
@@ -368,7 +368,7 @@ class TestEventSchemaValidation:
                 "stock_code": "000001.SZ",
                 "intelligence": "平安银行发布利好公告",
                 "sentiment": "positive",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
 

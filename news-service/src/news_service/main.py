@@ -401,6 +401,34 @@ class NewsService:
         # TODO: 存储到数据库或发送给监控系统
         # 可用于训练情报质量评分模型
 
+    def _log_prompt_optimization_suggestion(
+        self,
+        account_id: str,
+        reason: str,
+        current_value: float,
+        threshold: float
+    ):
+        """
+        记录Prompt优化建议（框架方法）
+
+        当前仅记录日志，实际优化逻辑在联调阶段实现。
+
+        Args:
+            account_id: AI账户ID
+            reason: 优化原因
+            current_value: 当前指标值
+            threshold: 阈值
+        """
+        logger.info(
+            f"[Prompt优化建议] account_id={account_id}, reason={reason}, "
+            f"current={current_value:.2f}, threshold={threshold:.2f}"
+        )
+        # TODO: 联调阶段实现实际优化逻辑
+        # 1. 分析低性能原因
+        # 2. 调整情报筛选参数
+        # 3. 优化DeepSeek Prompt模板
+        # 4. 发布配置更新事件
+
     async def _trigger_news_collection(self, symbol: str, alert_type: str, severity: str):
         """
         触发新闻采集
