@@ -190,11 +190,13 @@ class TestEventBusIntegration:
         # Mock事件消费者
         mock_consumer = Mock()
         mock_consumer.start = AsyncMock()
-        mock_consumer.stop = AsyncMock()
+        mock_consumer.stop = Mock()  # stop是同步方法
         service.event_consumer = mock_consumer
 
+        # Mock事件总线客户端 - 代码优先使用disconnect方法
         mock_client = Mock()
-        mock_client.close = AsyncMock()
+        mock_client.disconnect = Mock()  # disconnect是同步方法
+        mock_client.close = Mock()
         service.event_bus_client = mock_client
 
         # 测试停止
@@ -202,7 +204,8 @@ class TestEventBusIntegration:
 
         # 验证资源被释放
         assert mock_consumer.stop.called
-        assert mock_client.close.called
+        # 代码优先使用disconnect方法，如果存在则调用disconnect
+        assert mock_client.disconnect.called or mock_client.close.called
 
 
 class TestEventSchemaValidation:

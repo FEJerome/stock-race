@@ -34,7 +34,7 @@
 
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
-| 统一事件总线接入 | Backend Redis Streams | 🔄 | 解决中：发布`news:intelligence:extracted`到事件总线，见C2-001, C3-002 |
+| 统一事件总线接入 | Backend Redis Streams | ✅ | SDK已就绪，见C2-001。News Service需实现C3-002发布情报事件 |
 
 ### 2.2 等待 AI Service
 
@@ -107,16 +107,29 @@
 
 #### 冲突2/3：统一事件总线接入与双向依赖解耦
 
-| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
-|------|------|------|--------|----------|
-| C2-NS-001 | 集成Python事件总线SDK | ✅ | P0 | 已创建main.py，集成EventBusClient、Producer、Consumer |
-| C3-002 | 发布新闻情报事件 | ✅ | P0 | 已实现publish_intelligence_event()方法 |
-| C3-002B | 发布情感变化事件 | ✅ | P1 | 已实现publish_sentiment_change_event()方法 |
-| C3-003B | 订阅行情异动事件 | ✅ | P0 | 已订阅market:alert:price_move，实现_handle_price_alert |
-| C3-003C | 订阅AI决策反馈事件 | 🔲 | P1 | 订阅`ai:performance:report`优化Prompt |
-| C2-NS-002 | 配置消费者组 | ✅ | P1 | 已配置消费者组news-trigger-group |
+| 编号 | 任务 | 状态 | 优先级 | 测试描述 | 预计工时 |
+|------|------|------|--------|----------|----------|
+| C2-NS-001 | 集成Python事件总线SDK | ✅ | P0 | 已创建main.py，集成EventBusClient、Producer、Consumer | 已完成 |
+| C3-002 | 发布新闻情报事件 | ✅ | P0 | 已实现：main.py中创建EventProducer，publish_intelligence_event()方法发布到news:intelligence:extracted，Payload包含stock_code,intelligence,sentiment,confidence,timestamp | 2026-02-12 |
+| C3-002B | 发布情感变化事件 | 🔲 | P1 | 实现publish_sentiment_change_event()方法 | 0.5天 |
+| C3-003B | 订阅行情异动事件 | ✅ | P0 | 已实现：创建EventConsumer(consumer_group=news-trigger-group)，订阅market:alert:price_move，_handle_price_alert处理器解析symbol→触发采集 | 2026-02-12 |
+| C3-003C | 订阅AI决策反馈事件 | 🔲 | P1 | 订阅`ai:performance:report`优化Prompt | 0.5天 |
+| C2-NS-002 | 配置消费者组 | ✅ | P1 | 已配置消费者组news-trigger-group | 已完成 |
 
-**阻塞状态**: 依赖 [infra/TODO.md](../infra/TODO.md) C2-001（Python SDK）
+**C3-002 开发要求**:
+1. 在 `main.py` 中创建 `EventProducer` 实例
+2. 实现 `publish_intelligence_event()` 方法
+3. 在情报提取完成后调用该方法
+4. 发布到 stream: `news:intelligence:extracted`
+5. Payload格式: `{ stock_code, intelligence, sentiment, confidence, timestamp }`
+
+**C3-003B 开发要求**:
+1. 创建 `EventConsumer` 实例，consumer_group="news-trigger-group"
+2. 订阅 `market:alert:price_move` 事件
+3. 实现处理器：根据异动股票触发相关新闻采集
+4. 处理器逻辑：解析symbol -> 查询相关新闻源 -> 触发采集
+
+**阻塞状态**: ✅ C2-001 Python SDK已完成，C3-002/C3-003B可立即开始开发
 
 #### 冲突6：广度查询支持
 
@@ -137,8 +150,8 @@
 | 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 说明 |
 |----------|---------|---------|---------|------|
 | Backend | Redis Streams事件总线 | ✅ 已完成 | 2026-02-11 | SDK已就绪，见下方使用指南 |
-| AI Service | 决策反馈接口 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
-| Market Data Service | 行情异动事件 | 🔄 解决中 | 2026-02-11 | 架构变更：事件订阅 |
+| AI Service | 决策反馈接口 | 🔄 解决中 | 2026-02-11 | Trading AI发布`ai:performance:report`事件，News Service需订阅（C3-004B） |
+| Market Data Service | 行情异动事件 | ✅ 已就绪 | 2026-02-12 | Market Data已发布`market:alert:price_move`事件，News Service需实现订阅（C3-003B） |
 | infra | 事件总线Python SDK | ✅ 已完成 | 2026-02-11 | C2-001已完成，见下方使用指南 |
 | infra | 健康检查SDK | ✅ 已完成 | 2026-02-11 | C1-003已完成，见使用指南 |
 
@@ -222,7 +235,7 @@ producer.publish_event(
 
 | 依赖服务 | 所需功能 | 当前状态 | 跟进日期 |
 |----------|---------|---------|---------|
-| Backend | Redis Streams事件总线 | 🔄 解决中 | 2026-02-11 | 等待统一事件总线SDK，见C2-001 |
+| Backend | Redis Streams事件总线 | ✅ 已完成 | 2026-02-11 | SDK已就绪，可开始C3-002开发 |
 | AI Service | ~~决策反馈接口~~ | 🔄 解决中 | 2026-02-11 | 架构变更：通过事件总线发布`news:intelligence:extracted`，见C3-002 |
 | Market Data Service | 行情异动事件 | 🔄 解决中 | 2026-02-11 | 订阅`market:alert:price_move`触发新闻采集，见C3-001 |
 

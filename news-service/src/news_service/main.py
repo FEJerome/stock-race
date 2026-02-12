@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root / "infra" / "health-check" / "src"))
 
 import asyncio
 import signal
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from enum import Enum
 import logging
@@ -386,7 +386,7 @@ class NewsService:
                     "sentiment": sentiment,
                     "confidence": confidence,
                     "source": source,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -419,7 +419,7 @@ class NewsService:
                     "old_sentiment": old_sentiment,
                     "new_sentiment": new_sentiment,
                     "change_reason": change_reason,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             )
 
