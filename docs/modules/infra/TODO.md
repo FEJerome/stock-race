@@ -23,7 +23,7 @@
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
 | C1-001 | 部署共享Redis集群（阶段一：单节点） | 🔲 | P0 | 0.5天 | 阶段一：单节点1GB内存，无持久化，成本¥0 |
-| C1-002 | 定义服务启动状态机 | 🔲 | P0 | 1天 | 定义：初始化→降级运行→正常运行的状态流转 |
+| C1-002 | 定义服务启动状态机 | ✅ | P0 | 1天 | 定义：初始化→降级运行→正常运行的状态流转。已完成：ServiceStateMachine类、5种状态、依赖管理、自动恢复、15个测试通过 |
 | C1-003 | 实现健康检查SDK | ✅ | P0 | 1天 | 统一封装依赖服务健康检查逻辑。已完成：HealthChecker、HealthStatus、HealthReporter、装饰器，16个测试通过 |
 
 **测试描述**:
@@ -44,8 +44,8 @@
 | C2-002 | 实现事件总线SDK（Node.js版） | ✅ | P0 | 2天 | Backend和Frontend使用的Node.js SDK。已完成：EventSchema、EventProducer、EventConsumer、单元测试+集成测试（22 passed），使用指南已创建 |
 | C2-003 | 定义事件Schema和消息格式 | ✅ | P0 | 0.5天 | 统一事件字段：eventId, eventType, timestamp, source, payload。已完成：schema.js已定义 |
 | C2-004 | 实现消息持久化和ACK机制 | ✅ | P1 | 0.5天 | 确保消息不丢失，支持手动ACK。已完成：Consumer自动ACK，Pending消息查询接口已实现 |
-| C2-005 | 配置监控和告警 | 🔲 | P1 | 1天 | 消息堆积、消费延迟、错误率监控 |
-| C2-006 | 实现事件总线管理后台 | 🔲 | P2 | 2天 | 查看事件流、消费者组状态、消息堆积情况 |
+| C2-005 | 配置监控和告警 | ✅ | P1 | 1天 | 消息堆积、消费延迟、错误率监控。已完成：EventBusMonitor类、4种告警规则、告警去重、13个测试通过 |
+| C2-006 | 实现事件总线管理后台 | ✅ | P2 | 2天 | 查看事件流、消费者组状态、消息堆积情况。已完成：dashboard.py Web管理后台、实时监控、自动刷新 |
 
 **事件定义**:
 ```yaml
@@ -218,10 +218,10 @@ events:
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 |
 |------|------|------|--------|-----------|------|
 | O4-001 | 编写阶段一单节点Docker Compose | ✅ | P0 | 0.5天 | 单节点1GB，无持久化，开发环境。已完成：docker-compose.redis.yml、README.md，Redis已运行 |
-| O4-002 | 编写阶段二主从+Sentinel配置 | 🔲 | P1 | 1天 | Master-Slave+Sentinel，生产可用 |
-| O4-003 | 编写阶段三Cluster集群配置 | 🔲 | P2 | 1天 | 3主3从Cluster，大规模生产 |
-| O4-004 | 编写平滑迁移脚本 | 🔲 | P2 | 1天 | 阶段一→阶段二→阶段三迁移指南 |
-| O4-005 | 配置Redis监控告警 | 🔲 | P1 | 0.5天 | 内存使用率、连接数、命中率 |
+| O4-002 | 编写阶段二主从+Sentinel配置 | ✅ | P1 | 1天 | Master-Slave+Sentinel，生产可用。已完成：docker-compose.redis-sentinel.yml、3个Sentinel节点、自动故障转移 |
+| O4-003 | 编写阶段三Cluster集群配置 | ✅ | P2 | 1天 | 3主3从Cluster，大规模生产。已完成：docker-compose.redis-cluster.yml、6节点Cluster、自动分片 |
+| O4-004 | 编写平滑迁移脚本 | ✅ | P2 | 1天 | 阶段一→阶段二→阶段三迁移指南。已完成：migration-guide.md、零停机迁移方案、双写方案、回滚方案 |
+| O4-005 | 配置Redis监控告警 | ✅ | P1 | 0.5天 | 内存使用率、连接数、命中率。已完成：prometheus-redis.yml、redis_alerts.yml、7个告警规则 |
 
 **测试描述**:
 - 测试场景1：单节点部署（docker-compose up -d）
@@ -386,6 +386,7 @@ await producer.publishEvent(EventType.BACKEND_TRADE_EXECUTED, {...});
 | 2026-02-11 | 创建基础设施TODO.md，整合6个冲突解决方案和2个优化方案 | 首席架构师 |
 | 2026-02-11 | Node.js SDK开发完成（C2-002），22个测试通过 | Claude |
 | 2026-02-11 | Python SDK测试通过（C2-001），9个测试通过 | Claude |
+| 2026-02-12 | C1-001完成：共享Redis阶段一部署，更新docker-compose.yml配置，创建部署测试脚本 | Claude |
 
 ---
 

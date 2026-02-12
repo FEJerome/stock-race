@@ -1,0 +1,179 @@
+# Redis 渐进式部署配置 - 阶段二：主从+Sentinel
+# 适用场景：成长期生产环境 (100-1000用户)
+# 成本：¥50-200/月
+# 可用性：99.9%（自动故障转移）
+#
+# 架构：
+#   Master (主节点) <---- Slave (从节点)
+#      ^                    ^
+#      |                    |
+#   Sentinel1  Sentinel2  Sentinel3
+#
+
+version: '3.8'
+
+services:
+  # Redis Master 主节点
+  redis-master:
+    image: redis:7-alpine
+    container_name: stock-race-redis-master
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save ""
+      --tcp-keepalive 300
+      --timeout 0
+      --databases 16
+      --requirepass ${REDIS_PASSWORD:-redis123}
+      --masterauth ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_master_data:/data
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2.5G
+        reservations:
+          memory: 512M
+
+  # Redis Slave 从节点
+  redis-slave:
+    image: redis:7-alpine
+    container_name: stock-race-redis-slave
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save ""
+      --tcp-keepalive 300
+      --timeout 0
+      --databases 16
+      --requirepass ${REDIS_PASSWORD:-redis123}
+      --masterauth ${REDIS_PASSWORD:-redis123}
+      --replicaof redis-master 6379
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_slave_data:/data
+    networks:
+      - stock-race-network
+    depends_on:
+      - redis-master
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2.5G
+        reservations:
+          memory: 512M
+
+  # Sentinel 1
+  sentinel-1:
+    image: redis:7-alpine
+    container_name: stock-race-sentinel-1
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'port 26379' > /etc/sentinel.conf &&
+        echo 'sentinel monitor mymaster redis-master 6379 2' >> /etc/sentinel.conf &&
+        echo 'sentinel auth-pass mymaster ${REDIS_PASSWORD:-redis123}' >> /etc/sentinel.conf &&
+        echo 'sentinel down-after-milliseconds mymaster 5000' >> /etc/sentinel.conf &&
+        echo 'sentinel failover-timeout mymaster 60000' >> /etc/sentinel.conf &&
+        echo 'sentinel parallel-syncs mymaster 1' >> /etc/sentinel.conf &&
+        redis-sentinel /etc/sentinel.conf
+      "
+    ports:
+      - "26379:26379"
+    networks:
+      - stock-race-network
+    depends_on:
+      - redis-master
+      - redis-slave
+
+  # Sentinel 2
+  sentinel-2:
+    image: redis:7-alpine
+    container_name: stock-race-sentinel-2
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'port 26379' > /etc/sentinel.conf &&
+        echo 'sentinel monitor mymaster redis-master 6379 2' >> /etc/sentinel.conf &&
+        echo 'sentinel auth-pass mymaster ${REDIS_PASSWORD:-redis123}' >> /etc/sentinel.conf &&
+        echo 'sentinel down-after-milliseconds mymaster 5000' >> /etc/sentinel.conf &&
+        echo 'sentinel failover-timeout mymaster 60000' >> /etc/sentinel.conf &&
+        echo 'sentinel parallel-syncs mymaster 1' >> /etc/sentinel.conf &&
+        redis-sentinel /etc/sentinel.conf
+      "
+    ports:
+      - "26380:26379"
+    networks:
+      - stock-race-network
+    depends_on:
+      - redis-master
+      - redis-slave
+
+  # Sentinel 3
+  sentinel-3:
+    image: redis:7-alpine
+    container_name: stock-race-sentinel-3
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'port 26379' > /etc/sentinel.conf &&
+        echo 'sentinel monitor mymaster redis-master 6379 2' >> /etc/sentinel.conf &&
+        echo 'sentinel auth-pass mymaster ${REDIS_PASSWORD:-redis123}' >> /etc/sentinel.conf &&
+        echo 'sentinel down-after-milliseconds mymaster 5000' >> /etc/sentinel.conf &&
+        echo 'sentinel failover-timeout mymaster 60000' >> /etc/sentinel.conf &&
+        echo 'sentinel parallel-syncs mymaster 1' >> /etc/sentinel.conf &&
+        redis-sentinel /etc/sentinel.conf
+      "
+    ports:
+      - "26381:26379"
+    networks:
+      - stock-race-network
+    depends_on:
+      - redis-master
+      - redis-slave
+
+  # Redis Exporter for Prometheus
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: stock-race-redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis://redis-master:6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "9121:9121"
+    networks:
+      - stock-race-network
+    depends_on:
+      - redis-master
+
+networks:
+  stock-race-network:
+    driver: bridge
+
+volumes:
+  redis_master_data:
+  redis_slave_data:

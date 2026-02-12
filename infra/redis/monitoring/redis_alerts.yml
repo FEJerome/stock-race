@@ -1,0 +1,82 @@
+# Redis 告警规则
+groups:
+  - name: redis_alerts
+    rules:
+      # 内存使用率告警
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis实例 {{ $labels.instance }} 内存使用率超过80% (当前值: {{ $value }}%)"
+
+      - alert: RedisMemoryCritical
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis内存使用率严重过高"
+          description: "Redis实例 {{ $labels.instance }} 内存使用率超过90% (当前值: {{ $value }}%)"
+
+      # 连接数告警
+      - alert: RedisConnectionsHigh
+        expr: redis_connected_clients > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis连接数过高"
+          description: "Redis实例 {{ $labels.instance }} 连接数超过500 (当前值: {{ $value }})"
+
+      # 命中率告警
+      - alert: RedisHitRateLow
+        expr: rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis命中率过低"
+          description: "Redis实例 {{ $labels.instance }} 命中率低于80%"
+
+      # 实例宕机告警
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis实例宕机"
+          description: "Redis实例 {{ $labels.instance }} 无法访问"
+
+      # 复制延迟告警
+      - alert: RedisReplicationLag
+        expr: redis_master_link_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis主从复制中断"
+          description: "Redis从节点 {{ $labels.instance }} 与主节点复制中断"
+
+      # 持久化失败告警
+      - alert: RedisRDBSaveFailed
+        expr: redis_rdb_last_save_status == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis RDB持久化失败"
+          description: "Redis实例 {{ $labels.instance }} 最近RDB保存失败"
+
+      # 慢查询告警
+      - alert: RedisSlowQueries
+        expr: rate(redis_slowlog_length[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis慢查询增多"
+          description: "Redis实例 {{ $labels.instance }} 慢查询频率增加"
