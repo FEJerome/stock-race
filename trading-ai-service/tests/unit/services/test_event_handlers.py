@@ -43,8 +43,16 @@ class TestMarketDataHandler:
         mock_manager.subscribe = AsyncMock()
         mock_manager_class.return_value = mock_manager
 
-        handler = MarketDataHandler()
-        await handler.start()
+        # Mock EventType in the module where it's imported
+        with patch.dict('sys.modules', {'event_bus': Mock()}):
+            import sys
+            mock_event_bus = Mock()
+            mock_event_bus.EventType.MARKET_QUOTE_REALTIME = Mock()
+            mock_event_bus.EventType.MARKET_QUOTE_REALTIME.value = "market:quote:realtime"
+            sys.modules['event_bus'] = mock_event_bus
+
+            handler = MarketDataHandler()
+            await handler.start()
 
         assert handler._event_bus is mock_manager
         mock_manager.subscribe.assert_called_once()
@@ -158,8 +166,16 @@ class TestNewsHandler:
         mock_manager.subscribe = AsyncMock()
         mock_manager_class.return_value = mock_manager
 
-        handler = NewsHandler()
-        await handler.start()
+        # Mock EventType in the module where it's imported
+        with patch.dict('sys.modules', {'event_bus': Mock()}):
+            import sys
+            mock_event_bus = Mock()
+            mock_event_bus.EventType.NEWS_INTELLIGENCE_EXTRACTED = Mock()
+            mock_event_bus.EventType.NEWS_INTELLIGENCE_EXTRACTED.value = "news:intelligence:extracted"
+            sys.modules['event_bus'] = mock_event_bus
+
+            handler = NewsHandler()
+            await handler.start()
 
         assert handler._event_bus is mock_manager
         mock_manager.subscribe.assert_called_once()
@@ -276,11 +292,21 @@ class TestEventHandlersIntegration:
         mock_manager.subscribe = AsyncMock()
         mock_manager_class.return_value = mock_manager
 
-        market_handler = MarketDataHandler()
-        news_handler = NewsHandler()
+        # Mock EventType in the module where it's imported
+        with patch.dict('sys.modules', {'event_bus': Mock()}):
+            import sys
+            mock_event_bus = Mock()
+            mock_event_bus.EventType.MARKET_QUOTE_REALTIME = Mock()
+            mock_event_bus.EventType.MARKET_QUOTE_REALTIME.value = "market:quote:realtime"
+            mock_event_bus.EventType.NEWS_INTELLIGENCE_EXTRACTED = Mock()
+            mock_event_bus.EventType.NEWS_INTELLIGENCE_EXTRACTED.value = "news:intelligence:extracted"
+            sys.modules['event_bus'] = mock_event_bus
 
-        await market_handler.start()
-        await news_handler.start()
+            market_handler = MarketDataHandler()
+            news_handler = NewsHandler()
+
+            await market_handler.start()
+            await news_handler.start()
 
         # Simulate receiving events
         await market_handler._handle_market_quote({

@@ -1,0 +1,103 @@
+// uni.scss - UniApp 全局 SCSS 变量
+// 此文件会自动注入到所有页面和组件中
+// 只放 SCSS 变量，不放实际样式，避免包体积过大
+
+// ============================================================
+// uview-plus 主题变量
+// ============================================================
+$u-main-color: #303133;
+$u-content-color: #606266;
+$u-tips-color: #909193;
+$u-light-color: #c0c4cc;
+$u-border-color: #dadbde;
+$u-bg-color: #f3f4f6;
+$u-disabled-color: #c8c9cc;
+
+$u-primary: #3c9cff;
+$u-primary-dark: #398ade;
+$u-primary-disabled: #9acafc;
+$u-primary-light: #ecf5ff;
+
+$u-warning: #f9ae3d;
+$u-warning-dark: #f1a532;
+$u-warning-disabled: #f9d39b;
+$u-warning-light: #fdf6ec;
+
+$u-success: #5ac725;
+$u-success-dark: #53c21d;
+$u-success-disabled: #a9e08f;
+$u-success-light: #f5fff0;
+
+$u-error: #f56c6c;
+$u-error-dark: #e45656;
+$u-error-disabled: #f7b2b2;
+$u-error-light: #fef0f0;
+
+$u-info: #909399;
+$u-info-dark: #767a82;
+$u-info-disabled: #c4c6c9;
+$u-info-light: #f4f4f5;
+
+// scss 混入
+@mixin flex($direction: row) {
+	/* #ifndef APP-NVUE */
+	display: flex;
+	/* #endif */
+	flex-direction: $direction;
+}
+
+// ============================================================
+// Stock-Race 项目自定义变量
+// ============================================================
+
+// 主色调
+$primary-color: #1890FF;
+$primary-light: #40A9FF;
+$primary-dark: #096DD9;
+
+// 功能色
+$success-color: #52C41A;
+$warning-color: #FAAD14;
+$error-color: #FF4D4F;
+$info-color: #1890FF;
+
+// 涨跌色（金融专用）
+$rise-color: #FF4D4F;    // 涨 - 红色
+$fall-color: #52C41A;    // 跌 - 绿色
+
+// 中性色
+$title-color: #262626;
+$text-color: #595959;
+$text-muted: #8C8C8C;
+$border-color: #D9D9D9;
+$divider-color: #F0F0F0;
+$bg-color: #F5F5F5;
+$card-bg: #FFFFFF;
+
+// 字体大小
+$font-xs: 20rpx;
+$font-sm: 24rpx;
+$font-base: 28rpx;
+$font-md: 32rpx;
+$font-lg: 36rpx;
+$font-xl: 40rpx;
+$font-xxl: 48rpx;
+
+// 间距
+$spacing-xs: 8rpx;
+$spacing-sm: 16rpx;
+$spacing-base: 24rpx;
+$spacing-md: 32rpx;
+$spacing-lg: 40rpx;
+$spacing-xl: 48rpx;
+
+// 圆角
+$radius-sm: 8rpx;
+$radius-base: 16rpx;
+$radius-lg: 24rpx;
+$radius-round: 50%;
+
+// 阴影
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+$shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
