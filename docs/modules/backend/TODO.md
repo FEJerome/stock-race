@@ -148,7 +148,7 @@ POST /api/v1/guest/token
 | 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
 |------|------|------|----------|------|----------|
 | T-015 | 对接Market Data交易状态 | ✅ | 0.5天 | Market Data C3-001 | 实时交易状态查询，熔断降级 |
-| T-011 | 对接Market Data市场规则 | 🔲 | 0.5天 | Market Data C6-004~006 | 涨跌停限制查询，规则验证 |
+| T-011 | 对接Market Data市场规则 | ✅ | 0.5天 | Market Data C6-004~006 | 涨跌停限制查询，规则验证 |
 | C3-004B | 订阅AI绩效报告事件 | 🔲 | 0.5天 | Trading AI C3-004B | 消费 ai.performance.report 事件 |
 
 **T-015 完成详情**:
