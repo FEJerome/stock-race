@@ -1,1326 +1,1652 @@
 <template>
-  <view class="detail-page">
-    <!-- 加载状态 -->
-    <view class="loading-container" v-if="loading">
-      <text class="loading-text">加载中...</text>
-    </view>
-
-    <!-- 主要内容 -->
-    <template v-else-if="account">
-      <!-- 顶部账户信息卡片 -->
-      <view class="account-card">
-        <view class="card-header">
-          <view class="account-info">
-            <text class="account-name">{{ account.name }}</text>
-            <view class="account-tags">
-              <text class="tag school">{{ getUniversity(account.modelProvider) }}</text>
-              <text class="tag risk" :class="account.riskLevel">{{ getRiskLabel(account.riskLevel) }}</text>
-              <text class="tag status" :class="account.status">{{ getStatusLabel(account.status) }}</text>
+  <view class="trader-detail-page">
+    <view class="page-bg"></view>
+    
+    <view class="detail-container">
+      <view class="trader-header">
+        <view class="header-bg"></view>
+        <view class="back-btn" @click="goBack">
+          <text class="back-icon">←</text>
+        </view>
+        <view class="trader-profile">
+          <view class="trader-avatar-large">
+            <text class="avatar-emoji">{{ traderEmoji }}</text>
+            <view class="avatar-glow"></view>
+          </view>
+          <view class="trader-info">
+            <text class="trader-name">{{ traderName }}</text>
+            <text class="trader-title">{{ traderTitle }}</text>
+            <view class="trader-tags">
+              <view class="tag" :class="riskLevelClass">
+                <text class="tag-icon">{{ riskLevelIcon }}</text>
+                <text class="tag-text">{{ riskLevelText }}</text>
+              </view>
+              <view class="tag" :class="statusClass">
+                <text class="tag-icon">{{ statusIcon }}</text>
+                <text class="tag-text">{{ statusText }}</text>
+              </view>
             </view>
           </view>
-          <view class="account-profit">
-            <text class="profit-rate" :class="account.profitRate >= 0 ? 'text-rise' : 'text-fall'">
-              {{ formatPercent(account.profitRate / 100) }}
-            </text>
-            <text class="profit-label">总收益率</text>
-          </view>
         </view>
-
-        <view class="card-stats">
-          <view class="stat-item">
-            <text class="stat-value">{{ formatMoney(account.currentBalance) }}</text>
-            <text class="stat-label">当前资金</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value" :class="account.totalProfit >= 0 ? 'text-rise' : 'text-fall'">
-              {{ formatChange(account.totalProfit) }}
+        <view class="trader-stats">
+          <view class="stat-card profit">
+            <text class="stat-label">总收益</text>
+            <text class="stat-value" :class="totalProfit >= 0 ? 'text-rise' : 'text-fall'">
+              {{ formatChange(totalProfit) }}
             </text>
-            <text class="stat-label">累计收益</text>
+            <text class="stat-rate" :class="profitRate >= 0 ? 'text-rise' : 'text-fall'">
+              {{ formatPercent(profitRate) }}
+            </text>
           </view>
-          <view class="stat-item">
-            <text class="stat-value">{{ account.todayDecisions }}/{{ account.maxDailyDecisions }}</text>
+          <view class="stat-card balance">
+            <text class="stat-label">当前元宝</text>
+            <text class="stat-value">{{ formatMoney(currentBalance) }}</text>
+            <text class="stat-rate">管理中</text>
+          </view>
+          <view class="stat-card decisions">
             <text class="stat-label">今日决策</text>
+            <text class="stat-value">{{ todayDecisions }}/{{ maxDailyDecisions }}</text>
+            <text class="stat-rate">{{ decisionProgress }}%</text>
           </view>
         </view>
       </view>
 
-      <!-- 收益曲线区域 -->
-      <view class="section profit-section" v-if="profitStats">
-        <view class="section-header">
-          <text class="section-title">收益曲线</text>
-          <view class="period-tabs">
-            <text
-              v-for="period in periods"
-              :key="period.value"
-              class="period-tab"
-              :class="{ active: currentPeriod === period.value }"
-              @click="switchPeriod(period.value)"
-            >
-              {{ period.label }}
-            </text>
-          </view>
-        </view>
-
-        <!-- 收益指标 -->
-        <view class="profit-metrics">
-          <view class="metric-item">
-            <text class="metric-label">最大盈利</text>
-            <text class="metric-value text-rise">+{{ formatMoney(profitStats.maxProfit, 0) }}</text>
-          </view>
-          <view class="metric-item">
-            <text class="metric-label">最大亏损</text>
-            <text class="metric-value text-fall">{{ formatMoney(profitStats.maxLoss, 0) }}</text>
-          </view>
-          <view class="metric-item">
-            <text class="metric-label">日均收益</text>
-            <text class="metric-value" :class="profitStats.avgDailyReturn >= 0 ? 'text-rise' : 'text-fall'">
-              {{ formatPercent(profitStats.avgDailyReturn / 100) }}
-            </text>
-          </view>
-          <view class="metric-item">
-            <text class="metric-label">波动率</text>
-            <text class="metric-value">{{ profitStats.volatility.toFixed(2) }}%</text>
-          </view>
-        </view>
-
-        <!-- 简单收益曲线（使用数据点列表代替图表） -->
-        <view class="profit-list">
-          <view class="profit-item header">
-            <text class="date">日期</text>
-            <text class="value">资产</text>
-            <text class="profit">盈亏</text>
-            <text class="rate">收益率</text>
-          </view>
-          <scroll-view class="profit-scroll" scroll-y>
-            <view
-              v-for="(point, index) in currentProfitData"
-              :key="index"
-              class="profit-item"
-            >
-              <text class="date">{{ formatDate(point.date, 'MM-DD') }}</text>
-              <text class="value">{{ formatMoney(point.value, 0) }}</text>
-              <text class="profit" :class="point.profit >= 0 ? 'text-rise' : 'text-fall'">
-                {{ formatChange(point.profit) }}
-              </text>
-              <text class="rate" :class="point.profitRate >= 0 ? 'text-rise' : 'text-fall'">
-                {{ formatPercent(point.profitRate / 100) }}
-              </text>
-            </view>
-          </scroll-view>
-        </view>
-      </view>
-
-      <!-- Tab 切换区域 -->
-      <view class="section tabs-section">
-        <view class="tabs-header">
+      <view class="content-sections">
+        <view class="section-tabs">
           <view
+            class="tab-item"
             v-for="tab in tabs"
             :key="tab.value"
-            class="tab-item"
             :class="{ active: currentTab === tab.value }"
             @click="switchTab(tab.value)"
           >
-            <text class="tab-text">{{ tab.label }}</text>
-            <text v-if="tab.count !== undefined" class="tab-count">({{ tab.count }})</text>
+            <text class="tab-icon">{{ tab.icon }}</text>
+            <text class="tab-label">{{ tab.label }}</text>
           </view>
         </view>
 
-        <!-- 持仓列表 -->
-        <view class="tab-content" v-if="currentTab === 'holdings'">
-          <view class="holdings-list" v-if="holdings.length > 0">
-            <view class="holding-item header">
-              <text class="stock">股票</text>
-              <text class="price">现价/成本</text>
-              <text class="profit">盈亏</text>
+        <view class="tab-content">
+          <view class="skills-section" v-if="currentTab === 'skills'">
+            <view class="skills-header">
+              <text class="section-title">🎯 技能树</text>
+              <view class="skill-points">
+                <text class="points-label">可用技能点</text>
+                <text class="points-value">{{ availableSkillPoints }}</text>
+              </view>
             </view>
-            <view
-              v-for="holding in holdings"
-              :key="holding.id"
-              class="holding-item"
-              @click="goToStockDetail(holding.stockCode)"
-            >
-              <view class="stock">
-                <text class="stock-name">{{ holding.stockName }}</text>
-                <text class="stock-code">{{ holding.stockCode }}</text>
-                <text class="stock-quantity">{{ holding.quantity }}股</text>
+
+            <view class="skills-tree">
+              <view
+                class="skill-category"
+                v-for="category in skillCategories"
+                :key="category.id"
+              >
+                <view class="category-header">
+                  <text class="category-icon">{{ category.icon }}</text>
+                  <text class="category-name">{{ category.name }}</text>
+                  <text class="category-level">Lv.{{ category.level }}</text>
+                </view>
+                <view class="skills-grid">
+                  <view
+                    class="skill-card"
+                    v-for="skill in category.skills"
+                    :key="skill.id"
+                    :class="{ 
+                      'unlocked': skill.unlocked,
+                      'locked': !skill.unlocked,
+                      'maxed': skill.level >= skill.maxLevel
+                    }"
+                    @click="upgradeSkill(skill)"
+                  >
+                    <view class="skill-icon">
+                      <text class="icon-emoji">{{ skill.icon }}</text>
+                      <view class="lock-overlay" v-if="!skill.unlocked">
+                        <text class="lock-icon">🔒</text>
+                      </view>
+                    </view>
+                    <text class="skill-name">{{ skill.name }}</text>
+                    <view class="skill-level">
+                      <text class="level-text">Lv.{{ skill.level }}/{{ skill.maxLevel }}</text>
+                      <view class="level-bar">
+                        <view 
+                          class="level-fill" 
+                          :style="{ width: (skill.level / skill.maxLevel * 100) + '%' }"
+                        ></view>
+                      </view>
+                    </view>
+                    <view class="skill-effect" v-if="skill.unlocked">
+                      <text class="effect-label">{{ skill.effectLabel }}</text>
+                      <text class="effect-value">{{ skill.effectValue }}</text>
+                    </view>
+                    <view class="skill-cost" v-if="skill.unlocked && skill.level < skill.maxLevel">
+                      <text class="cost-label">升级消耗</text>
+                      <text class="cost-value">{{ skill.upgradeCost }}点</text>
+                    </view>
+                  </view>
+                </view>
               </view>
-              <view class="price">
-                <text class="current-price">{{ holding.currentPrice.toFixed(2) }}</text>
-                <text class="avg-cost">成本 {{ holding.avgCost.toFixed(2) }}</text>
+            </view>
+          </view>
+
+          <view class="achievements-section" v-if="currentTab === 'achievements'">
+            <view class="achievements-header">
+              <text class="section-title">🏆 成就系统</text>
+              <view class="achievement-stats">
+                <text class="stats-label">已解锁</text>
+                <text class="stats-value">{{ unlockedAchievements }}/{{ totalAchievements }}</text>
               </view>
-              <view class="profit">
-                <text class="profit-amount" :class="holding.profit >= 0 ? 'text-rise' : 'text-fall'">
-                  {{ formatChange(holding.profit) }}
+            </view>
+
+            <view class="achievements-list">
+              <view
+                class="achievement-item"
+                v-for="achievement in achievements"
+                :key="achievement.id"
+                :class="{ 'unlocked': achievement.unlocked }"
+              >
+                <view class="achievement-icon">
+                  <text class="icon-emoji">{{ achievement.icon }}</text>
+                  <view class="glow-effect" v-if="achievement.unlocked"></view>
+                  <view class="lock-overlay" v-if="!achievement.unlocked">
+                    <text class="lock-icon">🔒</text>
+                  </view>
+                </view>
+                <view class="achievement-info">
+                  <text class="achievement-name">{{ achievement.name }}</text>
+                  <text class="achievement-desc">{{ achievement.description }}</text>
+                  <view class="achievement-progress" v-if="!achievement.unlocked">
+                    <view class="progress-bar">
+                      <view 
+                        class="progress-fill" 
+                        :style="{ width: achievement.progress + '%' }"
+                      ></view>
+                    </view>
+                    <text class="progress-text">{{ achievement.progress }}%</text>
+                  </view>
+                  <view class="achievement-rewards" v-if="achievement.unlocked">
+                    <view class="reward-item">
+                      <text class="reward-icon">⭐</text>
+                      <text class="reward-value">{{ achievement.expReward }}经验</text>
+                    </view>
+                    <view class="reward-item" v-if="achievement.skillPointReward > 0">
+                      <text class="reward-icon">🎯</text>
+                      <text class="reward-value">{{ achievement.skillPointReward }}技能点</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="performance-section" v-if="currentTab === 'performance'">
+            <view class="performance-header">
+              <text class="section-title">📊 业绩表现</text>
+            </view>
+
+            <view class="performance-metrics">
+              <view class="metric-card">
+                <text class="metric-label">总收益率</text>
+                <text class="metric-value" :class="profitRate >= 0 ? 'text-rise' : 'text-fall'">
+                  {{ formatPercent(profitRate) }}
                 </text>
-                <text class="profit-rate" :class="holding.profitRate >= 0 ? 'text-rise' : 'text-fall'">
-                  {{ formatPercent(holding.profitRate / 100) }}
-                </text>
+                <text class="metric-desc">自创建以来</text>
+              </view>
+              <view class="metric-card">
+                <text class="metric-label">最大回撤</text>
+                <text class="metric-value text-fall">{{ formatPercent(maxDrawdown) }}</text>
+                <text class="metric-desc">历史最大亏损</text>
+              </view>
+              <view class="metric-card">
+                <text class="metric-label">夏普比率</text>
+                <text class="metric-value">{{ sharpeRatio.toFixed(2) }}</text>
+                <text class="metric-desc">风险调整收益</text>
+              </view>
+              <view class="metric-card">
+                <text class="metric-label">胜率</text>
+                <text class="metric-value">{{ winRate.toFixed(1) }}%</text>
+                <text class="metric-desc">盈利交易占比</text>
               </view>
             </view>
-          </view>
-          <view class="empty-state" v-else>
-            <text class="empty-text">暂无持仓</text>
-            <text class="empty-desc">该基金经理还没有购买任何股票</text>
-          </view>
-        </view>
 
-        <!-- 交易记录 -->
-        <view class="tab-content" v-if="currentTab === 'trades'">
-          <view class="trades-list" v-if="trades.length > 0">
-            <view
-              v-for="trade in trades"
-              :key="trade.id"
-              class="trade-item"
-            >
-              <view class="trade-header">
-                <view class="stock-info">
-                  <text class="stock-name">{{ trade.stockName }}</text>
-                  <text class="stock-code">{{ trade.stockCode }}</text>
-                </view>
-                <text class="trade-type" :class="trade.type">{{ trade.type === 'buy' ? '买入' : '卖出' }}</text>
-              </view>
-              <view class="trade-body">
-                <view class="trade-info">
-                  <text class="info-label">成交价格</text>
-                  <text class="info-value">{{ trade.price.toFixed(2) }}</text>
-                </view>
-                <view class="trade-info">
-                  <text class="info-label">成交数量</text>
-                  <text class="info-value">{{ trade.quantity }}股</text>
-                </view>
-                <view class="trade-info">
-                  <text class="info-label">成交金额</text>
-                  <text class="info-value">{{ formatMoney(trade.amount, 0) }}</text>
-                </view>
-                <view class="trade-info">
-                  <text class="info-label">手续费</text>
-                  <text class="info-value">{{ formatMoney(trade.fee, 2) }}</text>
-                </view>
-              </view>
-              <view class="trade-footer">
-                <text class="trade-time">{{ formatDate(trade.createdAt, 'YYYY-MM-DD HH:mm') }}</text>
-              </view>
-            </view>
-          </view>
-          <view class="empty-state" v-else>
-            <text class="empty-text">暂无交易记录</text>
-            <text class="empty-desc">该基金经理还没有进行任何交易</text>
-          </view>
-        </view>
-
-        <!-- 决策历史 -->
-        <view class="tab-content" v-if="currentTab === 'decisions'">
-          <view class="decisions-list" v-if="decisions.length > 0">
-            <view
-              v-for="decision in decisions"
-              :key="decision.id"
-              class="decision-item"
-              :class="{ expanded: expandedDecision === decision.id }"
-            >
-              <view class="decision-header" @click="toggleDecision(decision.id)">
-                <view class="decision-type" :class="decision.type">
-                  {{ decision.type === 'buy' ? '买入' : decision.type === 'sell' ? '卖出' : '持有' }}
-                </view>
-                <view class="decision-stock">
-                  <text class="stock-name">{{ decision.stockName }}</text>
-                  <text class="stock-code">{{ decision.stockCode }}</text>
-                </view>
-                <view class="decision-confidence">
-                  <text class="confidence-label">置信度</text>
-                  <text class="confidence-value">{{ (decision.confidence * 100).toFixed(0) }}%</text>
-                </view>
-                <text class="expand-icon" :class="{ expanded: expandedDecision === decision.id }">▼</text>
-              </view>
-              <view class="decision-body" v-if="expandedDecision === decision.id">
-                <view class="decision-detail">
-                  <text class="detail-label">建议价格</text>
-                  <text class="detail-value">{{ decision.price.toFixed(2) }}</text>
-                </view>
-                <view class="decision-detail">
-                  <text class="detail-label">建议数量</text>
-                  <text class="detail-value">{{ decision.quantity }}股</text>
-                </view>
-                <view class="decision-reason">
-                  <text class="reason-label">决策理由</text>
-                  <text class="reason-text">{{ decision.reason }}</text>
-                </view>
-                <view class="decision-result" v-if="decision.result">
-                  <text class="result-status" :class="decision.result.status">
-                    {{ decision.result.status === 'success' ? '执行成功' : decision.result.status === 'failed' ? '执行失败' : '待执行' }}
-                  </text>
-                  <text v-if="decision.result.profit !== undefined" class="result-profit" :class="decision.result.profit >= 0 ? 'text-rise' : 'text-fall'">
-                    收益: {{ formatChange(decision.result.profit) }}
+            <view class="performance-chart">
+              <view class="chart-header">
+                <text class="chart-title">收益曲线</text>
+                <view class="chart-periods">
+                  <text
+                    v-for="period in periods"
+                    :key="period.value"
+                    class="period-tab"
+                    :class="{ active: currentPeriod === period.value }"
+                    @click="switchPeriod(period.value)"
+                  >
+                    {{ period.label }}
                   </text>
                 </view>
               </view>
-              <view class="decision-footer">
-                <text class="decision-time">{{ formatRelativeTime(decision.createdAt) }}</text>
+              <view class="chart-content">
+                <view class="chart-bars">
+                  <view
+                    class="chart-bar"
+                    v-for="(point, index) in chartData"
+                    :key="index"
+                    :class="{ 'positive': point.profit >= 0, 'negative': point.profit < 0 }"
+                  >
+                    <view 
+                      class="bar-fill"
+                      :style="{ 
+                        height: Math.abs(point.profitRate * 200) + 'rpx',
+                        bottom: point.profitRate >= 0 ? '50%' : '50%'
+                      }"
+                    ></view>
+                    <text class="bar-label">{{ formatDate(point.date, 'MM-DD') }}</text>
+                  </view>
+                </view>
               </view>
             </view>
           </view>
-          <view class="empty-state" v-else>
-            <text class="empty-text">暂无决策记录</text>
-            <text class="empty-desc">该基金经理还没有生成任何决策</text>
+
+          <view class="holdings-section" v-if="currentTab === 'holdings'">
+            <view class="holdings-header">
+              <text class="section-title">💼 当前持仓</text>
+              <text class="holdings-count">{{ holdings.length }}只股票</text>
+            </view>
+
+            <view class="holdings-list" v-if="holdings.length > 0">
+              <view
+                class="holding-card"
+                v-for="holding in holdings"
+                :key="holding.id"
+              >
+                <view class="holding-info">
+                  <text class="stock-name">{{ holding.stockName }}</text>
+                  <text class="stock-code">{{ holding.stockCode }}</text>
+                  <text class="stock-quantity">{{ holding.quantity }}股</text>
+                </view>
+                <view class="holding-price">
+                  <text class="current-price">{{ holding.currentPrice.toFixed(2) }}</text>
+                  <text class="avg-cost">成本 {{ holding.avgCost.toFixed(2) }}</text>
+                </view>
+                <view class="holding-profit">
+                  <text class="profit-amount" :class="holding.profit >= 0 ? 'text-rise' : 'text-fall'">
+                    {{ formatChange(holding.profit) }}
+                  </text>
+                  <text class="profit-rate" :class="holding.profitRate >= 0 ? 'text-rise' : 'text-fall'">
+                    {{ formatPercent(holding.profitRate) }}
+                  </text>
+                </view>
+              </view>
+            </view>
+            <view class="empty-holdings" v-else>
+              <text class="empty-emoji">📊</text>
+              <text class="empty-text">暂无持仓</text>
+              <text class="empty-desc">交易员正在寻找投资机会</text>
+            </view>
           </view>
         </view>
       </view>
 
-      <!-- 底部操作栏 -->
       <view class="action-bar">
         <button class="action-btn secondary" @click="goBack">返回</button>
-        <button class="action-btn primary" @click="triggerDecision" :disabled="account.todayDecisions >= account.maxDailyDecisions">
-          立即决策
+        <button 
+          class="action-btn primary" 
+          @click="triggerDecision"
+          :disabled="todayDecisions >= maxDailyDecisions"
+        >
+          <text class="btn-icon">⚡</text>
+          <text class="btn-text">立即决策</text>
         </button>
       </view>
-    </template>
-
-    <!-- 错误状态 -->
-    <view class="error-state" v-else>
-      <text class="error-text">加载失败</text>
-      <text class="error-desc">无法获取基金经理信息</text>
-      <button class="retry-btn" @click="loadData">重试</button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAIStore } from '@/stores/ai'
 import { useTradingStore } from '@/stores/trading'
-import { formatMoney, formatPercent, formatChange, formatDate, formatRelativeTime } from '@/utils/formatter'
-import type { AIAccount, AIDecision } from '@/types/ai'
-import type { Holding, Trade } from '@/types/trading'
-
-// ============================================================================
-// 类型定义
-// ============================================================================
-
-type TabType = 'holdings' | 'trades' | 'decisions'
-type PeriodType = 'daily' | 'weekly' | 'monthly'
-
-interface PeriodOption {
-  label: string
-  value: PeriodType
-}
-
-interface TabOption {
-  label: string
-  value: TabType
-  count?: number
-}
-
-// ============================================================================
-// 状态管理
-// ============================================================================
+import { formatMoney, formatPercent, formatChange, formatDate } from '@/utils/formatter'
 
 const aiStore = useAIStore()
 const tradingStore = useTradingStore()
 
-// 页面状态
-const loading = ref(false)
 const accountId = ref('')
-const currentTab = ref<TabType>('holdings')
-const currentPeriod = ref<PeriodType>('daily')
-const expandedDecision = ref<string | null>(null)
+const currentTab = ref('skills')
+const currentPeriod = ref('daily')
 
-// 数据
-const account = ref<AIAccount | null>(null)
-const holdings = ref<Holding[]>([])
-const trades = ref<Trade[]>([])
-const decisions = ref<AIDecision[]>([])
-const profitStats = ref<any>(null)
+const traderEmoji = ref('🤖')
+const traderName = ref('智能交易员')
+const traderTitle = ref('Lv.5 资深分析师')
+const totalProfit = ref(12580.50)
+const profitRate = ref(0.1258)
+const currentBalance = ref(112580.50)
+const todayDecisions = ref(3)
+const maxDailyDecisions = ref(5)
+const riskLevel = ref('moderate')
+const status = ref('active')
 
-// ============================================================================
-// 计算属性
-// ============================================================================
+const availableSkillPoints = ref(8)
+const maxDrawdown = ref(-0.08)
+const sharpeRatio = ref(1.85)
+const winRate = ref(68.5)
 
-const periods = computed<PeriodOption[]>(() => [
-  { label: '日', value: 'daily' },
-  { label: '周', value: 'weekly' },
-  { label: '月', value: 'monthly' },
+const tabs = [
+  { value: 'skills', label: '技能', icon: '🎯' },
+  { value: 'achievements', label: '成就', icon: '🏆' },
+  { value: 'performance', label: '业绩', icon: '📊' },
+  { value: 'holdings', label: '持仓', icon: '💼' },
+]
+
+const periods = [
+  { value: 'daily', label: '日' },
+  { value: 'weekly', label: '周' },
+  { value: 'monthly', label: '月' },
+]
+
+const skillCategories = ref([
+  {
+    id: 'analysis',
+    name: '分析能力',
+    icon: '🔍',
+    level: 3,
+    skills: [
+      {
+        id: 'market-trend',
+        name: '市场趋势',
+        icon: '📈',
+        level: 3,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 2,
+        effectLabel: '趋势判断',
+        effectValue: '+15%',
+      },
+      {
+        id: 'fundamental',
+        name: '基本面',
+        icon: '📊',
+        level: 2,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 2,
+        effectLabel: '分析准确',
+        effectValue: '+10%',
+      },
+      {
+        id: 'technical',
+        name: '技术面',
+        icon: '📉',
+        level: 4,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 3,
+        effectLabel: '信号识别',
+        effectValue: '+20%',
+      },
+    ],
+  },
+  {
+    id: 'risk',
+    name: '风险控制',
+    icon: '🛡️',
+    level: 2,
+    skills: [
+      {
+        id: 'position-size',
+        name: '仓位管理',
+        icon: '⚖️',
+        level: 2,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 2,
+        effectLabel: '风险降低',
+        effectValue: '-12%',
+      },
+      {
+        id: 'stop-loss',
+        name: '止损策略',
+        icon: '🚫',
+        level: 1,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 1,
+        effectLabel: '止损效率',
+        effectValue: '+8%',
+      },
+      {
+        id: 'diversification',
+        name: '分散投资',
+        icon: '🌐',
+        level: 0,
+        maxLevel: 5,
+        unlocked: false,
+        upgradeCost: 3,
+        effectLabel: '分散度',
+        effectValue: '解锁',
+      },
+    ],
+  },
+  {
+    id: 'execution',
+    name: '执行效率',
+    icon: '⚡',
+    level: 4,
+    skills: [
+      {
+        id: 'timing',
+        name: '时机把握',
+        icon: '⏰',
+        level: 4,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 2,
+        effectLabel: '入场时机',
+        effectValue: '+18%',
+      },
+      {
+        id: 'speed',
+        name: '反应速度',
+        icon: '🚀',
+        level: 3,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 2,
+        effectLabel: '响应时间',
+        effectValue: '-25%',
+      },
+      {
+        id: 'adaptation',
+        name: '市场适应',
+        icon: '🔄',
+        level: 2,
+        maxLevel: 5,
+        unlocked: true,
+        upgradeCost: 2,
+        effectLabel: '适应能力',
+        effectValue: '+12%',
+      },
+    ],
+  },
 ])
 
-const tabs = computed<TabOption[]>(() => [
-  { label: '持仓', value: 'holdings', count: holdings.value.length },
-  { label: '交易', value: 'trades', count: trades.value.length },
-  { label: '决策', value: 'decisions', count: decisions.value.length },
+const achievements = ref([
+  {
+    id: 1,
+    name: '初出茅庐',
+    icon: '🌱',
+    description: '创建第一个AI交易员',
+    unlocked: true,
+    progress: 100,
+    expReward: 100,
+    skillPointReward: 1,
+  },
+  {
+    id: 2,
+    name: '第一桶金',
+    icon: '💰',
+    description: '单笔交易盈利超过1000元宝',
+    unlocked: true,
+    progress: 100,
+    expReward: 200,
+    skillPointReward: 2,
+  },
+  {
+    id: 3,
+    name: '稳定盈利',
+    icon: '📈',
+    description: '连续7天实现正收益',
+    unlocked: true,
+    progress: 100,
+    expReward: 300,
+    skillPointReward: 3,
+  },
+  {
+    id: 4,
+    name: '交易达人',
+    icon: '🎯',
+    description: '累计完成100笔交易',
+    unlocked: false,
+    progress: 68,
+    expReward: 500,
+    skillPointReward: 5,
+  },
+  {
+    id: 5,
+    name: '风险控制大师',
+    icon: '🛡️',
+    description: '最大回撤控制在5%以内',
+    unlocked: false,
+    progress: 85,
+    expReward: 400,
+    skillPointReward: 4,
+  },
+  {
+    id: 6,
+    name: '投资大师',
+    icon: '👑',
+    description: '总收益率达到50%',
+    unlocked: false,
+    progress: 25,
+    expReward: 1000,
+    skillPointReward: 10,
+  },
+  {
+    id: 7,
+    name: '传奇人物',
+    icon: '🏆',
+    description: '在排行榜进入前10名',
+    unlocked: false,
+    progress: 0,
+    expReward: 2000,
+    skillPointReward: 20,
+  },
 ])
 
-const currentProfitData = computed(() => {
-  if (!profitStats.value) return []
-  switch (currentPeriod.value) {
-    case 'daily':
-      return profitStats.value.dailyProfits || []
-    case 'weekly':
-      return profitStats.value.weeklyProfits || []
-    case 'monthly':
-      return profitStats.value.monthlyProfits || []
-    default:
-      return []
-  }
+const holdings = ref([
+  {
+    id: '1',
+    stockName: '贵州茅台',
+    stockCode: '600519',
+    quantity: 100,
+    currentPrice: 1850.00,
+    avgCost: 1750.00,
+    profit: 10000.00,
+    profitRate: 0.0571,
+  },
+  {
+    id: '2',
+    stockName: '宁德时代',
+    stockCode: '300750',
+    quantity: 200,
+    currentPrice: 180.50,
+    avgCost: 185.00,
+    profit: -900.00,
+    profitRate: -0.0243,
+  },
+  {
+    id: '3',
+    stockName: '比亚迪',
+    stockCode: '002594',
+    quantity: 300,
+    currentPrice: 260.00,
+    avgCost: 240.00,
+    profit: 6000.00,
+    profitRate: 0.0833,
+  },
+])
+
+const chartData = ref([
+  { date: '2024-01-01', profit: 500, profitRate: 0.005 },
+  { date: '2024-01-02', profit: 800, profitRate: 0.008 },
+  { date: '2024-01-03', profit: -300, profitRate: -0.003 },
+  { date: '2024-01-04', profit: 1200, profitRate: 0.012 },
+  { date: '2024-01-05', profit: 600, profitRate: 0.006 },
+  { date: '2024-01-06', profit: 1500, profitRate: 0.015 },
+  { date: '2024-01-07', profit: -200, profitRate: -0.002 },
+])
+
+const decisionProgress = computed(() => {
+  return Math.round((todayDecisions.value / maxDailyDecisions.value) * 100)
 })
 
-// ============================================================================
-// 方法
-// ============================================================================
-
-// 获取页面参数
-const getPageParams = () => {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
-  const query = currentPage.options || {}
-  accountId.value = query.id || ''
-}
-
-// 加载数据
-const loadData = async () => {
-  if (!accountId.value) {
-    uni.showToast({ title: '参数错误', icon: 'none' })
-    return
-  }
-
-  loading.value = true
-  uni.showLoading({ title: '加载中' })
-
-  try {
-    // 并行加载所有数据
-    await Promise.all([
-      loadAccountDetail(),
-      loadHoldings(),
-      loadTrades(),
-      loadDecisions(),
-      loadProfitStats(),
-    ])
-  } catch (error) {
-    console.error('Load data error:', error)
-    uni.showToast({ title: '加载失败', icon: 'none' })
-  } finally {
-    loading.value = false
-    uni.hideLoading()
-  }
-}
-
-// 加载账户详情
-const loadAccountDetail = async () => {
-  const result = await aiStore.fetchAccountDetail(accountId.value)
-  if (result && aiStore.currentAccount) {
-    account.value = aiStore.currentAccount
-  }
-}
-
-// 加载持仓
-const loadHoldings = async () => {
-  // TODO: 等待 Backend API 支持按账户筛选持仓
-  // 目前先加载所有持仓，然后按 accountId 过滤
-  await tradingStore.fetchHoldings()
-  holdings.value = tradingStore.holdings.filter(h => h.accountId === accountId.value)
-}
-
-// 加载交易记录
-const loadTrades = async () => {
-  await tradingStore.fetchTrades({ accountId: accountId.value, page: 1, pageSize: 50 })
-  trades.value = tradingStore.trades
-}
-
-// 加载决策历史
-const loadDecisions = async () => {
-  await aiStore.fetchDecisions(accountId.value)
-  decisions.value = aiStore.decisions
-}
-
-// 加载收益统计
-const loadProfitStats = async () => {
-  await tradingStore.fetchProfitStats()
-  profitStats.value = tradingStore.profitStats
-}
-
-// 切换 Tab
-const switchTab = (tab: TabType) => {
-  currentTab.value = tab
-}
-
-// 切换周期
-const switchPeriod = (period: PeriodType) => {
-  currentPeriod.value = period
-}
-
-// 展开/收起决策详情
-const toggleDecision = (id: string) => {
-  expandedDecision.value = expandedDecision.value === id ? null : id
-}
-
-// 触发决策
-const triggerDecision = async () => {
-  if (!account.value) return
-
-  if (account.value.todayDecisions >= account.value.maxDailyDecisions) {
-    uni.showToast({ title: '今日决策次数已用完', icon: 'none' })
-    return
-  }
-
-  uni.showLoading({ title: '生成决策中' })
-  const result = await aiStore.triggerDecision(accountId.value)
-  uni.hideLoading()
-
-  if (result) {
-    // 刷新决策列表
-    await loadDecisions()
-    // 刷新账户详情（更新今日决策次数）
-    await loadAccountDetail()
-  }
-}
-
-// 返回上一页
-const goBack = () => {
-  uni.navigateBack()
-}
-
-// 跳转到股票详情
-const goToStockDetail = (stockCode: string) => {
-  uni.navigateTo({
-    url: `/pages/market/stock-detail?code=${stockCode}`,
-  })
-}
-
-// ============================================================================
-// 辅助函数
-// ============================================================================
-
-const getUniversity = (provider: string): string => {
+const riskLevelClass = computed(() => {
   const map: Record<string, string> = {
-    deepseek: 'DeepSeek',
-    glm: '智谱AI',
-    claude: 'Anthropic',
-    openai: 'OpenAI',
-    qwen: '阿里通义',
+    conservative: 'conservative',
+    moderate: 'moderate',
+    aggressive: 'aggressive',
   }
-  return map[provider] || provider
-}
+  return map[riskLevel.value] || 'moderate'
+})
 
-const getRiskLabel = (level: string): string => {
+const riskLevelIcon = computed(() => {
   const map: Record<string, string> = {
-    conservative: '保守',
-    moderate: '稳健',
-    aggressive: '激进',
+    conservative: '🛡️',
+    moderate: '⚖️',
+    aggressive: '🚀',
   }
-  return map[level] || level
-}
+  return map[riskLevel.value] || '⚖️'
+})
 
-const getStatusLabel = (status: string): string => {
+const riskLevelText = computed(() => {
+  const map: Record<string, string> = {
+    conservative: '保守型',
+    moderate: '稳健型',
+    aggressive: '激进型',
+  }
+  return map[riskLevel.value] || '稳健型'
+})
+
+const statusClass = computed(() => {
+  const map: Record<string, string> = {
+    active: 'active',
+    inactive: 'inactive',
+    deciding: 'deciding',
+  }
+  return map[status.value] || 'inactive'
+})
+
+const statusIcon = computed(() => {
+  const map: Record<string, string> = {
+    active: '✅',
+    inactive: '⏸️',
+    deciding: '⚡',
+  }
+  return map[status.value] || '⏸️'
+})
+
+const statusText = computed(() => {
   const map: Record<string, string> = {
     active: '运行中',
     inactive: '已暂停',
     deciding: '决策中',
-    error: '异常',
   }
-  return map[status] || status
-}
-
-// ============================================================================
-// 生命周期
-// ============================================================================
-
-onMounted(() => {
-  getPageParams()
-  loadData()
+  return map[status.value] || '已暂停'
 })
 
-// 监听账户ID变化（用于刷新）
-watch(() => accountId.value, () => {
-  if (accountId.value) {
-    loadData()
+const unlockedAchievements = computed(() => {
+  return achievements.value.filter(a => a.unlocked).length
+})
+
+const totalAchievements = computed(() => {
+  return achievements.value.length
+})
+
+function switchTab(tab: string) {
+  currentTab.value = tab
+}
+
+function switchPeriod(period: string) {
+  currentPeriod.value = period
+}
+
+function upgradeSkill(skill: any) {
+  if (!skill.unlocked) {
+    uni.showToast({ 
+      title: '技能未解锁', 
+      icon: 'none' 
+    })
+    return
   }
+
+  if (skill.level >= skill.maxLevel) {
+    uni.showToast({ 
+      title: '技能已满级', 
+      icon: 'none' 
+    })
+    return
+  }
+
+  if (availableSkillPoints.value < skill.upgradeCost) {
+    uni.showToast({ 
+      title: '技能点不足', 
+      icon: 'none' 
+    })
+    return
+  }
+
+  skill.level++
+  availableSkillPoints.value -= skill.upgradeCost
+  
+  uni.showToast({ 
+    title: `${skill.name}升级成功！`, 
+    icon: 'success' 
+  })
+}
+
+function triggerDecision() {
+  if (todayDecisions.value >= maxDailyDecisions.value) {
+    uni.showToast({ 
+      title: '今日决策次数已用完', 
+      icon: 'none' 
+    })
+    return
+  }
+
+  uni.showLoading({ title: '生成决策中...' })
+  
+  setTimeout(() => {
+    uni.hideLoading()
+    todayDecisions.value++
+    uni.showToast({ 
+      title: '决策生成成功！', 
+      icon: 'success' 
+    })
+  }, 1500)
+}
+
+function goBack() {
+  uni.navigateBack()
+}
+
+onMounted(() => {
+  const pages = getCurrentPages()
+  const currentPage = pages[pages.length - 1]
+  const query = currentPage.options || {}
+  accountId.value = query.id || ''
 })
 </script>
 
-<style scoped lang="scss">
-// ============================================================================
-// 变量定义
-// ============================================================================
-
-$primary-color: #1890FF;
-$rise-color: #FF4D4F;
-$fall-color: #52C41A;
-$text-primary: #262626;
-$text-secondary: #595959;
-$text-tertiary: #8C8C8C;
-$bg-color: #F5F5F5;
-$card-bg: #FFFFFF;
-$border-color: #F0F0F0;
-
-// ============================================================================
-// 页面布局
-// ============================================================================
-
-.detail-page {
+<style lang="scss" scoped>
+.trader-detail-page {
   min-height: 100vh;
-  background: $bg-color;
-  padding-bottom: 120rpx;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  position: relative;
+  overflow: hidden;
+
+  .page-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .detail-container {
+    position: relative;
+    z-index: 1;
+    padding-bottom: 140rpx;
+  }
 }
 
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+.trader-header {
+  position: relative;
+  padding: 40rpx 32rpx;
 
-.loading-text {
-  font-size: 28rpx;
-  color: $text-tertiary;
-}
+  .header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    border-radius: 0 0 40rpx 40rpx;
+  }
 
-// ============================================================================
-// 账户卡片
-// ============================================================================
-
-.account-card {
-  background: $card-bg;
-  margin: 20rpx;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-
-  .card-header {
+  .back-btn {
+    position: absolute;
+    top: 40rpx;
+    left: 32rpx;
+    width: 64rpx;
+    height: 64rpx;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 32rpx;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24rpx;
-    padding-bottom: 24rpx;
-    border-bottom: 1rpx solid $border-color;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
 
-    .account-info {
-      flex: 1;
+    .back-icon {
+      font-size: 32rpx;
+      color: #ffffff;
+    }
+  }
 
-      .account-name {
-        font-size: 36rpx;
-        font-weight: 600;
-        color: $text-primary;
-        margin-bottom: 12rpx;
+  .trader-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 80rpx;
+    margin-bottom: 32rpx;
+
+    .trader-avatar-large {
+      position: relative;
+      width: 160rpx;
+      height: 160rpx;
+      margin-bottom: 24rpx;
+
+      .avatar-emoji {
+        position: relative;
+        z-index: 2;
+        font-size: 96rpx;
+        line-height: 160rpx;
+        text-align: center;
       }
 
-      .account-tags {
+      .avatar-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200rpx;
+        height: 200rpx;
+        background: radial-gradient(circle, rgba(102, 126, 234, 0.4) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+      }
+    }
+
+    .trader-info {
+      text-align: center;
+
+      .trader-name {
+        display: block;
+        font-size: 40rpx;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 8rpx;
+      }
+
+      .trader-title {
+        display: block;
+        font-size: 26rpx;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 16rpx;
+      }
+
+      .trader-tags {
         display: flex;
-        flex-wrap: wrap;
         gap: 12rpx;
+        justify-content: center;
 
         .tag {
+          display: flex;
+          align-items: center;
+          gap: 6rpx;
+          padding: 6rpx 16rpx;
+          border-radius: 20rpx;
           font-size: 22rpx;
-          padding: 4rpx 12rpx;
-          border-radius: 4rpx;
 
-          &.school {
-            background: #E6F7FF;
-            color: $primary-color;
+          &.conservative {
+            background: rgba(82, 196, 26, 0.2);
+            color: #52c41a;
           }
 
-          &.risk {
-            &.conservative {
-              background: #F6FFED;
-              color: $fall-color;
-            }
-
-            &.moderate {
-              background: #FFF7E6;
-              color: #FA8C16;
-            }
-
-            &.aggressive {
-              background: #FFF1F0;
-              color: $rise-color;
-            }
+          &.moderate {
+            background: rgba(24, 144, 255, 0.2);
+            color: #1890ff;
           }
 
-          &.status {
-            &.active {
-              background: #F6FFED;
-              color: $fall-color;
-            }
+          &.aggressive {
+            background: rgba(255, 77, 79, 0.2);
+            color: #ff4d4f;
+          }
 
-            &.inactive {
-              background: #F5F5F5;
-              color: $text-tertiary;
-            }
+          &.active {
+            background: rgba(82, 196, 26, 0.2);
+            color: #52c41a;
+          }
 
-            &.deciding {
-              background: #E6F7FF;
-              color: $primary-color;
-            }
+          &.inactive {
+            background: rgba(140, 140, 140, 0.2);
+            color: #8c8c8c;
+          }
 
-            &.error {
-              background: #FFF1F0;
-              color: $rise-color;
-            }
+          &.deciding {
+            background: rgba(250, 173, 20, 0.2);
+            color: #faad14;
+          }
+
+          .tag-icon {
+            font-size: 20rpx;
+          }
+
+          .tag-text {
+            font-size: 22rpx;
           }
         }
       }
     }
-
-    .account-profit {
-      text-align: right;
-
-      .profit-rate {
-        font-size: 48rpx;
-        font-weight: 700;
-        display: block;
-      }
-
-      .profit-label {
-        font-size: 24rpx;
-        color: $text-tertiary;
-        margin-top: 8rpx;
-      }
-    }
   }
 
-  .card-stats {
+  .trader-stats {
     display: flex;
-    justify-content: space-between;
+    gap: 16rpx;
 
-    .stat-item {
-      text-align: center;
+    .stat-card {
       flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20rpx);
+      border-radius: 20rpx;
+      padding: 24rpx 16rpx;
+      text-align: center;
+      border: 1rpx solid rgba(255, 255, 255, 0.1);
 
-      .stat-value {
-        font-size: 32rpx;
-        font-weight: 600;
-        color: $text-primary;
-        display: block;
+      &.profit {
+        background: rgba(82, 196, 26, 0.1);
+        border-color: rgba(82, 196, 26, 0.3);
+      }
+
+      &.balance {
+        background: rgba(24, 144, 255, 0.1);
+        border-color: rgba(24, 144, 255, 0.3);
+      }
+
+      &.decisions {
+        background: rgba(250, 173, 20, 0.1);
+        border-color: rgba(250, 173, 20, 0.3);
       }
 
       .stat-label {
-        font-size: 24rpx;
-        color: $text-tertiary;
-        margin-top: 8rpx;
         display: block;
+        font-size: 22rpx;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 8rpx;
+      }
+
+      .stat-value {
+        display: block;
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 4rpx;
+      }
+
+      .stat-rate {
+        display: block;
+        font-size: 20rpx;
+        color: rgba(255, 255, 255, 0.5);
       }
     }
   }
 }
 
-// ============================================================================
-// 收益区域
-// ============================================================================
+.content-sections {
+  padding: 0 24rpx;
+}
 
-.section {
-  background: $card-bg;
-  margin: 20rpx;
+.section-tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 32rpx;
+  padding: 8rpx;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20rpx);
   border-radius: 16rpx;
-  padding: 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
-
-  .section-title {
-    font-size: 32rpx;
-    font-weight: 600;
-    color: $text-primary;
-  }
-
-  .period-tabs {
-    display: flex;
-    background: $bg-color;
-    border-radius: 8rpx;
-    padding: 4rpx;
-
-    .period-tab {
-      font-size: 24rpx;
-      padding: 8rpx 20rpx;
-      color: $text-secondary;
-      border-radius: 6rpx;
-      transition: all 0.3s;
-
-      &.active {
-        background: $card-bg;
-        color: $primary-color;
-        box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.06);
-      }
-    }
-  }
-}
-
-.profit-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16rpx;
-  margin-bottom: 24rpx;
-  padding-bottom: 24rpx;
-  border-bottom: 1rpx solid $border-color;
-
-  .metric-item {
-    text-align: center;
-
-    .metric-label {
-      font-size: 22rpx;
-      color: $text-tertiary;
-      display: block;
-      margin-bottom: 8rpx;
-    }
-
-    .metric-value {
-      font-size: 26rpx;
-      font-weight: 500;
-    }
-  }
-}
-
-.profit-list {
-  .profit-scroll {
-    max-height: 400rpx;
-  }
-
-  .profit-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 16rpx 0;
-    border-bottom: 1rpx solid $border-color;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &.header {
-      padding: 12rpx 0;
-      border-bottom: 2rpx solid $border-color;
-
-      text {
-        font-weight: 500;
-        color: $text-secondary;
-        font-size: 24rpx;
-      }
-    }
-
-    text {
-      font-size: 26rpx;
-      color: $text-primary;
-      flex: 1;
-      text-align: center;
-
-      &.date {
-        text-align: left;
-      }
-    }
-  }
-}
-
-// ============================================================================
-// Tab 区域
-// ============================================================================
-
-.tabs-section {
-  padding: 0;
-  overflow: hidden;
-}
-
-.tabs-header {
-  display: flex;
-  border-bottom: 1rpx solid $border-color;
 
   .tab-item {
     flex: 1;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    padding: 24rpx 0;
-    position: relative;
-    cursor: pointer;
+    gap: 4rpx;
+    padding: 16rpx 8rpx;
+    border-radius: 12rpx;
+    transition: all 0.3s ease;
 
-    &.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 20%;
-      right: 20%;
-      height: 4rpx;
-      background: $primary-color;
-      border-radius: 2rpx;
+    &.active {
+      background: rgba(102, 126, 234, 0.2);
     }
 
-    .tab-text {
-      font-size: 28rpx;
-      color: $text-secondary;
-
-      .active & {
-        color: $primary-color;
-        font-weight: 500;
-      }
+    .tab-icon {
+      font-size: 32rpx;
     }
 
-    .tab-count {
-      font-size: 24rpx;
-      color: $text-tertiary;
-      margin-left: 8rpx;
-
-      .active & {
-        color: $primary-color;
-      }
+    .tab-label {
+      font-size: 22rpx;
+      color: rgba(255, 255, 255, 0.8);
     }
   }
 }
 
 .tab-content {
-  padding: 20rpx;
+  .section-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 24rpx;
+  }
 }
 
-// ============================================================================
-// 持仓列表
-// ============================================================================
-
-.holdings-list {
-  .holding-item {
+.skills-section {
+  .skills-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24rpx 0;
-    border-bottom: 1rpx solid $border-color;
+    margin-bottom: 24rpx;
 
-    &:last-child {
-      border-bottom: none;
-    }
+    .skill-points {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      padding: 8rpx 16rpx;
+      background: rgba(102, 126, 234, 0.2);
+      border-radius: 20rpx;
 
-    &.header {
-      padding: 16rpx 0;
-
-      text {
-        font-size: 24rpx;
-        color: $text-secondary;
-        font-weight: 500;
-      }
-    }
-
-    .stock {
-      flex: 1;
-
-      .stock-name {
-        font-size: 30rpx;
-        color: $text-primary;
-        font-weight: 500;
-        display: block;
-      }
-
-      .stock-code {
+      .points-label {
         font-size: 22rpx;
-        color: $text-tertiary;
-        margin-top: 4rpx;
-        display: block;
+        color: rgba(255, 255, 255, 0.7);
       }
 
-      .stock-quantity {
-        font-size: 22rpx;
-        color: $text-secondary;
-        margin-top: 4rpx;
-        display: block;
-      }
-    }
-
-    .price {
-      flex: 1;
-      text-align: center;
-
-      .current-price {
-        font-size: 30rpx;
-        color: $text-primary;
-        display: block;
-      }
-
-      .avg-cost {
-        font-size: 22rpx;
-        color: $text-tertiary;
-        margin-top: 4rpx;
-        display: block;
-      }
-    }
-
-    .profit {
-      flex: 1;
-      text-align: right;
-
-      .profit-amount {
+      .points-value {
         font-size: 28rpx;
-        font-weight: 500;
-        display: block;
-      }
-
-      .profit-rate {
-        font-size: 24rpx;
-        margin-top: 4rpx;
-        display: block;
+        font-weight: bold;
+        color: #667eea;
       }
     }
   }
-}
 
-// ============================================================================
-// 交易记录
-// ============================================================================
+  .skills-tree {
+    .skill-category {
+      margin-bottom: 32rpx;
 
-.trades-list {
-  .trade-item {
-    padding: 24rpx 0;
-    border-bottom: 1rpx solid $border-color;
+      &:last-child {
+        margin-bottom: 0;
+      }
 
-    &:last-child {
-      border-bottom: none;
-    }
+      .category-header {
+        display: flex;
+        align-items: center;
+        gap: 12rpx;
+        margin-bottom: 16rpx;
+        padding: 16rpx 20rpx;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16rpx;
 
-    .trade-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16rpx;
-
-      .stock-info {
-        .stock-name {
-          font-size: 30rpx;
-          color: $text-primary;
-          font-weight: 500;
-          margin-right: 12rpx;
+        .category-icon {
+          font-size: 32rpx;
         }
 
-        .stock-code {
+        .category-name {
+          flex: 1;
+          font-size: 28rpx;
+          font-weight: 600;
+          color: #ffffff;
+        }
+
+        .category-level {
           font-size: 24rpx;
-          color: $text-tertiary;
+          color: rgba(255, 255, 255, 0.6);
         }
       }
 
-      .trade-type {
-        font-size: 24rpx;
-        padding: 4rpx 16rpx;
-        border-radius: 4rpx;
+      .skills-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12rpx;
 
-        &.buy {
-          background: #FFF1F0;
-          color: $rise-color;
+        .skill-card {
+          position: relative;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20rpx);
+          border-radius: 16rpx;
+          padding: 20rpx 12rpx;
+          text-align: center;
+          border: 1rpx solid rgba(255, 255, 255, 0.1);
+          transition: all 0.3s ease;
+
+          &.unlocked {
+            &:active {
+              transform: scale(0.95);
+            }
+          }
+
+          &.locked {
+            opacity: 0.5;
+          }
+
+          &.maxed {
+            border-color: rgba(250, 173, 20, 0.5);
+            box-shadow: 0 0 20rpx rgba(250, 173, 20, 0.3);
+          }
+
+          .skill-icon {
+            position: relative;
+            width: 80rpx;
+            height: 80rpx;
+            margin: 0 auto 12rpx;
+
+            .icon-emoji {
+              font-size: 48rpx;
+              line-height: 80rpx;
+            }
+
+            .lock-overlay {
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.4);
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+
+              .lock-icon {
+                font-size: 32rpx;
+              }
+            }
+          }
+
+          .skill-name {
+            display: block;
+            font-size: 22rpx;
+            color: #ffffff;
+            margin-bottom: 12rpx;
+          }
+
+          .skill-level {
+            margin-bottom: 8rpx;
+
+            .level-text {
+              display: block;
+              font-size: 20rpx;
+              color: rgba(255, 255, 255, 0.6);
+              margin-bottom: 4rpx;
+            }
+
+            .level-bar {
+              height: 6rpx;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 3rpx;
+              overflow: hidden;
+              margin-bottom: 8rpx;
+
+              .level-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                border-radius: 3rpx;
+                transition: width 0.3s ease;
+              }
+            }
+          }
+
+          .skill-effect {
+            margin-bottom: 8rpx;
+
+            .effect-label {
+              display: block;
+              font-size: 18rpx;
+              color: rgba(255, 255, 255, 0.5);
+            }
+
+            .effect-value {
+              display: block;
+              font-size: 20rpx;
+              color: #52c41a;
+              font-weight: 600;
+            }
+          }
+
+          .skill-cost {
+            .cost-label {
+              display: block;
+              font-size: 18rpx;
+              color: rgba(255, 255, 255, 0.5);
+            }
+
+            .cost-value {
+              display: block;
+              font-size: 20rpx;
+              color: #667eea;
+              font-weight: 600;
+            }
+          }
         }
-
-        &.sell {
-          background: #F6FFED;
-          color: $fall-color;
-        }
-      }
-    }
-
-    .trade-body {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16rpx;
-      margin-bottom: 16rpx;
-
-      .trade-info {
-        .info-label {
-          font-size: 22rpx;
-          color: $text-tertiary;
-          display: block;
-          margin-bottom: 4rpx;
-        }
-
-        .info-value {
-          font-size: 26rpx;
-          color: $text-primary;
-          font-weight: 500;
-        }
-      }
-    }
-
-    .trade-footer {
-      .trade-time {
-        font-size: 22rpx;
-        color: $text-tertiary;
       }
     }
   }
 }
 
-// ============================================================================
-// 决策历史
-// ============================================================================
+.achievements-section {
+  .achievements-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24rpx;
 
-.decisions-list {
-  .decision-item {
-    padding: 24rpx 0;
-    border-bottom: 1rpx solid $border-color;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &.expanded {
-      background: #FAFAFA;
-      margin: 0 -20rpx;
-      padding: 24rpx 20rpx;
-    }
-
-    .decision-header {
+    .achievement-stats {
       display: flex;
       align-items: center;
-      gap: 16rpx;
+      gap: 8rpx;
+      padding: 8rpx 16rpx;
+      background: rgba(250, 173, 20, 0.2);
+      border-radius: 20rpx;
 
-      .decision-type {
+      .stats-label {
         font-size: 22rpx;
-        padding: 4rpx 12rpx;
-        border-radius: 4rpx;
-        font-weight: 500;
+        color: rgba(255, 255, 255, 0.7);
+      }
 
-        &.buy {
-          background: #FFF1F0;
-          color: $rise-color;
+      .stats-value {
+        font-size: 28rpx;
+        font-weight: bold;
+        color: #faad14;
+      }
+    }
+  }
+
+  .achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+
+    .achievement-item {
+      display: flex;
+      gap: 16rpx;
+      padding: 24rpx;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20rpx);
+      border-radius: 20rpx;
+      border: 1rpx solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+
+      &.unlocked {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.2);
+      }
+
+      .achievement-icon {
+        position: relative;
+        width: 96rpx;
+        height: 96rpx;
+        flex-shrink: 0;
+
+        .icon-emoji {
+          font-size: 64rpx;
+          line-height: 96rpx;
+          text-align: center;
         }
 
-        &.sell {
-          background: #F6FFED;
-          color: $fall-color;
+        .glow-effect {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 120rpx;
+          height: 120rpx;
+          background: radial-gradient(circle, rgba(250, 173, 20, 0.4) 0%, transparent 70%);
+          border-radius: 50%;
+          animation: pulse 2s ease-in-out infinite;
         }
 
-        &.hold {
-          background: #F5F5F5;
-          color: $text-tertiary;
+        .lock-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.4);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .lock-icon {
+            font-size: 40rpx;
+          }
         }
       }
 
-      .decision-stock {
+      .achievement-info {
         flex: 1;
 
-        .stock-name {
+        .achievement-name {
+          display: block;
           font-size: 28rpx;
-          color: $text-primary;
-          font-weight: 500;
-          margin-right: 8rpx;
-        }
-
-        .stock-code {
-          font-size: 22rpx;
-          color: $text-tertiary;
-        }
-      }
-
-      .decision-confidence {
-        text-align: center;
-
-        .confidence-label {
-          font-size: 20rpx;
-          color: $text-tertiary;
-          display: block;
-        }
-
-        .confidence-value {
-          font-size: 24rpx;
-          color: $primary-color;
-          font-weight: 500;
-        }
-      }
-
-      .expand-icon {
-        font-size: 24rpx;
-        color: $text-tertiary;
-        transition: transform 0.3s;
-
-        &.expanded {
-          transform: rotate(180deg);
-        }
-      }
-    }
-
-    .decision-body {
-      margin-top: 20rpx;
-      padding-top: 20rpx;
-      border-top: 1rpx solid $border-color;
-
-      .decision-detail {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 12rpx;
-
-        .detail-label {
-          font-size: 24rpx;
-          color: $text-secondary;
-        }
-
-        .detail-value {
-          font-size: 24rpx;
-          color: $text-primary;
-          font-weight: 500;
-        }
-      }
-
-      .decision-reason {
-        margin: 16rpx 0;
-        padding: 16rpx;
-        background: $card-bg;
-        border-radius: 8rpx;
-
-        .reason-label {
-          font-size: 22rpx;
-          color: $text-tertiary;
-          display: block;
+          font-weight: 600;
+          color: #ffffff;
           margin-bottom: 8rpx;
         }
 
-        .reason-text {
-          font-size: 26rpx;
-          color: $text-primary;
-          line-height: 1.6;
-        }
-      }
-
-      .decision-result {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 16rpx;
-        padding-top: 16rpx;
-        border-top: 1rpx dashed $border-color;
-
-        .result-status {
+        .achievement-desc {
+          display: block;
           font-size: 24rpx;
-          padding: 4rpx 12rpx;
-          border-radius: 4rpx;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 16rpx;
+        }
 
-          &.success {
-            background: #F6FFED;
-            color: $fall-color;
+        .achievement-progress {
+          display: flex;
+          align-items: center;
+          gap: 12rpx;
+          margin-bottom: 12rpx;
+
+          .progress-bar {
+            flex: 1;
+            height: 8rpx;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4rpx;
+            overflow: hidden;
+
+            .progress-fill {
+              height: 100%;
+              background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+              border-radius: 4rpx;
+              transition: width 0.5s ease;
+            }
           }
 
-          &.failed {
-            background: #FFF1F0;
-            color: $rise-color;
-          }
-
-          &.pending {
-            background: #FFF7E6;
-            color: #FA8C16;
+          .progress-text {
+            font-size: 22rpx;
+            color: rgba(255, 255, 255, 0.6);
+            min-width: 48rpx;
+            text-align: right;
           }
         }
 
-        .result-profit {
-          font-size: 26rpx;
-          font-weight: 500;
+        .achievement-rewards {
+          display: flex;
+          gap: 16rpx;
+
+          .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 6rpx;
+            padding: 6rpx 12rpx;
+            background: rgba(250, 173, 20, 0.1);
+            border-radius: 12rpx;
+
+            .reward-icon {
+              font-size: 20rpx;
+            }
+
+            .reward-value {
+              font-size: 20rpx;
+              color: #faad14;
+            }
+          }
         }
-      }
-    }
-
-    .decision-footer {
-      margin-top: 12rpx;
-
-      .decision-time {
-        font-size: 22rpx;
-        color: $text-tertiary;
       }
     }
   }
 }
 
-// ============================================================================
-// 底部操作栏
-// ============================================================================
+.performance-section {
+  .performance-header {
+    margin-bottom: 24rpx;
+  }
+
+  .performance-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16rpx;
+    margin-bottom: 32rpx;
+
+    .metric-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20rpx);
+      border-radius: 20rpx;
+      padding: 24rpx;
+      text-align: center;
+      border: 1rpx solid rgba(255, 255, 255, 0.1);
+
+      .metric-label {
+        display: block;
+        font-size: 22rpx;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 12rpx;
+      }
+
+      .metric-value {
+        display: block;
+        font-size: 36rpx;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 8rpx;
+      }
+
+      .metric-desc {
+        display: block;
+        font-size: 20rpx;
+        color: rgba(255, 255, 255, 0.4);
+      }
+    }
+  }
+
+  .performance-chart {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20rpx);
+    border-radius: 20rpx;
+    padding: 24rpx;
+    border: 1rpx solid rgba(255, 255, 255, 0.1);
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24rpx;
+
+      .chart-title {
+        font-size: 28rpx;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .chart-periods {
+        display: flex;
+        gap: 8rpx;
+
+        .period-tab {
+          padding: 6rpx 16rpx;
+          border-radius: 16rpx;
+          font-size: 22rpx;
+          color: rgba(255, 255, 255, 0.6);
+          transition: all 0.3s ease;
+
+          &.active {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+          }
+        }
+      }
+
+      .chart-content {
+        .chart-bars {
+          display: flex;
+          gap: 12rpx;
+          height: 300rpx;
+          align-items: center;
+          justify-content: space-between;
+
+          .chart-bar {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            .bar-fill {
+              position: absolute;
+              width: 40rpx;
+              border-radius: 8rpx;
+              transition: all 0.3s ease;
+
+              &.positive {
+                background: linear-gradient(180deg, #52c41a 0%, #73d13d 100%);
+              }
+
+              &.negative {
+                background: linear-gradient(180deg, #ff4d4f 0%, #ff7875 100%);
+              }
+            }
+
+            .bar-label {
+              position: absolute;
+              bottom: -32rpx;
+              font-size: 18rpx;
+              color: rgba(255, 255, 255, 0.5);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.holdings-section {
+  .holdings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24rpx;
+
+    .holdings-count {
+      font-size: 24rpx;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .holdings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+
+    .holding-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24rpx;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20rpx);
+      border-radius: 20rpx;
+      border: 1rpx solid rgba(255, 255, 255, 0.1);
+
+      .holding-info {
+        flex: 1;
+
+        .stock-name {
+          display: block;
+          font-size: 28rpx;
+          font-weight: 600;
+          color: #ffffff;
+          margin-bottom: 4rpx;
+        }
+
+        .stock-code {
+          display: block;
+          font-size: 22rpx;
+          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 4rpx;
+        }
+
+        .stock-quantity {
+          display: block;
+          font-size: 20rpx;
+          color: rgba(255, 255, 255, 0.4);
+        }
+      }
+
+      .holding-price {
+        text-align: center;
+
+        .current-price {
+          display: block;
+          font-size: 28rpx;
+          font-weight: 600;
+          color: #ffffff;
+          margin-bottom: 4rpx;
+        }
+
+        .avg-cost {
+          display: block;
+          font-size: 20rpx;
+          color: rgba(255, 255, 255, 0.4);
+        }
+      }
+
+      .holding-profit {
+        text-align: right;
+
+        .profit-amount {
+          display: block;
+          font-size: 28rpx;
+          font-weight: 600;
+          margin-bottom: 4rpx;
+        }
+
+        .profit-rate {
+          display: block;
+          font-size: 20rpx;
+        }
+      }
+    }
+  }
+
+  .empty-holdings {
+    text-align: center;
+    padding: 80rpx 32rpx;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20rpx);
+    border-radius: 20rpx;
+    border: 1rpx dashed rgba(255, 255, 255, 0.2);
+
+    .empty-emoji {
+      display: block;
+      font-size: 96rpx;
+      margin-bottom: 24rpx;
+      opacity: 0.5;
+    }
+
+    .empty-text {
+      display: block;
+      font-size: 28rpx;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 12rpx;
+    }
+
+    .empty-desc {
+      display: block;
+      font-size: 24rpx;
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+}
 
 .action-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
+  padding: 24rpx 32rpx;
+  background: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(20rpx);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
   display: flex;
-  gap: 20rpx;
-  padding: 20rpx 30rpx calc(20rpx + env(safe-area-inset-bottom));
-  background: $card-bg;
-  border-top: 1rpx solid $border-color;
-  z-index: 100;
+  gap: 16rpx;
 
   .action-btn {
     flex: 1;
-    height: 88rpx;
-    line-height: 88rpx;
-    text-align: center;
-    border-radius: 12rpx;
-    font-size: 30rpx;
-    font-weight: 500;
+    padding: 24rpx;
+    border-radius: 16rpx;
+    font-size: 28rpx;
+    font-weight: 600;
     border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8rpx;
 
     &.secondary {
-      background: $bg-color;
-      color: $text-secondary;
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
     }
 
     &.primary {
-      background: $primary-color;
-      color: #FFFFFF;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
 
       &:disabled {
-        background: #BFBFBF;
-        color: #FFFFFF;
+        opacity: 0.5;
+        box-shadow: none;
       }
+    }
+
+    .btn-icon {
+      font-size: 24rpx;
     }
   }
 }
 
-// ============================================================================
-// 空状态
-// ============================================================================
-
-.empty-state {
-  text-align: center;
-  padding: 60rpx 40rpx;
-
-  .empty-text {
-    font-size: 30rpx;
-    color: $text-secondary;
-    display: block;
-    margin-bottom: 12rpx;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
   }
-
-  .empty-desc {
-    font-size: 24rpx;
-    color: $text-tertiary;
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.1);
   }
 }
 
-// ============================================================================
-// 错误状态
-// ============================================================================
-
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-
-  .error-text {
-    font-size: 36rpx;
-    color: $text-primary;
-    margin-bottom: 12rpx;
-  }
-
-  .error-desc {
-    font-size: 26rpx;
-    color: $text-secondary;
-    margin-bottom: 40rpx;
-  }
-
-  .retry-btn {
-    width: 240rpx;
-    height: 80rpx;
-    line-height: 80rpx;
-    background: $primary-color;
-    color: #FFFFFF;
-    border-radius: 12rpx;
-    font-size: 28rpx;
-  }
-}
-
-// ============================================================================
-// 工具类
-// ============================================================================
-
-.text-rise {
-  color: $rise-color !important;
-}
-
-.text-fall {
-  color: $fall-color !important;
-}
+.text-rise { color: #ff4d4f; }
+.text-fall { color: #52c41a; }
 </style>

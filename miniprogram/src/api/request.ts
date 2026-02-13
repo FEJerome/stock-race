@@ -21,15 +21,8 @@ http.interceptors.request.use(
     
     const authStore = useAuthStore()
     
-    // 游客模式：使用真实的游客 Token
-    if (authStore.isGuestMode && authStore.guestSession?.token) {
-      config.header = {
-        ...config.header,
-        'X-Guest-Token': authStore.guestSession.token,
-      }
-    } 
-    // 正式用户：使用 Bearer Token
-    else if (authStore.token && authStore.token !== 'GUEST_TOKEN') {
+    // 统一使用JWT token（游客和正式用户都使用JWT）
+    if (authStore.token && authStore.token !== 'GUEST_TOKEN') {
       config.header = {
         ...config.header,
         Authorization: `Bearer ${authStore.token}`,

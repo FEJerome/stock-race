@@ -4,17 +4,17 @@
  * 格式化金额
  * @param value 金额数值
  * @param decimals 小数位数
- * @param prefix 前缀（如 ¥）
+ * @param prefix 前缀（如 💰）
  */
-export function formatMoney(value: number | string, decimals = 2, prefix = '¥'): string {
+export function formatMoney(value: number | string, decimals = 2, prefix = '💰 '): string {
   const num = typeof value === 'string' ? parseFloat(value) : value
-  if (isNaN(num)) return `${prefix}0.00`
+  if (isNaN(num)) return `${prefix}0.00 元宝`
 
   const formatted = num.toLocaleString('zh-CN', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })
-  return `${prefix}${formatted}`
+  return `${prefix}${formatted} 元宝`
 }
 
 /**

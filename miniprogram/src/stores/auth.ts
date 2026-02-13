@@ -142,7 +142,7 @@ export const useAuthStore = defineStore(
               
               // 后端确认有效，设置游客模式
               guestSession.value = session
-              token.value = GUEST_TOKEN_MARKER
+              token.value = session.token
               userInfo.value = {
                 id: 'guest',
                 username: 'guest',
@@ -229,8 +229,8 @@ export const useAuthStore = defineStore(
                 guestSession.value = session
                 uni.setStorageSync(GUEST_LIMITS.STORAGE_KEY, JSON.stringify(session))
 
-                // 设置游客模式标记
-                token.value = GUEST_TOKEN_MARKER
+                // 设置真实的JWT token（游客也使用JWT）
+                token.value = guestTokenRes.guestToken
                 userInfo.value = {
                   id: 'guest',
                   username: 'guest',
@@ -300,8 +300,8 @@ export const useAuthStore = defineStore(
                 guestSession.value = session
                 uni.setStorageSync(GUEST_LIMITS.STORAGE_KEY, JSON.stringify(session))
 
-                // 设置游客模式标记
-                token.value = GUEST_TOKEN_MARKER
+                // 设置真实的JWT token（游客也使用JWT）
+                token.value = guestTokenRes.guestToken
                 userInfo.value = {
                   id: 'guest',
                   username: 'guest',

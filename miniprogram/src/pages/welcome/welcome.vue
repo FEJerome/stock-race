@@ -1,10 +1,29 @@
 <template>
   <view class="welcome-page">
+    <view class="welcome-bg"></view>
+    
     <view class="welcome-container">
       <view class="logo-section">
-        <text class="logo-icon">📈</text>
-        <text class="title">Stock-Race</text>
-        <text class="subtitle">AI股票竞赛平台</text>
+        <view class="logo-icon-wrapper">
+          <text class="logo-icon">🤖</text>
+          <view class="logo-glow"></view>
+        </view>
+        <text class="title">AI财商竞技场</text>
+        <text class="subtitle">虚拟竞技，真实学习</text>
+        <view class="badge-row">
+          <view class="badge">
+            <text class="badge-icon">🎓</text>
+            <text class="badge-text">财商教育</text>
+          </view>
+          <view class="badge">
+            <text class="badge-icon">💰</text>
+            <text class="badge-text">虚拟竞技</text>
+          </view>
+          <view class="badge">
+            <text class="badge-icon">🤖</text>
+            <text class="badge-text">AI智能</text>
+          </view>
+        </view>
       </view>
 
       <view class="features-section">
@@ -15,28 +34,44 @@
         </view>
         <view class="feature-item">
           <view class="feature-icon">🤖</view>
-          <text class="feature-title">AI基金经理</text>
-          <text class="feature-desc">聘任AI基金经理管理资产</text>
+          <text class="feature-title">AI交易员</text>
+          <text class="feature-desc">聘任AI交易员管理元宝</text>
         </view>
         <view class="feature-item">
-          <view class="feature-icon">💼</view>
-          <text class="feature-title">模拟交易</text>
-          <text class="feature-desc">零风险模拟股票交易</text>
+          <view class="feature-icon">💰</view>
+          <text class="feature-title">虚拟竞技</text>
+          <text class="feature-desc">零风险虚拟交易竞技</text>
         </view>
         <view class="feature-item">
           <view class="feature-icon">🏆</view>
-          <text class="feature-title">竞赛排行</text>
+          <text class="feature-title">排行榜</text>
           <text class="feature-desc">与其他投资者一较高下</text>
         </view>
       </view>
 
-      <view class="actions-section">
-        <button class="primary-btn" @click="handleStart">
-          开始体验
-        </button>
-        <button class="secondary-btn" @click="handleLogin">
-          立即登录
-        </button>
+      <view class="age-warning-card">
+        <view class="warning-header">
+          <text class="warning-icon">⚠️</text>
+          <text class="warning-title">年龄提示</text>
+        </view>
+        <view class="warning-content">
+          <text class="warning-text">本平台为虚拟投资模拟平台</text>
+          <text class="warning-text">旨在提供财商教育和投资知识学习</text>
+          <text class="warning-text">所有交易均为虚拟竞技，不涉及真实货币</text>
+        </view>
+        <view class="age-question">
+          <text class="question-text">您是否已满18岁？</text>
+        </view>
+        <view class="age-buttons">
+          <view class="age-btn guardian" @click="handleGuardian">
+            <text class="btn-icon">👨‍👩‍👧</text>
+            <text class="btn-text">我是监护人</text>
+          </view>
+          <view class="age-btn adult" @click="handleAdult">
+            <text class="btn-icon">✓</text>
+            <text class="btn-text">我已满18岁</text>
+          </view>
+        </view>
       </view>
 
       <view class="hint-section">
@@ -55,136 +90,270 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 
-function handleStart() {
-  // 标记欢迎页已显示
-  authStore.markWelcomeShown()
+function handleAdult() {
+  uni.setStorageSync('ageConfirmed', true)
+  uni.setStorageSync('userType', 'adult')
   
-  // 跳转到首页
+  authStore.markWelcomeShown()
   uni.switchTab({ url: '/pages/index/index' })
 }
 
-function handleLogin() {
-  // 标记欢迎页已显示
-  authStore.markWelcomeShown()
+function handleGuardian() {
+  uni.setStorageSync('ageConfirmed', true)
+  uni.setStorageSync('userType', 'guardian')
   
-  // 跳转到登录页
-  uni.redirectTo({ url: '/pages/login/login' })
+  authStore.markWelcomeShown()
+  uni.switchTab({ url: '/pages/index/index' })
 }
 </script>
 
 <style lang="scss" scoped>
 .welcome-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #f5f5f5 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40rpx;
 }
 
+.welcome-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+
 .welcome-container {
   width: 100%;
   max-width: 600rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .logo-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 60rpx;
+  margin-bottom: 48rpx;
 
-  .logo-icon {
-    font-size: 120rpx;
+  .logo-icon-wrapper {
+    position: relative;
     margin-bottom: 24rpx;
+
+    .logo-icon {
+      font-size: 120rpx;
+      display: block;
+      position: relative;
+      z-index: 2;
+    }
+
+    .logo-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180rpx;
+      height: 180rpx;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
   }
 
   .title {
     font-size: 48rpx;
     font-weight: bold;
-    color: #262626;
+    color: #ffd700;
     margin-bottom: 12rpx;
+    text-shadow: 0 0 20rpx rgba(255, 215, 0, 0.3);
   }
 
   .subtitle {
     font-size: 28rpx;
-    color: #8c8c8c;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 24rpx;
+    letter-spacing: 2rpx;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 16rpx;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      padding: 12rpx 20rpx;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 32rpx;
+      border: 1rpx solid rgba(255, 255, 255, 0.2);
+
+      .badge-icon {
+        font-size: 24rpx;
+      }
+
+      .badge-text {
+        font-size: 24rpx;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
   }
 }
 
 .features-section {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10rpx);
   border-radius: 24rpx;
   padding: 40rpx 32rpx;
-  margin-bottom: 40rpx;
-  box-shadow: 0 4rpx 24rpx rgba(0, 0, 0, 0.06);
+  margin-bottom: 32rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
 
   .feature-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    margin-bottom: 40rpx;
+    gap: 24rpx;
+    margin-bottom: 32rpx;
 
     &:last-child {
       margin-bottom: 0;
     }
 
     .feature-icon {
-      font-size: 64rpx;
-      margin-bottom: 16rpx;
+      font-size: 48rpx;
+      flex-shrink: 0;
+    }
+
+    .feature-info {
+      flex: 1;
+      min-width: 0;
     }
 
     .feature-title {
-      font-size: 32rpx;
+      display: block;
+      font-size: 28rpx;
       font-weight: 600;
-      color: #262626;
-      margin-bottom: 8rpx;
+      color: rgba(255, 255, 255, 0.95);
+      margin-bottom: 4rpx;
     }
 
     .feature-desc {
+      display: block;
       font-size: 24rpx;
-      color: #8c8c8c;
+      color: rgba(255, 255, 255, 0.6);
     }
   }
 }
 
-.actions-section {
-  display: flex;
-  flex-direction: column;
-  gap: 24rpx;
-  margin-bottom: 40rpx;
+.age-warning-card {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
+  backdrop-filter: blur(10rpx);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 32rpx;
+  border: 2rpx solid rgba(255, 215, 0, 0.3);
 
-  .primary-btn {
-    height: 96rpx;
-    background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
-    border-radius: 48rpx;
-    color: #ffffff;
-    font-size: 32rpx;
-    font-weight: 500;
-    border: none;
+  .warning-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12rpx;
+    margin-bottom: 20rpx;
 
-    &:active {
-      opacity: 0.9;
+    .warning-icon {
+      font-size: 32rpx;
+    }
+
+    .warning-title {
+      font-size: 28rpx;
+      font-weight: 600;
+      color: #ffd700;
     }
   }
 
-  .secondary-btn {
-    height: 96rpx;
-    background: #ffffff;
-    border: 2rpx solid #1890ff;
-    border-radius: 48rpx;
-    color: #1890ff;
-    font-size: 32rpx;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .warning-content {
+    margin-bottom: 24rpx;
 
-    &:active {
-      background: #f0f8ff;
+    .warning-text {
+      display: block;
+      font-size: 24rpx;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.8;
+      margin-bottom: 8rpx;
+      text-align: center;
+    }
+  }
+
+  .age-question {
+    text-align: center;
+    padding: 20rpx 0;
+    margin-bottom: 20rpx;
+    border-top: 1rpx solid rgba(255, 215, 0, 0.2);
+    border-bottom: 1rpx solid rgba(255, 215, 0, 0.2);
+
+    .question-text {
+      font-size: 26rpx;
+      font-weight: 600;
+      color: #ffd700;
+    }
+  }
+
+  .age-buttons {
+    display: flex;
+    gap: 16rpx;
+
+    .age-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8rpx;
+      padding: 24rpx 16rpx;
+      border-radius: 16rpx;
+      transition: all 0.3s ease;
+
+      &.guardian {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1rpx solid rgba(255, 255, 255, 0.2);
+
+        &:active {
+          background: rgba(255, 255, 255, 0.2);
+        }
+      }
+
+      &.adult {
+        background: linear-gradient(135deg, #ffd700 0%, #ffec8b 100%);
+        border: 1rpx solid rgba(255, 215, 0, 0.5);
+
+        &:active {
+          opacity: 0.9;
+        }
+      }
+
+      .btn-icon {
+        font-size: 36rpx;
+      }
+
+      .btn-text {
+        font-size: 24rpx;
+        font-weight: 600;
+
+        .guardian & {
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .adult & {
+          color: #1a1a2e;
+        }
+      }
     }
   }
 }
@@ -194,8 +363,8 @@ function handleLogin() {
 
   .hint-text {
     display: block;
-    font-size: 26rpx;
-    color: #595959;
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.7);
     margin-bottom: 16rpx;
   }
 
@@ -205,9 +374,20 @@ function handleLogin() {
     gap: 8rpx;
 
     .hint-item {
-      font-size: 24rpx;
-      color: #8c8c8c;
+      font-size: 22rpx;
+      color: rgba(255, 255, 255, 0.5);
     }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.1);
   }
 }
 </style>
