@@ -27,6 +27,7 @@
 | B-004 | 手动刷新接口（管理员） | ✅ | P1 | `POST /api/v1/market/hot-stocks/refresh` | 集成测试 |
 | B-005 | 用户活动数据收集 | 🔄 | P1 | 从WebSocket连接统计用户查看行为 | 待实现 |
 | B-006 | 定时更新任务 | 🔲 | P1 | 每30秒自动更新热股票列表 | 待集成 |
+| B-007 | 热股票公开API端点 | ✅ | P1 | `GET /api/v1/public/hot-stocks`，供Market Data Service无认证访问 | 联调通过 |
 
 **设计文档**: [热股票列表API设计](../../architecture/CURRENT/HOT_STOCK_LIST_DESIGN.md)
 
@@ -35,6 +36,8 @@
 - ✅ 多因子权重计算：归一化处理，保留1位小数
 - ✅ Redis缓存：60秒TTL，支持容错降级
 - ✅ 权重范围：0-100，便于Market Data Service排序选取
+- ✅ 公开API：`/api/v1/public/hot-stocks` 无需认证，供Market Data Service调用
+- ✅ 修复Redis API：`setex` → `setEx` 适配Redis v4客户端
 
 **API端点**:
 - `GET /api/v1/market/hot-stocks` - 获取加权热股票列表
@@ -67,7 +70,35 @@
 
 ---
 
-### 1.2 等待其他服务实现
+### 1.2 游客数据PostgreSQL化改造（高优先级）
+
+> **背景**: 将游客数据从Redis迁移到PostgreSQL，使用逻辑删除+定时清理策略，与正式用户统一存储。
+> **设计文档**: [游客模式设计方案](../../architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md)
+
+| 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 | 测试覆盖 |
+|------|------|------|--------|-----------|------|----------|
+| G-001 | 创建guest_sessions表 | 🔲 | P0 | 0.5天 | 游客会话表，含openid_hash、token、expires_at、status字段 | 数据库迁移测试 |
+| G-002 | 修改ai_accounts表 | 🔲 | P0 | 0.5天 | 添加guest_session_id、is_guest、guest_expires_at字段 | 数据库迁移测试 |
+| G-003 | GuestService重构 | 🔲 | P0 | 2天 | 将Redis存储改为PostgreSQL存储，支持CRUD操作 | GuestService.test.js |
+| G-004 | 游客账户删除功能 | 🔲 | P0 | 0.5天 | 软删除实现，支持删除后重新创建（活跃上限3个） | 集成测试 |
+| G-005 | 游客数据查询接口 | 🔲 | P0 | 1天 | 持仓、交易记录、绩效、余额查询（联表查询） | api-layers.test.js |
+| G-006 | 游客转正迁移服务 | 🔲 | P0 | 1.5天 | 原子迁移：开启事务→锁定会话→迁移账户→标记状态→清除缓存 | MigrationService.test.js |
+| G-007 | 定时清理服务 | 🔲 | P0 | 1天 | 凌晨2点逻辑删除，凌晨3点物理删除，多重保险防误删 | GuestCleanupService.test.js |
+| G-008 | 缓存一致性保障 | 🔲 | P1 | 0.5天 | 删除时同步清缓存，缓存穿透防护（短TTL+数据库兜底） | 缓存测试 |
+| G-009 | 数据库触发器保护 | 🔲 | P1 | 0.5天 | 阻止删除已迁移游客会话，防止误删 | 数据库测试 |
+| G-010 | 迁移数据校验任务 | 🔲 | P1 | 0.5天 | 每小时校验迁移数据完整性，异常告警 | MigrationValidator.test.js |
+
+**关键约束**:
+- 定时任务WHERE条件必须包含 `status IN ('active', 'expired')` 排除 'migrating' 和 'migrated'
+- 物理删除延迟25小时（给恢复留余地）
+- 级联删除：guest_sessions → ai_accounts → portfolios/trades/ai_decisions
+- 缓存键前缀区分：guest:* vs user:*
+
+**阻塞状态**: G-001~G-002 阻塞 G-003；G-003 阻塞 G-004~G-006
+
+---
+
+### 1.3 等待其他服务实现
 
 #### 等待 trading-ai-service
 
@@ -146,7 +177,8 @@
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
-| 2026-02-13 | **新增游客接口**：持仓、交易记录、绩效、余额查询；AI账户上限2→3；支持删除后重建 | 首席架构师 |
+| 2026-02-13 | **新增游客数据PostgreSQL化改造任务**：G-001~G-010，含数据库设计、服务重构、定时清理、防误删机制 | 首席架构师 |
+| 2026-02-13 | **新增游客接口**：持仓、交易记录、绩效、余额查询；AI账户上限2→3；支持删除后重建（Redis版，待重构） | 首席架构师 |
 | 2026-02-13 | 大幅精简TODO.md，已完成内容移至HAVE_DONE.md | 首席架构师 |
 | 2026-02-12 | 联调冲刺完成，O3-001~O3-004、T-015、T-011、O6-003、O6-004完成 | Backend开发团队 |
 | 2026-02-11 | 重构TODO.md，创建HAVE_DONE.md | 首席架构师 |

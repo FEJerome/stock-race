@@ -68,9 +68,28 @@
 
 ---
 
-## 二、阻塞任务（需其他服务跟进）
+## 二、游客数据适配任务（Backend改造后实施）
 
-### 2.1 等待 Market Data Service
+> **背景**: Backend将游客数据从Redis迁移到PostgreSQL后，Trading AI Service需要适配查询游客账户。
+
+| 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 | 测试覆盖 |
+|------|------|------|--------|-----------|------|----------|
+| G-TAI-001 | 账户查询适配 | 🔲 | P0 | 0.5天 | 查询ai_accounts时检查is_guest和guest_session状态，已过期游客账户返回错误 | decision_service.test.js |
+| G-TAI-002 | 决策上下文构建 | 🔲 | P0 | 0.5天 | 为游客账户构建决策上下文（持仓、历史决策），逻辑与正式用户一致 | context_builder.test.js |
+| G-TAI-003 | 游客Token识别 | 🔲 | P1 | 0.5天 | 识别Backend传递的游客标识，支持游客账户决策 | auth_middleware.test.js |
+
+**改造说明**:
+- 改动范围小：只需在查询账户时增加 `is_guest` 和 `guest_session.status` 检查
+- 已过期游客账户（status != 'active'）返回 `AccountExpiredError`
+- 决策逻辑与正式用户完全一致，无需改动
+
+**阻塞状态**: 等待Backend完成G-001~G-003（数据表创建和GuestService重构）
+
+---
+
+## 三、阻塞任务（需其他服务跟进）
+
+### 3.1 等待 Market Data Service
 
 | 任务 | 依赖 | 状态 | 说明 |
 |------|------|------|------|
@@ -327,6 +346,7 @@ producer.publish_event(
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-13 | **新增游客数据适配任务**: G-TAI-001~003，Backend PostgreSQL化后实施 | 首席架构师 |
 | 2026-02-12 | 完成C6-TAI-001~003板块/行业/批量决策服务 | 开发智能体 |
 | 2026-02-12 | 新增MarketDataClient和BreadthDecisionService | 开发智能体 |
 | 2026-02-12 | 新增单元测试：market_data_client10+breadth_decision15 | 开发智能体 |

@@ -142,9 +142,13 @@ backend/
   - 热股票列表生成与排序
   - Redis缓存管理（TTL、失效处理）
   - 缓存状态查询
-- **对应需求**: B-001 ~ B-004 热股票列表API
-- **测试数量**: 18 个
-- **状态**: ✅ 实现完成，测试中
+- **对应需求**: B-001 ~ B-004, B-007 热股票列表API（含公开API）
+- **测试数量**: 18 个单元测试 + 联调验证
+- **状态**: ✅ 实现完成，联调通过（2026-02-13）
+- **API端点**:
+  - `GET /api/v1/market/hot-stocks` - 需认证
+  - `GET /api/v1/public/hot-stocks` - 公开API，供Market Data Service调用
+  - `GET /api/v1/public/hot-stocks/status` - 缓存状态查询
 
 ### 4. DynamicLimitService.test.js
 - **位置**: `tests/unit/services/DynamicLimitService.test.js`

@@ -61,8 +61,8 @@
 |------|------|------|--------|------|----------|
 | T-016 | 动态高频层调度器 | ✅ | P0 | 根据系统健康状态动态调整高频层股票数量：4源200只→0源0只 | test_dynamic_high_freq_scheduler.py（30个测试通过） |
 | T-017 | 加权热股票选取器 | ✅ | P0 | 按权重排序选取高频层股票，处理缺失/异常权重 | test_dynamic_high_freq_scheduler.py（集成测试） |
-| T-018 | Backend热股票API对接 | 🔄 | P1 | 对接Backend提供的加权热股票列表API | 等待Backend提供API |
-| T-019 | 高频层动态调整集成 | 🔲 | P1 | 健康状态变化时自动调整高频层股票 | 待T-018完成后集成 |
+| T-018 | Backend热股票API对接 | ✅ | P1 | 对接Backend提供的加权热股票列表API | 联调通过，API可正常访问 |
+| T-019 | 高频层动态调整集成 | ✅ | P1 | 健康状态变化时自动调整高频层股票 | 开发完成，48个测试通过 |
 
 **设计文档**: [动态高频层采集系统设计](../../architecture/CURRENT/DYNAMIC_HIGH_FREQ_LAYER_DESIGN.md)
 

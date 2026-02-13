@@ -221,7 +221,7 @@ class WeightedHotStocksService {
       updatedAt: new Date().toISOString()
     };
 
-    await this.redis.setex(
+    await this.redis.setEx(
       this.cacheKey,
       this.cacheTTL,
       JSON.stringify(cacheData)
