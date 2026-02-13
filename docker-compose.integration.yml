@@ -1,0 +1,146 @@
+version: '3.8'
+
+# 联调测试专用 Docker Compose 配置
+# 特点：
+# 1. Volume 挂载源代码，支持热重载
+# 2. 严格模式环境变量，强制使用真实数据
+# 3. 包含所有 4 个业务服务
+# 4. 与生产环境配置保持一致
+#
+# 使用方法：
+#   1. 先启动基础设施: docker-compose up -d redis postgres timescaledb
+#   2. 再启动业务服务: docker-compose -f docker-compose.integration.yml up -d
+
+services:
+
+  # ==================== Backend 服务 ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: stock-race-backend-int
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      # 关键：挂载源代码，支持热重载
+      - ./backend/src:/app/src
+      - ./backend/package.json:/app/package.json
+      - ./backend/.env:/app/.env
+      - backend_node_modules:/app/node_modules
+      # 挂载 infra SDK
+      - ./infra/event-bus/src/node:/app/infra/event-bus
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/stock_race
+      - REDIS_URL=redis://redis:6379
+      - AI_SERVICE_URL=http://trading-ai-service:8000
+      - DATA_SERVICE_URL=http://market-data-service:8001
+      - STRICT_MODE=true
+      - DISABLE_DATA_FALLBACK=true
+    depends_on: []
+    networks:
+      - stock-race-network
+    command: sh -c "cd /app && npm install && node src/app.js"
+
+  # ==================== Market Data Service ====================
+  market-data-service:
+    build:
+      context: ./market-data-service
+      dockerfile: Dockerfile.dev
+    container_name: stock-race-market-data-int
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./market-data-service/src:/app/src
+      - ./market-data-service/.env:/app/.env
+      - market_data_venv:/app/venv
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - DEBUG=True
+      - TSDB_HOST=timescaledb
+      - TSDB_PORT=5432
+      - TSDB_NAME=stock_race_tsdb
+      - TSDB_USER=timescale
+      - TSDB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379
+      - BACKEND_URL=http://backend:3001
+      - STRICT_MODE=true
+      - DISABLE_MOCK_DATA=true
+      - FORCE_DB_CONNECTION=true
+    depends_on: []
+    networks:
+      - stock-race-network
+    command: python -m uvicorn data_service.main:app --host 0.0.0.0 --port 8001 --reload
+
+  # ==================== Trading AI Service ====================
+  trading-ai-service:
+    build:
+      context: ./trading-ai-service
+      dockerfile: Dockerfile.dev
+    container_name: stock-race-trading-ai-int
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./trading-ai-service/src:/app/src
+      - ./trading-ai-service/.env:/app/.env
+      - ./infra/health-check/src:/app/infra/health-check
+      - trading_ai_venv:/app/venv
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=stock_race
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379
+      - BACKEND_URL=http://backend:3001
+      - DATA_SERVICE_URL=http://market-data-service:8001
+      - STRICT_MODE=true
+    depends_on: []
+    networks:
+      - stock-race-network
+    command: python -m uvicorn ai_service.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ==================== News Service ====================
+  news-service:
+    build:
+      context: ./news-service
+      dockerfile: Dockerfile
+    container_name: stock-race-news-int
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./news-service/src:/app/src
+      - ./infra/event-bus/src:/app/infra/event-bus
+      - ./infra/health-check/src:/app/infra/health-check
+    environment:
+      - PYTHONPATH=/app/src:/app/infra/event-bus/src:/app/infra/health-check/src
+      - REDIS_HOST=redis
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=stock_race
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - STRICT_MODE=true
+    depends_on: []
+    networks:
+      - stock-race-network
+    command: python src/news_service/main.py
+
+networks:
+  stock-race-network:
+    external:
+      name: stock-race_stock-race-network  # 使用现有的网络
+
+volumes:
+  backend_node_modules:
+  market_data_venv:
+  trading_ai_venv:
