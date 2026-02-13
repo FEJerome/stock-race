@@ -32,11 +32,12 @@ class GuestServiceError extends Error {
  * GuestService PostgreSQL版
  */
 class GuestServicePostgreSQL {
-  constructor(prismaClient) {
+  constructor(prismaClient, cacheService = null) {
     if (!prismaClient) {
       throw new GuestServiceError('PRISMA_NOT_INITIALIZED', 'Prisma client is required');
     }
     this.prisma = prismaClient;
+    this.cacheService = cacheService;
 
     // 游客配置
     this.config = {
@@ -50,6 +51,14 @@ class GuestServicePostgreSQL {
     // 清理定时器
     this.cleanupInterval = null;
     this.startCleanupTask();
+  }
+
+  /**
+   * 设置缓存服务（用于延迟初始化）
+   * @param {GuestCacheService} cacheService
+   */
+  setCacheService(cacheService) {
+    this.cacheService = cacheService;
   }
 
   // ============================================================================
@@ -131,7 +140,7 @@ class GuestServicePostgreSQL {
       const token = this._generateToken(openidHash);
       const expiresAt = this._calculateExpiry(0);
 
-      await this.prisma.guest_sessions.create({
+      const newSession = await this.prisma.guest_sessions.create({
         data: {
           openid_hash: openidHash,
           guest_token: token,
@@ -140,6 +149,11 @@ class GuestServicePostgreSQL {
           ai_account_count: 0
         }
       });
+
+      // 写入缓存（G-008）
+      if (this.cacheService) {
+        await this.cacheService.cacheToken(token, newSession);
+      }
 
       return {
         token,
@@ -153,12 +167,26 @@ class GuestServicePostgreSQL {
   }
 
   /**
-   * 验证游客Token
+   * 验证游客Token（带缓存）
    */
   async validateGuestToken(token) {
     if (!token) return null;
 
     try {
+      // 先尝试从缓存获取（G-008）
+      if (this.cacheService) {
+        const cached = await this.cacheService.getCachedToken(token, { preventPenetration: true });
+        if (cached) {
+          // 检查缓存数据是否过期
+          if (new Date(cached.expires_at) < new Date()) {
+            await this.cacheService.invalidateToken(token);
+            return null;
+          }
+          return cached;
+        }
+      }
+
+      // 缓存未命中，从数据库查询
       const session = await this.prisma.guest_sessions.findFirst({
         where: {
           guest_token: token,
@@ -183,6 +211,11 @@ class GuestServicePostgreSQL {
         where: { id: session.id },
         data: { last_activity_at: new Date() }
       });
+
+      // 写入缓存（G-008）
+      if (this.cacheService) {
+        await this.cacheService.cacheToken(token, session);
+      }
 
       return session;
 
@@ -356,6 +389,11 @@ class GuestServicePostgreSQL {
           }
         });
       });
+
+      // 清除AI账户列表缓存（G-008）
+      if (this.cacheService) {
+        await this.cacheService.invalidateAIAccounts(session.id);
+      }
 
       return {
         success: true,
@@ -555,6 +593,14 @@ class GuestServicePostgreSQL {
         timeout: 30000
       });
 
+      // 清除所有相关缓存（G-008）
+      if (this.cacheService) {
+        await this.cacheService.invalidateSessionCascade(session.id, {
+          token: token,
+          openidHash: session.openid_hash
+        });
+      }
+
       return {
         success: true,
         userId: result.userId,
@@ -608,6 +654,15 @@ class GuestServicePostgreSQL {
             where: { id: session.id },
             data: { status: 'expired' }
           });
+
+          // 清除相关缓存（G-008）
+          if (this.cacheService) {
+            await this.cacheService.invalidateSessionCascade(session.id, {
+              token: session.guest_token,
+              openidHash: session.openid_hash
+            });
+          }
+
           cleanedCount++;
         } catch (error) {
           console.error(`[GuestService] Failed to expire session ${session.id}:`, error);

@@ -71,18 +71,36 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 说明 |
 |------|------|------|--------|------|
-| I-001 | 完善Docker Compose测试环境 | 🔲 | P2 | 使剩余9个集成测试可自动化运行 |
+| I-001 | 完善Docker Compose测试环境 | ✅ | P2 | 使剩余9个集成测试可自动化运行 |
 
-**待解决的集成测试** (依赖外部服务):
-| 测试文件 | 依赖服务 |
-|---------|---------|
-| `service-communication.test.js` | trading-ai-service:8000, market-data-service:8001 |
-| `ai-account-creation.test.js` | Backend:3001 + PostgreSQL |
-| `ai-dialogue.test.js` | WebSocket 服务 |
-| `ai-decision-execution.test.js` | Backend + PostgreSQL |
-| `health-check.test.js` | 部分需外部服务 |
+**I-001 实现说明**:
+- 创建 `docker-compose.test.yml` - 测试专用环境配置（轻量级）
+- 创建 `scripts/run-integration-tests.sh` - 一键启动脚本（自动等待服务就绪、执行迁移）
+- 更新 `package.json` - 添加 `test:integration`, `test:unit` 脚本
+- 创建 `INTEGRATION_TESTING.md` - 完整测试指南文档
+- 支持三种模式：一键启动、手动启动、CI模式
+- 自动化健康检查和数据库迁移
 
-**解决方案**: 需执行 `docker-compose up -d` 启动完整环境，或使用 `docker-compose.test.yml` 创建测试专用环境。
+**测试脚本列表**:
+| 测试文件 | 测试内容 | 状态 |
+|---------|---------|------|
+| `service-communication.test.js` | 服务间通信 | ✅ 可运行 |
+| `ai-account-creation.test.js` | AI账户创建流程 | ✅ 可运行 |
+| `ai-dialogue.test.js` | WebSocket对话功能 | ✅ 可运行 |
+| `ai-decision-execution.test.js` | AI决策执行 | ✅ 可运行 |
+| `health-check.test.js` | 健康检查 | ✅ 可运行 |
+| `event-pubsub.test.js` | 事件发布订阅 | ✅ 可运行 |
+| `daily-close-job.test.js` | 日终结算任务 | ✅ 可运行 |
+| `hot-stocks-publishing.test.js` | 热股票发布 | ✅ 可运行 |
+
+**使用方式**:
+```bash
+# 一键启动完整环境
+./scripts/run-integration-tests.sh
+
+# 运行集成测试
+cd backend && npm run test:integration
+```
 
 ---
 
@@ -100,7 +118,7 @@
 | G-005 | 游客数据查询接口 | ✅ | P0 | 1天 | getAIAccounts等方法，联表查询支持 | GuestServicePostgreSQL.test.js |
 | G-006 | 游客转正迁移服务 | ✅ | P0 | 1.5天 | migrateToFormalUser：原子事务+乐观锁+回滚机制 | GuestServicePostgreSQL.test.js (8个迁移测试) |
 | G-007 | 定时清理服务 | ✅ | P0 | 1天 | GuestCleanupService：凌晨2点逻辑删除，凌晨3点物理删除 | GuestCleanupService.js |
-| G-008 | 缓存一致性保障 | ⏸️ | P1 | 0.5天 | 删除时同步清缓存，缓存穿透防护（短TTL+数据库兜底） | 待联调阶段实现 |
+| G-008 | 缓存一致性保障 | ✅ | P1 | 0.5天 | 删除时同步清缓存，缓存穿透防护（短TTL+数据库兜底） | GuestCacheService.test.js |
 | G-009 | 数据库触发器保护 | ✅ | P1 | 0.5天 | prevent_migrated_guest_delete触发器阻止误删 | guest-migration.test.js |
 | G-010 | 迁移数据校验任务 | ⏸️ | P1 | 0.5天 | 每小时校验迁移数据完整性，异常告警 | 待监控阶段实现 |
 
@@ -206,6 +224,8 @@
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-13 | **完成集成测试环境(I-001)**：docker-compose.test.yml、一键启动脚本、测试文档 | Backend开发团队 |
+| 2026-02-13 | **完成缓存一致性保障(G-008)**：GuestCacheService实现，缓存穿透防护，删除同步清缓存 | Backend开发团队 |
 | 2026-02-13 | **完成热股票列表API用户活动数据收集(B-005)**：StockActivityTracker实现，WebSocket集成，Redis存储 | Backend开发团队 |
 | 2026-02-13 | **完成热股票列表定时更新任务(B-006)**：每30秒自动更新，应用生命周期集成 | Backend开发团队 |
 | 2026-02-13 | **完成游客数据PostgreSQL化改造**：G-001~G-007全部完成（测试先行），含GuestServicePostgreSQL、GuestCleanupService | Backend开发团队 |
