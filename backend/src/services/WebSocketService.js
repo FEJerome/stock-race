@@ -5,14 +5,19 @@ import { tradeController } from '../controllers/TradeController.js';
 import { aiController } from '../controllers/AIController.js';
 import { marketController } from '../controllers/MarketController.js';
 
+import { StockActivityTracker } from './StockActivityTracker.js';
+
 export class WebSocketService {
-  constructor() {
+  constructor(redis) {
     this.io = null;
     this.connectedClients = new Map(); // Map<socketId, {userId, accountIds, subscriptions}>
     this.stockSubscriptions = new Map(); // Map<stockCode, Set<socketId>>
     this.accountSubscriptions = new Map(); // Map<accountId, Set<socketId>>
     this.marketDataInterval = null;
     this.reconnectAttempts = new Map(); // Map<socketId, attempts>
+
+    // 初始化活动追踪器
+    this.activityTracker = redis ? new StockActivityTracker(redis) : null;
   }
 
   /**
@@ -235,6 +240,12 @@ export class WebSocketService {
       }
       this.stockSubscriptions.get(stockCode).add(socket.id);
     });
+
+    // 记录用户活动（用于热股票计算）
+    if (this.activityTracker) {
+      this.activityTracker.trackUserSession(client.userId, stockCodes)
+        .catch(error => console.error('[WebSocket] Failed to track activity:', error));
+    }
 
     socket.emit('subscription:success', {
       type: 'stocks',
@@ -475,6 +486,11 @@ export class WebSocketService {
   handleDisconnect(socket) {
     const client = this.connectedClients.get(socket.id);
     if (client) {
+      // 清理活动追踪器中的用户会话
+      if (this.activityTracker && client.userId) {
+        this.activityTracker.clearUserSession(client.userId);
+      }
+
       // 清理股票订阅
       client.subscriptions.stocks.forEach(stockCode => {
         const subscribers = this.stockSubscriptions.get(stockCode);
@@ -702,5 +718,10 @@ export class WebSocketService {
   }
 }
 
-// 创建单例实例
+// 创建单例实例（需要在应用启动时通过 initialize 注入 Redis）
 export const webSocketService = new WebSocketService();
+
+// 工厂函数：创建带Redis的实例
+export function createWebSocketService(redis) {
+  return new WebSocketService(redis);
+}

@@ -10,6 +10,24 @@ const redisClient = createClient({ url: process.env.REDIS_URL });
 redisClient.connect().catch(console.error);
 const weightedHotStocksService = new WeightedHotStocksService(redisClient);
 
+// 启动定时更新任务 (B-006)
+// 注意: 需要在应用启动时调用 startScheduledUpdates
+export function startHotStocksScheduler(interval = 30000) {
+  console.log('[MarketController] 启动热股票定时更新任务...');
+  weightedHotStocksService.startScheduledUpdates(interval);
+}
+
+// 停止定时更新任务
+export function stopHotStocksScheduler() {
+  console.log('[MarketController] 停止热股票定时更新任务...');
+  weightedHotStocksService.stopScheduledUpdates();
+}
+
+// 设置活动追踪器 (用于B-005)
+export function setActivityTracker(activityTracker) {
+  weightedHotStocksService.setActivityTracker(activityTracker);
+}
+
 export class MarketController {
   /**
    * 获取排行榜

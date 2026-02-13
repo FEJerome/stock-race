@@ -45,12 +45,33 @@ model GuestSession {
   // 关联
   aiAccounts       AIAccount[]
   migratedUser     User?            @relation(fields: [migratedUserId], references: [id], onDelete: SetNull)
+  migrationLogs    GuestMigrationLog[]
 
   @@index([openidHash])
   @@index([guestToken])
   @@index([status])
   @@index([expiresAt])
   @@map("guest_sessions")
+}
+
+model GuestMigrationLog {
+  id                Int           @id @default(autoincrement())
+  guestSessionId    Int           @map("guest_session_id")
+  openidHash        String        @map("openid_hash") @db.VarChar(64)
+  userId            Int           @map("user_id")
+  accountsMigrated  Int           @default(0) @map("accounts_migrated")
+  accountIds        Json?         @map("account_ids")
+  migratedAt        DateTime      @default(now()) @map("migrated_at") @db.Timestamptz(6)
+  ipAddress         String?       @map("ip_address") @db.VarChar(45)
+  userAgent         String?       @map("user_agent") @db.VarChar(500)
+
+  // 关联
+  guestSession      GuestSession  @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+
+  @@index([guestSessionId])
+  @@index([userId])
+  @@index([migratedAt])
+  @@map("guest_migration_logs")
 }
 
 model AIAccount {

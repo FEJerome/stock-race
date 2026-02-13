@@ -13,8 +13,10 @@ import internalRoutes from './routes/internal.js';
 import { requestLogger } from './middleware/auth.js';
 import { sessionService } from './services/SessionService.js';
 import { webSocketService } from './services/WebSocketService.js';
+import { getRedisClientSafe } from './database/redis.js';
 import { responseFormatterMiddleware } from './utils/responseFormatter.js';
 import { setupJobs } from './jobs/index.js';
+import { startHotStocksScheduler, stopHotStocksScheduler, setActivityTracker } from './controllers/MarketController.js';
 import {
   globalErrorHandler,
   notFoundHandler,
@@ -216,11 +218,28 @@ const startServer = async () => {
       console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
     });
 
-    // 初始化WebSocket服务
+    // 初始化WebSocket服务（传入Redis用于活动追踪）
+    const redis = getRedisClientSafe();
+    let activityTracker = null;
+    if (redis) {
+      const { StockActivityTracker } = await import('./services/StockActivityTracker.js');
+      activityTracker = new StockActivityTracker(redis);
+      webSocketService.activityTracker = activityTracker;
+    }
     webSocketService.initialize(server);
+
+    // 启动热股票定时更新任务 (B-006)
+    if (activityTracker) {
+      setActivityTracker(activityTracker);
+    }
+    startHotStocksScheduler(30000); // 每30秒更新一次
+    console.log('✅ 热股票定时更新任务已启动（每30秒）');
 
     // 优雅关闭
     const gracefulShutdown = async () => {
+      // 停止热股票定时更新任务
+      stopHotStocksScheduler();
+      console.log('✅ 热股票定时更新任务已停止');
       console.log('🛑 收到关闭信号，正在优雅关闭...');
 
       // 关闭WebSocket服务

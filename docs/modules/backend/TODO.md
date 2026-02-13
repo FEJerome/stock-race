@@ -2,7 +2,7 @@
 
 > 本文档仅记录**未完成**和**等待其他服务跟进**的工作项。
 > 已完成功能请查阅 [HAVE_DONE.md](./HAVE_DONE.md)。
-> 最后更新：2026-02-13
+> 最后更新：2026-02-13 (Backend开发团队)
 
 ---
 
@@ -25,8 +25,8 @@
 | B-002 | 热股票列表API端点 | ✅ | P0 | `GET /api/v1/market/hot-stocks`，支持limit和minWeight参数 | 集成测试 |
 | B-003 | 缓存状态查询接口 | ✅ | P1 | `GET /api/v1/market/hot-stocks/status` | 集成测试 |
 | B-004 | 手动刷新接口（管理员） | ✅ | P1 | `POST /api/v1/market/hot-stocks/refresh` | 集成测试 |
-| B-005 | 用户活动数据收集 | 🔄 | P1 | 从WebSocket连接统计用户查看行为 | 待实现 |
-| B-006 | 定时更新任务 | 🔲 | P1 | 每30秒自动更新热股票列表 | 待集成 |
+| B-005 | 用户活动数据收集 | ✅ | P1 | 从WebSocket连接统计用户查看行为 | StockActivityTracker.test.js |
+| B-006 | 定时更新任务 | ✅ | P1 | 每30秒自动更新热股票列表 | 集成测试 |
 | B-007 | 热股票公开API端点 | ✅ | P1 | `GET /api/v1/public/hot-stocks`，供Market Data Service无认证访问 | 联调通过 |
 
 **设计文档**: [热股票列表API设计](../../architecture/CURRENT/HOT_STOCK_LIST_DESIGN.md)
@@ -46,10 +46,26 @@
 
 **实现文件**:
 - `src/services/WeightedHotStocksService.js` - 权重计算服务
-- `src/controllers/MarketController.js` - 控制器方法
+- `src/services/StockActivityTracker.js` - 用户活动追踪服务(B-005)
+- `src/controllers/MarketController.js` - 控制器方法（含定时任务启动/停止）
 - `src/routes/market.js` - API路由
+- `src/app.js` - 应用启动时启动定时任务(B-006)
 
-**阻塞状态**: B-005、B-006待后续迭代实现
+**阻塞状态**: B-005、B-006已完成
+
+**B-005 实现说明**:
+- 创建 `StockActivityTracker` 服务，使用 Redis Hash 存储用户查看数据
+- 记录 userCount（独立用户数）和 viewCount（查看次数）
+- 集成到 `WebSocketService`，用户订阅股票时自动记录
+- 支持批量记录、单条查询、批量查询
+- 数据过期时间：1小时（可配置）
+- 内存缓存去重：避免同一用户重复计数
+
+**B-006 实现说明**:
+- 应用启动时自动启动定时更新任务（每30秒）
+- 通过 `startHotStocksScheduler()` / `stopHotStocksScheduler()` 控制
+- 优雅关闭时自动停止定时任务
+- 首次启动立即执行一次更新，确保缓存可用
 
 ### 1.2 集成测试环境完善
 
@@ -77,16 +93,29 @@
 
 | 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 | 测试覆盖 |
 |------|------|------|--------|-----------|------|----------|
-| G-001 | 创建guest_sessions表 | 🔲 | P0 | 0.5天 | 游客会话表，含openid_hash、token、expires_at、status字段 | 数据库迁移测试 |
-| G-002 | 修改ai_accounts表 | 🔲 | P0 | 0.5天 | 添加guest_session_id、is_guest、guest_expires_at字段 | 数据库迁移测试 |
-| G-003 | GuestService重构 | 🔲 | P0 | 2天 | 将Redis存储改为PostgreSQL存储，支持CRUD操作 | GuestService.test.js |
-| G-004 | 游客账户删除功能 | 🔲 | P0 | 0.5天 | 软删除实现，支持删除后重新创建（活跃上限3个） | 集成测试 |
-| G-005 | 游客数据查询接口 | 🔲 | P0 | 1天 | 持仓、交易记录、绩效、余额查询（联表查询） | api-layers.test.js |
-| G-006 | 游客转正迁移服务 | 🔲 | P0 | 1.5天 | 原子迁移：开启事务→锁定会话→迁移账户→标记状态→清除缓存 | MigrationService.test.js |
-| G-007 | 定时清理服务 | 🔲 | P0 | 1天 | 凌晨2点逻辑删除，凌晨3点物理删除，多重保险防误删 | GuestCleanupService.test.js |
-| G-008 | 缓存一致性保障 | 🔲 | P1 | 0.5天 | 删除时同步清缓存，缓存穿透防护（短TTL+数据库兜底） | 缓存测试 |
-| G-009 | 数据库触发器保护 | 🔲 | P1 | 0.5天 | 阻止删除已迁移游客会话，防止误删 | 数据库测试 |
-| G-010 | 迁移数据校验任务 | 🔲 | P1 | 0.5天 | 每小时校验迁移数据完整性，异常告警 | MigrationValidator.test.js |
+| G-001 | 创建guest_sessions表 | ✅ | P0 | 0.5天 | 游客会话表，含openid_hash、token、expires_at、status字段 | guest-migration.test.js |
+| G-002 | 修改ai_accounts表 | ✅ | P0 | 0.5天 | 添加guest_session_id、is_guest、guest_expires_at字段，外键级联删除 | guest-migration.test.js |
+| G-003 | GuestService重构 | ✅ | P0 | 2天 | GuestServicePostgreSQL：Token管理、AI账户CRUD、对话管理 | GuestServicePostgreSQL.test.js (50+测试) |
+| G-004 | 游客账户删除功能 | ✅ | P0 | 0.5天 | 软删除实现，删除后可重建（活跃上限3个），事务保证计数准确 | GuestServicePostgreSQL.test.js |
+| G-005 | 游客数据查询接口 | ✅ | P0 | 1天 | getAIAccounts等方法，联表查询支持 | GuestServicePostgreSQL.test.js |
+| G-006 | 游客转正迁移服务 | ✅ | P0 | 1.5天 | migrateToFormalUser：原子事务+乐观锁+回滚机制 | GuestServicePostgreSQL.test.js (8个迁移测试) |
+| G-007 | 定时清理服务 | ✅ | P0 | 1天 | GuestCleanupService：凌晨2点逻辑删除，凌晨3点物理删除 | GuestCleanupService.js |
+| G-008 | 缓存一致性保障 | ⏸️ | P1 | 0.5天 | 删除时同步清缓存，缓存穿透防护（短TTL+数据库兜底） | 待联调阶段实现 |
+| G-009 | 数据库触发器保护 | ✅ | P1 | 0.5天 | prevent_migrated_guest_delete触发器阻止误删 | guest-migration.test.js |
+| G-010 | 迁移数据校验任务 | ⏸️ | P1 | 0.5天 | 每小时校验迁移数据完整性，异常告警 | 待监控阶段实现 |
+
+**实现文件**:
+- `prisma/schema.prisma` - GuestSession、GuestMigrationLog模型
+- `src/services/GuestServicePostgreSQL.js` - 核心服务（450+行，事务安全）
+- `src/services/GuestCleanupService.js` - 定时清理服务（200+行）
+- `tests/unit/database/guest-migration.test.js` - 数据库层测试（18个测试）
+- `tests/unit/services/GuestServicePostgreSQL.test.js` - 服务层测试（50+测试）
+
+**关键实现细节**:
+- **事务安全**: 所有关键操作使用Prisma事务，隔离级别Serializable
+- **防误删机制**: 触发器阻止删除migrated/migrating状态，延迟25小时物理删除
+- **并发控制**: 乐观锁（status条件）+ 行级锁（FOR UPDATE）
+- **回滚机制**: 迁移失败自动恢复session状态
 
 **关键约束**:
 - 定时任务WHERE条件必须包含 `status IN ('active', 'expired')` 排除 'migrating' 和 'migrated'
@@ -177,6 +206,10 @@
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-13 | **完成热股票列表API用户活动数据收集(B-005)**：StockActivityTracker实现，WebSocket集成，Redis存储 | Backend开发团队 |
+| 2026-02-13 | **完成热股票列表定时更新任务(B-006)**：每30秒自动更新，应用生命周期集成 | Backend开发团队 |
+| 2026-02-13 | **完成游客数据PostgreSQL化改造**：G-001~G-007全部完成（测试先行），含GuestServicePostgreSQL、GuestCleanupService | Backend开发团队 |
+| 2026-02-13 | **测试代码量超过实现代码量**：GuestServicePostgreSQL.test.js（50+测试）确保事务安全和账户安全 | Backend开发团队 |
 | 2026-02-13 | **新增游客数据PostgreSQL化改造任务**：G-001~G-010，含数据库设计、服务重构、定时清理、防误删机制 | 首席架构师 |
 | 2026-02-13 | **新增游客接口**：持仓、交易记录、绩效、余额查询；AI账户上限2→3；支持删除后重建（Redis版，待重构） | 首席架构师 |
 | 2026-02-13 | 大幅精简TODO.md，已完成内容移至HAVE_DONE.md | 首席架构师 |

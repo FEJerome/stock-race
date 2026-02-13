@@ -10,9 +10,15 @@
  */
 
 class WeightedHotStocksService {
-  constructor(redis, marketDataClient) {
+  /**
+   * @param {Object} redis - Redis客户端
+   * @param {Object} marketDataClient - 行情数据服务客户端
+   * @param {Object} activityTracker - 股票活动追踪服务 (StockActivityTracker)
+   */
+  constructor(redis, marketDataClient, activityTracker = null) {
     this.redis = redis;
     this.marketDataClient = marketDataClient;
+    this.activityTracker = activityTracker;
     this.cacheKey = 'hot:stocks:weighted';
     this.cacheTTL = 60; // 缓存60秒
 
@@ -23,6 +29,14 @@ class WeightedHotStocksService {
       tradeVolume: { max: 1000000, weight: 20 }, // 交易量，20%
       favoriteCount: { max: 500, weight: 10 }  // 收藏数，10%
     };
+  }
+
+  /**
+   * 设置活动追踪器
+   * @param {Object} activityTracker - StockActivityTracker实例
+   */
+  setActivityTracker(activityTracker) {
+    this.activityTracker = activityTracker;
   }
 
   /**
@@ -127,12 +141,23 @@ class WeightedHotStocksService {
 
   /**
    * 获取用户活动数据
-   * 从Redis或活动追踪服务获取
+   * 从StockActivityTracker获取实时数据
    * @returns {Promise<Object>} 用户活动数据
    */
   async getUserActivityData() {
-    // TODO: 从用户活动追踪服务获取实时数据
-    // 临时返回模拟数据，实际实现时需要替换
+    // 如果有活动追踪器，使用真实数据
+    if (this.activityTracker) {
+      try {
+        const allData = await this.activityTracker.getAllActivityData();
+        return allData;
+      } catch (error) {
+        console.error('[HotStocks] Failed to get activity data:', error);
+        // 降级返回空数据
+        return {};
+      }
+    }
+
+    // 降级返回默认数据（用于测试或无追踪器时）
     return {
       '000001.SZ': { userCount: 120, viewCount: 450 },
       '600519.SH': { userCount: 98, viewCount: 380 },
