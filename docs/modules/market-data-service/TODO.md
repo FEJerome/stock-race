@@ -55,6 +55,33 @@
 
 **阻塞状态**: 无阻塞，开发完成
 
+### Phase 7: 动态高频层采集（2026-02-13新增）✅ 已完成
+
+| 编号 | 任务 | 状态 | 优先级 | 说明 | 测试覆盖 |
+|------|------|------|--------|------|----------|
+| T-016 | 动态高频层调度器 | ✅ | P0 | 根据系统健康状态动态调整高频层股票数量：4源200只→0源0只 | test_dynamic_high_freq_scheduler.py（30个测试通过） |
+| T-017 | 加权热股票选取器 | ✅ | P0 | 按权重排序选取高频层股票，处理缺失/异常权重 | test_dynamic_high_freq_scheduler.py（集成测试） |
+| T-018 | Backend热股票API对接 | 🔄 | P1 | 对接Backend提供的加权热股票列表API | 等待Backend提供API |
+| T-019 | 高频层动态调整集成 | 🔲 | P1 | 健康状态变化时自动调整高频层股票 | 待T-018完成后集成 |
+
+**设计文档**: [动态高频层采集系统设计](../../architecture/CURRENT/DYNAMIC_HIGH_FREQ_LAYER_DESIGN.md)
+
+**实现说明**:
+- ✅ 采用TDD开发模式：先编写测试脚本，再实现功能代码
+- ✅ 动态股票数量：4源(200只) → 3源(150只) → 2源(100只) → 1源(50只) → 0源(0只)
+- ✅ 权重排序选取：Backend提供带权重的热股票列表，Market Data Service按权重排序选取前N只
+- ✅ 权重计算因子：查看用户数(40%) + 查看次数(30%) + 交易活跃度(20%) + 收藏数(10%)
+- ✅ 30个单元测试全部通过
+
+**实现文件**:
+- `src/data_service/services/dynamic_high_freq_scheduler.py` - DynamicHighFreqScheduler类，动态调整高频层
+- `src/data_service/services/hot_stock_selector.py` - HotStockSelector类，加权热股票选取
+
+**测试文件**:
+- `tests/unit/services/test_dynamic_high_freq_scheduler.py` - 30个测试用例
+
+**阻塞状态**: T-018等待Backend提供热股票列表API
+
 ### Phase 5: 生产环境优化（剩余项）
 
 | 编号 | 优化项 | 状态 | 优先级 | 说明 |
