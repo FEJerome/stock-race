@@ -24,7 +24,7 @@
 - [**数据库设计**](docs/architecture/CURRENT/DATABASE_DESIGN.md) - 数据库ER图与表结构
 - [**配置中心架构设计**](docs/architecture/CURRENT/CONFIG_CENTER/README.md) - 配置中心规划与各服务配置设计（持续更新）
 
-### 架构决策文档（2026-02-11更新）
+### 架构决策文档（2026-02-13更新）
 - [**服务依赖冲突分析**](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 五服务外部依赖对接需求分析与6个冲突解决方案
 - [**循环依赖解决方案**](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md) - 三种方案详细对比分析
 - [**事件总线风险分析**](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md) - Redis Streams事件总线的风险点、成本、性能分析
@@ -35,6 +35,7 @@
 - [**AI决策服务广度查询需求确认**](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
 - [**Redis渐进式部署策略**](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
 - [**六数据源频率限制策略**](docs/architecture/CURRENT/DATA_SOURCE_RATE_LIMITING_STRATEGY.md) - A股全量数据采集方案，6数据源智能调度与分层采集
+- [**AI架构定位与演进路线图**](docs/architecture/CURRENT/DECISIONS/010-AI-ARCHITECTURE-POSITIONING.md) - 当前"LLM as a Service"定位确认，三阶段演进路线图（上线→轻量Agent→观望），避免过度工程化决策
 
 ### 历史架构文档
 历史架构文档已归档至 [docs/architecture/HISTORICAL/](docs/architecture/HISTORICAL/) 目录：
