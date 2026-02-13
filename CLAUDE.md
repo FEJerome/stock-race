@@ -182,16 +182,150 @@ module-dev miniprogram          # 微信小程序开发
 
 ---
 
-### 开发环境启动
+## 🐳 Docker 部署指南
+
+### 环境概述
+
+项目提供两种 Docker Compose 配置：
+
+| 配置 | 用途 | 文件 | 特点 |
+|------|------|------|------|
+| **联调测试** | 集成测试、全服务验证 | `docker-compose.integration.yml` | 全容器化、热重载、严格模式 |
+| **开发环境** | 本地开发、单服务调试 | `docker-compose.yml` | 仅基础设施、服务本地运行 |
+
+---
+
+### 联调测试环境（推荐）
+
+**适用场景**：
+- 多服务集成测试
+- 联调验证
+- 生产环境预演
+- CI/CD 流水线
+
+**配置特点**：
+- ✅ 所有服务（包括业务服务）Docker 容器化
+- ✅ Volume 挂载源代码，支持热重载
+- ✅ 严格模式（STRICT_MODE=true），强制使用真实数据
+- ✅ 自动数据库迁移
+- ✅ 健康检查与依赖等待
+
+**一键启动**：
 ```bash
-# 一键启动所有服务
-docker-compose up -d
+# 启动所有服务（基础设施 + 业务服务）
+docker-compose -f docker-compose.integration.yml up -d
 
 # 查看服务状态
-docker-compose ps
+docker-compose -f docker-compose.integration.yml ps
 
-# 查看服务日志
-docker-compose logs -f [service_name]
+# 查看实时日志
+docker-compose -f docker-compose.integration.yml logs -f
+
+# 查看特定服务日志
+docker-compose -f docker-compose.integration.yml logs -f backend
+
+# 停止所有服务
+docker-compose -f docker-compose.integration.yml down
+
+# 停止并清除数据卷（谨慎使用）
+docker-compose -f docker-compose.integration.yml down -v
+```
+
+**服务端口映射**：
+
+| 服务 | 容器名 | 主机端口 | 容器端口 | 说明 |
+|------|--------|----------|----------|------|
+| Backend | stock-race-backend-int | 3001 | 3001 | API 服务 |
+| Trading AI Service | stock-race-trading-ai-int | 8000 | 8000 | AI 决策服务 |
+| Market Data Service | stock-race-market-data-int | 8001 | 8001 | 行情数据服务 |
+| News Service | stock-race-news-int | - | - | 新闻服务（无 HTTP） |
+| Redis | stock-race-redis-int | 6380 | 6379 | 缓存（注意：宿主机 6379 已被占用） |
+| PostgreSQL | stock-race-postgres-int | 5434 | 5432 | 主数据库 |
+| TimescaleDB | stock-race-timescaledb-int | 5433 | 5432 | 时序数据库 |
+
+**健康检查**：
+```bash
+# Backend
+curl http://localhost:3001/api/health
+
+# Trading AI Service
+curl http://localhost:8000/api/v1/health/
+
+# Market Data Service
+curl http://localhost:8001/health
+```
+
+**常见问题解决**：
+```bash
+# 端口冲突（如 6379 被宿主机 Redis 占用）
+# 已在配置中修改为 6380，无需额外操作
+
+# 重建镜像（代码变更后）
+docker-compose -f docker-compose.integration.yml build
+
+# 强制重启特定服务
+docker-compose -f docker-compose.integration.yml up -d --force-recreate backend
+
+# 进入容器调试
+docker exec -it stock-race-backend-int sh
+docker exec -it stock-race-market-data-int bash
+```
+
+---
+
+### 生产环境部署
+
+**部署文件**：
+- `docker-compose.prod.yml` - 生产环境配置
+- `backend/Dockerfile` - Backend 生产镜像
+- `trading-ai-service/Dockerfile` - AI 服务生产镜像
+- `market-data-service/Dockerfile` - 数据服务生产镜像
+- `news-service/Dockerfile` - 新闻服务生产镜像
+
+**启动步骤**：
+```bash
+# 1. 设置环境变量
+export NODE_ENV=production
+export DATABASE_URL=postgresql://user:pass@postgres:5432/stock_race
+export REDIS_URL=redis://redis:6379
+
+# 2. 启动基础设施
+docker-compose -f docker-compose.prod.yml up -d postgres redis timescaledb
+
+# 3. 等待数据库就绪（约 10 秒）
+sleep 10
+
+# 4. 执行数据库迁移
+docker-compose -f docker-compose.prod.yml run --rm backend npx prisma migrate deploy
+
+# 5. 启动所有服务
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**生产环境检查清单**：
+- [ ] 修改默认密码（PostgreSQL、Redis）
+- [ ] 配置 SSL/TLS 证书
+- [ ] 设置资源限制（CPU/内存）
+- [ ] 配置日志收集（ELK/Loki）
+- [ ] 启用监控告警（Prometheus/Grafana）
+- [ ] 配置备份策略
+
+---
+
+### 开发环境（基础设施 only）
+
+**适用场景**：
+- 单服务本地开发调试
+- 快速启动基础设施
+
+**启动方式**：
+```bash
+# 仅启动基础设施（PostgreSQL、Redis、TimescaleDB）
+docker-compose up -d
+
+# 服务在宿主机本地运行，便于调试
+# Backend: cd backend && npm run dev
+# Market Data: cd market-data-service && python -m uvicorn data_service.main:app --reload
 ```
 
 ### 服务访问地址
@@ -252,6 +386,38 @@ curl http://localhost:8001/health
 - 微信小程序：`docs/miniprogram/`
 
 ## 📈 近期开发进展
+
+### Docker 全容器化联调环境配置完成
+**项目状态**：✅ **联调环境全 Docker 化完成（2026-02-13）**
+
+**关键成果**：完成所有业务服务的 Docker 容器化配置，支持一键启动全服务联调环境。
+
+**解决的问题**：
+1. **Backend 容器化** - 添加 OpenSSL 支持 Prisma，自动生成 Prisma Client，启动时自动运行 migrations
+2. **Market Data Service 容器化** - 添加缺失依赖（`python-jose`, `pydantic-settings`, `akshare`, `baostock`, `tushare`, `asyncpg`）
+3. **Trading AI Service 容器化** - 修正依赖安装方式，支持 infra SDK 本地挂载
+4. **News Service 容器化** - 修正依赖安装顺序和 PYTHONPATH 配置
+5. **Redis 端口冲突** - 将 Docker Redis 映射到宿主机 6380 端口，避免与宿主机 Redis 冲突
+
+**配置文件**：
+- `docker-compose.integration.yml` - 联调测试专用配置（全容器化）
+- `backend/Dockerfile.dev` - Backend 开发镜像
+- `market-data-service/Dockerfile.dev` - 数据服务开发镜像
+- `trading-ai-service/Dockerfile.dev` - AI 服务开发镜像
+- `news-service/Dockerfile` - 新闻服务镜像
+
+**快速启动命令**：
+```bash
+# 一键启动所有服务
+docker-compose -f docker-compose.integration.yml up -d
+
+# 验证所有服务健康状态
+curl http://localhost:3001/api/health
+curl http://localhost:8000/api/v1/health/
+curl http://localhost:8001/health
+```
+
+---
 
 ### 五服务架构冲突分析与解决方案制定
 **项目状态**：✅ **架构审查完成，6个冲突全部解决（2026-02-11）**
@@ -429,4 +595,4 @@ curl http://localhost:8001/health
 
 ---
 
-*本文档最后更新于：2026-02-11*
+*本文档最后更新于：2026-02-13*
