@@ -43,7 +43,7 @@
             v-for="risk in riskLevels"
             :key="risk.value"
             :class="{ active: form.riskLevel === risk.value }"
-            @click="form.riskLevel = risk.value"
+            @click="form.riskLevel = risk.value as RiskLevel"
           >
             <text class="risk-name">{{ risk.label }}</text>
             <text class="risk-desc">{{ risk.desc }}</text>

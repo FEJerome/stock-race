@@ -89,7 +89,8 @@ export const useTradingStore = defineStore('trading', () => {
       return true
     } catch (error) {
       console.error('Fetch overview error:', error)
-      return false
+      // 不返回 false，让错误继续传播，触发 Mock 数据降级
+      throw error
     } finally {
       loading.value = false
     }
@@ -113,7 +114,7 @@ export const useTradingStore = defineStore('trading', () => {
       return true
     } catch (error) {
       console.error('Fetch holdings error:', error)
-      return false
+      throw error
     } finally {
       loading.value = false
     }
@@ -127,7 +128,7 @@ export const useTradingStore = defineStore('trading', () => {
       return true
     } catch (error) {
       console.error('Fetch trades error:', error)
-      return false
+      throw error
     } finally {
       loading.value = false
     }
@@ -140,7 +141,7 @@ export const useTradingStore = defineStore('trading', () => {
       return true
     } catch (error) {
       console.error('Fetch profit stats error:', error)
-      return false
+      throw error
     }
   }
 
@@ -300,6 +301,7 @@ export const useTradingStore = defineStore('trading', () => {
     buy,
     sell,
     refreshAll,
+    refreshProfitData,
     mergeRealtimePrices,
     getHoldingSymbols,
     startPeriodicRefresh,

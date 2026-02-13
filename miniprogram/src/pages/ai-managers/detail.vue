@@ -91,7 +91,7 @@
             <text class="profit">盈亏</text>
             <text class="rate">收益率</text>
           </view>
-          <scroll-view scroll-y class="profit-scroll">
+          <scroll-view class="profit-scroll" scroll-y>
             <view
               v-for="(point, index) in currentProfitData"
               :key="index"
@@ -368,7 +368,7 @@ const currentProfitData = computed(() => {
 const getPageParams = () => {
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
-  const query = currentPage.$page?.options || currentPage.options || {}
+  const query = currentPage.options || {}
   accountId.value = query.id || ''
 }
 

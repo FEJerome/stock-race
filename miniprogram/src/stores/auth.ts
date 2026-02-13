@@ -3,8 +3,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '@/api/auth'
 import { guestApi } from '@/api/guest'
-import type { UserInfo, LoginRequest, RegisterRequest, WechatLoginRequest } from '@/types/api'
-import type { GuestSession, GuestStatus } from '@/types/guest'
+import type { UserInfo, LoginRequest, RegisterRequest } from '@/types/api'
+import type { GuestSession, GuestStatus, GuestInitResult } from '@/types/guest'
 import { GUEST_LIMITS } from '@/types/guest'
 import { DEMO_ACCOUNT } from '@/utils/constants'
 
@@ -66,19 +66,17 @@ export const useAuthStore = defineStore(
         return true
       } catch (error) {
         console.error('Login error:', error)
-
         // 降级到演示账户
         if (useDemoFallback) {
           console.log('Using demo account fallback')
           token.value = DEMO_ACCOUNT.token
-          userInfo.value = DEMO_ACCOUNT.user as UserInfo
+          userInfo.value = DEMO_ACCOUNT.user
           uni.showToast({
             title: '已切换到演示模式',
             icon: 'none',
           })
           return true
         }
-
         return false
       }
     }
@@ -87,7 +85,7 @@ export const useAuthStore = defineStore(
       try {
         const res = await authApi.register(data)
         token.value = res.token
-        userInfo.value = res.user
+        userInfo.value = res.user || undefined
         return true
       } catch (error) {
         console.error('Register error:', error)
@@ -98,7 +96,7 @@ export const useAuthStore = defineStore(
     async function fetchUserInfo(): Promise<boolean> {
       try {
         const user = await authApi.getCurrentUser()
-        userInfo.value = user
+        userInfo.value = user || undefined
         return true
       } catch (error) {
         console.error('Fetch user info error:', error)
@@ -115,7 +113,6 @@ export const useAuthStore = defineStore(
         token.value = ''
         userInfo.value = null
         clearGuestSession()
-        // 清除所有缓存
         uni.clearStorageSync()
       }
     }
@@ -128,36 +125,156 @@ export const useAuthStore = defineStore(
     // ==================== 游客模式方法 ====================
 
     // 初始化游客模式（从Backend获取真实游客Token）
-    async function initGuestMode(): Promise<boolean> {
+    async function initGuestMode(): Promise<GuestInitResult> {
       try {
         // 检查本地是否已有有效的游客会话
         const storedSession = uni.getStorageSync(GUEST_LIMITS.STORAGE_KEY)
+        const welcomeShown = uni.getStorageSync(GUEST_LIMITS.WELCOME_SHOWN_KEY)
+
         if (storedSession) {
           const session: GuestSession = JSON.parse(storedSession)
+          
           // 检查是否过期
           if (session.expiresAt > Date.now()) {
-            guestSession.value = session
-            token.value = GUEST_TOKEN_MARKER
-            userInfo.value = {
-              id: 'guest',
-              username: 'guest',
-              nickname: '游客',
-              avatar: '/static/icons/guest.png',
+            // 未过期，检查后端状态
+            try {
+              const status = await guestApi.checkGuestStatus(session.token)
+              
+              // 后端确认有效，设置游客模式
+              guestSession.value = session
+              token.value = GUEST_TOKEN_MARKER
+              userInfo.value = {
+                id: 'guest',
+                username: 'guest',
+                nickname: '游客',
+                avatar: '/static/icons/guest.png',
+              }
+              
+              return {
+                success: true,
+                isNewGuest: !welcomeShown,
+                isExpired: false,
+                hasAIAccount: status.hasAIAccount,
+              }
+            } catch (error) {
+              console.error('Check guest status error:', error)
+              // 后端检查失败，降级到本地游客模式
+              return handleGuestSessionExpired(session, welcomeShown)
             }
-            return true
+          } else {
+            // 已过期，清除
+            uni.removeStorageSync(GUEST_LIMITS.STORAGE_KEY)
+            return handleGuestSessionExpired(session, welcomeShown)
           }
-          // 已过期，清除
-          uni.removeStorageSync(GUEST_LIMITS.STORAGE_KEY)
         }
 
         // 获取新的游客Token
-        return await refreshGuestToken()
+        return await createNewGuestSession()
       } catch (error) {
         console.error('Init guest mode error:', error)
         // 降级到本地游客模式
         enableLocalGuestMode()
-        return true
+        return {
+          success: true,
+          isNewGuest: !welcomeShown,
+          isExpired: false,
+          hasAIAccount: false,
+        }
       }
+    }
+
+    // 处理游客会话过期
+    function handleGuestSessionExpired(session: GuestSession, welcomeShown: any): GuestInitResult {
+      if (session.hasAIAccount) {
+        // 创建过AI账户，返回已过期标记
+        enableLocalGuestMode()
+        return {
+          success: true,
+          isNewGuest: false,
+          isExpired: true,
+          hasAIAccount: true,
+        }
+      } else {
+        // 未创建AI账户，当作新游客
+        enableLocalGuestMode()
+        return {
+          success: true,
+          isNewGuest: true,
+          isExpired: true,
+          hasAIAccount: false,
+        }
+      }
+    }
+
+    // 创建新的游客会话
+    async function createNewGuestSession(): Promise<GuestInitResult> {
+      return new Promise((resolve) => {
+        uni.login({
+          provider: 'weixin',
+          success: async (res) => {
+            if (res.code) {
+              try {
+                const guestTokenRes = await guestApi.getGuestToken(res.code)
+
+                // 创建游客会话
+                const session: GuestSession = {
+                  token: guestTokenRes.guestToken,
+                  openid: guestTokenRes.openid,
+                  expiresAt: Date.now() + guestTokenRes.expiresIn * 1000,
+                  hasAIAccount: guestTokenRes.hasAIAccount,
+                  lastActivityAt: Date.now(),
+                }
+
+                // 保存到本地
+                guestSession.value = session
+                uni.setStorageSync(GUEST_LIMITS.STORAGE_KEY, JSON.stringify(session))
+
+                // 设置游客模式标记
+                token.value = GUEST_TOKEN_MARKER
+                userInfo.value = {
+                  id: 'guest',
+                  username: 'guest',
+                  nickname: '游客',
+                  avatar: '/static/icons/guest.png',
+                }
+
+                resolve({
+                  success: true,
+                  isNewGuest: true,
+                  isExpired: false,
+                  hasAIAccount: guestTokenRes.hasAIAccount,
+                })
+              } catch (error) {
+                console.error('Get guest token error:', error)
+                enableLocalGuestMode()
+                resolve({
+                  success: true,
+                  isNewGuest: true,
+                  isExpired: false,
+                  hasAIAccount: false,
+                })
+              }
+            } else {
+              enableLocalGuestMode()
+              resolve({
+                success: true,
+                isNewGuest: true,
+                isExpired: false,
+                hasAIAccount: false,
+              })
+            }
+          },
+          fail: () => {
+            enableLocalGuestMode()
+            resolve({
+              success: true,
+              isNewGuest: true,
+              isExpired: false,
+              hasAIAccount: false,
+            })
+          },
+        })
+      })
     }
 
     // 获取/刷新游客Token
@@ -267,6 +384,16 @@ export const useAuthStore = defineStore(
       uni.removeStorageSync(GUEST_LIMITS.STORAGE_KEY)
     }
 
+    // 标记欢迎页已显示
+    function markWelcomeShown() {
+      uni.setStorageSync(GUEST_LIMITS.WELCOME_SHOWN_KEY, 'true')
+    }
+
+    // 检查欢迎页是否已显示
+    function isWelcomeShown(): boolean {
+      return !!uni.getStorageSync(GUEST_LIMITS.WELCOME_SHOWN_KEY)
+    }
+
     // 检查是否需要登录，返回true表示已登录，false表示未登录并跳转到登录页
     function requireAuth(redirectUrl?: string): boolean {
       if (isGuestMode.value) {
@@ -316,6 +443,8 @@ export const useAuthStore = defineStore(
       updateGuestActivity,
       loginAndBindGuest,
       clearGuestSession,
+      markWelcomeShown,
+      isWelcomeShown,
       requireAuth,
     }
   },
@@ -331,7 +460,7 @@ export const useAuthStore = defineStore(
         },
       },
       // 只持久化这些字段
-      paths: ['token', 'userInfo'],
+      paths: ['token', 'userInfo', 'guestSession'],
     },
   }
 )

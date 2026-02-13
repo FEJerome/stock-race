@@ -35,8 +35,8 @@ export interface UserInfo {
   avatar?: string
   email?: string
   phone?: string
-  createdAt: string
-  updatedAt: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 // 注册请求

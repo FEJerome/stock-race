@@ -193,12 +193,22 @@ function getUniversity(provider: string): string {
 async function refreshData() {
   if (loading.value) return
   loading.value = true
-  await Promise.all([
-    tradingStore.refreshAll(),
-    aiStore.fetchAccounts(),
-  ])
-  loading.value = false
-  uni.showToast({ title: '刷新成功', icon: 'success' })
+  try {
+    await Promise.all([
+      tradingStore.refreshAll(),
+      aiStore.fetchAccounts(),
+    ])
+    uni.showToast({ title: '刷新成功', icon: 'success' })
+  } catch (error) {
+    console.error('刷新数据失败:', error)
+    // 如果 API 请求失败，Mock 数据降级已经处理了，这里不需要额外提示
+    // 只有在完全没有数据的情况下才提示
+    if (tradingStore.totalAssets === 0 && aiStore.accounts.length === 0) {
+      uni.showToast({ title: '数据加载失败', icon: 'none' })
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
 // 页面跳转
@@ -236,11 +246,7 @@ function goToSettings() {
 }
 
 // 初始化
-onMounted(() => {
-  // 如果没有token，启用游客模式
-  if (!authStore.token) {
-    authStore.enableGuestMode()
-  }
+onMounted(async () => {
   // 加载数据（游客和登录用户均可访问公开数据）
   refreshData()
 })

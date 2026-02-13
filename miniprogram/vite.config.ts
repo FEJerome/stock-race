@@ -22,6 +22,13 @@ export default defineConfig({
   },
   server: {
     port: 3002,
+    host: '0.0.0.0',
+    open: false,
+    watch: {
+      usePolling: true,
+      interval: 1000,
+      ignored: ['**/node_modules/**', '**/.git/**', '**/dist/**'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
@@ -29,5 +36,9 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
+  },
+  build: {
+    minify: false,
+    sourcemap: true,
   },
 })

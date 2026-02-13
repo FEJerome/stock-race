@@ -94,8 +94,18 @@ const STORAGE_KEY = 'app_env'
  */
 export function getCurrentEnv(): AppEnv {
   // 1. 尝试从 uniapp 编译时注入的环境变量获取
-  // @ts-ignore
-  const buildEnv = process.env.VUE_APP_ENV as AppEnv
+  // 注意：小程序环境不支持 process.env，需要使用其他方式
+  let buildEnv: AppEnv | undefined = undefined
+  try {
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env && process.env.VUE_APP_ENV) {
+      // @ts-ignore
+      buildEnv = process.env.VUE_APP_ENV as AppEnv
+    }
+  } catch (e) {
+    // 忽略 process 未定义的错误
+  }
+
   if (buildEnv && envConfigs[buildEnv]) {
     return buildEnv
   }

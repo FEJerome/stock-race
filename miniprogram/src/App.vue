@@ -1,8 +1,22 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
+import { useAuthStore } from '@/stores/auth'
 
 onLaunch(() => {
   console.log('App Launch')
+  
+  const authStore = useAuthStore()
+  
+  // 检查是否需要显示欢迎页
+  if (!authStore.isWelcomeShown()) {
+    // 首次启动，跳转到欢迎页
+    uni.redirectTo({ url: '/pages/welcome/welcome' })
+  } else {
+    // 已显示过欢迎页，初始化游客模式
+    if (!authStore.token) {
+      authStore.initGuestMode()
+    }
+  }
 })
 
 onShow(() => {

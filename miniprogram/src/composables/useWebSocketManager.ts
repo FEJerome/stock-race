@@ -5,7 +5,7 @@
  * 使用场景: AI账户详情页、持仓页、行情页
  */
 
-import { onMounted, onUnmounted, watch } from 'vue'
+import { watch } from 'vue'
 import { useMarketStore } from '@/stores/market'
 import { useTradingStore } from '@/stores/trading'
 import {
@@ -19,9 +19,6 @@ import {
 } from '@/services/websocket'
 
 // ==================== 配置 ====================
-
-const RECONNECT_INTERVAL = 30000 // 30秒检查一次连接
-
 // ==================== Composable ====================
 
 export function useWebSocketManager() {
@@ -29,7 +26,6 @@ export function useWebSocketManager() {
   const tradingStore = useTradingStore()
 
   let unsubscribeMessage: (() => void) | null = null
-  let checkTimer: number | null = null
 
   // ==================== 连接管理 ====================
 

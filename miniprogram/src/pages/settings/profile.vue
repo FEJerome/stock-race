@@ -1,11 +1,11 @@
 <template>
   <view class="profile-page">
     <!-- 用户信息卡片 -->
-    <view class="user-card" v-if="userStore.userInfo">
-      <image class="avatar" :src="userStore.userInfo.avatar || '/static/default-avatar.png'" mode="aspectFill" />
+    <view class="user-card" v-if="userStore.profile">
+      <image class="avatar" :src="userStore.profile?.avatar || '/static/default-avatar.png'" mode="aspectFill" />
       <view class="user-info">
-        <text class="nickname">{{ userStore.userInfo.nickname || userStore.userInfo.username }}</text>
-        <text class="username">用户名: {{ userStore.userInfo.username }}</text>
+        <text class="nickname">{{ userStore.profile?.nickname || userStore.profile?.username }}</text>
+        <text class="username">用户名: {{ userStore.profile?.username }}</text>
       </view>
     </view>
 
@@ -68,7 +68,7 @@
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
-import { getCurrentEnv, getEnvConfig, getAvailableEnvs } from '@/config/env'
+import { getCurrentEnv } from '@/config/env'
 import type { AppEnv } from '@/types/config'
 import EnvSwitcher from '@/components/config/EnvSwitcher.vue'
 
@@ -87,8 +87,8 @@ const currentEnvName = computed(() => {
   return names[currentEnv.value] || currentEnv.value
 })
 
-const onPopupChange = (e: { show: boolean }) => {
-  showEnvSwitcher.value = e.show
+const onPopupChange = () => {
+  // 环境切换弹窗变化处理
 }
 
 const editProfile = () => {

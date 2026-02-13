@@ -1,7 +1,7 @@
 <template>
   <view class="login-page">
     <view class="login-header">
-      <image class="logo" src="/static/logo.png" mode="aspectFit" />
+      <text class="logo-icon">📈</text>
       <text class="title">Stock-Race</text>
       <text class="subtitle">AI股票竞赛平台</text>
     </view>
@@ -108,7 +108,7 @@ async function handleWechatLogin() {
     })
 
     // 获取用户信息
-    const userInfoRes = await new Promise<{ userInfo: any }>((resolve, reject) => {
+    await new Promise<{ userInfo: any }>((resolve) => {
       uni.getUserInfo({
         provider: 'weixin',
         success: (res) => resolve(res as any),
@@ -218,9 +218,8 @@ function backToGuestMode() {
   align-items: center;
   margin-bottom: 60rpx;
 
-  .logo {
-    width: 160rpx;
-    height: 160rpx;
+  .logo-icon {
+    font-size: 120rpx;
     margin-bottom: 24rpx;
   }
 

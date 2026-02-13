@@ -2,7 +2,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { marketApi } from '@/api/market'
-import { publicApi } from '@/api/public'
 import type { StockQuote, MarketIndex, MarketStatus, RankingUser, CompetitionStats } from '@/types/market'
 import type { QuoteUpdate } from '@/services/websocket'
 import { cache } from '@/utils/cache'

@@ -1,13 +1,12 @@
 // 公开API接口封装（无需认证）
 // 对应架构文档: 005-MINIPROGRAM-GUEST-MODE.md
-// API路径: /api/public/*
+// API路径: /api/v1/public/*
 
 import { request } from './request'
 import type {
   StockQuote,
   StockSearchResult,
   QuoteListResponse,
-  RankingItem,
   RankingResponse,
   AIManagerPublicDetail,
   MarketIndex,
@@ -18,13 +17,13 @@ import type {
 // ==================== 配置 ====================
 
 // 公开API基础路径
-const PUBLIC_API_BASE = '/api/public'
+const PUBLIC_API_BASE = '/v1/public'
 
 // ==================== 行情数据API ====================
 
 /**
  * 获取股票行情列表
- * GET /api/public/market/quotes
+ * GET /api/v1/public/market/quotes
  * @param page 页码，默认1
  * @param pageSize 每页数量，默认20
  * @param sortBy 排序字段
@@ -46,7 +45,7 @@ export const getStockQuotes = async (
 
 /**
  * 搜索股票
- * GET /api/public/market/search
+ * GET /api/v1/public/market/search
  * @param keyword 搜索关键词（代码、名称、拼音）
  * @param limit 返回数量限制，默认10
  */
@@ -62,7 +61,7 @@ export const searchStocks = async (
 
 /**
  * 获取单个股票行情
- * GET /api/public/market/quotes/:code
+ * GET /api/v1/public/market/quotes/:code
  * @param code 股票代码，如 "000001.SZ"
  */
 export const getStockQuote = async (code: string): Promise<StockQuote> => {
@@ -73,7 +72,7 @@ export const getStockQuote = async (code: string): Promise<StockQuote> => {
 
 /**
  * 获取收益排行榜
- * GET /api/public/ranking/:period
+ * GET /api/v1/public/ranking/:period
  * @param period 周期: 'daily' | 'weekly' | 'monthly'
  * @param page 页码，默认1
  * @param pageSize 每页数量，默认20
@@ -91,7 +90,7 @@ export const getRanking = async (
 
 /**
  * 获取排行榜统计
- * GET /api/public/ranking/stats
+ * GET /api/v1/public/ranking/stats
  */
 export const getRankingStats = async (): Promise<{
   totalAccounts: number
@@ -106,7 +105,7 @@ export const getRankingStats = async (): Promise<{
 
 /**
  * 获取AI经理公开详情
- * GET /api/public/ai-managers/:id
+ * GET /api/v1/public/ai-managers/:id
  * @param id AI经理ID
  */
 export const getAIManagerPublicDetail = async (
@@ -117,7 +116,7 @@ export const getAIManagerPublicDetail = async (
 
 /**
  * 获取公开AI经理列表
- * GET /api/public/ai-managers
+ * GET /api/v1/public/ai-managers
  * @param page 页码
  * @param pageSize 每页数量
  */
@@ -138,7 +137,7 @@ export const getPublicAIManagers = async (
 
 /**
  * 获取市场指数
- * GET /api/public/market/indices
+ * GET /api/v1/public/market/indices
  */
 export const getMarketIndices = async (): Promise<MarketIndex[]> => {
   return request.get<MarketIndex[]>(`${PUBLIC_API_BASE}/market/indices`)
@@ -146,7 +145,7 @@ export const getMarketIndices = async (): Promise<MarketIndex[]> => {
 
 /**
  * 获取市场状态
- * GET /api/public/market/status
+ * GET /api/v1/public/market/status
  */
 export const getMarketStatus = async (): Promise<MarketStatus> => {
   return request.get<MarketStatus>(`${PUBLIC_API_BASE}/market/status`)
