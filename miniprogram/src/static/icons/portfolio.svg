@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81 81" width="81" height="81">
+  <!-- 西式复古精英风格 - 持仓图标 -->
+  <!-- 装饰边框 -->
+  <rect x="12" y="12" width="57" height="57" fill="none" stroke="#D4AF37" stroke-width="0.5" opacity="0.3" rx="1"/>
+
+  <!-- 公文包主体 -->
+  <rect x="18" y="28" width="45" height="32" fill="none" stroke="#1A365D" stroke-width="2.5" rx="2"/>
+
+  <!-- 公文包顶部翻盖 -->
+  <path d="M18 32 L18 30 Q18 24 23 24 L58 24 Q63 24 63 30 L63 32" fill="none" stroke="#1A365D" stroke-width="2"/>
+
+  <!-- 提手 -->
+  <path d="M32 24 L32 18 Q32 14 36 14 L45 14 Q49 14 49 18 L49 24" fill="none" stroke="#1A365D" stroke-width="2"/>
+  <!-- 提手装饰 -->
+  <rect x="30" y="22" width="4" height="4" fill="none" stroke="#D4AF37" stroke-width="1"/>
+  <rect x="47" y="22" width="4" height="4" fill="none" stroke="#D4AF37" stroke-width="1"/>
+
+  <!-- 扣带 - 左 -->
+  <rect x="26" y="38" width="8" height="14" fill="none" stroke="#1A365D" stroke-width="1.5" rx="1"/>
+  <circle cx="30" cy="48" r="2" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
+  <line x1="26" y1="42" x2="34" y2="42" stroke="#1A365D" stroke-width="1"/>
+
+  <!-- 扣带 - 右 -->
+  <rect x="47" y="38" width="8" height="14" fill="none" stroke="#1A365D" stroke-width="1.5" rx="1"/>
+  <circle cx="51" cy="48" r="2" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
+  <line x1="47" y1="42" x2="55" y2="42" stroke="#1A365D" stroke-width="1"/>
+
+  <!-- 中间装饰线 -->
+  <line x1="40.5" y1="28" x2="40.5" y2="60" stroke="#1A365D" stroke-width="0.8" stroke-dasharray="2,2"/>
+
+  <!-- 底部装饰 -->
+  <rect x="35" y="58" width="11" height="3" fill="none" stroke="#D4AF37" stroke-width="1" rx="1"/>
+
+  <!-- 边角装饰 -->
+  <path d="M18 28 L21 31" fill="none" stroke="#D4AF37" stroke-width="1"/>
+  <path d="M63 28 L60 31" fill="none" stroke="#D4AF37" stroke-width="1"/>
+  <path d="M18 60 L21 57" fill="none" stroke="#D4AF37" stroke-width="1"/>
+  <path d="M63 60 L60 57" fill="none" stroke="#D4AF37" stroke-width="1"/>
+</svg>

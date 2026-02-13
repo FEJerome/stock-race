@@ -33,6 +33,12 @@
       }
     },
     {
+      "path": "pages/ai-managers/edit",
+      "style": {
+        "navigationBarTitleText": "编辑基金经理"
+      }
+    },
+    {
       "path": "pages/market/quotes",
       "style": {
         "navigationBarTitleText": "市场行情"
@@ -78,6 +84,24 @@
       "path": "pages/settings/security",
       "style": {
         "navigationBarTitleText": "安全设置"
+      }
+    },
+    {
+      "path": "pages/settings/notification",
+      "style": {
+        "navigationBarTitleText": "通知设置"
+      }
+    },
+    {
+      "path": "pages/analytics/overview",
+      "style": {
+        "navigationBarTitleText": "基金分析"
+      }
+    },
+    {
+      "path": "pages/analytics/comparison",
+      "style": {
+        "navigationBarTitleText": "经理对比"
       }
     }
   ],

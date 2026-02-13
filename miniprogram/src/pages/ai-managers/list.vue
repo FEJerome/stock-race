@@ -1,7 +1,7 @@
 <template>
-  <view class="manager-list-page">
+  <view class="manager-list-page page-enter-fade">
     <!-- 头部统计 -->
-    <view class="stats-card">
+    <view class="stats-card anim-slide-down">
       <view class="stats-item">
         <text class="stats-value">{{ aiStore.accounts.length }}</text>
         <text class="stats-label">基金经理</text>
@@ -18,12 +18,19 @@
       </view>
     </view>
 
+    <!-- 骨架屏加载 -->
+    <view v-if="aiStore.loading" class="skeleton-container">
+      <Skeleton type="card" :rows="3" :active="true" />
+      <Skeleton type="card" :rows="3" :active="true" />
+    </view>
+
     <!-- 基金经理列表 -->
-    <view class="manager-list">
+    <view class="manager-list" v-else>
       <view
-        class="manager-card"
-        v-for="account in aiStore.accounts"
+        class="manager-card card-click-feedback"
+        v-for="(account, index) in aiStore.accounts"
         :key="account.id"
+        :class="getItemClass(index)"
         @click="goToDetail(account.id)"
       >
         <view class="card-header">
@@ -61,10 +68,10 @@
         </view>
 
         <view class="card-footer">
-          <button class="action-btn primary" @click.stop="triggerDecision(account.id)">
+          <button class="action-btn primary btn-click-feedback" @click.stop="triggerDecision(account.id)">
             立即决策
           </button>
-          <button class="action-btn" @click.stop="goToDetail(account.id)">
+          <button class="action-btn btn-click-feedback" @click.stop="goToDetail(account.id)">
             查看详情
           </button>
         </view>
@@ -79,7 +86,7 @@
     </view>
 
     <!-- 添加按钮 -->
-    <view class="fab-btn" @click="goToCreate">
+    <view class="fab-btn btn-click-feedback float-animation" @click="goToCreate">
       <text class="fab-icon">+</text>
     </view>
   </view>
@@ -90,8 +97,11 @@ import { onMounted } from 'vue'
 import { useAIStore } from '@/stores/ai'
 import { formatMoney, formatPercent, formatChange } from '@/utils/formatter'
 import { MODEL_PROVIDERS, RISK_LEVELS, AI_ACCOUNT_STATUS } from '@/utils/constants'
+import Skeleton from '@/components/common/Skeleton.vue'
+import { useListAnimation } from '@/mixins/animation'
 
 const aiStore = useAIStore()
+const { getItemClass } = useListAnimation()
 
 function getUniversity(provider: string): string {
   return MODEL_PROVIDERS.find(p => p.value === provider)?.university || provider
@@ -131,6 +141,10 @@ onMounted(() => {
   min-height: 100vh;
   background: #f5f5f5;
   padding-bottom: 120rpx;
+}
+
+.skeleton-container {
+  padding: 24rpx;
 }
 
 .stats-card {
