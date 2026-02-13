@@ -132,6 +132,17 @@ services:
       - STRICT_MODE=true
       - DISABLE_MOCK_DATA=true
       - FORCE_DB_CONNECTION=true
+      # 采集策略配置 - 保守反爬策略
+      - BATCH_SIZE=20
+      - BATCH_INTERVAL=3.0
+      - HIGH_FREQ_STOCKS=50
+      - HIGH_FREQ_INTERVAL=15
+      - MID_FREQ_STOCKS=200
+      - MID_FREQ_INTERVAL=45
+      - LOW_FREQ_STOCKS=4750
+      - LOW_FREQ_INTERVAL=60
+      # Tushare API Token
+      - TUSHARE_TOKEN=791fa4626dab07758375179361c7b501dad7a98ed0b9d71e78140e06
     depends_on:
       timescaledb:
         condition: service_healthy
@@ -139,6 +150,14 @@ services:
         condition: service_healthy
     networks:
       - stock-race-network
+    # 网络优化 - 解决容器DNS和连接问题
+    dns:
+      - 8.8.8.8
+      - 114.114.114.114
+    sysctls:
+      - net.ipv4.tcp_keepalive_time=60
+      - net.ipv4.tcp_keepalive_intvl=10
+      - net.ipv4.tcp_keepalive_probes=6
 
   # ==================== Trading AI Service ====================
   trading-ai-service:

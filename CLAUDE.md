@@ -592,7 +592,32 @@ curl http://localhost:8001/health
 
 ---
 
-📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含前端模拟数据改造、紧急系统修复、Docker容器化、内存持久化优化等14个历史项目详细记录。
+### 数据源扩展计划取消（2026-02-13）
+**项目状态**: ❌ **计划取消**
+
+**背景**: 计划利用春节期间将数据源从4个扩展到6-8个，提升系统容灾能力。
+
+**调研结果**: 对7个潜在数据源（网易财经、金融界、中国证券网、同花顺、和讯网、中金在线、雪球）进行详细调研和POC测试，结果如下：
+- ❌ 网易财经：API已失效，域名无法解析
+- ❌ 金融界：无官方开放API
+- ❌ 中国证券网：无公开接口
+- ⚠️ 同花顺：需付费（298-60,000元/年）
+- ❌ 和讯网：API已停用
+- ❌ 中金在线：无公开接口
+- ❌ 雪球：反爬过于严格（4/5级）
+
+**结论**: 7个调研数据源中6个完全不可行，仅同花顺可用但需付费。由于无法找到可用的免费数据源，**本计划正式取消**。
+
+**后续方案**: 保持现有4数据源系统（新浪、腾讯、东方财富、Baostock），如需扩展考虑采购同花顺官方API或联系券商获取Level-2接口。
+
+**归档文档**:
+- 📋 [调研报告](docs/architecture/HISTORICAL/V2026-02-13-DATA_SOURCE_SURVEY_REPORTS.md)
+- 📋 [可行性评估](docs/architecture/HISTORICAL/V2026-02-13-NEW_DATA_SOURCE_FEASIBILITY.md)
+- 📋 [完整规划](docs/architecture/HISTORICAL/V2026-02-13-DATA_SOURCE_EXPANSION_PLAN_V2-CANCELLED.md)
+
+---
+
+📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含前端模拟数据改造、紧急系统修复、Docker容器化、内存持久化优化等15个历史项目详细记录。
 
 ---
 

@@ -14,9 +14,7 @@ from .base import DataSource, DataSourceError, RateLimitError
 from .sina import SinaCollector
 from .tencent import TencentCollector
 from .eastmoney import EastMoneyCollector
-from .akshare import AkShareCollector
 from .baostock import BaostockCollector
-from .tushare import TushareCollector
 
 from ..core.config import settings
 from ..utils.data_quality import (
@@ -139,14 +137,6 @@ class DataSourceRouter:
                 "current_weight": 0.6,
                 "enabled": True
             },
-            "akshare": {
-                "min_interval": 0.05,  # 50ms - fastest for real-time data
-                "max_requests_per_minute": 500,  # Conservative limit
-                "batch_size": 200,  # Larger batch size
-                "base_weight": 1.2,  # 降低初始权重，避免免费API限制
-                "current_weight": 1.2,
-                "enabled": settings.AKSHARE_ENABLED
-            },
             "baostock": {
                 "min_interval": 0.15,  # 150ms - historical data doesn't need to be as fast
                 "max_requests_per_minute": 300,  # Baostock has no strict limits but be respectful
@@ -154,14 +144,6 @@ class DataSourceRouter:
                 "base_weight": 1.2,  # Good weight for historical data
                 "current_weight": 1.2,
                 "enabled": settings.BAOSTOCK_ENABLED
-            },
-            "tushare": {
-                "min_interval": 0.5,  # 500ms - Tushare has rate limits for free tier
-                "max_requests_per_minute": 200,  # Free tier limits
-                "batch_size": 50,  # Smaller batches due to rate limits
-                "base_weight": 1.2,  # 降低初始权重，考虑免费API限制
-                "current_weight": 1.2,
-                "enabled": bool(settings.TUSHARE_TOKEN and settings.TUSHARE_TOKEN != "your-tushare-token-here")
             }
         }
 
@@ -179,14 +161,12 @@ class DataSourceRouter:
             # Create data sources based on enabled configuration
             data_sources_to_create = []
 
-            # Define source mapping
+            # Define source mapping (4 reliable sources)
             source_mapping = {
                 "sina": SinaCollector,
                 "tencent": TencentCollector,
                 "eastmoney": EastMoneyCollector,
-                "akshare": AkShareCollector,
-                "baostock": BaostockCollector,
-                "tushare": TushareCollector
+                "baostock": BaostockCollector
             }
 
             # Check each source and create if enabled
@@ -529,8 +509,8 @@ class DataSourceRouter:
         # Convert to list of segments
         segments = list(segments_dict.values())
 
-        # Limit segment size
-        max_segment_size = 50
+        # Limit segment size - 反爬优化：每批次20只，避免触发反爬
+        max_segment_size = 20
         final_segments = []
 
         for segment in segments:

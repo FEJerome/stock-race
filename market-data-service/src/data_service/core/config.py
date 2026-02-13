@@ -38,15 +38,22 @@ class Settings(BaseSettings):
     TIINGO_API_KEY: Optional[str] = os.getenv("TIINGO_API_KEY")
     YAHOO_FINANCE_ENABLED: bool = os.getenv("YAHOO_FINANCE_ENABLED", "True").lower() == "true"
 
-    # Chinese Stock Data APIs
-    TUSHARE_TOKEN: Optional[str] = os.getenv("TUSHARE_TOKEN")
-    AKSHARE_ENABLED: bool = os.getenv("AKSHARE_ENABLED", "True").lower() == "true"
+    # Chinese Stock Data APIs (4 reliable sources only)
     BAOSTOCK_ENABLED: bool = os.getenv("BAOSTOCK_ENABLED", "True").lower() == "true"
 
-    # Data Collection
+    # Data Collection - 反爬优化配置（保守策略）
     COLLECTION_INTERVAL: int = int(os.getenv("COLLECTION_INTERVAL", 60))  # seconds
-    BATCH_SIZE: int = int(os.getenv("BATCH_SIZE", 100))
+    BATCH_SIZE: int = int(os.getenv("BATCH_SIZE", 20))  # 保守：每批次20只（避免触发反爬）
+    BATCH_INTERVAL: float = float(os.getenv("BATCH_INTERVAL", 3.0))  # 批次间隔3秒
     MAX_RETRIES: int = int(os.getenv("MAX_RETRIES", 3))
+
+    # 分层采集配置 - 基于反爬机制优化（保守版）
+    HIGH_FREQ_STOCKS: int = int(os.getenv("HIGH_FREQ_STOCKS", 50))  # 高频层50只
+    HIGH_FREQ_INTERVAL: int = int(os.getenv("HIGH_FREQ_INTERVAL", 15))  # 15秒
+    MID_FREQ_STOCKS: int = int(os.getenv("MID_FREQ_STOCKS", 200))  # 中频层200只
+    MID_FREQ_INTERVAL: int = int(os.getenv("MID_FREQ_INTERVAL", 45))  # 45秒
+    LOW_FREQ_STOCKS: int = int(os.getenv("LOW_FREQ_STOCKS", 4750))  # 低频层4750只
+    LOW_FREQ_INTERVAL: int = int(os.getenv("LOW_FREQ_INTERVAL", 60))  # 60秒
 
     # Market Hours (China A-share market)
     MARKET_OPEN_HOUR: int = int(os.getenv("MARKET_OPEN_HOUR", 9))

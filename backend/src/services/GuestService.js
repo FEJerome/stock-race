@@ -314,6 +314,24 @@ class GuestService {
   }
 
   /**
+   * 获取游客的活跃AI账户数量（不包括已删除的）
+   * @private
+   * @param {string} openidHash - openid的hash
+   * @returns {number} 活跃账户数量
+   */
+  _getActiveGuestAccountCount(openidHash) {
+    let count = 0;
+    for (const account of this.aiAccounts.values()) {
+      if (account.guestId === openidHash &&
+          account.status !== 'migrated' &&
+          account.status !== 'deleted') {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
    * C5-002: 创建游客AI账户
    * P0-004: 支持Redis持久化
    * @param {string} token - 游客token
@@ -324,12 +342,12 @@ class GuestService {
     const session = await this._validateToken(token);
     const openidHash = session.openidHash;
 
-    // 检查账户数量限制
-    const accountCount = this._getGuestAccountCount(openidHash);
-    if (accountCount >= 2) {
+    // 检查账户数量限制（最多3个活跃账户）
+    const activeCount = this._getActiveGuestAccountCount(openidHash);
+    if (activeCount >= 3) {
       throw new GuestServiceError(
         'ACCOUNT_LIMIT_REACHED',
-        'Maximum 2 AI accounts allowed for guest'
+        'Maximum 3 active AI accounts allowed for guest'
       );
     }
 
@@ -709,6 +727,389 @@ class GuestService {
     } catch (error) {
       return null;
     }
+  }
+
+  /**
+   * 删除游客AI账户（软删除）
+   * 删除后可以重新创建，活跃账户上限保持3个
+   * @param {string} token - 游客token
+   * @param {string} accountId - AI账户ID
+   * @returns {Promise<Object>} 删除结果
+   */
+  async deleteAIAccount(token, accountId) {
+    const session = await this._validateToken(token);
+
+    // 查找账户
+    let account = this.aiAccounts.get(accountId);
+
+    if (!account && this._useRedis()) {
+      const redis = this._getRedis();
+      const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+      if (accountData) {
+        account = JSON.parse(accountData);
+      }
+    }
+
+    if (!account || account.guestId !== session.openidHash) {
+      throw new GuestServiceError('ACCOUNT_NOT_FOUND', 'AI account not found');
+    }
+
+    if (account.status === 'deleted') {
+      throw new GuestServiceError('ACCOUNT_ALREADY_DELETED', 'AI account already deleted');
+    }
+
+    // 软删除
+    account.status = 'deleted';
+    account.deletedAt = new Date().toISOString();
+
+    // 保存
+    this.aiAccounts.set(accountId, account);
+    await this._persistAccount(accountId, account);
+
+    console.log(`[GuestService] Deleted AI account: ${accountId}`);
+
+    return {
+      success: true,
+      accountId,
+      deletedAt: account.deletedAt,
+      message: 'Account deleted successfully. You can create a new one.',
+    };
+  }
+
+  /**
+   * 获取AI账户详情（含持仓、余额信息）
+   * @param {string} token - 游客token
+   * @param {string} accountId - AI账户ID
+   * @returns {Promise<Object>} AI账户详情
+   */
+  async getAIAccountDetail(token, accountId) {
+    const session = await this._validateToken(token);
+
+    let account = this.aiAccounts.get(accountId);
+
+    if (!account && this._useRedis()) {
+      const redis = this._getRedis();
+      const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+      if (accountData) {
+        account = JSON.parse(accountData);
+        this.aiAccounts.set(accountId, account);
+      }
+    }
+
+    if (!account || account.guestId !== session.openidHash) {
+      throw new GuestServiceError('ACCOUNT_NOT_FOUND', 'AI account not found');
+    }
+
+    if (account.status === 'deleted') {
+      throw new GuestServiceError('ACCOUNT_DELETED', 'AI account has been deleted');
+    }
+
+    // 构建账户详情（包含模拟的持仓和余额数据）
+    const detail = {
+      ...account,
+      balance: this._generateMockBalance(account),
+      positions: this._generateMockPositions(account),
+      performance: this._generateMockPerformance(account),
+    };
+
+    return detail;
+  }
+
+  /**
+   * 获取AI账户持仓列表
+   * @param {string} token - 游客token
+   * @param {string} accountId - AI账户ID
+   * @returns {Promise<Array>} 持仓列表
+   */
+  async getAIAccountPositions(token, accountId) {
+    const session = await this._validateToken(token);
+
+    let account = this.aiAccounts.get(accountId);
+
+    if (!account && this._useRedis()) {
+      const redis = this._getRedis();
+      const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+      if (accountData) {
+        account = JSON.parse(accountData);
+      }
+    }
+
+    if (!account || account.guestId !== session.openidHash) {
+      throw new GuestServiceError('ACCOUNT_NOT_FOUND', 'AI account not found');
+    }
+
+    if (account.status === 'deleted') {
+      throw new GuestServiceError('ACCOUNT_DELETED', 'AI account has been deleted');
+    }
+
+    return this._generateMockPositions(account);
+  }
+
+  /**
+   * 获取AI账户交易记录
+   * @param {string} token - 游客token
+   * @param {string} accountId - AI账户ID
+   * @param {Object} options - 查询选项
+   * @returns {Promise<Object>} 交易记录和统计
+   */
+  async getAIAccountTrades(token, accountId, options = {}) {
+    const session = await this._validateToken(token);
+    const { page = 1, limit = 20 } = options;
+
+    let account = this.aiAccounts.get(accountId);
+
+    if (!account && this._useRedis()) {
+      const redis = this._getRedis();
+      const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+      if (accountData) {
+        account = JSON.parse(accountData);
+      }
+    }
+
+    if (!account || account.guestId !== session.openidHash) {
+      throw new GuestServiceError('ACCOUNT_NOT_FOUND', 'AI account not found');
+    }
+
+    if (account.status === 'deleted') {
+      throw new GuestServiceError('ACCOUNT_DELETED', 'AI account has been deleted');
+    }
+
+    // 生成模拟交易记录
+    const trades = this._generateMockTrades(account, page, limit);
+    const statistics = this._generateMockTradeStats(account);
+
+    return {
+      trades,
+      statistics,
+      pagination: {
+        page,
+        limit,
+        total: account.trades?.length || 0,
+      },
+    };
+  }
+
+  /**
+   * 获取AI账户绩效
+   * @param {string} token - 游客token
+   * @param {string} accountId - AI账户ID
+   * @param {string} period - 周期 (day/week/month/quarter/year/all)
+   * @returns {Promise<Object>} 绩效数据
+   */
+  async getAIAccountPerformance(token, accountId, period = 'month') {
+    const session = await this._validateToken(token);
+
+    let account = this.aiAccounts.get(accountId);
+
+    if (!account && this._useRedis()) {
+      const redis = this._getRedis();
+      const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+      if (accountData) {
+        account = JSON.parse(accountData);
+      }
+    }
+
+    if (!account || account.guestId !== session.openidHash) {
+      throw new GuestServiceError('ACCOUNT_NOT_FOUND', 'AI account not found');
+    }
+
+    if (account.status === 'deleted') {
+      throw new GuestServiceError('ACCOUNT_DELETED', 'AI account has been deleted');
+    }
+
+    return this._generateMockPerformance(account, period);
+  }
+
+  /**
+   * 获取AI账户余额
+   * @param {string} token - 游客token
+   * @param {string} accountId - AI账户ID
+   * @returns {Promise<Object>} 余额数据
+   */
+  async getAIAccountBalance(token, accountId) {
+    const session = await this._validateToken(token);
+
+    let account = this.aiAccounts.get(accountId);
+
+    if (!account && this._useRedis()) {
+      const redis = this._getRedis();
+      const accountData = await redis.get(`${this.redisPrefix.account}${accountId}`);
+      if (accountData) {
+        account = JSON.parse(accountData);
+      }
+    }
+
+    if (!account || account.guestId !== session.openidHash) {
+      throw new GuestServiceError('ACCOUNT_NOT_FOUND', 'AI account not found');
+    }
+
+    if (account.status === 'deleted') {
+      throw new GuestServiceError('ACCOUNT_DELETED', 'AI account has been deleted');
+    }
+
+    return this._generateMockBalance(account);
+  }
+
+  /**
+   * 生成模拟余额数据
+   * @private
+   */
+  _generateMockBalance(account) {
+    const initialBalance = account.initialBalance || 100000;
+    // 模拟一些收益/亏损
+    const mockReturn = (Math.random() * 0.2 - 0.05); // -5% to +15%
+    const currentBalance = initialBalance * (1 + mockReturn);
+    const totalValue = currentBalance + (initialBalance * 0.3); // 假设持仓市值
+
+    return {
+      initialBalance,
+      currentBalance: Math.round(currentBalance * 100) / 100,
+      totalValue: Math.round(totalValue * 100) / 100,
+      availableCash: Math.round(currentBalance * 0.3 * 100) / 100, // 30% 现金
+      totalReturn: Math.round(mockReturn * 10000) / 100, // 百分比
+      totalReturnAmount: Math.round((currentBalance - initialBalance) * 100) / 100,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * 生成模拟持仓数据
+   * @private
+   */
+  _generateMockPositions(account) {
+    const positions = [];
+    const stockCodes = ['000001.SZ', '600000.SH', '000858.SZ', '600519.SH', '002594.SZ'];
+    const stockNames = ['平安银行', '浦发银行', '五粮液', '贵州茅台', '比亚迪'];
+
+    // 生成2-4个模拟持仓
+    const count = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      const avgPrice = 10 + Math.random() * 100;
+      const quantity = 100 + Math.floor(Math.random() * 10) * 100;
+      const currentPrice = avgPrice * (1 + (Math.random() * 0.2 - 0.08));
+      const profitLoss = (currentPrice - avgPrice) * quantity;
+
+      positions.push({
+        symbol: stockCodes[i],
+        name: stockNames[i],
+        quantity,
+        avgPrice: Math.round(avgPrice * 100) / 100,
+        currentPrice: Math.round(currentPrice * 100) / 100,
+        cost: Math.round(avgPrice * quantity * 100) / 100,
+        marketValue: Math.round(currentPrice * quantity * 100) / 100,
+        profitLoss: Math.round(profitLoss * 100) / 100,
+        profitLossRate: Math.round(((currentPrice - avgPrice) / avgPrice) * 10000) / 100,
+        weight: Math.round((1 / count) * 10000) / 100,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return positions;
+  }
+
+  /**
+   * 生成模拟绩效数据
+   * @private
+   */
+  _generateMockPerformance(account, period = 'month') {
+    const initialBalance = account.initialBalance || 100000;
+    const totalReturn = Math.random() * 0.25 - 0.05; // -5% to +20%
+    const totalValue = initialBalance * (1 + totalReturn);
+
+    // 生成收益曲线数据点
+    const dataPoints = [];
+    const days = period === 'day' ? 1 : period === 'week' ? 7 : period === 'month' ? 30 :
+                  period === 'quarter' ? 90 : period === 'year' ? 365 : 30;
+
+    for (let i = days; i >= 0; i -= Math.floor(days / 10) || 1) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const progress = (days - i) / days;
+      const dailyReturn = totalReturn * progress + (Math.random() * 0.02 - 0.01);
+      dataPoints.push({
+        date: date.toISOString().split('T')[0],
+        value: initialBalance * (1 + dailyReturn),
+        return: dailyReturn,
+      });
+    }
+
+    return {
+      initialBalance,
+      currentValue: Math.round(totalValue * 100) / 100,
+      totalReturn: Math.round(totalReturn * 10000) / 100,
+      totalReturnAmount: Math.round((totalValue - initialBalance) * 100) / 100,
+      sharpeRatio: Math.round((Math.random() * 1.5 + 0.5) * 100) / 100,
+      maxDrawdown: Math.round((Math.random() * 0.15) * 10000) / 100,
+      volatility: Math.round((Math.random() * 0.2 + 0.1) * 10000) / 100,
+      winRate: Math.round((Math.random() * 0.3 + 0.5) * 10000) / 100,
+      dataPoints,
+      period,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * 生成模拟交易记录
+   * @private
+   */
+  _generateMockTrades(account, page = 1, limit = 20) {
+    const trades = [];
+    const stockCodes = ['000001.SZ', '600000.SH', '000858.SZ', '600519.SH'];
+    const stockNames = ['平安银行', '浦发银行', '五粮液', '贵州茅台'];
+    const actions = ['buy', 'sell'];
+
+    const count = Math.min(limit, 10 + Math.floor(Math.random() * 20)); // 10-30条记录
+
+    for (let i = 0; i < count; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+
+      const action = actions[Math.floor(Math.random() * actions.length)];
+      const price = 10 + Math.random() * 100;
+      const quantity = 100 + Math.floor(Math.random() * 10) * 100;
+
+      trades.push({
+        id: `trade-${account.id}-${i}`,
+        accountId: account.id,
+        symbol: stockCodes[Math.floor(Math.random() * stockCodes.length)],
+        name: stockNames[Math.floor(Math.random() * stockNames.length)],
+        action,
+        price: Math.round(price * 100) / 100,
+        quantity,
+        totalAmount: Math.round(price * quantity * 100) / 100,
+        status: 'executed',
+        executedAt: date.toISOString(),
+        reason: 'AI决策自动执行',
+      });
+    }
+
+    // 按时间排序
+    trades.sort((a, b) => new Date(b.executedAt) - new Date(a.executedAt));
+
+    return trades;
+  }
+
+  /**
+   * 生成模拟交易统计
+   * @private
+   */
+  _generateMockTradeStats(account) {
+    const totalTrades = 20 + Math.floor(Math.random() * 30);
+    const buyTrades = Math.floor(totalTrades * 0.6);
+    const sellTrades = totalTrades - buyTrades;
+    const winTrades = Math.floor(totalTrades * 0.65);
+
+    return {
+      totalTrades,
+      buyTrades,
+      sellTrades,
+      winTrades,
+      lossTrades: totalTrades - winTrades,
+      winRate: Math.round((winTrades / totalTrades) * 10000) / 100,
+      totalProfit: Math.round(Math.random() * 5000 * 100) / 100,
+      totalLoss: Math.round(Math.random() * 2000 * 100) / 100,
+      avgTradeAmount: Math.round((15000 + Math.random() * 10000) * 100) / 100,
+    };
   }
 
   /**

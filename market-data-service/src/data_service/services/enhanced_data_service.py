@@ -43,8 +43,8 @@ class EnhancedDataService:
             "performance_metrics": {}
         }
 
-        # Configuration
-        self.batch_size = 50
+        # Configuration - 反爬优化：每批次80只，避免触发反爬机制
+        self.batch_size = 80
         self.max_concurrent_requests = 5
         self.cache_ttl = {
             "quote": 5,  # 5 seconds

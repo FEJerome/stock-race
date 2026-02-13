@@ -24,6 +24,37 @@
 |------|------|------|--------|------|----------|
 | T-007 | WebSocket实时数据推送 | ⚠️ | P1 | 接口预留但未启用，需前端支持 | 待前端WebSocket客户端就绪 |
 
+### Phase 6: 4源接力式采集优化（2026-02-13新增）✅ 已完成
+
+| 编号 | 任务 | 状态 | 优先级 | 说明 | 测试覆盖 |
+|------|------|------|--------|------|----------|
+| T-011 | 接力式采集器核心实现 | ✅ | P0 | 实现分段分配+接力补偿机制，15%重叠冗余替代完全备份 | test_relay_collector.py（21个测试通过） |
+| T-012 | 全量优先调度器 | ✅ | P0 | 实现动态降级：60s→90s→120s→180s，确保全量覆盖优先于高频层 | test_full_coverage_scheduler.py（36个测试通过） |
+| T-013 | 股票名称本地缓存 | ✅ | P1 | 解决东方财富name字段缺失问题，本地维护5000+股票名称映射 | test_stock_name_cache.py（18个测试通过） |
+| T-014 | 时段感知策略优化 | ✅ | P1 | 优化交易时段/收盘后/晚间时段的采集策略，Baostock收盘后正确禁用 | 已集成到FullCoverageScheduler |
+| T-015 | 接力采集集成测试 | ✅ | P2 | 验证故障场景下的接力补偿和覆盖率保证 | 集成测试通过 |
+
+**设计文档**: [4源接力式混合采集方案设计](../../architecture/CURRENT/FOUR_SOURCE_RELAY_COLLECTION_DESIGN.md)
+
+**实现说明**:
+- ✅ 采用TDD开发模式：先编写测试脚本（Red），再实现功能代码（Green）
+- ✅ 核心目标：保证99%全量覆盖率，将系统冗余从200%降至125%
+- ✅ 关键创新：接力式采集（分段+补偿）替代完全备份
+- ✅ 容灾策略：宁可降频（60s→180s），也不减覆盖
+- ✅ 全部75个单元测试通过
+
+**实现文件**:
+- `src/data_service/collectors/relay_collector.py` - RelayCollector类，实现接力式采集核心逻辑
+- `src/data_service/services/full_coverage_scheduler.py` - FullCoverageScheduler类，实现全量优先调度
+- `src/data_service/utils/stock_name_cache.py` - StockNameCache类，解决东方财富name字段缺失问题
+
+**测试文件**:
+- `tests/unit/collectors/test_relay_collector.py` - 21个测试用例
+- `tests/unit/services/test_full_coverage_scheduler.py` - 36个测试用例
+- `tests/unit/utils/test_stock_name_cache.py` - 18个测试用例
+
+**阻塞状态**: 无阻塞，开发完成
+
 ### Phase 5: 生产环境优化（剩余项）
 
 | 编号 | 优化项 | 状态 | 优先级 | 说明 |
