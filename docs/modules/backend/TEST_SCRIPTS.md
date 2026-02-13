@@ -132,6 +132,20 @@ backend/
 - **对应需求**: T-012 热股票列表事件驱动优化
 - **测试数量**: 12 个
 
+### 3.1 WeightedHotStocksService.test.js（新增）
+- **位置**: `tests/unit/services/WeightedHotStocksService.test.js`
+- **功能**: 加权热股票服务测试（B-001 ~ B-004）
+- **测试内容**:
+  - 多因子权重计算（用户查看数40% + 查看次数30% + 交易量20% + 收藏数10%）
+  - 权重归一化处理（0-100范围，保留1位小数）
+  - 边界值处理（最大值、最小值、负数、缺失值）
+  - 热股票列表生成与排序
+  - Redis缓存管理（TTL、失效处理）
+  - 缓存状态查询
+- **对应需求**: B-001 ~ B-004 热股票列表API
+- **测试数量**: 18 个
+- **状态**: ✅ 实现完成，测试中
+
 ### 4. DynamicLimitService.test.js
 - **位置**: `tests/unit/services/DynamicLimitService.test.js`
 - **功能**: 动态限制服务测试（T-013）

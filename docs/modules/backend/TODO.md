@@ -17,7 +17,38 @@
 
 ## 一、待办任务
 
-### 1.1 集成测试环境完善
+### 1.1 Market Data Service 热股票列表 API（新增）
+
+| 编号 | 任务 | 状态 | 优先级 | 说明 | 测试覆盖 |
+|------|------|------|--------|------|----------|
+| B-001 | WeightedHotStocksService实现 | ✅ | P0 | 多因子权重计算服务：用户查看数(40%) + 查看次数(30%) + 交易量(20%) + 收藏数(10%) | WeightedHotStocksService.test.js |
+| B-002 | 热股票列表API端点 | ✅ | P0 | `GET /api/v1/market/hot-stocks`，支持limit和minWeight参数 | 集成测试 |
+| B-003 | 缓存状态查询接口 | ✅ | P1 | `GET /api/v1/market/hot-stocks/status` | 集成测试 |
+| B-004 | 手动刷新接口（管理员） | ✅ | P1 | `POST /api/v1/market/hot-stocks/refresh` | 集成测试 |
+| B-005 | 用户活动数据收集 | 🔄 | P1 | 从WebSocket连接统计用户查看行为 | 待实现 |
+| B-006 | 定时更新任务 | 🔲 | P1 | 每30秒自动更新热股票列表 | 待集成 |
+
+**设计文档**: [热股票列表API设计](../../architecture/CURRENT/HOT_STOCK_LIST_DESIGN.md)
+
+**实现说明**:
+- ✅ 采用TDD开发模式：先编写测试脚本，再实现功能代码
+- ✅ 多因子权重计算：归一化处理，保留1位小数
+- ✅ Redis缓存：60秒TTL，支持容错降级
+- ✅ 权重范围：0-100，便于Market Data Service排序选取
+
+**API端点**:
+- `GET /api/v1/market/hot-stocks` - 获取加权热股票列表
+- `GET /api/v1/market/hot-stocks/status` - 获取缓存状态
+- `POST /api/v1/market/hot-stocks/refresh` - 手动刷新（管理员）
+
+**实现文件**:
+- `src/services/WeightedHotStocksService.js` - 权重计算服务
+- `src/controllers/MarketController.js` - 控制器方法
+- `src/routes/market.js` - API路由
+
+**阻塞状态**: B-005、B-006待后续迭代实现
+
+### 1.2 集成测试环境完善
 
 | 编号 | 任务 | 状态 | 优先级 | 说明 |
 |------|------|------|--------|------|
