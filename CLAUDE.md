@@ -34,6 +34,7 @@
 - [**Miniprogram数据流优化方案**](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) - 混合分离方案：行情直连+收益后端计算
 - [**AI决策服务广度查询需求确认**](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
 - [**Redis渐进式部署策略**](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
+- [**六数据源频率限制策略**](docs/architecture/CURRENT/DATA_SOURCE_RATE_LIMITING_STRATEGY.md) - A股全量数据采集方案，6数据源智能调度与分层采集
 
 ### 历史架构文档
 历史架构文档已归档至 [docs/architecture/HISTORICAL/](docs/architecture/HISTORICAL/) 目录：

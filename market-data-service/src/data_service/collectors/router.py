@@ -241,6 +241,23 @@ class DataSourceRouter:
 
         logger.info("DataSourceRouter closed")
 
+    def _get_sorted_sources(self) -> List[DataSource]:
+        """Get all active sources sorted by weight and health score."""
+        available_sources = [s for s in self.data_sources if self.metrics[s.name].is_active]
+
+        if not available_sources:
+            return []
+
+        # Update dynamic weights
+        self._update_dynamic_weights()
+
+        # Sort by weight (highest first)
+        def get_source_weight(source):
+            config = self.source_configs.get(source.name, {})
+            return config.get('current_weight', 0)
+
+        return sorted(available_sources, key=get_source_weight, reverse=True)
+
     def _select_source_by_strategy(self, symbol: Optional[str] = None) -> DataSource:
         """Select data source based on strategy."""
         available_sources = [s for s in self.data_sources if self.metrics[s.name].is_active]
@@ -408,30 +425,58 @@ class DataSourceRouter:
         return all_quotes
 
     async def _collect_segment_quotes(self, symbols: List[str], segment_idx: int) -> Dict[str, Dict[str, Any]]:
-        """Collect quotes for a segment of symbols."""
+        """Collect quotes for a segment of symbols with failover."""
         if not symbols:
             return {}
 
-        # Select source for this segment
-        source = self._select_source_by_strategy()
-
-        try:
-            # Check rate limiting
-            await self._check_rate_limit(source.name)
-
-            # Get batch quotes
-            quotes = await source.get_batch_quotes(symbols)
-
-            # Update metrics
-            self.metrics[source.name].request_count += 1
-            self.metrics[source.name].success_count += 1
-
-            return quotes
-
-        except Exception as e:
-            logger.error(f"Failed to collect segment {segment_idx} from {source.name}: {str(e)}")
-            self.metrics[source.name].error_count += 1
+        # Get all available sources sorted by weight/health
+        available_sources = self._get_sorted_sources()
+        logger.debug(f"Available sources: {len(available_sources)}, names: {[s.name for s in available_sources]}")
+        if not available_sources:
+            logger.error(f"No active data sources available for segment {segment_idx}")
             return {}
+
+        # Try each source until success
+        for source in available_sources:
+            logger.info(f"DEBUG: Trying source {source.name} for segment {segment_idx}")
+            try:
+                # Check rate limiting
+                await self._check_rate_limit(source.name)
+
+                # Get batch quotes
+                quotes = await source.get_batch_quotes(symbols)
+
+                # Check if result is valid (not empty)
+                if not quotes or len(quotes) == 0:
+                    logger.warning(f"Source {source.name} returned empty result for segment {segment_idx}, trying next source")
+                    self.metrics[source.name].error_count += 1
+                    self.metrics[source.name].consecutive_errors += 1
+                    continue
+
+                # Update metrics
+                self.metrics[source.name].request_count += 1
+                self.metrics[source.name].success_count += 1
+                self.metrics[source.name].consecutive_errors = 0
+
+                logger.info(f"DEBUG: Source {source.name} succeeded for segment {segment_idx}, got {len(quotes)} quotes")
+                return quotes
+
+            except Exception as e:
+                logger.warning(f"Source {source.name} failed for segment {segment_idx}: {str(e)}")
+                self.metrics[source.name].error_count += 1
+                self.metrics[source.name].consecutive_errors += 1
+
+                # Mark source as inactive if too many errors
+                if self.metrics[source.name].consecutive_errors >= 5:
+                    self.metrics[source.name].is_active = False
+                    logger.warning(f"Deactivated source {source.name} due to consecutive errors")
+
+                # Continue to next source
+                continue
+
+        # All sources failed
+        logger.error(f"All data sources failed for segment {segment_idx} with symbols {symbols}")
+        return {}
 
     def _segment_symbols(self, symbols: List[str], strategy: str) -> List[List[str]]:
         """

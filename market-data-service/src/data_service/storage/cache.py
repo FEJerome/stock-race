@@ -340,5 +340,7 @@ def get_redis_cache() -> RedisCache:
     """获取Redis缓存实例"""
     global _cache_instance
     if _cache_instance is None:
-        _cache_instance = RedisCache()
+        import os
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        _cache_instance = RedisCache(redis_url=redis_url)
     return _cache_instance
