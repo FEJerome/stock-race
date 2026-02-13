@@ -2,7 +2,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { marketApi } from '@/api/market'
+import { publicApi } from '@/api/public'
 import type { StockQuote, MarketIndex, MarketStatus, RankingUser, CompetitionStats } from '@/types/market'
+import type { QuoteUpdate } from '@/services/websocket'
 import { cache } from '@/utils/cache'
 import { CACHE_TTL } from '@/utils/constants'
 
@@ -15,9 +17,28 @@ export const useMarketStore = defineStore('market', () => {
   const competitionStats = ref<CompetitionStats | null>(null)
   const loading = ref(false)
   const lastUpdateTime = ref<number>(0)
+  const realtimeQuotes = ref<Map<string, QuoteUpdate>>(new Map())
 
   // Getters
   const isMarketOpen = computed(() => marketStatus.value?.isOpen ?? false)
+
+  // 获取合并后的行情数据（HTTP数据 + WebSocket实时数据）
+  const mergedQuotes = computed<StockQuote[]>(() => {
+    return quotes.value.map((quote) => {
+      const realtime = realtimeQuotes.value.get(quote.code)
+      if (realtime) {
+        return {
+          ...quote,
+          price: realtime.current,
+          change: realtime.change,
+          changePercent: realtime.changePercent,
+          volume: realtime.volume,
+          updateTime: realtime.timestamp,
+        }
+      }
+      return quote
+    })
+  })
 
   // Actions
   async function fetchMarketStatus(): Promise<boolean> {
@@ -104,7 +125,37 @@ export const useMarketStore = defineStore('market', () => {
     ])
   }
 
+  // ==================== WebSocket实时数据合并 (O6-006) ====================
+
+  /**
+   * 合并实时行情数据
+   * @param updates 实时行情更新
+   */
+  function mergeRealtimeQuotes(updates: QuoteUpdate[]): void {
+    updates.forEach((update) => {
+      realtimeQuotes.value.set(update.symbol, update)
+    })
+    lastUpdateTime.value = Date.now()
+  }
+
+  /**
+   * 获取单只股票的实时价格
+   * @param symbol 股票代码
+   */
+  function getRealtimePrice(symbol: string): number | null {
+    const realtime = realtimeQuotes.value.get(symbol)
+    return realtime?.current ?? null
+  }
+
+  /**
+   * 清空实时数据缓存
+   */
+  function clearRealtimeQuotes(): void {
+    realtimeQuotes.value.clear()
+  }
+
   return {
+    // State
     marketStatus,
     indices,
     quotes,
@@ -112,12 +163,19 @@ export const useMarketStore = defineStore('market', () => {
     competitionStats,
     loading,
     lastUpdateTime,
+    realtimeQuotes,
+    // Getters
     isMarketOpen,
+    mergedQuotes,
+    // Actions
     fetchMarketStatus,
     fetchIndices,
     fetchQuotes,
     fetchRanking,
     fetchCompetitionStats,
     refreshAllMarketData,
+    mergeRealtimeQuotes,
+    getRealtimePrice,
+    clearRealtimeQuotes,
   }
 })

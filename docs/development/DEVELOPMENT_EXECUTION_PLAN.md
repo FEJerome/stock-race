@@ -17,12 +17,12 @@
 
 ### 1.2 开发团队配置建议
 
-| 团队 | 负责模块 | 人数建议 | 当前优先级 |
-|------|---------|---------|-----------|
-| Backend团队 | Backend (Node.js) | 2-3人 | P0（最高） |
-| Python团队 | Market Data + News Service + Trading AI | 3-4人 | P0 |
-| Frontend团队 | Frontend + Miniprogram | 2人 | P1 |
-| 小程序团队 | Miniprogram (已暂停，等待Backend) | 1人 | 阻塞中 |
+| 团队 | 负责模块 | 人数建议 | 当前优先级 | 说明 |
+|------|---------|---------|-----------|------|
+| Backend团队 | Backend (Node.js) | 2-3人 | P0（最高） | API网关，承载Miniprogram全部流量 |
+| Python团队 | Market Data + News Service + Trading AI | 3-4人 | P0 | 事件总线联调 |
+| **Miniprogram团队** | **Miniprogram** | **2人** | **P0（最高）** | **唯一C端用户入口，优先保障** |
+| **Frontend团队** | **Frontend** | **1人** | **⏸️ 暂停** | **联调阶段暂停，延后至Miniprogram上线后** |
 
 ---
 
@@ -196,7 +196,7 @@ Miniprogram团队:
 | Backend O3开发延期 | 中 | 高 | Miniprogram团队可先完成单元测试，准备Mock数据 |
 | 事件总线联调复杂 | 中 | 中 | 每完成一个环节立即联调测试，不累积到阶段末 |
 | 微信登录真机问题 | 中 | 中 | 准备测试号，提前配置AppID |
-| Frontend WebSocket延迟 | 低 | 低 | Miniprogram可先用HTTP轮询兜底 |
+| Frontend功能暂停 | 已决策 | 低 | Frontend不参与联调，专注Miniprogram |
 
 ### 4.2 应急预案
 
@@ -286,7 +286,51 @@ Miniprogram团队:
 
 ---
 
+---
+
+## 八、Frontend联调阶段暂停声明
+
+### 8.1 决策背景
+
+**决策日期**: 2026-02-12
+**决策编号**: ARCH-2026-02-12-001
+**决策人**: 首席架构师、产品经理
+
+**决策内容**:
+1. Frontend在此次联调阶段暂停用户界面功能开发
+2. Frontend定位从"用户Web界面"调整为"监控中心 + 配置中心"
+3. Miniprogram作为唯一C端用户入口，优先保障联调
+
+**决策理由**:
+- Miniprogram是项目主要用户触点（微信生态）
+- Web Frontend当前仅用于开发调试，非生产必需
+- 监控与配置中心需要完整的架构设计，目前尚未完成
+- 避免资源分散，集中火力保障Miniprogram联调
+
+### 8.2 Frontend后续规划
+
+**转型定位**: 监控中心 + 配置中心
+**启动时间**: Miniprogram上线且稳定后（预计2026-03后）
+**目标用户**: 运维人员、管理员、开发人员
+
+**核心功能**:
+- 服务健康监控（Backend/Market Data/Trading AI/News）
+- 事件总线监控（Redis Streams消息堆积、消费延迟）
+- AI决策性能监控（Token消耗、响应时间、成功率）
+- 行情数据质量监控（数据源可用性、延迟）
+- 动态配置管理（Feature Flag、系统参数）
+- AI模型配置（Prompt模板、模型参数）
+- 业务规则配置（交易规则、风控阈值）
+
+### 8.3 相关文档
+
+- `docs/architecture/CURRENT/DECISIONS/009-FRONTEND-POSITIONING.md` - 架构决策记录
+- `docs/modules/frontend/TODO.md` - Frontend开发规划（含监控中心详细设计）
+
+---
+
 *本文档最后更新：2026-02-12*
+*架构决策：Frontend转型监控中心，联调阶段暂停用户界面开发*
 *维护者：首席架构师*
 
 **相关文档**：

@@ -14,6 +14,7 @@
 | [006](./006-MINIPROGRAM-DATA-FLOW.md) | 2026-02-11 | Miniprogram数据流优化 | ✅ 已决策 | C5 |
 | [007](./007-BREADTH-QUERY-REQUIREMENTS.md) | 2026-02-11 | AI决策广度查询需求 | ✅ 已决策 | C6 |
 | [008](./008-REDIS-DEPLOYMENT.md) | 2026-02-11 | Redis渐进式部署策略 | ✅ 已决策 | - |
+| [009](./009-FRONTEND-POSITIONING.md) | 2026-02-12 | Frontend定位调整与联调策略 | ✅ 已决策 | - |
 
 ## 决策状态说明
 
@@ -52,4 +53,4 @@
 
 ---
 
-*本文档最后更新于：2026-02-11*
+*本文档最后更新于：2026-02-12*
