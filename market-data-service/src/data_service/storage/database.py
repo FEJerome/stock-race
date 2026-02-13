@@ -38,9 +38,15 @@ class DatabaseStorage:
             await self._create_tables()
 
         except Exception as e:
-            logger.warning(f"Failed to connect to TimescaleDB: {str(e)}")
-            logger.info("Falling back to in-memory mode (simulated data)")
-            self.timescale_pool = None
+            logger.error(f"Failed to connect to TimescaleDB: {str(e)}")
+            # 联调阶段：强制使用真实数据，连接失败时抛出异常
+            raise RuntimeError(
+                f"无法连接到TimescaleDB数据库。请检查:\n"
+                f"  1. TimescaleDB容器是否运行: docker ps | grep timescaledb\n"
+                f"  2. 连接配置是否正确: {settings.TSDB_HOST}:{settings.TSDB_PORT}\n"
+                f"  3. 网络是否通畅\n"
+                f"原始错误: {str(e)}"
+            )
 
     async def close(self):
         """Close database connections."""

@@ -13,8 +13,15 @@ from ..core.auth import get_current_user
 from ..models.stock import StockSymbol, StockData, StockQuote, StockHistory
 from ..services.data_service import DataService
 from ..services.realtime_service import RealtimeService
+from ..storage.cache import get_redis_cache
 
 router = APIRouter()
+
+
+def get_realtime_service() -> RealtimeService:
+    """Dependency to get RealtimeService instance."""
+    cache = get_redis_cache()
+    return RealtimeService(redis_cache=cache)
 
 
 @router.get("/health")
@@ -199,7 +206,7 @@ async def get_data_quality(
 @router.websocket("/ws/public/quotes")
 async def websocket_public_quotes(
     websocket: WebSocket,
-    realtime_service: RealtimeService = Depends()
+    realtime_service: RealtimeService = Depends(get_realtime_service)
 ):
     """
     Public WebSocket endpoint for real-time stock quotes (O6-001).
