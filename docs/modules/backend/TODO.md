@@ -2,7 +2,7 @@
 
 > 本文档仅记录**未完成**和**等待其他服务跟进**的工作项。
 > 已完成功能请查阅 [HAVE_DONE.md](./HAVE_DONE.md)。
-> 最后更新：2026-02-13 (Backend开发团队)
+> 最后更新：2026-02-13 (Backend开发团队) - 今日开发收尾完成，所有工作已校验并持久化
 
 ---
 
@@ -124,10 +124,12 @@ cd backend && npm run test:integration
 
 **实现文件**:
 - `prisma/schema.prisma` - GuestSession、GuestMigrationLog模型
-- `src/services/GuestServicePostgreSQL.js` - 核心服务（450+行，事务安全）
+- `src/services/GuestServicePostgreSQL.js` - 核心服务（450+行，事务安全，含缓存集成）
+- `src/services/GuestCacheService.js` - 缓存服务（Token/AI账户列表缓存，穿透防护）(G-008)
 - `src/services/GuestCleanupService.js` - 定时清理服务（200+行）
 - `tests/unit/database/guest-migration.test.js` - 数据库层测试（18个测试）
 - `tests/unit/services/GuestServicePostgreSQL.test.js` - 服务层测试（50+测试）
+- `tests/unit/services/GuestCacheService.test.js` - 缓存服务测试（21个测试）(G-008)
 
 **关键实现细节**:
 - **事务安全**: 所有关键操作使用Prisma事务，隔离级别Serializable
@@ -141,7 +143,16 @@ cd backend && npm run test:integration
 - 级联删除：guest_sessions → ai_accounts → portfolios/trades/ai_decisions
 - 缓存键前缀区分：guest:* vs user:*
 
-**阻塞状态**: G-001~G-002 阻塞 G-003；G-003 阻塞 G-004~G-006
+**阻塞状态**: G-001~G-002 阻塞 G-003；G-003 阻塞 G-004~G-006；G-008 已完成
+
+**G-008 实现说明（缓存一致性保障）**:
+- 创建 `GuestCacheService` 服务，提供游客数据Redis缓存层
+- **缓存内容**：Token验证结果、AI账户列表、OpenID映射
+- **缓存穿透防护**：空值缓存（60秒TTL），防止缓存击穿
+- **缓存一致性**：数据库删除/更新时同步清除相关缓存（级联删除）
+- **集成点**：`GuestServicePostgreSQL` 所有读写操作自动维护缓存
+- **性能优化**：使用pipeline批量操作，命中率统计监控
+- **降级策略**：Redis不可用时自动降级到数据库查询
 
 ---
 
@@ -190,8 +201,8 @@ cd backend && npm run test:integration
 
 ### 3.1 短期（架构师要求后执行）
 
-- [ ] 完善集成测试环境（I-001）
-- [ ] 添加API响应缓存层
+- [x] 完善集成测试环境（I-001）✅ 已完成
+- [x] 添加API响应缓存层（G-008）✅ 已完成
 
 ### 3.2 中期（架构师要求后执行）
 
@@ -224,6 +235,7 @@ cd backend && npm run test:integration
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
+| 2026-02-13 | **开发收尾校验完成**：校验所有已完成工作已持久化到文档，修复TODO中过期标记，文档与实际代码状态一致 | Backend开发团队 |
 | 2026-02-13 | **完成集成测试环境(I-001)**：docker-compose.test.yml、一键启动脚本、测试文档 | Backend开发团队 |
 | 2026-02-13 | **完成缓存一致性保障(G-008)**：GuestCacheService实现，缓存穿透防护，删除同步清缓存 | Backend开发团队 |
 | 2026-02-13 | **完成热股票列表API用户活动数据收集(B-005)**：StockActivityTracker实现，WebSocket集成，Redis存储 | Backend开发团队 |
