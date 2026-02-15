@@ -17,12 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 class DegradationLevel(Enum):
-    """降级级别枚举"""
-    NORMAL = 0      # 正常模式 - 使用新浪财经
-    DEGRADED_L1 = 1 # 一级降级 - 腾讯+东方财富
-    DEGRADED_L2 = 2 # 二级降级 - Baostock+AkShare
-    DEGRADED_L3 = 3 # 三级降级 - Tushare
-    CRITICAL = 4    # 极限降级 - 缓存+单股
+    """降级级别枚举 (4 reliable sources)"""
+    NORMAL = 0      # 正常模式 - 新浪+腾讯双主源
+    DEGRADED_L1 = 1 # 一级降级 - 东财+Baostock补位
+    DEGRADED_L2 = 2 # 二级降级 - 单源轮询模式
+    CRITICAL = 3    # 极限降级 - 缓存+降频采集
 
 
 @dataclass
@@ -65,22 +64,20 @@ class DegradationConfig:
     recovery_check_interval: int = 60   # 恢复检查间隔(秒)
     recovery_confirmation_samples: int = 3  # 恢复确认样本数
 
-    # 各级别数据源配置
+    # 各级别数据源配置 (4 reliable sources)
     level_sources: Dict[int, List[str]] = field(default_factory=lambda: {
-        0: ["sina"],
-        1: ["tencent", "eastmoney"],
-        2: ["baostock", "akshare"],
-        3: ["tushare"],
-        4: ["cache"],
+        0: ["sina", "tencent"],           # 正常模式: 双主源并行
+        1: ["eastmoney", "baostock"],     # 一级降级: 东财+Baostock
+        2: ["sina"],                       # 二级降级: 单源轮询(新浪)
+        3: ["cache"],                      # 极限降级: 缓存模式
     })
 
     # 各级别批大小配置
     level_batch_sizes: Dict[int, int] = field(default_factory=lambda: {
-        0: 100,
-        1: 100,
-        2: 100,
-        3: 50,
-        4: 10,
+        0: 50,     # 正常模式: 50只/批次
+        1: 20,     # 一级降级: 减小到20只
+        2: 10,     # 二级降级: 单源小批次
+        3: 5,      # 极限降级: 最小批次
     })
 
 
@@ -160,12 +157,10 @@ class DataMerger:
 
     # 数据源权重
     SOURCE_WEIGHTS = {
-        "sina": 1.0,
-        "tencent": 0.9,
-        "eastmoney": 0.9,
-        "tushare": 0.95,
-        "baostock": 0.7,
-        "akshare": 0.8,
+        "sina": 1.0,        # 新浪数据质量最高
+        "tencent": 0.95,    # 腾讯接近新浪
+        "eastmoney": 0.85,  # 东财有name字段缺失问题
+        "baostock": 0.7,    # Baostock有小盘股缺失
     }
 
     async def merge_quotes(

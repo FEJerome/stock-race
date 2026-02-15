@@ -12,6 +12,9 @@
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
+    "test:unit": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathPattern=unit --coverage",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathPattern=integration --forceExit",
+    "test:integration:local": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathPattern=integration --detectOpenHandles",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
     "test:types": "tsc --noEmit",
     "lint": "eslint src/**/*.{js,ts}",
@@ -35,7 +38,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.9.1",
-    "@stock-race/event-bus": "file:../../../infra/event-bus/src/node",
+    "@stock-race/event-bus": "file:../infra/event-bus/src/node",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "bull": "^4.11.5",

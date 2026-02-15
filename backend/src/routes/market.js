@@ -485,4 +485,109 @@ router.get('/realtime', optionalAuthenticate, (req, res) => marketController.get
  */
 router.get('/history', optionalAuthenticate, (req, res) => marketController.getHistory(req, res));
 
+/**
+ * @swagger
+ * /market/hot-stocks:
+ *   get:
+ *     tags: [市场]
+ *     summary: 获取加权热股票列表
+ *     description: 获取根据用户活动、交易活跃度等多因子计算的加权热股票列表，用于Market Data Service动态高频层采集
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 200
+ *           default: 50
+ *         description: 返回股票数量限制
+ *       - in: query
+ *         name: minWeight
+ *         schema:
+ *           type: number
+ *           minimum: 0
+ *           maximum: 100
+ *           default: 0
+ *         description: 最小权重过滤
+ *     responses:
+ *       200:
+ *         description: 获取热股票列表成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     stocks:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           symbol:
+ *                             type: string
+ *                           weight:
+ *                             type: number
+ *                           factors:
+ *                             type: object
+ *                     totalCount:
+ *                       type: integer
+ *                     updatedAt:
+ *                       type: string
+ *                     nextUpdateIn:
+ *                       type: integer
+ *       503:
+ *         description: 缓存未就绪
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/hot-stocks', optionalAuthenticate, (req, res) => marketController.getWeightedHotStocks(req, res));
+
+/**
+ * @swagger
+ * /market/hot-stocks/status:
+ *   get:
+ *     tags: [市场]
+ *     summary: 获取热股票缓存状态
+ *     description: 获取热股票列表缓存的状态信息
+ *     responses:
+ *       200:
+ *         description: 获取状态成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ */
+router.get('/hot-stocks/status', optionalAuthenticate, (req, res) => marketController.getHotStocksStatus(req, res));
+
+/**
+ * @swagger
+ * /market/hot-stocks/refresh:
+ *   post:
+ *     tags: [市场]
+ *     summary: 手动刷新热股票列表
+ *     description: 手动触发一次热股票列表的完整更新（仅管理员）
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 刷新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       403:
+ *         description: 权限不足
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/hot-stocks/refresh', authenticate, (req, res) => marketController.refreshHotStocks(req, res));
+
 export default router;

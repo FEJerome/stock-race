@@ -12,7 +12,7 @@ from ..collectors.router import DataSourceRouter
 from ..collectors.base import DataSourceError
 from ..processors.data_processor import DataProcessor
 from ..storage.database import DatabaseStorage
-from ..storage.cache import RedisCache
+from ..storage.cache import RedisCache, get_redis_cache
 from ..models.stock import (
     StockSymbol, StockQuote, StockData, StockHistory,
     TechnicalIndicator, DataQualityMetrics, CollectionResult,
@@ -30,7 +30,7 @@ class DataService:
         self.data_router = DataSourceRouter()
         self.data_processor = DataProcessor()
         self.database_storage = DatabaseStorage()
-        self.redis_cache = RedisCache()
+        self.redis_cache = get_redis_cache()
         self.is_initialized = False
         self.collection_stats = {
             "total_collections": 0,

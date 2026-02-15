@@ -1,12 +1,15 @@
 <template>
-  <view class="index-page">
+  <view class="index-page page-enter-fade">
     <!-- 自定义导航栏 -->
     <view class="custom-nav">
       <text class="nav-title">基金总览</text>
     </view>
 
-    <!-- 总资产卡片 -->
-    <view class="asset-card">
+    <!-- 页面加载器 -->
+    <PageLoader :loading="pageLoading" type="skeleton" skeletonType="card" :skeletonRows="5"
+    >
+      <!-- 总资产卡片 -->
+      <view class="asset-card anim-slide-up">
       <view class="asset-header">
         <text class="asset-label">总资产 (元)</text>
         <view class="refresh-btn" @click="refreshData">
@@ -33,7 +36,7 @@
     </view>
 
     <!-- 董事长指令卡片 -->
-    <view class="chairman-card">
+    <view class="chairman-card anim-slide-up anim-delay-1">
       <view class="card-header">
         <text class="card-title">📋 董事长指令</text>
         <text class="status-tag" :class="getStatusClass">{{ chairmanStatus }}</text>
@@ -57,7 +60,7 @@
     </view>
 
     <!-- AI基金经理概览 -->
-    <view class="section-card">
+    <view class="section-card anim-slide-up anim-delay-2">
       <view class="section-header" @click="goToAIManagers">
         <text class="section-title">🤖 AI基金经理</text>
         <text class="section-more">查看全部 ></text>
@@ -90,7 +93,7 @@
     </view>
 
     <!-- 持仓概览 -->
-    <view class="section-card">
+    <view class="section-card anim-slide-up anim-delay-3">
       <view class="section-header" @click="goToPortfolio">
         <text class="section-title">📊 持仓概览</text>
         <text class="section-more">查看全部 ></text>
@@ -121,25 +124,25 @@
     </view>
 
     <!-- 快捷操作 -->
-    <view class="quick-actions">
-      <view class="action-item" @click="goToMarket">
+    <view class="quick-actions anim-slide-up anim-delay-4">
+      <view class="action-item btn-click-feedback" @click="goToMarket">
         <view class="action-icon market">📈</view>
         <text class="action-label">市场行情</text>
       </view>
-      <view class="action-item" @click="goToRanking">
+      <view class="action-item btn-click-feedback" @click="goToRanking">
         <view class="action-icon ranking">🏆</view>
         <text class="action-label">竞赛排行</text>
       </view>
-      <view class="action-item" @click="goToTrades">
+      <view class="action-item btn-click-feedback" @click="goToTrades">
         <view class="action-icon trades">📋</view>
         <text class="action-label">交易记录</text>
       </view>
-      <view class="action-item" @click="goToSettings">
+      <view class="action-item btn-click-feedback" @click="goToSettings">
         <view class="action-icon settings">⚙️</view>
         <text class="action-label">设置</text>
       </view>
     </view>
-  </view>
+  </PageLoader>
 </template>
 
 <script setup lang="ts">
@@ -149,11 +152,13 @@ import { useTradingStore } from '@/stores/trading'
 import { useAIStore } from '@/stores/ai'
 import { formatMoney, formatPercent, formatChange } from '@/utils/formatter'
 import { MODEL_PROVIDERS } from '@/utils/constants'
+import PageLoader from '@/components/common/PageLoader.vue'
 
 const authStore = useAuthStore()
 const tradingStore = useTradingStore()
 const aiStore = useAIStore()
 const loading = ref(false)
+const pageLoading = ref(true)
 
 // 计算属性
 const totalAssets = computed(() => tradingStore.totalAssets)
@@ -193,11 +198,13 @@ function getUniversity(provider: string): string {
 async function refreshData() {
   if (loading.value) return
   loading.value = true
+  pageLoading.value = true
   await Promise.all([
     tradingStore.refreshAll(),
     aiStore.fetchAccounts(),
   ])
   loading.value = false
+  pageLoading.value = false
   uni.showToast({ title: '刷新成功', icon: 'success' })
 }
 

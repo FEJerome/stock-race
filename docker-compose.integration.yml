@@ -1,0 +1,234 @@
+version: '3.8'
+
+# 联调测试专用 Docker Compose 配置（全容器化）
+# 特点：
+# 1. 所有服务（包括业务服务）使用 Docker 容器
+# 2. Volume 挂载源代码，支持热重载
+# 3. 严格模式环境变量，强制使用真实数据
+# 4. 与生产环境配置保持一致
+#
+# 使用方法：
+#   docker-compose -f docker-compose.integration.yml up -d
+#
+# 注意：build context 使用项目根目录，以便访问 infra/ 下的 SDK
+
+services:
+
+  # ==================== 基础设施 ====================
+  redis:
+    image: redis:7-alpine
+    container_name: stock-race-redis-int
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data_int:/data
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: stock-race-postgres-int
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_race
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data_int:/var/lib/postgresql/data
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: stock-race-timescaledb-int
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stock_race_tsdb
+      POSTGRES_USER: timescale
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb_data_int:/var/lib/postgresql/data
+    networks:
+      - stock-race-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U timescale"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== Backend 服务 ====================
+  backend:
+    build:
+      context: .                              # 使用项目根目录作为 build context
+      dockerfile: backend/Dockerfile.dev      # 指定 Dockerfile 路径
+    container_name: stock-race-backend-int
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      # 挂载源代码实现热重载
+      - ./backend/src:/app/src
+      - ./backend/package.json:/app/package.json
+      - ./backend/.env:/app/.env
+      # 挂载 infra SDK（开发时修改 SDK 也能生效）
+      - ./infra/event-bus/src/node:/app/infra/event-bus/src/node
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/stock_race
+      - REDIS_URL=redis://redis:6379
+      - AI_SERVICE_URL=http://trading-ai-service:8000
+      - DATA_SERVICE_URL=http://market-data-service:8001
+      - STRICT_MODE=true
+      - DISABLE_DATA_FALLBACK=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - stock-race-network
+
+  # ==================== Market Data Service ====================
+  market-data-service:
+    build:
+      context: .                                      # 使用项目根目录
+      dockerfile: market-data-service/Dockerfile.dev  # 指定 Dockerfile 路径
+    container_name: stock-race-market-data-int
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./market-data-service/src:/app/src
+      - ./market-data-service/.env:/app/.env
+      # 挂载 infra SDK 支持热重载
+      - ./infra/health-check/src:/app/infra/health-check/src
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - DEBUG=True
+      - TSDB_HOST=timescaledb
+      - TSDB_PORT=5432
+      - TSDB_NAME=stock_race_tsdb
+      - TSDB_USER=timescale
+      - TSDB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379
+      - BACKEND_URL=http://backend:3001
+      - STRICT_MODE=true
+      - DISABLE_MOCK_DATA=true
+      - FORCE_DB_CONNECTION=true
+      # 采集策略配置 - 保守反爬策略
+      - BATCH_SIZE=20
+      - BATCH_INTERVAL=3.0
+      - HIGH_FREQ_STOCKS=50
+      - HIGH_FREQ_INTERVAL=15
+      - MID_FREQ_STOCKS=200
+      - MID_FREQ_INTERVAL=45
+      - LOW_FREQ_STOCKS=4750
+      - LOW_FREQ_INTERVAL=60
+      # Tushare API Token
+      - TUSHARE_TOKEN=791fa4626dab07758375179361c7b501dad7a98ed0b9d71e78140e06
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - stock-race-network
+    # 网络优化 - 解决容器DNS和连接问题
+    dns:
+      - 8.8.8.8
+      - 114.114.114.114
+    sysctls:
+      - net.ipv4.tcp_keepalive_time=60
+      - net.ipv4.tcp_keepalive_intvl=10
+      - net.ipv4.tcp_keepalive_probes=6
+
+  # ==================== Trading AI Service ====================
+  trading-ai-service:
+    build:
+      context: .                                       # 使用项目根目录
+      dockerfile: trading-ai-service/Dockerfile.dev     # 指定 Dockerfile 路径
+    container_name: stock-race-trading-ai-int
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./trading-ai-service/src:/app/src
+      - ./trading-ai-service/.env:/app/.env
+      # 挂载 infra SDK 支持热重载
+      - ./infra/health-check/src:/app/infra/health-check/src
+      - ./infra/event-bus/src:/app/infra/event-bus/src
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=True
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=stock_race
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379
+      - BACKEND_URL=http://backend:3001
+      - DATA_SERVICE_URL=http://market-data-service:8001
+      - STRICT_MODE=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - stock-race-network
+
+  # ==================== News Service ====================
+  news-service:
+    build:
+      context: .                            # 使用项目根目录
+      dockerfile: news-service/Dockerfile   # 指定 Dockerfile 路径
+    container_name: stock-race-news-int
+    restart: unless-stopped
+    volumes:
+      - ./news-service/src:/app/src
+      # 挂载 infra SDK 支持热重载
+      - ./infra/event-bus/src:/app/infra/event-bus/src
+      - ./infra/health-check/src:/app/infra/health-check/src
+    environment:
+      - PYTHONPATH=/app/src:/app/infra/event-bus/src:/app/infra/health-check/src
+      - REDIS_HOST=redis
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=stock_race
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - STRICT_MODE=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - stock-race-network
+
+networks:
+  stock-race-network:
+    driver: bridge
+
+volumes:
+  postgres_data_int:
+  timescaledb_data_int:
+  redis_data_int:

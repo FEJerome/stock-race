@@ -1,19 +1,36 @@
-# Backend Development Dockerfile
+# Backend Development Dockerfile (支持联调热重载)
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install OpenSSL and other dependencies required by Prisma (Alpine版本)
+RUN apk add --no-cache openssl libc6-compat
 
-# Install dependencies
+# 创建 infra 目录结构（用于本地依赖安装）
+RUN mkdir -p /app/infra/event-bus/src/node
+
+# 先复制本地依赖（event-bus）
+COPY infra/event-bus/src/node/package*.json /app/infra/event-bus/src/node/
+COPY infra/event-bus/src/node/index.js /app/infra/event-bus/src/node/
+COPY infra/event-bus/src/node/lib /app/infra/event-bus/src/node/lib/
+
+# 复制 Backend package 文件
+COPY backend/package*.json ./
+
+# 安装本地依赖（使用 symlink）
+RUN npm install ./infra/event-bus/src/node
+
+# 安装其他依赖
 RUN npm ci
 
-# Copy source code
-COPY . .
+# 复制 Prisma schema 并生成客户端
+COPY backend/prisma ./prisma
+RUN npx prisma generate
 
-# Expose port
+# 暴露端口
 EXPOSE 3001
 
-# Start development server
-CMD ["npm", "run", "dev"]
+# 开发模式：热重载
+# 注意：源代码通过 volume 挂载，修改自动生效
+# 先运行 migrations，然后启动服务
+CMD ["sh", "-c", "npx prisma migrate deploy && node src/app.js"]

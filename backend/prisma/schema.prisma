@@ -23,10 +23,55 @@ model User {
   aiAccounts          AIAccount[]
   systemLogs          SystemLog[]
   userSettings        UserSettings?
+  migratedGuests      GuestSession[]
 
   @@index([username])
   @@index([email])
   @@index([status])
+}
+
+model GuestSession {
+  id               Int              @id @default(autoincrement())
+  openidHash       String           @unique @map("openid_hash") @db.VarChar(64)
+  guestToken       String           @unique @map("guest_token") @db.VarChar(255)
+  status           GuestStatus      @default(active)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastActivityAt   DateTime         @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+  expiresAt        DateTime         @map("expires_at") @db.Timestamptz(6)
+  migratedUserId   Int?             @map("migrated_user_id")
+  migratedAt       DateTime?        @map("migrated_at") @db.Timestamptz(6)
+  aiAccountCount   Int              @default(0) @map("ai_account_count")
+
+  // 关联
+  aiAccounts       AIAccount[]
+  migratedUser     User?            @relation(fields: [migratedUserId], references: [id], onDelete: SetNull)
+  migrationLogs    GuestMigrationLog[]
+
+  @@index([openidHash])
+  @@index([guestToken])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("guest_sessions")
+}
+
+model GuestMigrationLog {
+  id                Int           @id @default(autoincrement())
+  guestSessionId    Int           @map("guest_session_id")
+  openidHash        String        @map("openid_hash") @db.VarChar(64)
+  userId            Int           @map("user_id")
+  accountsMigrated  Int           @default(0) @map("accounts_migrated")
+  accountIds        Json?         @map("account_ids")
+  migratedAt        DateTime      @default(now()) @map("migrated_at") @db.Timestamptz(6)
+  ipAddress         String?       @map("ip_address") @db.VarChar(45)
+  userAgent         String?       @map("user_agent") @db.VarChar(500)
+
+  // 关联
+  guestSession      GuestSession  @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+
+  @@index([guestSessionId])
+  @@index([userId])
+  @@index([migratedAt])
+  @@map("guest_migration_logs")
 }
 
 model AIAccount {
@@ -49,17 +94,27 @@ model AIAccount {
   promptTemplateId String?          @map("prompt_template_id") @db.VarChar(50)
   tokenBudget      Int?             @default(1500) @map("token_budget")
   lastDecisionAt   DateTime?        @map("last_decision_at") @db.Timestamptz(6)
+
+  // 游客相关字段
+  guestSessionId   Int?             @map("guest_session_id")
+  isGuest          Boolean          @default(false) @map("is_guest")
+  guestExpiresAt   DateTime?        @map("guest_expires_at") @db.Timestamptz(6)
+
+  // 关联
   portfolios       Portfolio[]
   rankings         Ranking[]
   trades           Trade[]
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   decisionLogs     DecisionLog[]
   systemLogs       SystemLog[]
+  guestSession     GuestSession?    @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
   @@index([modelType])
   @@index([promptTemplateId])
+  @@index([guestSessionId])
+  @@index([isGuest])
   @@map("ai_accounts")
 }
 
@@ -289,6 +344,13 @@ enum UserStatus {
   active
   inactive
   suspended
+}
+
+enum GuestStatus {
+  active
+  migrating
+  migrated
+  expired
 }
 
 enum ModelType {

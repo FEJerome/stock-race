@@ -19,18 +19,45 @@ const rankingRepository = new RankingRepository();
 const watchlistRepository = new WatchlistRepository();
 const systemLogRepository = new SystemLogRepository();
 
-// Mock competitionRepository for tests
-const competitionRepository = {
-  paginate: async () => ({ rows: [], count: 0 }),
-  findOne: async () => null,
-  create: async () => ({ id: 'mock-id' }),
-  update: async () => ({ id: 'mock-id' }),
+// 联调阶段：禁止使用Mock Repository
+// 所有数据操作必须使用真实的PostgreSQL连接
+// 如需测试，请在测试环境中使用独立的mock文件
+
+let competitionRepository;
+let prisma;
+
+// 检查是否配置了真实数据库
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    'DATABASE_URL 未配置。联调阶段必须使用真实数据库。\n' +
+    '请检查: 1) .env文件是否存在 2) 数据库连接字符串是否正确'
+  );
+}
+
+// 实际repository将在app.js中初始化时注入
+// 这里先导出占位符，确保模块加载不报错
+competitionRepository = {
+  paginate: async () => {
+    throw new Error('competitionRepository 未正确初始化。请检查数据库连接。');
+  },
+  findOne: async () => {
+    throw new Error('competitionRepository 未正确初始化。请检查数据库连接。');
+  },
+  create: async () => {
+    throw new Error('competitionRepository 未正确初始化。请检查数据库连接。');
+  },
+  update: async () => {
+    throw new Error('competitionRepository 未正确初始化。请检查数据库连接。');
+  },
 };
 
-// Mock prisma for tests
-const prisma = {
-  $queryRaw: async () => [],
-  $transaction: async (fn) => fn(prisma),
+prisma = {
+  $queryRaw: async () => {
+    throw new Error('Prisma 未正确初始化。请检查数据库连接。');
+  },
+  $transaction: async () => {
+    throw new Error('Prisma 未正确初始化。请检查数据库连接。');
+  },
 };
 
 export {

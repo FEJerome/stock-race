@@ -21,6 +21,7 @@
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
     "uview-plus": "^3.2.24",
+    "@qiun/ucharts": "2.5.0-20230101",
     "vue": "^3.4.21",
     "vue-i18n": "^9.10.2"
   },

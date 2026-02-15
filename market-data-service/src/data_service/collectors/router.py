@@ -14,9 +14,7 @@ from .base import DataSource, DataSourceError, RateLimitError
 from .sina import SinaCollector
 from .tencent import TencentCollector
 from .eastmoney import EastMoneyCollector
-from .akshare import AkShareCollector
 from .baostock import BaostockCollector
-from .tushare import TushareCollector
 
 from ..core.config import settings
 from ..utils.data_quality import (
@@ -139,14 +137,6 @@ class DataSourceRouter:
                 "current_weight": 0.6,
                 "enabled": True
             },
-            "akshare": {
-                "min_interval": 0.05,  # 50ms - fastest for real-time data
-                "max_requests_per_minute": 500,  # Conservative limit
-                "batch_size": 200,  # Larger batch size
-                "base_weight": 1.2,  # 降低初始权重，避免免费API限制
-                "current_weight": 1.2,
-                "enabled": settings.AKSHARE_ENABLED
-            },
             "baostock": {
                 "min_interval": 0.15,  # 150ms - historical data doesn't need to be as fast
                 "max_requests_per_minute": 300,  # Baostock has no strict limits but be respectful
@@ -154,14 +144,6 @@ class DataSourceRouter:
                 "base_weight": 1.2,  # Good weight for historical data
                 "current_weight": 1.2,
                 "enabled": settings.BAOSTOCK_ENABLED
-            },
-            "tushare": {
-                "min_interval": 0.5,  # 500ms - Tushare has rate limits for free tier
-                "max_requests_per_minute": 200,  # Free tier limits
-                "batch_size": 50,  # Smaller batches due to rate limits
-                "base_weight": 1.2,  # 降低初始权重，考虑免费API限制
-                "current_weight": 1.2,
-                "enabled": bool(settings.TUSHARE_TOKEN and settings.TUSHARE_TOKEN != "your-tushare-token-here")
             }
         }
 
@@ -179,14 +161,12 @@ class DataSourceRouter:
             # Create data sources based on enabled configuration
             data_sources_to_create = []
 
-            # Define source mapping
+            # Define source mapping (4 reliable sources)
             source_mapping = {
                 "sina": SinaCollector,
                 "tencent": TencentCollector,
                 "eastmoney": EastMoneyCollector,
-                "akshare": AkShareCollector,
-                "baostock": BaostockCollector,
-                "tushare": TushareCollector
+                "baostock": BaostockCollector
             }
 
             # Check each source and create if enabled
@@ -240,6 +220,23 @@ class DataSourceRouter:
                 logger.error(f"Failed to close data source {source.name}: {str(e)}")
 
         logger.info("DataSourceRouter closed")
+
+    def _get_sorted_sources(self) -> List[DataSource]:
+        """Get all active sources sorted by weight and health score."""
+        available_sources = [s for s in self.data_sources if self.metrics[s.name].is_active]
+
+        if not available_sources:
+            return []
+
+        # Update dynamic weights
+        self._update_dynamic_weights()
+
+        # Sort by weight (highest first)
+        def get_source_weight(source):
+            config = self.source_configs.get(source.name, {})
+            return config.get('current_weight', 0)
+
+        return sorted(available_sources, key=get_source_weight, reverse=True)
 
     def _select_source_by_strategy(self, symbol: Optional[str] = None) -> DataSource:
         """Select data source based on strategy."""
@@ -408,30 +405,58 @@ class DataSourceRouter:
         return all_quotes
 
     async def _collect_segment_quotes(self, symbols: List[str], segment_idx: int) -> Dict[str, Dict[str, Any]]:
-        """Collect quotes for a segment of symbols."""
+        """Collect quotes for a segment of symbols with failover."""
         if not symbols:
             return {}
 
-        # Select source for this segment
-        source = self._select_source_by_strategy()
-
-        try:
-            # Check rate limiting
-            await self._check_rate_limit(source.name)
-
-            # Get batch quotes
-            quotes = await source.get_batch_quotes(symbols)
-
-            # Update metrics
-            self.metrics[source.name].request_count += 1
-            self.metrics[source.name].success_count += 1
-
-            return quotes
-
-        except Exception as e:
-            logger.error(f"Failed to collect segment {segment_idx} from {source.name}: {str(e)}")
-            self.metrics[source.name].error_count += 1
+        # Get all available sources sorted by weight/health
+        available_sources = self._get_sorted_sources()
+        logger.debug(f"Available sources: {len(available_sources)}, names: {[s.name for s in available_sources]}")
+        if not available_sources:
+            logger.error(f"No active data sources available for segment {segment_idx}")
             return {}
+
+        # Try each source until success
+        for source in available_sources:
+            logger.info(f"DEBUG: Trying source {source.name} for segment {segment_idx}")
+            try:
+                # Check rate limiting
+                await self._check_rate_limit(source.name)
+
+                # Get batch quotes
+                quotes = await source.get_batch_quotes(symbols)
+
+                # Check if result is valid (not empty)
+                if not quotes or len(quotes) == 0:
+                    logger.warning(f"Source {source.name} returned empty result for segment {segment_idx}, trying next source")
+                    self.metrics[source.name].error_count += 1
+                    self.metrics[source.name].consecutive_errors += 1
+                    continue
+
+                # Update metrics
+                self.metrics[source.name].request_count += 1
+                self.metrics[source.name].success_count += 1
+                self.metrics[source.name].consecutive_errors = 0
+
+                logger.info(f"DEBUG: Source {source.name} succeeded for segment {segment_idx}, got {len(quotes)} quotes")
+                return quotes
+
+            except Exception as e:
+                logger.warning(f"Source {source.name} failed for segment {segment_idx}: {str(e)}")
+                self.metrics[source.name].error_count += 1
+                self.metrics[source.name].consecutive_errors += 1
+
+                # Mark source as inactive if too many errors
+                if self.metrics[source.name].consecutive_errors >= 5:
+                    self.metrics[source.name].is_active = False
+                    logger.warning(f"Deactivated source {source.name} due to consecutive errors")
+
+                # Continue to next source
+                continue
+
+        # All sources failed
+        logger.error(f"All data sources failed for segment {segment_idx} with symbols {symbols}")
+        return {}
 
     def _segment_symbols(self, symbols: List[str], strategy: str) -> List[List[str]]:
         """
@@ -484,8 +509,8 @@ class DataSourceRouter:
         # Convert to list of segments
         segments = list(segments_dict.values())
 
-        # Limit segment size
-        max_segment_size = 50
+        # Limit segment size - 反爬优化：每批次20只，避免触发反爬
+        max_segment_size = 20
         final_segments = []
 
         for segment in segments:

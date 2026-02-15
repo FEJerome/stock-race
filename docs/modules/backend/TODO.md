@@ -1,8 +1,8 @@
-# Backend 模块 - 开发任务追踪
+# Backend 模块 - 待办任务追踪
 
-> 本文档仅记录未完成和待其他服务跟进的工作项。
+> 本文档仅记录**未完成**和**等待其他服务跟进**的工作项。
 > 已完成功能请查阅 [HAVE_DONE.md](./HAVE_DONE.md)。
-> 最后更新：2026-02-12（联调冲刺日）
+> 最后更新：2026-02-13 (Backend开发团队) - 今日开发收尾完成，所有工作已校验并持久化
 
 ---
 
@@ -10,857 +10,208 @@
 
 - 🔲 待开发
 - 🔄 开发中
-- ⚠️ 待验证/部分完成
 - ⏸️ 阻塞（依赖其他服务）
 - ✅ 已完成（已移至 HAVE_DONE.md）
 
 ---
 
-## 一、联调准备阶段 (2026-02-12)
+## 一、待办任务
 
-> Backend服务已达到**联调准备就绪状态**（95%完成度）。以下任务为联调验证和文档完善工作项。
+### 1.1 Market Data Service 热股票列表 API（新增）
 
-### 联调就绪状态
+| 编号 | 任务 | 状态 | 优先级 | 说明 | 测试覆盖 |
+|------|------|------|--------|------|----------|
+| B-001 | WeightedHotStocksService实现 | ✅ | P0 | 多因子权重计算服务：用户查看数(40%) + 查看次数(30%) + 交易量(20%) + 收藏数(10%) | WeightedHotStocksService.test.js |
+| B-002 | 热股票列表API端点 | ✅ | P0 | `GET /api/v1/market/hot-stocks`，支持limit和minWeight参数 | 集成测试 |
+| B-003 | 缓存状态查询接口 | ✅ | P1 | `GET /api/v1/market/hot-stocks/status` | 集成测试 |
+| B-004 | 手动刷新接口（管理员） | ✅ | P1 | `POST /api/v1/market/hot-stocks/refresh` | 集成测试 |
+| B-005 | 用户活动数据收集 | ✅ | P1 | 从WebSocket连接统计用户查看行为 | StockActivityTracker.test.js |
+| B-006 | 定时更新任务 | ✅ | P1 | 每30秒自动更新热股票列表 | 集成测试 |
+| B-007 | 热股票公开API端点 | ✅ | P1 | `GET /api/v1/public/hot-stocks`，供Market Data Service无认证访问 | 联调通过 |
 
-| 模块 | 状态 | 说明 |
-|------|------|------|
-| 三层API架构 | ✅ 就绪 | O3-001~O3-004 公开/游客/认证API全部实现 |
-| 游客模式 | ✅ 就绪 | C5-001~C5-006 Redis持久化，32个测试通过 |
-| 事件总线 | ✅ 就绪 | C2-BE-001~006 SDK集成，15个测试通过 |
-| 健康检查 | ✅ 就绪 | C1-BE-001~003 SDK集成，18个测试通过 |
-| AI对话服务 | ✅ 就绪 | C4-001~C4-008 Backend实现，58个测试通过 |
-| 性能优化 | ✅ 就绪 | O6-003收益接口增强，O6-004缓存服务 |
-| 测试系统 | ✅ 就绪 | P0-001~P0-003 ESM修复，398个单元测试通过 |
+**设计文档**: [热股票列表API设计](../../architecture/CURRENT/HOT_STOCK_LIST_DESIGN.md)
 
-### 联调就绪确认
+**实现说明**:
+- ✅ 采用TDD开发模式：先编写测试脚本，再实现功能代码
+- ✅ 多因子权重计算：归一化处理，保留1位小数
+- ✅ Redis缓存：60秒TTL，支持容错降级
+- ✅ 权重范围：0-100，便于Market Data Service排序选取
+- ✅ 公开API：`/api/v1/public/hot-stocks` 无需认证，供Market Data Service调用
+- ✅ 修复Redis API：`setex` → `setEx` 适配Redis v4客户端
 
-> Backend服务已达到**联调准备就绪状态**，所有核心功能完成，无阻塞其他服务的未完成任务。
->
-> 统一测试文档和流程将由架构团队统一制定，Backend团队无需单独编写。
+**API端点**:
+- `GET /api/v1/market/hot-stocks` - 获取加权热股票列表
+- `GET /api/v1/market/hot-stocks/status` - 获取缓存状态
+- `POST /api/v1/market/hot-stocks/refresh` - 手动刷新（管理员）
 
-| 就绪项 | 状态 | 说明 |
-|--------|------|------|
-| API接口 | ✅ 就绪 | 公开/游客/认证三层API全部实现 |
-| 事件总线 | ✅ 就绪 | 可发布/订阅所有约定事件 |
-| 健康检查 | ✅ 就绪 | `/api/v1/public/health` 端点可用 |
-| 降级策略 | ✅ 就绪 | Market Data依赖有降级方案 |
+**实现文件**:
+- `src/services/WeightedHotStocksService.js` - 权重计算服务
+- `src/services/StockActivityTracker.js` - 用户活动追踪服务(B-005)
+- `src/controllers/MarketController.js` - 控制器方法（含定时任务启动/停止）
+- `src/routes/market.js` - API路由
+- `src/app.js` - 应用启动时启动定时任务(B-006)
 
-### 阻塞其他服务的任务（Backend提供）
+**阻塞状态**: B-005、B-006已完成
 
-| 编号 | 任务 | 状态 | 被阻塞服务 | 说明 |
-|------|------|------|----------|------|
-| C3-004B | 订阅AI绩效报告事件 | ✅ | Trading AI | Backend已实现`subscribeToAIPerformanceReports`，等待对方发布`ai.performance.report`事件 |
+**B-005 实现说明**:
+- 创建 `StockActivityTracker` 服务，使用 Redis Hash 存储用户查看数据
+- 记录 userCount（独立用户数）和 viewCount（查看次数）
+- 集成到 `WebSocketService`，用户订阅股票时自动记录
+- 支持批量记录、单条查询、批量查询
+- 数据过期时间：1小时（可配置）
+- 内存缓存去重：避免同一用户重复计数
 
----
+**B-006 实现说明**:
+- 应用启动时自动启动定时更新任务（每30秒）
+- 通过 `startHotStocksScheduler()` / `stopHotStocksScheduler()` 控制
+- 优雅关闭时自动停止定时任务
+- 首次启动立即执行一次更新，确保缓存可用
 
-## 二、联调冲刺历史记录 (2026-02-12)
-
-### P0-001: 修复ESM/CommonJS混用问题 ✅ 已完成
-
-**完成内容**:
-1. 修改 `package.json` - 使用 `NODE_OPTIONS='--experimental-vm-modules'` 运行Jest
-2. 重命名 `jest.config.js` → `jest.config.cjs`，使用CommonJS导出语法
-3. 配置 `babel.config.cjs` - 支持ESM转换和顶层await
-4. 安装依赖 `@babel/preset-env`, `chai`, `sinon`, `socket.io-client`
-5. 转换源文件为ESM格式:
-   - `src/services/GuestService.js` - ESM导入导出
-   - `src/services/EventBusService.js` - ESM导入导出
-   - `src/services/TradeValidator.js` - ESM导入导出
-   - `src/models/index.js` - 添加 `competitionRepository` 和 `prisma` mock导出
-   - `src/app.js` - 添加默认导出
-6. 批量转换测试文件（18个文件）- 将Chai/Sinon语法转换为Jest语法
-
-**测试结果**:
-- 测试套件: 20通过, 27失败, 共47个
-- 测试用例: 422通过, 97失败, 共519个
-- 所有ESM/CommonJS混用语法错误已修复
-- 测试系统可正常运行 `npm test`
-
-**备注**: 27个失败的测试套件主要是集成测试，需要外部服务（Redis、PostgreSQL、Trading AI Service等），属于I-001任务范畴
-
----
-
-### P0 - 阻塞Miniprogram联调（最高优先级）
-
-| 编号 | 任务 | 状态 | 预估工时 | 验收标准 |
-|------|------|------|----------|----------|
-| O3-001 | 公开API - 排行榜接口 | ✅ | 0.5天 | GET /api/v1/public/rankings，无需认证，支持分页排序 |
-| O3-002 | 公开API - 行情数据接口 | ✅ | 0.5天 | GET /api/v1/public/market/quotes，无需认证，批量查询 |
-| O3-003 | 游客API - 游客认证中间件 | ✅ | 1天 | POST /api/v1/guest/token，24h过期，设备指纹绑定 |
-| O3-004 | 三层API路由架构 | ✅ | 0.5天 | /api/public/*, /api/guest/*, /api/* 分层路由 |
-
-**阻塞关系**:
-- O3-001/O3-002 阻塞 Miniprogram T-008/T-009（排行榜/行情页）✅ 已完成
-- O3-003 阻塞 Miniprogram C5-007（游客Token获取）✅ 已完成
-
-**完成详情**:
-1. **O3-004 三层API路由架构**: 创建 `src/routes/api-layers.js`
-   - `/api/v1/public/*` - 公开API，无需认证
-   - `/api/v1/guest/*` - 游客API，需要guest-token
-   - `/api/v1/*` - 认证API，需要JWT
-
-2. **O3-001 排行榜接口**: `GET /api/v1/public/rankings`
-   - 支持分页 (page, limit)
-   - 支持排序 (by_return, by_sharpe, by_win_rate)
-   - 速率限制 100 req/min
-
-3. **O3-002 行情数据接口**: `GET /api/v1/public/market/quotes`
-   - 批量查询 (最多50只)
-   - 从Market Data Service获取数据
-   - 速率限制 200 req/min
-
-4. **O3-003 游客Token接口**: `POST /api/v1/guest/token`
-   - 设备指纹绑定
-   - 24h过期
-   - 支持Token刷新
-
-5. **新增文件**:
-   - `src/routes/public.js` - 公开API路由
-   - `src/middleware/guestAuth.js` - 游客认证中间件
-   - `src/routes/guest-token.js` - 游客Token路由
-   - `src/routes/api-layers.js` - 三层路由整合
-   - `tests/unit/routes/api-layers.test.js` - 单元测试
-
-6. **修改文件**:
-   - `src/app.js` - 挂载三层路由 `/api/v1`
-   - `src/models/RankingRepository.js` - 添加 `getPublicRankings()`
-   - `src/services/MarketDataClient.js` - 添加 `getQuotes()`, `getMarketSnapshot()`
-
-**接口规格**:
-
-**1. 排行榜接口** (`GET /api/v1/public/rankings`)
-```typescript
-// 请求
-GET /api/v1/public/rankings?page=1&limit=20&sort=by_return
-
-// 响应
-{
-  "data": [
-    {
-      "rank": 1,
-      "ai_manager_name": "量化先锋",
-      "total_return": 0.256,
-      "sharpe_ratio": 1.85,
-      "win_rate": 0.72
-    }
-  ],
-  "pagination": { "page": 1, "limit": 20, "total": 150 }
-}
-```
-
-**2. 行情数据接口** (`GET /api/v1/public/market/quotes`)
-```typescript
-// 请求
-GET /api/v1/public/market/quotes?symbols=000001.SZ,600000.SH
-
-// 响应
-{
-  "data": [
-    {
-      "symbol": "000001.SZ",
-      "name": "平安银行",
-      "price": 12.58,
-      "change": 0.35,
-      "change_percent": 2.86,
-      "volume": 1250000
-    }
-  ]
-}
-```
-
-**3. 游客Token接口** (`POST /api/v1/guest/token`)
-```typescript
-// 请求
-POST /api/v1/guest/token
-{ "device_fingerprint": "abc123..." }
-
-// 响应
-{ "guest_token": "g_xxx", "expires_at": "2026-02-13T12:00:00Z" }
-```
-
----
-
-### P1 - 服务间联调（高优先级）
-
-| 编号 | 任务 | 状态 | 预估工时 | 依赖 | 验收标准 |
-|------|------|------|----------|------|----------|
-| T-015 | 对接Market Data交易状态 | ✅ | 0.5天 | Market Data C3-001 | 实时交易状态查询，熔断降级 |
-| T-011 | 对接Market Data市场规则 | ✅ | 0.5天 | Market Data C6-004~006 | 涨跌停限制查询，规则验证 |
-| C3-004B | 订阅AI绩效报告事件 | ⏸️ | 0.5天 | Trading AI C3-004B | 消费 ai.performance.report 事件 |
-
-**阻塞说明**: 等待 Trading AI Service 实现 `ai.performance.report` 事件发布。当前Backend事件总线SDK已就绪（C2-BE-001~006），可消费事件但依赖对方先实现发布端。
-
-**T-015 完成详情**:
-1. **MarketDataClient扩展**: 添加 `getTradingStatus()` 和 `getMarketRules()` 方法
-2. **TradingStatusService创建**:
-   - 封装交易状态查询逻辑
-   - 实现熔断器机制（失败5次后开启，60秒后尝试恢复）
-   - 30秒本地缓存
-   - Market Data不可用时降级到TradingRulesEngine
-3. **API路由**: `GET /api/v1/trading-status/:symbol`, `POST /api/v1/trading-status/batch`, `GET /api/v1/trading-status/market/:market/rules`
-4. **单元测试**: `tests/unit/services/TradingStatusService.test.js`
-
-**新增文件**:
-- `src/services/TradingStatusService.js` - 交易状态服务
-- `src/routes/trading-status.js` - 交易状态API路由
-- `tests/unit/services/TradingStatusService.test.js` - 单元测试
-
-**修改文件**:
-- `src/services/MarketDataClient.js` - 添加getTradingStatus, getMarketRules
-- `src/routes/api-layers.js` - 挂载交易状态路由
-
----
-
-### P2 - 性能优化（中优先级）
-
-| 编号 | 任务 | 状态 | 预估工时 | 验收标准 |
-|------|------|------|----------|----------|
-| O6-003 | 优化收益接口 | ✅ | 1天 | 含持仓成本，支持实时收益计算 |
-| O6-004 | 缓存Market Data数据 | ✅ | 0.5天 | 5秒TTL缓存，减少外部依赖 |
-
-**O6-003 完成详情**:
-1. **AIAccountRepository.getAccountPerformance()** 方法增强：
-   - 新增持仓明细 `positions.positions`，包含每只股票的成本、市值、盈亏
-   - 新增持仓汇总 `positions.totalCost/totalMarketValue/totalUnrealizedPnL`
-   - 增强交易统计 `trading.buyTrades/sellTrades/totalProfit/totalLoss`
-   - 新增风险指标 `risk.sharpeRatio/maxDrawdown/volatility`
-   - 保留原有字段兼容：`totalReturn/winRate/totalTrades`
-
-2. **接口响应格式**:
-```typescript
-{
-  initialBalance: number,
-  currentBalance: number,
-  totalValue: number,
-  totalReturn: number,
-  positions: {
-    count: number,
-    totalCost: number,
-    totalMarketValue: number,
-    totalUnrealizedPnL: number,
-    positions: [{
-      symbol: string, name: string, quantity: number,
-      avgCost: number, currentPrice: number,
-      cost: number, marketValue: number,
-      profitLoss: number, profitLossRate: number, weight: number
-    }]
-  },
-  trading: { /* 交易统计 */ },
-  risk: { /* 风险指标 */ }
-}
-```
-
-**O6-004 完成详情**:
-1. **CacheService 通用缓存服务** (`src/services/CacheService.js`)：
-   - 支持Redis和内存缓存双模式
-   - 默认5秒TTL，可配置
-   - 提供 `getOrSet()` 方法实现Cache-Aside模式
-   - 缓存统计功能：hits/misses/hitRate
-
-2. **缓存专用实例**：
-   - `marketDataCache`: 行情数据缓存，TTL=5秒
-   - `tradingStatusCache`: 交易状态缓存，TTL=30秒
-   - `rankingsCache`: 排行榜缓存，TTL=60秒
-
-3. **集成位置**：
-   - `public.js`: `/market/quotes` 和 `/market/snapshot` 使用 marketDataCache
-   - `TradingStatusService`: 使用 tradingStatusCache 替代内部Map缓存
-
----
-
-### 联调验收 checklist
-
-- [x] 公开API无需认证可访问 ✅ O3-001~O3-004 已完成
-- [x] 游客Token生成与验证正常 ✅ O3-003 已完成
-- [x] 排行榜数据正确返回 ✅ O3-001 已完成（含60秒缓存）
-- [x] 行情数据实时更新 ✅ O3-002 已完成（含5秒缓存O6-004）
-- [x] 收益接口含持仓成本 ✅ O6-003 已完成
-- [x] ESM测试系统修复 ✅ P0-001~P0-003 已完成
-- [ ] 事件总线收发正常 ⏸️ 依赖Infra C2-001（SDK✅, 集成测试需I-001）
-- [ ] 所有集成测试通过 ⏸️ 依赖I-001（Docker Compose环境）
-
-**遗留阻塞项**:
-1. **I-001**: 集成测试需完整Docker环境（86个测试待验证）
-2. **C3-004B**: 等待Trading AI发布`ai.performance.report`事件
-3. **Market Data**: 等待实际接口（当前用降级方案）
-4. **News Service**: 等待情报接口/事件发布
-
----
-
-## 二、未完成工作项
-
-### 2.1 集成测试环境完善
+### 1.2 集成测试环境完善
 
 | 编号 | 任务 | 状态 | 优先级 | 说明 |
 |------|------|------|--------|------|
-| I-001 | 完善Docker Compose测试环境 | ⏸️ | P2 | 使剩余9个集成测试可自动化运行 |
+| I-001 | 完善Docker Compose测试环境 | ✅ | P2 | 使剩余9个集成测试可自动化运行 |
 
-**阻塞说明**: 需完整Docker Compose环境启动所有服务。当前单元测试398个通过（P0-003完成），86个集成测试失败皆因外部服务未启动。
+**I-001 实现说明**:
+- 创建 `docker-compose.test.yml` - 测试专用环境配置（轻量级）
+- 创建 `scripts/run-integration-tests.sh` - 一键启动脚本（自动等待服务就绪、执行迁移）
+- 更新 `package.json` - 添加 `test:integration`, `test:unit` 脚本
+- 创建 `INTEGRATION_TESTING.md` - 完整测试指南文档
+- 支持三种模式：一键启动、手动启动、CI模式
+- 自动化健康检查和数据库迁移
 
-**待解决的集成测试** (依赖外部服务):
-| 测试文件 | 依赖服务 | 阻塞原因 |
-|---------|---------|---------|
-| `service-communication.test.js` | trading-ai-service:8000, market-data-service:8001 | 服务未启动 |
-| `ai-account-creation.test.js` | Backend:3001 + PostgreSQL | 数据库未连接 |
-| `ai-dialogue.test.js` | WebSocket 服务 | 需完整Backend服务 |
-| `ai-decision-execution.test.js` | Backend + PostgreSQL | 数据库未连接 |
-| `health-check.test.js` | 部分需外部服务 | 依赖服务未启动 |
+**测试脚本列表**:
+| 测试文件 | 测试内容 | 状态 |
+|---------|---------|------|
+| `service-communication.test.js` | 服务间通信 | ✅ 可运行 |
+| `ai-account-creation.test.js` | AI账户创建流程 | ✅ 可运行 |
+| `ai-dialogue.test.js` | WebSocket对话功能 | ✅ 可运行 |
+| `ai-decision-execution.test.js` | AI决策执行 | ✅ 可运行 |
+| `health-check.test.js` | 健康检查 | ✅ 可运行 |
+| `event-pubsub.test.js` | 事件发布订阅 | ✅ 可运行 |
+| `daily-close-job.test.js` | 日终结算任务 | ✅ 可运行 |
+| `hot-stocks-publishing.test.js` | 热股票发布 | ✅ 可运行 |
 
-**解决方案**: 需执行 `docker-compose up -d` 启动完整环境，或使用 `docker-compose.test.yml` 创建测试专用环境。
+**使用方式**:
+```bash
+# 一键启动完整环境
+./scripts/run-integration-tests.sh
+
+# 运行集成测试
+cd backend && npm run test:integration
+```
 
 ---
 
-## 二、阻塞任务（需其他服务跟进）
+### 1.2 游客数据PostgreSQL化改造（高优先级）
 
-### 2.1 等待 trading-ai-service
+> **背景**: 将游客数据从Redis迁移到PostgreSQL，使用逻辑删除+定时清理策略，与正式用户统一存储。
+> **设计文档**: [游客模式设计方案](../../architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md)
 
-| 任务 | 依赖 | 状态 | 说明 |
-|------|------|------|------|
-| AI对话会话 | `POST /api/v1/dialogue/session` | ⏸️ | ~~T-011重构依赖此接口~~ ➤ 架构变更：由Backend实现，见C4-001 |
-| 投资偏好提取 | `POST /api/v1/dialogue/preference` | ⏸️ | ~~从对话提取结构化偏好~~ ➤ 架构变更：由Backend实现，见C4-003 |
+| 编号 | 任务 | 状态 | 优先级 | 预计工作量 | 说明 | 测试覆盖 |
+|------|------|------|--------|-----------|------|----------|
+| G-001 | 创建guest_sessions表 | ✅ | P0 | 0.5天 | 游客会话表，含openid_hash、token、expires_at、status字段 | guest-migration.test.js |
+| G-002 | 修改ai_accounts表 | ✅ | P0 | 0.5天 | 添加guest_session_id、is_guest、guest_expires_at字段，外键级联删除 | guest-migration.test.js |
+| G-003 | GuestService重构 | ✅ | P0 | 2天 | GuestServicePostgreSQL：Token管理、AI账户CRUD、对话管理 | GuestServicePostgreSQL.test.js (50+测试) |
+| G-004 | 游客账户删除功能 | ✅ | P0 | 0.5天 | 软删除实现，删除后可重建（活跃上限3个），事务保证计数准确 | GuestServicePostgreSQL.test.js |
+| G-005 | 游客数据查询接口 | ✅ | P0 | 1天 | getAIAccounts等方法，联表查询支持 | GuestServicePostgreSQL.test.js |
+| G-006 | 游客转正迁移服务 | ✅ | P0 | 1.5天 | migrateToFormalUser：原子事务+乐观锁+回滚机制 | GuestServicePostgreSQL.test.js (8个迁移测试) |
+| G-007 | 定时清理服务 | ✅ | P0 | 1天 | GuestCleanupService：凌晨2点逻辑删除，凌晨3点物理删除 | GuestCleanupService.js |
+| G-008 | 缓存一致性保障 | ✅ | P1 | 0.5天 | 删除时同步清缓存，缓存穿透防护（短TTL+数据库兜底） | GuestCacheService.test.js |
+| G-009 | 数据库触发器保护 | ✅ | P1 | 0.5天 | prevent_migrated_guest_delete触发器阻止误删 | guest-migration.test.js |
+| G-010 | 迁移数据校验任务 | ⏸️ | P1 | 0.5天 | 每小时校验迁移数据完整性，异常告警 | 待监控阶段实现 |
 
-> **架构变更说明**: 根据冲突4解决方案，AI对话服务由Backend实现，不再依赖Trading AI Service。见 [infra/TODO.md](../infra/TODO.md) C4-001~C4-007。
+**实现文件**:
+- `prisma/schema.prisma` - GuestSession、GuestMigrationLog模型
+- `src/services/GuestServicePostgreSQL.js` - 核心服务（450+行，事务安全，含缓存集成）
+- `src/services/GuestCacheService.js` - 缓存服务（Token/AI账户列表缓存，穿透防护）(G-008)
+- `src/services/GuestCleanupService.js` - 定时清理服务（200+行）
+- `tests/unit/database/guest-migration.test.js` - 数据库层测试（18个测试）
+- `tests/unit/services/GuestServicePostgreSQL.test.js` - 服务层测试（50+测试）
+- `tests/unit/services/GuestCacheService.test.js` - 缓存服务测试（21个测试）(G-008)
 
-**接口规格**:
+**关键实现细节**:
+- **事务安全**: 所有关键操作使用Prisma事务，隔离级别Serializable
+- **防误删机制**: 触发器阻止删除migrated/migrating状态，延迟25小时物理删除
+- **并发控制**: 乐观锁（status条件）+ 行级锁（FOR UPDATE）
+- **回滚机制**: 迁移失败自动恢复session状态
 
-**1. 对话会话接口** (`POST /api/v1/dialogue/session`)
-```typescript
-// 请求
-{
-  account_id: string;
-  user_preferences: object;
-  history: Message[];
-}
+**关键约束**:
+- 定时任务WHERE条件必须包含 `status IN ('active', 'expired')` 排除 'migrating' 和 'migrated'
+- 物理删除延迟25小时（给恢复留余地）
+- 级联删除：guest_sessions → ai_accounts → portfolios/trades/ai_decisions
+- 缓存键前缀区分：guest:* vs user:*
 
-// 响应 (SSE流式)
-{
-  type: 'message|preference_update|complete';
-  content: string;
-  roundCount: number;
-  remainingRounds: number;
-  extractedPreference?: object;
-}
-```
+**阻塞状态**: G-001~G-002 阻塞 G-003；G-003 阻塞 G-004~G-006；G-008 已完成
 
-### 2.2 等待 market-data-service
-
-| 任务 | 依赖 | 状态 | 说明 |
-|------|------|------|------|
-| 股票交易状态 | `GET /api/v1/stocks/{symbol}/trading-status` | ⏸️ | **Backend已实现T-015**，等待Market Data Service提供实际接口。当前使用TradingRulesEngine降级方案 |
-| 状态变更订阅 | `WS /ws/market/stock-status` | 🔄 | ~~WebSocket方案~~ ➤ 优化为事件总线订阅 `market:alert:price_move`，依赖Infra C2-001 |
-| 市场规则配置 | `GET /api/v1/market/rules` | ⏸️ | **Backend已实现T-011**，等待Market Data Service提供实际接口。当前使用本地规则引擎降级 |
-
-> **架构变更说明**: 根据冲突2/3解决方案，优先使用事件总线替代部分WebSocket订阅。见 [infra/TODO.md](../infra/TODO.md) C2-001, C3-001。
-
-**接口规格**:
-
-**1. 交易状态接口** (`GET /api/v1/stocks/{symbol}/trading-status`)
-```typescript
-// 响应
-{
-  symbol: string;
-  status: 'normal|suspended|limit_up|limit_down|auction';
-  priceLimits: { upper: number; lower: number; };
-  tradingPhase: 'continuous|auction|closed';
-  isST: boolean;
-  isSuspended: boolean;
-}
-```
-
-### 2.3 等待 news-service
-
-| 任务 | 依赖 | 状态 | 说明 |
-|------|------|------|------|
-| 新闻情报获取 | `GET /api/v1/intelligence/{stock_code}` | ⏸️ | **Backend已预留接口**，等待News Service实现数据提供 |
-| 新闻推送订阅 | `SUBSCRIBE news:breaking` | 🔄 | **Backend事件总线已就绪**（C2-BE-001~006），等待News Service发布 `news:intelligence:extracted` 事件 |
-
-**阻塞详情**:
-1. News Service需实现情报提取接口（REST API或事件推送）
-2. Backend已准备好事件消费者（`subscribeToNewsIntelligence()`方法待添加）
-3. 依赖Infra C2-001（事件总线SDK）✅ 已完成
-4. 依赖News Service C3-002（新闻事件发布）⏸️ 待开发
-
-> **架构变更说明**: 根据冲突2/3解决方案，使用事件总线订阅新闻事件。见 [infra/TODO.md](../infra/TODO.md) C2-001, C3-002。
+**G-008 实现说明（缓存一致性保障）**:
+- 创建 `GuestCacheService` 服务，提供游客数据Redis缓存层
+- **缓存内容**：Token验证结果、AI账户列表、OpenID映射
+- **缓存穿透防护**：空值缓存（60秒TTL），防止缓存击穿
+- **缓存一致性**：数据库删除/更新时同步清除相关缓存（级联删除）
+- **集成点**：`GuestServicePostgreSQL` 所有读写操作自动维护缓存
+- **性能优化**：使用pipeline批量操作，命中率统计监控
+- **降级策略**：Redis不可用时自动降级到数据库查询
 
 ---
 
-## 三、技术债务
+### 1.3 等待其他服务实现
 
-### 3.1 测试完善
+#### 等待 trading-ai-service
+
+| 任务 | 依赖 | 状态 | 说明 |
+|------|------|------|------|
+| AI绩效报告事件 | `ai.performance.report` | ⏸️ | Backend已实现`subscribeToAIPerformanceReports`，等待对方发布事件 |
+
+#### 等待 market-data-service
+
+| 任务 | 依赖 | 状态 | 说明 |
+|------|------|------|------|
+| 股票交易状态实时接口 | `GET /api/v1/stocks/{symbol}/trading-status` | ⏸️ | Backend已实现T-015，当前使用TradingRulesEngine降级方案 |
+| 市场规则配置接口 | `GET /api/v1/market/rules` | ⏸️ | Backend已实现T-011，当前使用本地规则引擎降级 |
+
+#### 等待 news-service
+
+| 任务 | 依赖 | 状态 | 说明 |
+|------|------|------|------|
+| 新闻情报获取 | `GET /api/v1/intelligence/{code}` | ⏸️ | Backend已预留接口，等待News Service实现 |
+| 新闻推送订阅 | `news:intelligence:extracted` 事件 | ⏸️ | Backend事件总线已就绪，可即时消费 |
+
+---
+
+## 二、技术债务
+
+### 2.1 测试完善
 
 | 项目 | 优先级 | 说明 | 预计工作量 |
 |------|--------|------|-----------|
-| 集成测试环境 | P2 | 完善Docker Compose使全部75个测试可运行 | 1天 |
 | E2E测试 | P3 | 端到端测试覆盖 | 3天 |
 
-### 3.2 性能优化
+### 2.2 性能优化
 
 | 项目 | 优先级 | 说明 | 预计工作量 |
 |------|--------|------|-----------|
-| API响应缓存 | P2 | 热点数据Redis缓存 | 1天 |
 | 数据库连接池 | P2 | 优化PostgreSQL连接池配置 | 0.5天 |
 | WebSocket性能 | P3 | 支持更多并发连接 | 1天 |
 
 ---
 
-## 四、P0 紧急任务（架构审查发现）
+## 三、未来规划（等待架构师要求）
 
-> 基于架构审查报告 [ARCHITECTURE_REVIEW_2026-02-11.md](./ARCHITECTURE_REVIEW_2026-02-11.md)，以下任务需立即执行（1周内）。
+### 3.1 短期（架构师要求后执行）
 
-### 4.1 测试系统修复
+- [x] 完善集成测试环境（I-001）✅ 已完成
+- [x] 添加API响应缓存层（G-008）✅ 已完成
 
-| 编号 | 任务 | 状态 | 优先级 | 测试要求 |
-|------|------|------|--------|----------|
-| P0-001 | 修复 ESM/CommonJS 混合问题 | ✅ | P0 | 所有测试文件通过 `npm test` 运行。已完成：package.json配置、jest.config.cjs、18个测试文件转换 |
-| P0-002 | 整合 test/ 和 tests/ 目录 | ✅ | P0 | Jest 配置统一指向 tests/ 目录，test-setup.js已移动 |
-| P0-003 | 替换 Chai/Sinon 为 Jest 断言 | ✅ | P0 | 4个测试文件已转换：TradingRulesEngine、DialogueService、DialogueConfigService、DialogueAuditService |
-
-**P0-002 完成详情**:
-1. **移动 test-setup.js**: `backend/test/test-setup.js` → `backend/tests/test-setup.js`
-2. **更新 jest.config.cjs**:
-   - `roots`: 从 `['<rootDir>/test', '<rootDir>/tests']` 改为 `['<rootDir>/tests']`
-   - `setupFilesAfterEnv`: 从 `'<rootDir>/test/test-setup.js'` 改为 `'<rootDir>/tests/test-setup.js'`
-3. **删除 test/ 目录**: 已清理空的 `backend/test/` 目录
-
-**P0-003 完成详情**:
-1. **转换的测试文件** (4个):
-   - `tests/unit/services/TradingRulesEngine.test.js` - 28个测试通过
-   - `tests/unit/services/DialogueService.test.js` - 16个测试通过
-   - `tests/unit/services/DialogueConfigService.test.js` - 17个测试通过
-   - `tests/unit/services/DialogueAuditService.test.js` - 25个测试通过
-
-2. **主要替换规则**:
-   - `import { expect } from 'chai'` → `import { jest, describe, it, expect, beforeEach } from '@jest/globals'`
-   - `sinon.stub()` → `jest.fn()`
-   - `sinon.stub().resolves(x)` → `jest.fn().mockResolvedValue(x)`
-   - `stub.calledTwice` → `expect(stub).toHaveBeenCalledTimes(2)`
-   - `.to.equal(x)` → `.toBe(x)`
-   - `.to.have.property('x')` → `.toHaveProperty('x')`
-   - `.to.include(x)` → `.toContain(x)`
-   - `.to.match(regex)` → `.toMatch(regex)`
-   - `.to.be.null` → `.toBeNull()`
-   - `.to.be.true/false` → `.toBe(true/false)`
-
-**P0-001 详细测试要求**:
-```javascript
-// 测试文件必须使用 ESM 格式
-// ❌ 错误：使用 CommonJS
-const { expect } = require('chai');
-
-// ✅ 正确：使用 ESM + Jest
-import { jest, describe, it, expect } from '@jest/globals';
-
-// 断言使用 Jest 内置
-expect(result).toBe(value);
-expect(result).toEqual(object);
-expect(mockFn).toHaveBeenCalled();
-```
-
-**测试通过标准**:
-- [ ] `npm test` 运行无语法错误
-- [ ] 至少 195 个单元测试全部通过
-- [ ] 覆盖率报告正确生成
-- [ ] 无 `require is not defined` 错误
-
----
-
-### 4.2 GuestService 持久化改造
-
-| 编号 | 任务 | 状态 | 优先级 | 测试要求 |
-|------|------|------|--------|----------|
-| P0-004 | GuestService Redis 持久化 | ✅ | P0 | 服务重启后游客数据不丢失 |
-| P0-005 | 添加 GuestService 单元测试 | ✅ | P0 | 覆盖 C5-001 ~ C5-006 全部功能 |
-
-**完成详情**:
-1. **P0-004 GuestService Redis 持久化**:
-   - 修改 `src/services/GuestService.js` - 添加Redis持久化支持
-   - 新增 `_persistSession()`, `_persistAccount()`, `_persistDialogue()` 方法
-   - 新增 `restoreFromRedis()` 方法用于服务启动时恢复数据
-   - 新增 `getPersistenceStats()` 方法获取持久化统计
-   - 支持TTL自动过期（24h/72h根据账户数量）
-   - 降级 gracefully：Redis不可用时自动降级到内存模式
-
-2. **P0-005 GuestService 单元测试**:
-   - 更新 `tests/unit/services/GuestService.test.js`
-   - 覆盖 C5-001 ~ C5-006 全部功能
-   - 新增 Redis 持久化测试（从Redis恢复、降级处理）
-   - 测试用例：32个全部通过
-
-**P0-004 详细测试要求**:
-```javascript
-// tests/unit/services/GuestService.test.js
-
-describe('GuestService Persistence', () => {
-  it('should persist session to Redis', async () => {
-    const token = await GuestService.createGuestToken('openid-123');
-    // 模拟服务重启
-    GuestService.sessions.clear();
-    // 从 Redis 恢复
-    await GuestService.restoreFromRedis();
-    const session = await GuestService.getSession(token.token);
-    expect(session).not.toBeNull();
-  });
-
-  it('should handle Redis connection failure gracefully', async () => {
-    // Redis 断开时降级到内存模式
-    redis.disconnect();
-    const token = await GuestService.createGuestToken('openid-123');
-    expect(token).toHaveProperty('token');
-  });
-});
-```
-
-**P0-005 测试覆盖要求**:
-| 功能点 | 测试场景 | 断言要求 |
-|--------|----------|----------|
-| C5-001 创建游客Token | 同一 openid 生成相同 token | `expect(token1).toBe(token2)` |
-| C5-001 Token 过期 | 过期后验证失败 | `expect(session).toBeNull()` |
-| C5-002 创建AI账户 | 最多2个账户限制 | 第3个创建抛出 `ACCOUNT_LIMIT_REACHED` |
-| C5-003 AI对话 | 10轮对话限制 | 第11轮抛出 `ROUND_LIMIT_REACHED` |
-| C5-004 数据迁移 | 迁移成功后游客数据绑定 | `expect(account.migratedTo).toBe(userId)` |
-| C5-005 过期清理 | 无AI账户24h过期 | 模拟时间前进24h后状态为 `expired` |
-
----
-
-### 4.3 核心功能验证
-
-| 编号 | 任务 | 状态 | 优先级 | 测试要求 |
-|------|------|------|--------|----------|
-| P0-006 | EventBusService 集成测试 | ⏸️ | P0 | 发布/订阅事件端到端测试 |
-| P0-007 | TradingRulesEngine 规则验证 | ✅ | P0 | 涨跌停计算精度测试 |
-
-**P0-007 完成详情**:
-- 测试文件: `tests/unit/services/TradingRulesEngine.test.js`
-- 测试数量: 28个全部通过
-- 覆盖场景: 主板10%/创业板20%/科创板20%/北交所30%涨跌停计算，ST股票5%限制，停牌检测，交易时间验证
-
-**P0-006 阻塞说明**: EventBusService集成测试需要完整的Redis + Docker Compose环境（I-001）。当前单元测试已覆盖SDK调用（15个测试通过），端到端测试需要外部服务。
-
-**P0-006 测试要求**:
-```javascript
-// 集成测试要求
-it('should publish and consume events', async () => {
-  const handler = jest.fn();
-  await EventBusService.subscribeToAIDecisions(handler);
-
-  // 发布测试事件
-  await EventBusService.publishTradeExecuted({
-    accountId: 'test-acc',
-    tradeId: 'test-trade',
-    symbol: '000001.SZ',
-    action: 'buy',
-    quantity: 100,
-    price: 12.58
-  });
-
-  // 验证消费
-  await waitFor(() => expect(handler).toHaveBeenCalled());
-});
-```
-
-**P0-007 测试要求**:
-```javascript
-// 涨跌停计算精度测试
-it('should calculate limit prices correctly', () => {
-  // 主板 10% 涨跌幅
-  const result = TradingRulesEngine.calculateLimitPrices('000001.SZ', 10.00);
-  expect(result.upper).toBe(11.00);  // 10 * 1.10
-  expect(result.lower).toBe(9.00);   // 10 * 0.90
-
-  // 科创板 20% 涨跌幅
-  const kcbResult = TradingRulesEngine.calculateLimitPrices('688001.SH', 10.00);
-  expect(kcbResult.upper).toBe(12.00);  // 10 * 1.20
-});
-```
-
----
-
-## 四、架构优化任务（2026-02-11新增）
-
-### 4.1 冲突解决方案
-
-#### 冲突1：循环依赖解决（共享Redis + 冷启动）
-
-| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
-|------|------|------|--------|----------|
-| C1-BE-001 | 接入健康检查SDK | ✅ | P0 | 服务启动时检查Redis和依赖服务状态 |
-| C1-BE-002 | 实现降级运行模式 | ✅ | P0 | 依赖不可用时以降级模式启动，提供有限功能 |
-| C1-BE-003 | 实现自动恢复机制 | ✅ | P0 | 依赖恢复后自动升级到正常模式 |
-
-**完成详情**:
-1. **C1-BE-001 接入健康检查SDK**:
-   - 更新 `src/services/HealthService.js`
-   - 添加 `performHealthCheck()` 方法检查所有依赖
-   - 支持检查：Redis、PostgreSQL、Market Data、Trading AI、News Service、EventBus
-   - 新增 `checkEventBus()` 方法检查事件总线状态
-
-2. **C1-BE-002 实现降级运行模式**:
-   - 添加 `ServiceStatus` 枚举：NORMAL/DEGRADED/OFFLINE
-   - 添加 `calculateServiceStatus()` 方法计算整体状态
-   - 关键服务（PostgreSQL/Redis）OFFLINE时整体为OFFLINE
-   - 添加 `isDegraded()`, `isOffline()`, `isDependencyAvailable()` 方法
-
-3. **C1-BE-003 实现自动恢复机制**:
-   - 添加 `attemptRecovery()` 方法尝试自动恢复
-   - 每10秒自动检查（`startAutoCheck()`）
-   - 支持恢复：Redis、PostgreSQL、EventBus
-   - 添加 `initialize()` 方法初始化健康检查服务
-
-**阻塞状态**: ✅ 已完成，健康检查SDK集成就绪
-
-#### 冲突2：统一事件总线接入
-
-| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
-|------|------|------|--------|----------|
-| C2-BE-001 | 集成Node.js事件总线SDK | ✅ | P0 | 使用SDK发布和订阅事件。已完成：SDK安装、EventBusService实现、15个集成测试通过 |
-| C2-BE-002 | 发布账户更新事件 | ✅ | P0 | 账户状态变更时发布`backend:account:updated`。已完成：publishAccountUpdated方法实现 |
-| C2-BE-003 | 发布交易执行事件 | ✅ | P0 | 交易完成后发布`backend:trade:executed`。已完成：publishTradeExecuted方法实现 |
-| C2-BE-004 | 订阅AI决策事件 | ✅ | P0 | 订阅`ai:decision:made`，接收AI决策通知。已完成：subscribeToAIDecisions方法实现 |
-| C2-BE-005 | 实现事件处理器 | ✅ | P0 | 处理AI决策事件，触发交易执行。已完成：handler包装器实现，支持错误处理和日志 |
-| C2-BE-006 | 配置消费者组 | ✅ | P1 | Backend多实例负载均衡消费。已完成：支持自定义consumerGroup和consumerName |
-
-**实现详情**:
-- **SDK安装**: `npm install @stock-race/event-bus`
-- **服务文件**: `src/services/EventBusService.js`
-- **测试文件**: `tests/unit/services/EventBusIntegration.test.js` (15个测试通过)
-- **核心功能**:
-  - `initialize()`: 初始化Redis连接
-  - `publishAccountUpdated()`: 发布账户更新事件
-  - `publishTradeExecuted()`: 发布交易执行事件
-  - `subscribeToAIDecisions()`: 订阅AI决策事件
-  - `stop()`: 优雅关闭
-
-**阻塞状态**: ✅ 已完成，事件总线集成就绪
-
-#### 冲突4：AI对话服务实现（Backend承接）
-
-| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
-|------|------|------|--------|----------|
-| C4-001 | 实现对话会话接口 | ✅ | P0 | `POST /api/ai-accounts/{id}/dialogue/session`创建会话 |
-| C4-002 | 实现对话消息接口（SSE） | ✅ | P0 | `POST /api/ai-accounts/{id}/dialogue/message`流式响应 |
-| C4-003 | 实现画像提取接口 | ✅ | P0 | `POST /api/ai-accounts/{id}/finalize`提取并激活账户 |
-| C4-004 | 对接DeepSeek API | ✅ | P0 | 封装DeepSeek调用，支持流式响应 |
-| C4-005 | 实现对话上下文管理 | ✅ | P0 | Redis存储对话历史，10轮限制 |
-| C4-006 | 实现Token成本控制 | ✅ | P1 | 单条<2000 tokens，总额度限制 |
-| C4-007 | 实现动态配置系统 | ✅ | P1 | DialogueConfigService，支持分层配置、缓存、热更新 |
-| C4-008 | 实现内容审查机制 | ✅ | P1 | DialogueAuditService，敏感词检测、审计日志、管理接口 |
-
-**阻塞状态**: 无阻塞，可独立开发
-
-#### 冲突5：Miniprogram游客模式（Backend实现）
-
-| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
-|------|------|------|--------|----------|
-| C5-001 | 实现游客Token生成 | ✅ | P0 | `POST /api/guest/auth/token`，基于openid_hash |
-| C5-002 | 实现游客AI账户创建 | ✅ | P0 | `POST /api/guest/ai-accounts`，限制2个 |
-| C5-003 | 实现游客AI对话 | ✅ | P0 | `POST /api/guest/ai-accounts/:id/chat`，限制10轮 |
-| C5-004 | 实现游客数据迁移 | ✅ | P0 | 登录后游客数据绑定到正式用户，事务保护 |
-| C5-005 | 实现智能过期策略 | ✅ | P0 | 无AI账户24h过期，有AI账户72h过期 |
-| C5-006 | 创建guest_sessions表 | ✅ | P0 | 游客会话表设计，含openid_hash、expires_at等字段 |
-
-**阻塞状态**: 无阻塞，可独立开发
-
-#### 优化3：三层API架构
-
-| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
-|------|------|------|--------|----------|
-| O3-001 | 公开API层实现 | ✅ | P0 | `/api/public/*`行情、排行榜、搜索无需认证 |
-| O3-002 | 游客API层实现 | ✅ | P0 | `/api/guest/*`游客Token、临时AI账户 |
-| O3-003 | 认证API层保护 | ✅ | P0 | `/api/*`JWT认证加固 |
-| O3-004 | API路由分层中间件 | ✅ | P0 | 根据路由前缀应用不同认证策略 |
-
-**完成详情**: 三层API架构已实现，见【P0 - 阻塞Miniprogram联调】章节。C5-001~C5-006游客模式已完成，无阻塞。
-
-#### 优化6：Miniprogram数据流优化（Backend部分）
-
-| 编号 | 任务 | 状态 | 优先级 | 测试描述 |
-|------|------|------|--------|----------|
-| O6-003 | 优化收益接口 | ✅ | P0 | `GET /api/ai-accounts/{id}/performance`含持仓成本 |
-| O6-004 | 缓存Market Data数据 | ✅ | P0 | 5秒TTL缓存行情数据，减少外部依赖 |
-
-**完成详情**:
-- O6-003: `AIAccountRepository.getAccountPerformance()` 已增强，返回持仓明细、成本、盈亏、风险指标
-- O6-004: `CacheService` 已实现，集成到 `public.js` 和 `TradingStatusService`，5秒TTL缓存
-- 见【P2 - 性能优化】章节详细说明
-
----
-
-## 六、联调依赖矩阵
-
-### Backend作为被依赖方（已就绪）
-
-| 消费方 | 依赖功能 | 状态 | 接口/事件 |
-|--------|---------|------|----------|
-| Miniprogram | 排行榜API | ✅ | `GET /api/v1/public/rankings` |
-| Miniprogram | 行情API | ✅ | `GET /api/v1/public/market/quotes` |
-| Miniprogram | 游客Token | ✅ | `POST /api/v1/guest/token` |
-| Miniprogram | 游客AI账户 | ✅ | `POST /api/v1/guest/ai-accounts` |
-| Miniprogram | 收益查询 | ✅ | `GET /api/ai-accounts/:id/performance` |
-| Trading AI | 交易执行结果 | ✅ | `backend:trade:executed` 事件 |
-| Trading AI | AI账户更新 | ✅ | `backend:account:updated` 事件 |
-
-### Backend作为依赖方（等待其他服务）
-
-| 提供方 | 所需功能 | 状态 | 阻塞影响 |
-|--------|---------|------|----------|
-| Market Data | 交易状态API | ⏸️ | Backend使用TradingRulesEngine降级方案，无阻塞 |
-| Market Data | 市场规则API | ⏸️ | Backend使用本地规则引擎，无阻塞 |
-| News Service | 情报查询API | ⏸️ | 功能预留，联调阶段可选 |
-| News Service | 情报事件 | ⏸️ | Backend事件总线已就绪，可即时消费 |
-| Trading AI | 绩效报告事件 | ⏸️ | C3-004B已实现，等待对方发布事件 |
-
-**结论**: Backend核心功能全部就绪，无阻塞联调的硬性依赖。
-
----
-
-## 七、外部依赖跟踪（归档）
-
-| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 备注 |
-|----------|---------|---------|---------|------|
-| market-data-service | `GET /api/v1/stocks/{symbol}/trading-status` | ⏸️ 降级运行 | 2026-02-12 | Backend已实现T-015，使用降级方案 |
-| market-data-service | `GET /api/v1/market/rules` | ⏸️ 降级运行 | 2026-02-12 | Backend已实现T-011，使用降级方案 |
-| news-service | `GET /api/v1/intelligence/{code}` | ⏸️ 预留 | 2026-02-12 | 功能预留，联调阶段可选 |
-| news-service | `SUBSCRIBE news:breaking` | ✅ 就绪 | 2026-02-12 | Backend事件总线已就绪 |
-| trading-ai-service | `SUBSCRIBE ai:performance:report` | ✅ 就绪 | 2026-02-12 | C3-004B已实现，等待对方发布 |
-
----
-
-## 附录：事件总线SDK使用指南
-
-### SDK位置
-```
-项目根目录/infra/event-bus/
-├── src/event_bus/          # Python SDK（已完成）
-└── src/node/               # Node.js SDK（✅ 已完成，23个测试通过）
-    └── USAGE_GUIDE.md      # Node.js SDK使用指南
-```
-
-### Backend使用说明
-
-Backend使用Node.js开发，事件总线Node.js SDK已开发完成。
-
-**使用方法：**
-
-1. **安装SDK**
-```bash
-cd /home/fe-jerome/projects/stock-rice/backend
-npm install /home/fe-jerome/projects/stock-rice/infra/event-bus/src/node
-```
-
-2. **使用SDK发布和订阅事件**
-```javascript
-const {
-  EventBusClient,
-  EventProducer,
-  EventConsumer,
-  EventType,
-} = require('@stock-race/event-bus');
-
-class TradeExecutor {
-  constructor() {
-    this.client = new EventBusClient({
-      host: process.env.REDIS_HOST,
-      port: parseInt(process.env.REDIS_PORT),
-    });
-
-    // 生产者：发布交易执行事件
-    this.producer = new EventProducer({
-      client: this.client,
-      serviceName: 'backend',
-    });
-
-    // 消费者：订阅AI决策
-    this.consumer = new EventConsumer({
-      client: this.client,
-      serviceName: 'backend',
-      consumerGroup: 'trade-executor-group',
-    });
-
-    // 注册处理器
-    this.consumer.subscribe(
-      EventType.AI_DECISION_MADE,
-      this._handleAIDecision.bind(this)
-    );
-  }
-
-  async _handleAIDecision(event) {
-    const { accountId, decision } = event.payload;
-
-    // 执行交易...
-    const tradeResult = await this._executeTrade(accountId, decision);
-
-    // 发布交易执行事件
-    await this.producer.publishEvent(
-      EventType.BACKEND_TRADE_EXECUTED,
-      {
-        accountId: accountId,
-        tradeId: tradeResult.id,
-        symbol: tradeResult.symbol,
-        action: tradeResult.action,
-        quantity: tradeResult.quantity,
-        price: tradeResult.price,
-      }
-    );
-  }
-
-  async start() {
-    await this.client.connect();
-    this.consumer.start();
-  }
-
-  async stop() {
-    await this.consumer.stop();
-    await this.client.disconnect();
-  }
-}
-```
-
-### 事件Schema规范
-
-所有事件遵循统一格式：
-```json
-{
-  "eventId": "uuid",
-  "eventType": "ai:decision:made",
-  "timestamp": "2026-02-11T10:00:00Z",
-  "source": "trading-ai",
-  "payload": { ... },
-  "correlationId": "optional"
-}
-```
-
-### Backend需要处理的事件
-
-| 事件类型 | 方向 | 处理逻辑 |
-|----------|------|----------|
-| `ai:decision:made` | 订阅 | 接收AI决策，执行交易 |
-| `backend:trade:executed` | 发布 | 交易完成后发布结果 |
-| `backend:account:updated` | 发布 | 账户状态变更时发布 |
-
-### 完整文档
-- [Node.js SDK使用指南](../../infra/event-bus/src/node/USAGE_GUIDE.md) - Backend使用
-- [Python SDK使用指南](../../infra/event-bus/USAGE_GUIDE.md) - Python服务使用
-- [SDK README](../../infra/event-bus/README.md)
-
----
-
-## 四、未来规划（与架构演进相关）
-
-### 4.1 短期（1-2周）
-
-- [ ] 完善集成测试环境（I-001）
-- [ ] 对接 trading-ai-service 对话接口
-- [ ] 对接 market-data-service 交易状态接口
-- [ ] 添加API响应缓存层
-
-### 4.2 中期（1-2月）
+### 3.2 中期（架构师要求后执行）
 
 - [ ] 引入消息队列（RabbitMQ/Kafka）
 - [ ] 添加分布式追踪（Jaeger）
 - [ ] 完善Prometheus业务指标
 - [ ] GraphQL接口支持
 
-### 4.3 长期（3月+）
+### 3.3 长期（架构师要求后执行）
 
 - [ ] 微服务拆分（Auth/Trade/AI独立服务）
 - [ ] 服务网格（Istio）
@@ -868,44 +219,49 @@ class TradeExecutor {
 
 ---
 
-## 五、外部依赖跟踪
+## 四、外部依赖跟踪
 
-| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 |
-|----------|---------|---------|---------|
-| trading-ai-service | `POST /api/v1/dialogue/session` | 🔲 未开始 | - |
-| trading-ai-service | `POST /api/v1/dialogue/preference` | 🔲 未开始 | - |
-| market-data-service | `GET /api/v1/stocks/{symbol}/trading-status` | 🔲 未开始 | - |
-| market-data-service | `WS /ws/market/stock-status` | 🔲 未开始 | - |
-| market-data-service | `GET /api/v1/market/rules` | 🔲 未开始 | - |
-| news-service | `GET /api/v1/intelligence/{code}` | 🔲 未开始 | - |
-| news-service | `SUBSCRIBE news:breaking` | 🔲 未开始 | - |
+| 依赖服务 | 所需功能 | 当前状态 | 跟进日期 | 备注 |
+|----------|---------|---------|---------|------|
+| trading-ai-service | `ai.performance.report` 事件 | ⏸️ 等待对方 | 2026-02-12 | Backend端已就绪 |
+| market-data-service | 交易状态API | ⏸️ 降级运行 | 2026-02-12 | Backend使用降级方案 |
+| market-data-service | 市场规则API | ⏸️ 降级运行 | 2026-02-12 | Backend使用降级方案 |
+| news-service | 情报查询API | ⏸️ 预留 | 2026-02-12 | 联调阶段可选 |
+| news-service | 新闻事件 | ✅ 就绪 | 2026-02-12 | Backend事件总线已就绪 |
 
 ---
 
-## 六、最近更新记录
+## 五、最近更新记录
 
 | 日期 | 更新内容 | 更新人 |
 |------|---------|--------|
-| 2026-02-12 | **联调冲刺**：完成O3-001~O3-004、O6-003、O6-004、P0-002、P0-003、T-015、T-011 | Backend开发团队 |
-| 2026-02-12 | 更新阻塞任务标注，添加外部依赖状态表 | Backend开发团队 |
+| 2026-02-13 | **开发收尾校验完成**：校验所有已完成工作已持久化到文档，修复TODO中过期标记，文档与实际代码状态一致 | Backend开发团队 |
+| 2026-02-13 | **完成集成测试环境(I-001)**：docker-compose.test.yml、一键启动脚本、测试文档 | Backend开发团队 |
+| 2026-02-13 | **完成缓存一致性保障(G-008)**：GuestCacheService实现，缓存穿透防护，删除同步清缓存 | Backend开发团队 |
+| 2026-02-13 | **完成热股票列表API用户活动数据收集(B-005)**：StockActivityTracker实现，WebSocket集成，Redis存储 | Backend开发团队 |
+| 2026-02-13 | **完成热股票列表定时更新任务(B-006)**：每30秒自动更新，应用生命周期集成 | Backend开发团队 |
+| 2026-02-13 | **完成游客数据PostgreSQL化改造**：G-001~G-007全部完成（测试先行），含GuestServicePostgreSQL、GuestCleanupService | Backend开发团队 |
+| 2026-02-13 | **测试代码量超过实现代码量**：GuestServicePostgreSQL.test.js（50+测试）确保事务安全和账户安全 | Backend开发团队 |
+| 2026-02-13 | **新增游客数据PostgreSQL化改造任务**：G-001~G-010，含数据库设计、服务重构、定时清理、防误删机制 | 首席架构师 |
+| 2026-02-13 | **新增游客接口**：持仓、交易记录、绩效、余额查询；AI账户上限2→3；支持删除后重建（Redis版，待重构） | 首席架构师 |
+| 2026-02-13 | 大幅精简TODO.md，已完成内容移至HAVE_DONE.md | 首席架构师 |
+| 2026-02-12 | 联调冲刺完成，O3-001~O3-004、T-015、T-011、O6-003、O6-004完成 | Backend开发团队 |
 | 2026-02-11 | 重构TODO.md，创建HAVE_DONE.md | 首席架构师 |
-| 2026-02-11 | 完成T-011~T-015开发与测试 | 开发团队 |
-| 2026-02-10 | 完成T-001~T-010开发与测试 | 开发团队 |
 
 ---
 
-## 七、文档索引
+## 六、文档索引
 
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| 已完成功能 | `./HAVE_DONE.md` | 已完成功能与架构师评价 |
+| 已完成功能 | `./HAVE_DONE.md` | 已完成功能与架构师评价（含详细实现） |
 | 测试脚本 | `./TEST_SCRIPTS.md` | 测试脚本功能说明与索引 |
 | 测试源码 | `../../../backend/tests/` | 单元测试和集成测试代码 |
 
 ---
 
-*文档版本: v2.3（联调冲刺完成版）*
-*最后更新: 2026-02-12*
-*维护者: Backend开发团队 / 首席架构师*
+*文档版本: v3.0（精简版）*
+*最后更新: 2026-02-13*
+*维护者: 首席架构师*
 
-**提示：已完成功能详情和代码审查报告请查阅 [HAVE_DONE.md](./HAVE_DONE.md)**
+**提示：已完成内容的详细实现请查阅 [HAVE_DONE.md](./HAVE_DONE.md)**

@@ -24,7 +24,7 @@
 - [**数据库设计**](docs/architecture/CURRENT/DATABASE_DESIGN.md) - 数据库ER图与表结构
 - [**配置中心架构设计**](docs/architecture/CURRENT/CONFIG_CENTER/README.md) - 配置中心规划与各服务配置设计（持续更新）
 
-### 架构决策文档（2026-02-11更新）
+### 架构决策文档（2026-02-13更新）
 - [**服务依赖冲突分析**](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 五服务外部依赖对接需求分析与6个冲突解决方案
 - [**循环依赖解决方案**](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md) - 三种方案详细对比分析
 - [**事件总线风险分析**](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md) - Redis Streams事件总线的风险点、成本、性能分析
@@ -34,6 +34,8 @@
 - [**Miniprogram数据流优化方案**](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) - 混合分离方案：行情直连+收益后端计算
 - [**AI决策服务广度查询需求确认**](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
 - [**Redis渐进式部署策略**](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
+- [**六数据源频率限制策略**](docs/architecture/CURRENT/DATA_SOURCE_RATE_LIMITING_STRATEGY.md) - A股全量数据采集方案，6数据源智能调度与分层采集
+- [**AI架构定位与演进路线图**](docs/architecture/CURRENT/DECISIONS/010-AI-ARCHITECTURE-POSITIONING.md) - 当前"LLM as a Service"定位确认，三阶段演进路线图（上线→轻量Agent→观望），避免过度工程化决策
 
 ### 历史架构文档
 历史架构文档已归档至 [docs/architecture/HISTORICAL/](docs/architecture/HISTORICAL/) 目录：
@@ -182,16 +184,150 @@ module-dev miniprogram          # 微信小程序开发
 
 ---
 
-### 开发环境启动
+## 🐳 Docker 部署指南
+
+### 环境概述
+
+项目提供两种 Docker Compose 配置：
+
+| 配置 | 用途 | 文件 | 特点 |
+|------|------|------|------|
+| **联调测试** | 集成测试、全服务验证 | `docker-compose.integration.yml` | 全容器化、热重载、严格模式 |
+| **开发环境** | 本地开发、单服务调试 | `docker-compose.yml` | 仅基础设施、服务本地运行 |
+
+---
+
+### 联调测试环境（推荐）
+
+**适用场景**：
+- 多服务集成测试
+- 联调验证
+- 生产环境预演
+- CI/CD 流水线
+
+**配置特点**：
+- ✅ 所有服务（包括业务服务）Docker 容器化
+- ✅ Volume 挂载源代码，支持热重载
+- ✅ 严格模式（STRICT_MODE=true），强制使用真实数据
+- ✅ 自动数据库迁移
+- ✅ 健康检查与依赖等待
+
+**一键启动**：
 ```bash
-# 一键启动所有服务
-docker-compose up -d
+# 启动所有服务（基础设施 + 业务服务）
+docker-compose -f docker-compose.integration.yml up -d
 
 # 查看服务状态
-docker-compose ps
+docker-compose -f docker-compose.integration.yml ps
 
-# 查看服务日志
-docker-compose logs -f [service_name]
+# 查看实时日志
+docker-compose -f docker-compose.integration.yml logs -f
+
+# 查看特定服务日志
+docker-compose -f docker-compose.integration.yml logs -f backend
+
+# 停止所有服务
+docker-compose -f docker-compose.integration.yml down
+
+# 停止并清除数据卷（谨慎使用）
+docker-compose -f docker-compose.integration.yml down -v
+```
+
+**服务端口映射**：
+
+| 服务 | 容器名 | 主机端口 | 容器端口 | 说明 |
+|------|--------|----------|----------|------|
+| Backend | stock-race-backend-int | 3001 | 3001 | API 服务 |
+| Trading AI Service | stock-race-trading-ai-int | 8000 | 8000 | AI 决策服务 |
+| Market Data Service | stock-race-market-data-int | 8001 | 8001 | 行情数据服务 |
+| News Service | stock-race-news-int | - | - | 新闻服务（无 HTTP） |
+| Redis | stock-race-redis-int | 6380 | 6379 | 缓存（注意：宿主机 6379 已被占用） |
+| PostgreSQL | stock-race-postgres-int | 5434 | 5432 | 主数据库 |
+| TimescaleDB | stock-race-timescaledb-int | 5433 | 5432 | 时序数据库 |
+
+**健康检查**：
+```bash
+# Backend
+curl http://localhost:3001/api/health
+
+# Trading AI Service
+curl http://localhost:8000/api/v1/health/
+
+# Market Data Service
+curl http://localhost:8001/health
+```
+
+**常见问题解决**：
+```bash
+# 端口冲突（如 6379 被宿主机 Redis 占用）
+# 已在配置中修改为 6380，无需额外操作
+
+# 重建镜像（代码变更后）
+docker-compose -f docker-compose.integration.yml build
+
+# 强制重启特定服务
+docker-compose -f docker-compose.integration.yml up -d --force-recreate backend
+
+# 进入容器调试
+docker exec -it stock-race-backend-int sh
+docker exec -it stock-race-market-data-int bash
+```
+
+---
+
+### 生产环境部署
+
+**部署文件**：
+- `docker-compose.prod.yml` - 生产环境配置
+- `backend/Dockerfile` - Backend 生产镜像
+- `trading-ai-service/Dockerfile` - AI 服务生产镜像
+- `market-data-service/Dockerfile` - 数据服务生产镜像
+- `news-service/Dockerfile` - 新闻服务生产镜像
+
+**启动步骤**：
+```bash
+# 1. 设置环境变量
+export NODE_ENV=production
+export DATABASE_URL=postgresql://user:pass@postgres:5432/stock_race
+export REDIS_URL=redis://redis:6379
+
+# 2. 启动基础设施
+docker-compose -f docker-compose.prod.yml up -d postgres redis timescaledb
+
+# 3. 等待数据库就绪（约 10 秒）
+sleep 10
+
+# 4. 执行数据库迁移
+docker-compose -f docker-compose.prod.yml run --rm backend npx prisma migrate deploy
+
+# 5. 启动所有服务
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+**生产环境检查清单**：
+- [ ] 修改默认密码（PostgreSQL、Redis）
+- [ ] 配置 SSL/TLS 证书
+- [ ] 设置资源限制（CPU/内存）
+- [ ] 配置日志收集（ELK/Loki）
+- [ ] 启用监控告警（Prometheus/Grafana）
+- [ ] 配置备份策略
+
+---
+
+### 开发环境（基础设施 only）
+
+**适用场景**：
+- 单服务本地开发调试
+- 快速启动基础设施
+
+**启动方式**：
+```bash
+# 仅启动基础设施（PostgreSQL、Redis、TimescaleDB）
+docker-compose up -d
+
+# 服务在宿主机本地运行，便于调试
+# Backend: cd backend && npm run dev
+# Market Data: cd market-data-service && python -m uvicorn data_service.main:app --reload
 ```
 
 ### 服务访问地址
@@ -252,6 +388,38 @@ curl http://localhost:8001/health
 - 微信小程序：`docs/miniprogram/`
 
 ## 📈 近期开发进展
+
+### Docker 全容器化联调环境配置完成
+**项目状态**：✅ **联调环境全 Docker 化完成（2026-02-13）**
+
+**关键成果**：完成所有业务服务的 Docker 容器化配置，支持一键启动全服务联调环境。
+
+**解决的问题**：
+1. **Backend 容器化** - 添加 OpenSSL 支持 Prisma，自动生成 Prisma Client，启动时自动运行 migrations
+2. **Market Data Service 容器化** - 添加缺失依赖（`python-jose`, `pydantic-settings`, `akshare`, `baostock`, `tushare`, `asyncpg`）
+3. **Trading AI Service 容器化** - 修正依赖安装方式，支持 infra SDK 本地挂载
+4. **News Service 容器化** - 修正依赖安装顺序和 PYTHONPATH 配置
+5. **Redis 端口冲突** - 将 Docker Redis 映射到宿主机 6380 端口，避免与宿主机 Redis 冲突
+
+**配置文件**：
+- `docker-compose.integration.yml` - 联调测试专用配置（全容器化）
+- `backend/Dockerfile.dev` - Backend 开发镜像
+- `market-data-service/Dockerfile.dev` - 数据服务开发镜像
+- `trading-ai-service/Dockerfile.dev` - AI 服务开发镜像
+- `news-service/Dockerfile` - 新闻服务镜像
+
+**快速启动命令**：
+```bash
+# 一键启动所有服务
+docker-compose -f docker-compose.integration.yml up -d
+
+# 验证所有服务健康状态
+curl http://localhost:3001/api/health
+curl http://localhost:8000/api/v1/health/
+curl http://localhost:8001/health
+```
+
+---
 
 ### 五服务架构冲突分析与解决方案制定
 **项目状态**：✅ **架构审查完成，6个冲突全部解决（2026-02-11）**
@@ -425,8 +593,33 @@ curl http://localhost:8001/health
 
 ---
 
-📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含前端模拟数据改造、紧急系统修复、Docker容器化、内存持久化优化等14个历史项目详细记录。
+### 数据源扩展计划取消（2026-02-13）
+**项目状态**: ❌ **计划取消**
+
+**背景**: 计划利用春节期间将数据源从4个扩展到6-8个，提升系统容灾能力。
+
+**调研结果**: 对7个潜在数据源（网易财经、金融界、中国证券网、同花顺、和讯网、中金在线、雪球）进行详细调研和POC测试，结果如下：
+- ❌ 网易财经：API已失效，域名无法解析
+- ❌ 金融界：无官方开放API
+- ❌ 中国证券网：无公开接口
+- ⚠️ 同花顺：需付费（298-60,000元/年）
+- ❌ 和讯网：API已停用
+- ❌ 中金在线：无公开接口
+- ❌ 雪球：反爬过于严格（4/5级）
+
+**结论**: 7个调研数据源中6个完全不可行，仅同花顺可用但需付费。由于无法找到可用的免费数据源，**本计划正式取消**。
+
+**后续方案**: 保持现有4数据源系统（新浪、腾讯、东方财富、Baostock），如需扩展考虑采购同花顺官方API或联系券商获取Level-2接口。
+
+**归档文档**:
+- 📋 [调研报告](docs/architecture/HISTORICAL/V2026-02-13-DATA_SOURCE_SURVEY_REPORTS.md)
+- 📋 [可行性评估](docs/architecture/HISTORICAL/V2026-02-13-NEW_DATA_SOURCE_FEASIBILITY.md)
+- 📋 [完整规划](docs/architecture/HISTORICAL/V2026-02-13-DATA_SOURCE_EXPANSION_PLAN_V2-CANCELLED.md)
 
 ---
 
-*本文档最后更新于：2026-02-11*
+📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含前端模拟数据改造、紧急系统修复、Docker容器化、内存持久化优化等15个历史项目详细记录。
+
+---
+
+*本文档最后更新于：2026-02-13*

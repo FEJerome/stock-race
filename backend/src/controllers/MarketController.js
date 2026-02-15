@@ -2,6 +2,31 @@ import { rankingRepository } from '../models/index.js';
 import { aiAccountRepository } from '../models/index.js';
 import { stockRepository } from '../models/index.js';
 import { tradeRepository } from '../models/index.js';
+import WeightedHotStocksService from '../services/WeightedHotStocksService.js';
+import { createClient } from 'redis';
+
+// 初始化加权热股票服务
+const redisClient = createClient({ url: process.env.REDIS_URL });
+redisClient.connect().catch(console.error);
+const weightedHotStocksService = new WeightedHotStocksService(redisClient);
+
+// 启动定时更新任务 (B-006)
+// 注意: 需要在应用启动时调用 startScheduledUpdates
+export function startHotStocksScheduler(interval = 30000) {
+  console.log('[MarketController] 启动热股票定时更新任务...');
+  weightedHotStocksService.startScheduledUpdates(interval);
+}
+
+// 停止定时更新任务
+export function stopHotStocksScheduler() {
+  console.log('[MarketController] 停止热股票定时更新任务...');
+  weightedHotStocksService.stopScheduledUpdates();
+}
+
+// 设置活动追踪器 (用于B-005)
+export function setActivityTracker(activityTracker) {
+  weightedHotStocksService.setActivityTracker(activityTracker);
+}
 
 export class MarketController {
   /**
@@ -1694,6 +1719,120 @@ export class MarketController {
       drawdownScore * weights.drawdown +
       winRateScore * weights.winRate
     );
+  }
+
+  /**
+   * 获取加权热股票列表
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getWeightedHotStocks(req, res) {
+    try {
+      const {
+        limit = 50,
+        minWeight = 0
+      } = req.query;
+
+      // 验证参数
+      const parsedLimit = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+      const parsedMinWeight = Math.min(100, Math.max(0, parseFloat(minWeight) || 0));
+
+      // 获取热股票列表
+      const result = await weightedHotStocksService.getWeightedHotStocks({
+        limit: parsedLimit,
+        minWeight: parsedMinWeight
+      });
+
+      if (!result.success) {
+        return res.status(503).json(result);
+      }
+
+      return res.json(result);
+    } catch (error) {
+      console.error('[MarketController] Failed to get weighted hot stocks:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '获取热股票列表失败'
+        }
+      });
+    }
+  }
+
+  /**
+   * 手动触发热股票列表更新（管理员接口）
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async refreshHotStocks(req, res) {
+    try {
+      // 检查权限
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: '只有管理员可以手动刷新热股票列表'
+          }
+        });
+      }
+
+      const result = await weightedHotStocksService.performFullUpdate();
+
+      if (result.success) {
+        return res.json({
+          success: true,
+          message: '热股票列表已更新',
+          data: {
+            count: result.count,
+            topStock: result.topStock
+          }
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: {
+            code: 'UPDATE_FAILED',
+            message: result.error || '更新失败'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('[MarketController] Failed to refresh hot stocks:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '刷新热股票列表失败'
+        }
+      });
+    }
+  }
+
+  /**
+   * 获取热股票缓存状态
+   * @param {Object} req - 请求对象
+   * @param {Object} res - 响应对象
+   */
+  async getHotStocksStatus(req, res) {
+    try {
+      const status = await weightedHotStocksService.getCacheStatus();
+
+      return res.json({
+        success: true,
+        data: status
+      });
+    } catch (error) {
+      console.error('[MarketController] Failed to get hot stocks status:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: '获取缓存状态失败'
+        }
+      });
+    }
   }
 }
 

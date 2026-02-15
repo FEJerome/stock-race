@@ -42,6 +42,12 @@ export class DataService {
       currentDataSource: 'unknown'
     };
 
+    // 严格模式：联调阶段强制使用真实数据
+    this.strictMode = process.env.STRICT_MODE === 'true' || process.env.DISABLE_DATA_FALLBACK === 'true';
+    if (this.strictMode) {
+      console.log('[DataService] 严格模式已启用：禁止使用模拟/降级数据');
+    }
+
     // 启动健康检查
     this.startHealthCheck();
   }
@@ -59,13 +65,9 @@ export class DataService {
       return cached;
     }
 
-    // 检查是否应该使用降级方案
+    // 联调阶段：禁用降级方案，强制使用真实数据
     if (this.shouldUseFallback()) {
-      console.warn(`数据服务降级模式激活，使用模拟数据 (${stockCode})`);
-      const fallbackData = this.getMockRealtimeData(stockCode);
-      this.updateMonitoringStats(true, true); // 降级方案视为成功
-      this.setToCache(cacheKey, fallbackData, 5000); // 降级数据缓存5秒
-      return fallbackData;
+      throw new Error(`数据服务不可用，无法获取股票 ${stockCode} 的实时数据。请确保Market Data Service已启动并正常运行。`);
     }
 
     try {
@@ -111,10 +113,8 @@ export class DataService {
       console.error(`获取股票实时数据失败 (${stockCode}):`, error.message);
       this.updateMonitoringStats(false, false);
 
-      // 返回模拟数据作为降级方案
-      const fallbackData = this.getMockRealtimeData(stockCode);
-      this.setToCache(cacheKey, fallbackData, 5000); // 降级数据缓存5秒
-      return fallbackData;
+      // 联调阶段：禁用降级方案，抛出错误
+      throw new Error(`获取股票 ${stockCode} 实时数据失败: ${error.message}`);
     }
   }
 
@@ -124,12 +124,9 @@ export class DataService {
    * @returns {Promise<Array<Object>>} 实时数据数组
    */
   async batchGetRealtimeData(stockCodes) {
-    // 检查是否应该使用降级方案
+    // 联调阶段：禁用降级方案，强制使用真实数据
     if (this.shouldUseFallback()) {
-      console.warn('数据服务降级模式激活，批量使用模拟数据');
-      const fallbackResults = stockCodes.map(stockCode => this.getMockRealtimeData(stockCode));
-      this.updateMonitoringStats(true, true); // 降级方案视为成功
-      return fallbackResults;
+      throw new Error('数据服务不可用，无法批量获取股票实时数据。请确保Market Data Service已启动并正常运行。');
     }
 
     try {
@@ -812,6 +809,11 @@ export class DataService {
    * @returns {boolean} 是否应该使用降级方案
    */
   shouldUseFallback() {
+    // 严格模式：禁止使用降级方案
+    if (this.strictMode) {
+      return false;
+    }
+
     // 如果数据服务不健康，使用降级方案
     if (!this.monitoringStats.isHealthy) {
       return true;
