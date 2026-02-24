@@ -1,0 +1,27 @@
+# 自动处理换行符，确保 Linux 容器内文件使用 LF
+* text=auto
+
+# 强制特定文件类型使用 LF（Linux 容器必需）
+*.sh text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.sql text eol=lf
+*.ps1 text eol=crlf
+
+# Dockerfile 和相关配置
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+
+# 二进制文件不处理
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.exe binary
+*.dll binary
