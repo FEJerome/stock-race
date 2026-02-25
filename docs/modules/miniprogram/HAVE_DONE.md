@@ -1,11 +1,49 @@
 # Miniprogram 模块 - 已完成功能总结
 
 > 本文档记录 Miniprogram（微信小程序）模块已完成的全部功能、架构师评价及潜在优化空间。
-> 最后更新：2026-02-11
+> 最后更新：2026-02-25
 
 ---
 
 ## 一、功能完成清单
+
+### Phase 0: uCharts v2.x 图表适配（UC-V2-001）
+
+**背景**: 项目使用 `@qiun/ucharts@2.5.0`（v2.x API），但原有图表组件使用 v1.x 的 `<qiun-data-charts>` 组件方式，导致小程序白屏。本 Phase 完成 uCharts v2.x 适配。
+
+| 编号 | 功能模块 | 完成状态 | 关键文件 | 代码质量 |
+|------|---------|---------|---------|---------|
+| UC-V2-001 | uCharts v2.x 通用工具模块 | ✅ 已完成 | `src/utils/ucharts.ts` | 优秀 |
+
+**UC-V2-001 实现细节（2026-02-25完成）**:
+- **核心功能**: 封装 `getCanvasContext()`, `createUChart()`, `initChart()`, `disposeChart()` 等函数
+- **平台兼容**: 支持微信小程序 Canvas 2D API 和旧版 Canvas API 自动降级
+- **实例管理**: 使用 Map 缓存图表实例，防止重复创建，支持 `disposeAllCharts()` 批量清理
+- **配置生成器**: 提供 `createPieChartOptions()`, `createLineChartOptions()`, `createCandleChartOptions()` 快捷函数
+- **测试覆盖**: 17 个单元测试，覆盖 TC-UCV2-001-01~05 全部测试要求
+
+**关键代码**:
+```typescript
+// 获取 Canvas 2D 上下文
+export async function getCanvasContext(canvasId: string): Promise<any>
+
+// 创建 uCharts 实例（带缓存）
+export async function createUChart(canvasId: string, options: ChartOptions): Promise<ChartInstance>
+
+// 销毁图表实例
+export function disposeChart(canvasId: string): void
+```
+
+**架构师评价**:
+- ✅ 代码结构清晰，类型定义完整
+- ✅ 错误处理完善，有意义的错误信息
+- ✅ 平台差异处理到位（Canvas 2D / 旧版 Canvas 降级）
+- ✅ 内存泄漏防护措施到位（实例缓存 + dispose）
+- ✅ 测试先行，17 个测试用例全部通过
+
+**下一任务**: UC-V2-002 ~ UC-V2-005 图表组件重构
+
+---
 
 ### Phase 1: 基础设施（T-001 ~ T-003）
 
