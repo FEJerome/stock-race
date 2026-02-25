@@ -73,6 +73,7 @@ services:
 
   # ==================== Backend 服务 ====================
   backend:
+    image: stock-race-backend:latest
     build:
       context: .                              # 使用项目根目录作为 build context
       dockerfile: backend/Dockerfile.dev      # 指定 Dockerfile 路径
@@ -106,6 +107,7 @@ services:
 
   # ==================== Market Data Service ====================
   market-data-service:
+    image: stock-race-market-data:latest
     build:
       context: .                                      # 使用项目根目录
       dockerfile: market-data-service/Dockerfile.dev  # 指定 Dockerfile 路径
@@ -161,6 +163,7 @@ services:
 
   # ==================== Trading AI Service ====================
   trading-ai-service:
+    image: stock-race-trading-ai:latest
     build:
       context: .                                       # 使用项目根目录
       dockerfile: trading-ai-service/Dockerfile.dev     # 指定 Dockerfile 路径
@@ -197,6 +200,7 @@ services:
 
   # ==================== News Service ====================
   news-service:
+    image: stock-race-news:latest
     build:
       context: .                            # 使用项目根目录
       dockerfile: news-service/Dockerfile   # 指定 Dockerfile 路径

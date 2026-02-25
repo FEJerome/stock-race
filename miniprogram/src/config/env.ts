@@ -90,7 +90,7 @@ const STORAGE_KEY = 'app_env'
 
 /**
  * 获取当前环境
- * 优先级：编译时注入 > 本地存储 > 默认(dev)
+ * 优先级：编译时注入 > 本地存储 > 默认(local)
  */
 export function getCurrentEnv(): AppEnv {
   // 1. 尝试从 uniapp 编译时注入的环境变量获取
@@ -120,8 +120,8 @@ export function getCurrentEnv(): AppEnv {
     console.warn('Failed to read env from storage:', e)
   }
 
-  // 3. 默认使用联调环境（便于直接访问 192.168.110.147）
-  return 'dev'
+  // 3. 默认使用本地开发环境（Docker 服务在 localhost）
+  return 'local'
 }
 
 /**

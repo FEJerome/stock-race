@@ -331,4 +331,4 @@ class StockActivityTracker {
   }
 }
 
-module.exports = { StockActivityTracker };
+export { StockActivityTracker };

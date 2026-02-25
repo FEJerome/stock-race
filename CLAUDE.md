@@ -184,6 +184,48 @@ module-dev miniprogram          # 微信小程序开发
 
 ---
 
+## 🔧 统一命令入口（Makefile）
+
+项目根目录提供 `Makefile` 作为统一命令入口，简化常用操作：
+
+```bash
+# 查看所有可用命令
+make help
+
+# 启动联调环境（最常用）
+make integration
+
+# 查看服务状态
+make status
+
+# 查看日志
+make logs
+
+# 健康检查
+make health
+
+# 启动基础设施（仅 Docker 数据库）
+make up
+
+# 停止所有服务
+make down
+```
+
+### Makefile 命令速查表
+
+| 命令 | 用途 | 说明 |
+|------|------|------|
+| `make integration` | 启动联调环境 | 全容器化，含热重载，推荐日常使用 |
+| `make up` | 启动基础设施 | 仅 Redis/PostgreSQL/TimescaleDB |
+| `make down` | 停止所有服务 | 停止所有 Docker 容器 |
+| `make status` | 查看服务状态 | 列出所有运行的 stock-race 容器 |
+| `make logs` | 查看实时日志 | 跟踪所有服务的日志输出 |
+| `make health` | 健康检查 | 检查三个主要服务的健康状态 |
+| `make build` | 重新构建镜像 | 依赖变更后使用 |
+| `make clean` | 清理资源 | 清理停止的容器和未使用镜像 |
+
+---
+
 ## 🐳 Docker 部署指南
 
 ### 环境概述
@@ -212,21 +254,33 @@ module-dev miniprogram          # 微信小程序开发
 - ✅ 自动数据库迁移
 - ✅ 健康检查与依赖等待
 
-**一键启动**：
+**一键启动（推荐）**：
 ```bash
-# 启动所有服务（基础设施 + 业务服务）
-docker-compose -f docker-compose.integration.yml up -d
+# 使用 Makefile 启动联调环境（最常用）
+make integration
 
+# 或使用 docker-compose 命令
+docker-compose -f docker-compose.integration.yml up -d
+```
+
+**其他常用命令**：
+```bash
 # 查看服务状态
+make status
+# 或
 docker-compose -f docker-compose.integration.yml ps
 
 # 查看实时日志
+make logs
+# 或
 docker-compose -f docker-compose.integration.yml logs -f
 
 # 查看特定服务日志
 docker-compose -f docker-compose.integration.yml logs -f backend
 
 # 停止所有服务
+make down
+# 或
 docker-compose -f docker-compose.integration.yml down
 
 # 停止并清除数据卷（谨慎使用）
@@ -386,6 +440,27 @@ curl http://localhost:8001/health
 - 部署相关：`docs/deployment/`
 - 智能体相关：`docs/agents/`
 - 微信小程序：`docs/miniprogram/`
+- 脚本工具：`scripts/` ([脚本说明](scripts/README.md))
+
+### 脚本目录结构
+
+所有脚本按功能分类存放在 `scripts/` 目录下：
+
+| 目录 | 用途 | 说明 |
+|------|------|------|
+| `scripts/dev/` | 开发工具 | 启动/停止服务、环境检查 |
+| `scripts/install/` | 环境安装 | 数据库、Docker 安装脚本 |
+| `scripts/test/` | 测试脚本 | E2E 测试、AI 测试、验证脚本 |
+| `scripts/mcp/` | MCP 测试 | MCP 连通性测试脚本 |
+| `scripts/deploy/` | 部署脚本 | 生产环境部署 |
+| `scripts/archive/` | 归档脚本 | 早期演示脚本（不再维护） |
+
+**快速命令（推荐优先使用 Makefile）**：
+```bash
+make integration    # 启动联调环境
+make status         # 查看服务状态
+make health         # 健康检查
+```
 
 ## 📈 近期开发进展
 
@@ -622,4 +697,44 @@ curl http://localhost:8001/health
 
 ---
 
-*本文档最后更新于：2026-02-13*
+---
+
+### 项目根目录整理完成（2026-02-25）
+**项目状态**：✅ **根目录脚本整理完成**
+
+**关键成果**：
+1. **创建 Makefile** - 统一命令入口，简化常用操作
+2. **整理 scripts 目录** - 按功能分类存放脚本
+3. **归档过时脚本** - 早期演示脚本移至 `scripts/archive/`
+4. **删除重复脚本** - 移除功能重复的启动脚本
+
+**整理后的项目结构**：
+```
+stock-race/
+├── Makefile                    # 统一命令入口（新增）
+├── docker-compose*.yml         # Docker 编排配置（4个）
+├── CLAUDE.md                   # 项目导航中心
+├── README.md                   # 项目说明
+├── .env / .env.production      # 环境变量
+├── .gitignore / .gitattributes # Git 配置
+└── scripts/                    # 分类存放的脚本
+    ├── README.md               # 脚本目录说明
+    ├── dev/                    # 开发工具
+    ├── install/                # 环境安装
+    ├── test/                   # 测试脚本
+    ├── mcp/                    # MCP 测试
+    ├── deploy/                 # 部署脚本
+    └── archive/                # 归档脚本
+```
+
+**常用命令（优先使用 Makefile）**：
+```bash
+make integration    # 启动联调环境
+make status         # 查看服务状态
+make logs           # 查看实时日志
+make health         # 健康检查
+```
+
+---
+
+*本文档最后更新于：2026-02-25*

@@ -10,7 +10,7 @@
         type="pie"
         :opts="chartOpts"
         :chartData="chartData"
-        :canvas2d="true"
+        :canvas2d="false"
         :canvasId="canvasId"
         :width="chartWidth"
         :height="chartHeight"

@@ -377,17 +377,6 @@
   will-change: transform;
 }
 
-// 减少动画（用于低性能设备）
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
 // 内容可见性优化（长列表）
 .content-visibility-auto {
   content-visibility: auto;
