@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "wechat-devtools": {
+      "type": "sse",
+      "url": "http://192.168.110.146:9420/sse",
+      "description": "微信开发者工具自动化控制 - Windows 192.168.110.146:9420"
+    }
+  }
+}

@@ -18,6 +18,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!infra/event-bus/src/node/lib/
 !.claude/scripts/lib/
 lib64/
 parts/
