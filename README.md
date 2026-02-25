@@ -34,22 +34,22 @@ Stock-Race 是一个 AI 驱动的股票竞赛平台。用户扮演"投资总负�
 
 ```mermaid
 graph TB
-    subgraph "数据层"
-        R[Redis<br/>热数据缓存]
-        P[(PostgreSQL<br/>业务数据)]
-        T[(TimescaleDB<br/>时序行情)]
+    subgraph DataLayer["数据层"]
+        R[Redis<br />热数据缓存]
+        P[(PostgreSQL<br />业务数据)]
+        T[(TimescaleDB<br />时序行情)]
     end
 
-    subgraph "服务层"
-        B[Backend<br/>Node.js + Express]
-        M[Market Data<br/>Python + FastAPI]
-        N[News Service<br/>Python + FastAPI]
-        A[Trading AI<br/>Python + FastAPI]
+    subgraph ServiceLayer["服务层"]
+        B[Backend<br />Node.js + Express]
+        M[Market Data<br />Python + FastAPI]
+        N[News Service<br />Python + FastAPI]
+        A[Trading AI<br />Python + FastAPI]
     end
 
-    subgraph "接入层"
-        F[Frontend<br/>React 18]
-        MP[Miniprogram<br/>UniApp + Vue 3]
+    subgraph AccessLayer["接入层"]
+        F[Frontend<br />React 18]
+        MP[Miniprogram<br />UniApp + Vue 3]
     end
 
     F -->|WebSocket/Socket.io| B
