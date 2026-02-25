@@ -1,6 +1,20 @@
 {
   "pages": [
     {
+      "path": "pages/welcome/welcome",
+      "style": {
+        "navigationBarTitleText": "欢迎",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/expired/expired",
+      "style": {
+        "navigationBarTitleText": "账户已清空",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "基金总览",

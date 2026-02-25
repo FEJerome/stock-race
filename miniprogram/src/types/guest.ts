@@ -115,8 +115,24 @@ export interface GuestStatus {
   maxChatTurns: number
 }
 
-// ==================== 游客限制配置 ====================
+// 游客状态检查响应
+export interface GuestStatusCheckResponse {
+  isValid: boolean        // token是否有效
+  isExpired: boolean      // 是否过期
+  hasAIAccount: boolean   // 是否创建过AI账户
+  expiresAt: number       // 过期时间戳
+  remainingHours: number   // 剩余小时数
+}
 
+// 游客初始化结果
+export interface GuestInitResult {
+  success: boolean
+  isNewGuest: boolean      // 是否新游客
+  isExpired: boolean      // 是否已过期
+  hasAIAccount: boolean  // 是否创建过AI账户
+}
+
+// ==================== 游客限制配置 ====================
 export const GUEST_LIMITS = {
   // AI账户限制
   MAX_AI_ACCOUNTS: 2,
@@ -130,4 +146,5 @@ export const GUEST_LIMITS = {
 
   // 本地存储键
   STORAGE_KEY: 'stock_race_guest_session',
+  WELCOME_SHOWN_KEY: 'stock_race_welcome_shown',
 }

@@ -39,7 +39,7 @@ export const useAIStore = defineStore('ai', () => {
       return true
     } catch (error) {
       console.error('Fetch AI accounts error:', error)
-      return false
+      throw error
     } finally {
       loading.value = false
     }
@@ -53,7 +53,7 @@ export const useAIStore = defineStore('ai', () => {
       return true
     } catch (error) {
       console.error('Fetch account detail error:', error)
-      return false
+      throw error
     } finally {
       loading.value = false
     }
