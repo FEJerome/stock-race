@@ -6,22 +6,30 @@
     </view>
 
     <view class="chart-container">
-      <qiun-data-charts
-        type="pie"
-        :opts="chartOpts"
-        :chartData="chartData"
-        :canvas2d="false"
-        :canvasId="canvasId"
-        :width="chartWidth"
-        :height="chartHeight"
-        @complete="onChartComplete"
-        @error="onChartError"
+      <!-- Empty State -->
+      <view v-if="!hasHoldings" class="empty-placeholder">
+        <text class="empty-text">暂无持仓</text>
+      </view>
+
+      <!-- uCharts v2.x Canvas -->
+      <canvas
+        v-else
+        :id="canvasId"
+        :canvas-id="canvasId"
+        class="chart-canvas"
+        :style="canvasStyle"
+        @tap="handleCanvasTap"
       />
     </view>
 
     <!-- 持仓列表 -->
-    <view class="holding-list" v-if="showList && holdings.length > 0">
-      <view class="holding-item" v-for="(item, index) in topHoldings" :key="item.stockCode">
+    <view class="holding-list" v-if="showList && hasHoldings">
+      <view
+        class="holding-item"
+        v-for="(item, index) in displayHoldings"
+        :key="item.stockCode"
+        @tap="handleItemClick(item)"
+      >
         <view class="item-left">
           <view class="color-dot" :style="{ backgroundColor: getColor(index) }"></view>
           <text class="stock-name">{{ item.stockName }}</text>
@@ -32,16 +40,17 @@
           <text class="holding-ratio">{{ item.ratio }}%</text>
         </view>
       </view>
-      <view class="more-holdings" v-if="holdings.length > maxDisplayCount">
-        <text class="more-text">还有 {{ holdings.length - maxDisplayCount }} 只持仓...</text>
+      <view class="more-holdings" v-if="hasMore">
+        <text class="more-text">还有 {{ otherCount }} 只持仓...</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { formatCurrency } from '@/utils/formatter'
+import { createUChart, disposeChart, updateChartData, type ChartInstance } from '@/utils/ucharts'
 
 // 持仓数据项
 interface HoldingItem {
@@ -80,23 +89,9 @@ const emit = defineEmits<{
   (e: 'click', data: HoldingItem): void
 }>()
 
-// 图表数据
-const chartData = ref<any>({})
-
-// 图表尺寸
-const chartWidth = computed(() => {
-  if (typeof props.width === 'number') {
-    return uni.upx2px(props.width)
-  }
-  return props.width
-})
-
-const chartHeight = computed(() => {
-  if (typeof props.height === 'number') {
-    return uni.upx2px(props.height)
-  }
-  return props.height
-})
+// 图表实例
+const chartInstance = ref<ChartInstance | null>(null)
+const isChartReady = ref(false)
 
 // 颜色配置 - 西式复古精英风格
 const COLORS = [
@@ -110,10 +105,14 @@ const COLORS = [
   '#8B7355', // 暖灰棕
 ]
 
-// 获取颜色
-function getColor(index: number): string {
-  return COLORS[index % COLORS.length]
-}
+// 计算属性
+const hasHoldings = computed(() => props.holdings && props.holdings.length > 0)
+
+const canvasStyle = computed(() => {
+  const width = typeof props.width === 'number' ? `${props.width}px` : props.width
+  const height = typeof props.height === 'number' ? `${props.height}px` : `${props.height}px`
+  return `width:${width};height:${height};`
+})
 
 // 处理持仓数据（排序并计算比例）
 const processedHoldings = computed(() => {
@@ -129,107 +128,174 @@ const processedHoldings = computed(() => {
     .sort((a, b) => b.marketValue - a.marketValue)
 })
 
-// 前N只持仓
-const topHoldings = computed(() => {
-  return processedHoldings.value.slice(0, props.maxDisplayCount)
-})
+// 显示持仓数据（前N个 + 其他）
+const displayHoldings = computed(() => {
+  const topHoldings = processedHoldings.value.slice(0, props.maxDisplayCount)
 
-// 图表配置
-const chartOpts = computed(() => {
-  return {
-    color: COLORS,
-    padding: [10, 10, 10, 10],
-    dataLabel: true,
-    dataPointShape: false,
-    legend: {
-      show: false // 使用自定义列表替代
-    },
-    title: {
-      name: '持仓',
-      fontSize: 12,
-      color: '#8c8c8c'
-    },
-    subtitle: {
-      name: `${props.holdings.length}只`,
-      fontSize: 16,
-      color: '#1f1f1f'
-    },
-    extra: {
-      pie: {
-        activeOpacity: 0.8,
-        offsetAngle: 0,
-        labelWidth: 15,
-        border: true,
-        borderWidth: 2,
-        borderColor: '#ffffff',
-        customRadius: 0,
-        linearType: 'none'
-      },
-      tooltip: {
-        showBox: true,
-        bgColor: '#000000',
-        bgOpacity: 0.7,
-        fontSize: 12,
-        lineHeight: 18,
-        color: '#ffffff',
-        padding: 10,
-        showArrow: true,
-        arrowSize: 6
-      }
-    }
-  }
-})
-
-// 处理图表数据
-function processChartData() {
-  if (!processedHoldings.value || processedHoldings.value.length === 0) {
-    return {
-      series: []
-    }
-  }
-
-  const series = processedHoldings.value.slice(0, props.maxDisplayCount).map((item, index) => ({
-    name: item.stockName,
-    data: item.marketValue,
-    legendShape: 'circle'
-  }))
-
-  // 如果有更多持仓，合并为"其他"
+  // 如果有更多持仓，添加"其他"
   if (processedHoldings.value.length > props.maxDisplayCount) {
     const otherValue = processedHoldings.value
       .slice(props.maxDisplayCount)
       .reduce((sum, h) => sum + h.marketValue, 0)
 
-    series.push({
-      name: '其他',
-      data: otherValue,
-      legendShape: 'circle'
+    const total = processedHoldings.value.reduce((sum, h) => sum + h.marketValue, 0)
+
+    topHoldings.push({
+      stockCode: 'OTHER',
+      stockName: '其他',
+      marketValue: otherValue,
+      ratio: total > 0 ? Math.round((otherValue / total) * 100 * 100) / 100 : 0
     })
   }
 
-  return { series }
+  return topHoldings
+})
+
+const hasMore = computed(() => props.holdings.length > props.maxDisplayCount)
+const otherCount = computed(() => props.holdings.length - props.maxDisplayCount)
+
+// 获取颜色
+function getColor(index: number): string {
+  return COLORS[index % COLORS.length]
+}
+
+// 初始化图表
+async function initChart() {
+  if (!hasHoldings.value) return
+
+  try {
+    // 等待 DOM 更新
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    const chartData = {
+      series: [{
+        data: displayHoldings.value.map((item, index) => ({
+          name: item.stockName,
+          value: item.marketValue,
+          color: getColor(index)
+        }))
+      }]
+    }
+
+    chartInstance.value = await createUChart(props.canvasId, {
+      type: 'pie',
+      width: typeof props.width === 'number' ? props.width : 300,
+      height: typeof props.height === 'number' ? props.height : 280,
+      series: chartData.series,
+      color: COLORS,
+      padding: [10, 10, 10, 10],
+      dataLabel: true,
+      dataPointShape: false,
+      legend: {
+        show: false
+      },
+      title: {
+        name: '持仓',
+        fontSize: 12,
+        color: '#8c8c8c'
+      },
+      subtitle: {
+        name: `${props.holdings.length}只`,
+        fontSize: 16,
+        color: '#1f1f1f'
+      },
+      animation: true,
+      extra: {
+        pie: {
+          activeOpacity: 0.8,
+          offsetAngle: 0,
+          labelWidth: 15,
+          border: true,
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          customRadius: 0,
+          linearType: 'none'
+        },
+        tooltip: {
+          showBox: true,
+          bgColor: '#000000',
+          bgOpacity: 0.7,
+          fontSize: 12,
+          lineHeight: 18,
+          color: '#ffffff',
+          padding: 10,
+          showArrow: true,
+          arrowSize: 6
+        }
+      }
+    })
+
+    isChartReady.value = true
+    emit('complete')
+  } catch (error) {
+    console.error('[HoldingPieChart] 初始化图表失败:', error)
+    emit('error', error)
+  }
 }
 
 // 更新图表数据
-function updateChartData() {
-  chartData.value = processChartData()
+async function updateChart() {
+  if (!chartInstance.value || !isChartReady.value) {
+    // 如果图表未初始化，尝试初始化
+    if (hasHoldings.value) {
+      await initChart()
+    }
+    return
+  }
+
+  try {
+    const chartData = {
+      series: [{
+        data: displayHoldings.value.map((item, index) => ({
+          name: item.stockName,
+          value: item.marketValue,
+          color: getColor(index)
+        }))
+      }]
+    }
+
+    updateChartData(props.canvasId, chartData)
+  } catch (error) {
+    console.error('[HoldingPieChart] 更新图表失败:', error)
+  }
 }
+
+// 处理 Canvas 点击
+function handleCanvasTap(e: any) {
+  // 可以在这里处理图表区域的点击事件
+  console.log('[HoldingPieChart] Canvas tapped:', e)
+}
+
+// 处理持仓项点击
+function handleItemClick(item: HoldingItem) {
+  emit('click', item)
+}
+
+// 生命周期
+onMounted(() => {
+  if (hasHoldings.value) {
+    initChart()
+  }
+})
+
+onUnmounted(() => {
+  // 清理图表实例
+  disposeChart(props.canvasId)
+  chartInstance.value = null
+  isChartReady.value = false
+})
 
 // 监听数据变化
 watch(() => props.holdings, () => {
-  updateChartData()
-}, { deep: true, immediate: true })
-
-// 图表完成回调
-function onChartComplete() {
-  emit('complete')
-}
-
-// 图表错误回调
-function onChartError(error: any) {
-  console.error('持仓分布图渲染错误:', error)
-  emit('error', error)
-}
+  if (hasHoldings.value) {
+    updateChart()
+  } else {
+    // 清空图表
+    disposeChart(props.canvasId)
+    chartInstance.value = null
+    isChartReady.value = false
+  }
+}, { deep: true })
 </script>
 
 <style lang="scss" scoped>
@@ -262,6 +328,25 @@ function onChartError(error: any) {
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
+  min-height: 280rpx;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 280px;
+}
+
+.empty-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 280rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #bfbfbf;
 }
 
 .holding-list {
