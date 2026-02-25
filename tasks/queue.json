@@ -2,12 +2,12 @@
   "version": "1.0",
   "project": "stock-race",
   "created_at": "2026-02-25T20:00:00Z",
-  "last_updated": "2026-02-25T22:00:00Z",
+  "last_updated": "2026-02-25T22:30:00Z",
   "stats": {
     "total": 1,
-    "pending": 1,
+    "pending": 0,
     "in_progress": 0,
-    "completed": 0,
+    "completed": 1,
     "blocked": 0,
     "failed": 0,
     "skipped": 0
@@ -19,7 +19,7 @@
       "type": "fix",
       "title": "创建 uCharts v2.x 通用工具模块",
       "description": "解决小程序白屏问题，创建通用图表工具模块，封装uCharts v2.x API。创建 src/utils/ucharts.ts 通用模块，封装 initChart 和 getCanvasContext 函数，处理平台差异，导出 uCharts 实例创建辅助函数。",
-      "status": "pending",
+      "status": "completed",
       "priority": "P0",
       "todo_ref": "UC-V2-001",
       "tdd": true,
@@ -38,12 +38,18 @@
         "TC-UCV2-001-05: 页面卸载时正确销毁 uCharts 实例（避免内存泄漏）"
       ],
       "created_at": "2026-02-25T22:00:00Z",
-      "started_at": null,
-      "completed_at": null,
+      "started_at": "2026-02-25T22:00:00Z",
+      "completed_at": "2026-02-25T22:30:00Z",
       "blocked_at": null,
       "block_reason": null,
       "error_log": null,
-      "execution_log": null
+      "execution_log": [
+        {
+          "timestamp": "2026-02-25T22:30:00Z",
+          "event": "completed",
+          "details": "UC-V2-001 任务完成：创建 uCharts v2.x 通用工具模块，17个单元测试全部通过，代码已提交至 develop 分支 (commit: 0f78122)"
+        }
+      ]
     }
   ]
 }
