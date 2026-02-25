@@ -1,9 +1,14 @@
 {
   "mcpServers": {
-    "wechat-devtools": {
-      "type": "sse",
-      "url": "http://192.168.110.146:9420/sse",
-      "description": "微信开发者工具自动化控制 - Windows 192.168.110.146:9420"
+    "weixin-devtools": {
+      "command": "node",
+      "args": [
+        "C:\\dev\\projects\\weixin-devtools-mcp\\build\\server.js"
+      ],
+      "env": {
+        "WEIXIN_MCP_TOOLS_PROFILE": "core"
+      },
+      "description": "微信开发者工具自动化控制 - Windows 本地"
     }
   }
 }

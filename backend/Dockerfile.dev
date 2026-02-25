@@ -1,4 +1,6 @@
 # Backend Development Dockerfile (支持联调热重载)
+# 重要：此 Dockerfile 需要在项目根目录作为 build context 运行
+# 例如：docker build -f backend/Dockerfile.dev -t backend:dev .
 FROM node:20-alpine
 
 WORKDIR /app

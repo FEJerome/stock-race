@@ -1,4 +1,6 @@
 # AI Service Development Dockerfile
+# 重要：此 Dockerfile 需要在项目根目录作为 build context 运行
+# 例如：docker build -f trading-ai-service/Dockerfile.dev -t trading-ai:dev .
 FROM python:3.11-alpine
 
 WORKDIR /app

@@ -1,4 +1,6 @@
 # Data Service Development Dockerfile (联调/生产兼容)
+# 重要：此 Dockerfile 需要在项目根目录作为 build context 运行
+# 例如：docker build -f market-data-service/Dockerfile.dev -t market-data:dev .
 FROM python:3.11-slim
 
 WORKDIR /app

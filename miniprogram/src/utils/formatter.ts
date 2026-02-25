@@ -18,6 +18,33 @@ export function formatMoney(value: number | string, decimals = 2, prefix = '💰
 }
 
 /**
+ * 格式化价格
+ * @param value 价格数值
+ * @param decimals 小数位数
+ */
+export function formatPrice(value: number | string, decimals = 2): string {
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) return '0.00'
+  return num.toFixed(decimals)
+}
+
+/**
+ * 格式化金额（简化显示）
+ * @param value 金额数值
+ */
+export function formatAmount(value: number | string): string {
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) return '0'
+
+  if (num >= 100000000) {
+    return (num / 100000000).toFixed(2) + '亿'
+  } else if (num >= 10000) {
+    return (num / 10000).toFixed(2) + '万'
+  }
+  return num.toLocaleString()
+}
+
+/**
  * 格式化百分比
  * @param value 百分比数值（如 0.15 表示 15%）
  * @param decimals 小数位数
@@ -64,6 +91,15 @@ export function formatVolume(value: number | string): string {
     return (num / 10000).toFixed(2) + '万'
   }
   return num.toLocaleString()
+}
+
+/**
+ * 格式化日期时间
+ * @param date 日期字符串或Date对象
+ * @param format 格式模板
+ */
+export function formatDateTime(date: string | Date | number, format = 'YYYY-MM-DD HH:mm'): string {
+  return formatDate(date, format)
 }
 
 /**
