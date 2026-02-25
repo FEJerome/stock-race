@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "last_scan_time": "2026-02-25T12:00:00Z",
+    "total_scans": 1,
+    "github_token_configured": true,
+    "initialized_at": "2026-02-25T00:00:00Z"
+  },
+  "tracked_projects": [
+    {
+      "repo": "oraios/serena",
+      "first_seen": "2026-02-25T12:00:00Z",
+      "last_checked": "2026-02-25T12:00:00Z",
+      "latest_version": "v0.1.4",
+      "category": "mcp-server",
+      "status": "active",
+      "check_count": 1,
+      "stars": 20609,
+      "forks": 1392,
+      "language": "Python",
+      "adaption_score": 4,
+      "description": "A powerful coding agent toolkit providing semantic retrieval and editing capabilities (MCP server & other integrations)"
+    },
+    {
+      "repo": "BeehiveInnovations/pal-mcp-server",
+      "first_seen": "2026-02-25T12:00:00Z",
+      "last_checked": "2026-02-25T12:00:00Z",
+      "latest_version": "v9.8.2",
+      "category": "mcp-server",
+      "status": "active",
+      "check_count": 1,
+      "stars": 11121,
+      "forks": 945,
+      "language": "Python",
+      "adaption_score": 3,
+      "description": "The power of Claude Code / GeminiCLI / CodexCLI + multiple AI models working as one"
+    },
+    {
+      "repo": "hangwin/mcp-chrome",
+      "first_seen": "2026-02-25T12:00:00Z",
+      "last_checked": "2026-02-25T12:00:00Z",
+      "latest_version": "v1.0.0",
+      "category": "mcp-server",
+      "status": "active",
+      "check_count": 1,
+      "stars": 10481,
+      "forks": 925,
+      "language": "TypeScript",
+      "adaption_score": 4,
+      "description": "Chrome MCP Server is a Chrome extension-based MCP server for browser automation"
+    },
+    {
+      "repo": "affaan-m/everything-claude-code",
+      "first_seen": "2026-02-25T12:00:00Z",
+      "last_checked": "2026-02-25T12:00:00Z",
+      "latest_version": "v1.6.0",
+      "category": "skill-command-hook",
+      "status": "active",
+      "check_count": 1,
+      "stars": 51380,
+      "forks": 6363,
+      "language": "JavaScript",
+      "adaption_score": 5,
+      "description": "Complete Claude Code configuration collection - agents, skills, hooks, commands, rules, MCPs"
+    },
+    {
+      "repo": "mcp-use/mcp-use",
+      "first_seen": "2026-02-25T12:00:00Z",
+      "last_checked": "2026-02-25T12:00:00Z",
+      "latest_version": null,
+      "category": "mcp-framework",
+      "status": "active",
+      "check_count": 1,
+      "stars": 9271,
+      "forks": 1142,
+      "language": "TypeScript",
+      "adaption_score": 4,
+      "description": "The fullstack MCP framework to develop MCP Apps for ChatGPT / Claude & MCP Servers for AI Agents"
+    }
+  ],
+  "ignored_projects": [],
+  "scan_history": [
+    {
+      "scan_id": "2026-02-25-001",
+      "scan_time": "2026-02-25T12:00:00Z",
+      "projects_checked": 5,
+      "projects_with_updates": 0,
+      "projects_new": 5
+    }
+  ]
+}

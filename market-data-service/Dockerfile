@@ -1,20 +1,17 @@
-FROM python:3.11-slim
+# Market Data Service Dockerfile
+FROM python:3.11-alpine
 
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache gcc g++ musl-dev curl
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt .
+COPY market-data-service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY src/ ./src/
+COPY market-data-service/src/ ./src/
 
 # Create logs directory
 RUN mkdir -p logs

@@ -1,0 +1,40 @@
+# AI Service Production Dockerfile
+FROM python:3.11-alpine
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache gcc g++ musl-dev curl
+
+# Copy and install infra SDKs first
+COPY infra/health-check/src /app/infra/health-check/src
+COPY infra/event-bus/src /app/infra/event-bus/src
+RUN pip install --no-cache-dir /app/infra/health-check/src
+
+# Copy AI Service source code
+COPY trading-ai-service/src ./src
+COPY trading-ai-service/pyproject.toml .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    fastapi>=0.104.0 \
+    uvicorn[standard]>=0.24.0 \
+    pydantic>=2.5.0 \
+    httpx>=0.25.0 \
+    redis>=5.0.0 \
+    psycopg2-binary>=2.9.0 \
+    sqlalchemy>=2.0.0 \
+    python-dotenv>=1.0.0 \
+    tenacity>=8.2.0 \
+    openai>=1.0.0 \
+    anthropic>=0.8.0 \
+    google-generativeai>=0.3.0
+
+# Set PYTHONPATH
+ENV PYTHONPATH=/app/src
+
+# Expose port
+EXPOSE 8000
+
+# Start development server
+CMD ["uvicorn", "ai_service.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

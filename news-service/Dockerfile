@@ -1,9 +1,10 @@
-FROM python:3.11-slim
+# News Service Dockerfile
+FROM python:3.11-alpine
 
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y gcc g++ && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache gcc g++ musl-dev
 
 # Copy and install infra SDKs first
 COPY infra/health-check/src /app/infra/health-check/src
@@ -15,10 +16,10 @@ COPY news-service/requirements.txt .
 COPY news-service/src/ ./src/
 COPY news-service/pyproject.toml .
 
-# Install dependencies (不使用 editable mode)
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Set Python path (包含 infra SDK)
+# Set Python path
 ENV PYTHONPATH=/app/src:/app/infra/event-bus/src:/app/infra/health-check/src
 
 # Run service
