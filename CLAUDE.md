@@ -105,56 +105,84 @@
 - **CODING_STANDARDS.md** - 编码规范细节
 - **ARTIFACT_MANAGEMENT.md** - 产出物管理规范
 
-## 🎯 核心模块导航
+## 🎯 核心模块位置
 
-### 前端模块
-- **主要文件**：`frontend/src/`
-- **关键文件**：
-  - `frontend/src/main.tsx` - 应用入口
-  - `frontend/src/App.tsx` - 路由配置
-  - `frontend/src/services/` - API服务
+| 模块 | 代码位置 | 详细结构 |
+|------|----------|----------|
+| **前端** | `frontend/src/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#前端) |
+| **后端** | `backend/src/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#后端) |
+| **交易AI服务** | `trading-ai-service/src/ai_service/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#交易ai服务) |
+| **数据服务** | `market-data-service/src/data_service/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#数据服务) |
+| **微信小程序** | `miniprogram/src/` | [需求规格](docs/miniprogram/REQUIREMENTS.md) · [技术栈](docs/miniprogram/TECH_STACK.md) |
+| **基础设施** | `docs/modules/infra/` | [TODO](docs/modules/infra/TODO.md) |
 
-### 后端模块
-- **主要文件**：`backend/src/`
-- **关键文件**：
-  - `backend/src/app.js` - Express应用
-  - `backend/src/routes/` - API路由
-  - `backend/src/controllers/` - 业务逻辑
+> 📚 完整代码结构请参考 [CODE_MAP.md](docs/architecture/CODE_MAP.md)
 
-### 交易AI服务模块
-- **主要文件**：`trading-ai-service/src/ai_service/`
-- **关键文件**：
-  - `trading-ai-service/src/ai_service/main.py` - FastAPI应用
-  - `trading-ai-service/src/ai_service/adapters/` - AI模型适配器
-  - `trading-ai-service/src/ai_service/services/decision_service.py` - 决策服务
+---
 
-### 市场行情数据服务模块
-- **主要文件**：`market-data-service/src/data_service/`
-- **关键文件**：
-  - `market-data-service/src/data_service/main.py` - FastAPI应用
-  - `market-data-service/src/data_service/collectors/` - 数据采集器
-  - `market-data-service/src/data_service/services/data_service.py` - 主数据服务
+## 🛠️ 环境工具清单
 
-### 微信小程序模块
-- **主要文件**：`miniprogram/src/`
-- **关键文件**：
-  - `miniprogram/src/pages/` - 页面组件
-  - `miniprogram/src/components/` - 公共组件
-  - `miniprogram/src/stores/` - 状态管理（Pinia）
-  - `miniprogram/src/api/` - API服务层
-  - 📚 **文档**：[小程序需求规格](docs/miniprogram/REQUIREMENTS.md) | [技术栈](docs/miniprogram/TECH_STACK.md)
+**⚠️ 智能体必看**：操作项目数据时，请优先使用以下已安装的工具，避免重复实现。
 
-### 基础设施模块
-- **文档位置**：`docs/modules/infra/`
-- **关键文件**：
-  - **[基础设施TODO](docs/modules/infra/TODO.md)** - 跨服务架构任务跟踪（事件总线、Redis部署、冲突解决方案）
-  - 共享Redis集群部署、统一事件总线SDK、服务解耦实施计划
+### JSON 处理工具
+
+| 工具 | 版本 | 用途 | 常用命令示例 |
+|------|------|------|-------------|
+| **jq** | 1.7.1 | JSON 查询、过滤、修改 | `jq '.tasks[0]' tasks/queue.json` |
+| | | | `jq '.tasks[] | select(.status=="pending")' tasks/queue.json` |
+| | | | `jq '.stats.completed += 1' tasks/queue.json` |
+
+> 💡 **优先使用 jq**：操作 `tasks/queue.json` 等 JSON 文件时，**必须使用 jq**，禁止手动字符串拼接。
+
+### 版本控制工具
+
+| 工具 | 用途 | 常用命令示例 |
+|------|------|-------------|
+| **git** | 代码版本管理 | `git status` / `git add .` / `git commit -m "msg"` |
+| | | `git log --oneline -5` / `git diff HEAD~1` |
+
+### 构建与运行工具
+
+| 工具 | 用途 | 常用命令示例 |
+|------|------|-------------|
+| **make** | 统一命令入口 | `make help` / `make integration` / `make status` |
+| **node/npm** | JavaScript 运行时 | `node scripts/test.js` / `npm run dev` |
+| **python** | Python 运行时 | `python -m uvicorn main:app` / `pip install` |
+| **docker-compose** | 容器编排 | `docker-compose up -d` / `docker-compose ps` |
+
+### 文本处理工具（Git Bash 内置）
+
+| 工具 | 用途 | 常用命令示例 |
+|------|------|-------------|
+| **grep** | 文本搜索 | `grep -r "TODO" src/` / `grep -n "function" file.ts` |
+| **sed** | 流编辑器 | `sed -i 's/old/new/g' file.txt` |
+| **awk** | 文本处理 | `awk '{print $1}' file.txt` |
+| **curl** | HTTP 请求 | `curl http://localhost:3001/api/health` |
+
+### 自动化开发工具
+
+| 工具/脚本 | 用途 | 文档链接 |
+|-----------|------|----------|
+| **dev-loop.sh** | 自动化任务循环执行 | [使用指南](docs/agents/AUTO_DEV_USAGE_GUIDE.md) |
+| **resume-task.sh** | 恢复被阻塞的任务 | [使用指南](docs/agents/AUTO_DEV_USAGE_GUIDE.md) |
+
+### 开发环境说明
+
+- **Shell 环境**：Git Bash（Windows）- **不支持 WSL**，因微信开发者工具 MCP 需 Windows 原生环境
+- **项目根目录**：脚本自动检测，无需手动 `cd`
+- **配置文件加载**：`.claude/skills/` 和 `.claude/mcp.json` 由脚本自动加载
+
+---
 
 ## 🔧 快速操作指南
 
-### 模块开发命令（module-dev）
+### 智能体上岗（必需首先执行）
 
-使用 `module-dev` 命令快速进入指定模块的开发工作流：
+```bash
+/pro-init
+```
+
+### 模块开发命令
 
 ```bash
 # 格式：module-dev <服务名>
@@ -166,225 +194,24 @@ module-dev news-service         # 新闻服务开发
 module-dev miniprogram          # 微信小程序开发
 ```
 
-**命令执行流程**：
-1. 自动执行 `/pro-init` 熟悉项目结构
-2. 读取 `docs/modules/<服务名>/TODO.md` 开发规划
-3. 识别下一个待开发条目（🔲 待开发）
-4. 检查当前git分支，引导切换至正确worktree
-5. 制定具体执行计划，等待你的开发指令
+**模块规划文档**：
+- [Backend](docs/modules/backend/TODO.md) · [Frontend](docs/modules/frontend/TODO.md) · [Market Data](docs/modules/market-data-service/TODO.md) · [AI Service](docs/modules/trading-ai-service/TODO.md) · [News](docs/modules/news-service/TODO.md) · [Miniprogram](docs/modules/miniprogram/TODO.md) · [Infra](docs/modules/infra/TODO.md)
 
-**模块开发规划文档**：
-- [Backend TODO](docs/modules/backend/TODO.md) - 后端开发规划（含架构优化任务C1~C6, O3, O6）
-- [Frontend TODO](docs/modules/frontend/TODO.md) - 前端开发规划
-- [Market Data Service TODO](docs/modules/market-data-service/TODO.md) - 数据服务规划（含架构优化任务C1~C6, O6）
-- [Trading AI Service TODO](docs/modules/trading-ai-service/TODO.md) - AI服务规划（含架构优化任务C1~C4）
-- [News Service TODO](docs/modules/news-service/TODO.md) - 新闻服务规划（含架构优化任务C1~C6）
-- [Miniprogram TODO](docs/modules/miniprogram/TODO.md) - 小程序规划（含架构优化任务C1, C5, O6）
-- **[Infrastructure TODO](docs/modules/infra/TODO.md)** - 基础设施规划（6个冲突解决方案 + 2个优化方案）
+### Makefile 常用命令
 
----
+| 命令 | 用途 |
+|------|------|
+| `make integration` | 启动联调环境（全容器化，推荐） |
+| `make status` | 查看服务状态 |
+| `make logs` | 查看实时日志 |
+| `make health` | 健康检查 |
+| `make help` | 查看所有命令 |
 
-## 🔧 统一命令入口（Makefile）
-
-项目根目录提供 `Makefile` 作为统一命令入口，简化常用操作：
-
-```bash
-# 查看所有可用命令
-make help
-
-# 启动联调环境（最常用）
-make integration
-
-# 查看服务状态
-make status
-
-# 查看日志
-make logs
-
-# 健康检查
-make health
-
-# 启动基础设施（仅 Docker 数据库）
-make up
-
-# 停止所有服务
-make down
-```
-
-### Makefile 命令速查表
-
-| 命令 | 用途 | 说明 |
-|------|------|------|
-| `make integration` | 启动联调环境 | 全容器化，含热重载，推荐日常使用 |
-| `make up` | 启动基础设施 | 仅 Redis/PostgreSQL/TimescaleDB |
-| `make down` | 停止所有服务 | 停止所有 Docker 容器 |
-| `make status` | 查看服务状态 | 列出所有运行的 stock-race 容器 |
-| `make logs` | 查看实时日志 | 跟踪所有服务的日志输出 |
-| `make health` | 健康检查 | 检查三个主要服务的健康状态 |
-| `make build` | 重新构建镜像 | 依赖变更后使用 |
-| `make clean` | 清理资源 | 清理停止的容器和未使用镜像 |
+> 📚 [Docker 部署详细指南](docs/usage/DOCKER_GUIDE.md) | [新手指南](docs/usage/QUICK_START.md)
 
 ---
 
-## 🐳 Docker 部署指南
-
-### 环境概述
-
-项目提供两种 Docker Compose 配置：
-
-| 配置 | 用途 | 文件 | 特点 |
-|------|------|------|------|
-| **联调测试** | 集成测试、全服务验证 | `docker-compose.integration.yml` | 全容器化、热重载、严格模式 |
-| **开发环境** | 本地开发、单服务调试 | `docker-compose.yml` | 仅基础设施、服务本地运行 |
-
----
-
-### 联调测试环境（推荐）
-
-**适用场景**：
-- 多服务集成测试
-- 联调验证
-- 生产环境预演
-- CI/CD 流水线
-
-**配置特点**：
-- ✅ 所有服务（包括业务服务）Docker 容器化
-- ✅ Volume 挂载源代码，支持热重载
-- ✅ 严格模式（STRICT_MODE=true），强制使用真实数据
-- ✅ 自动数据库迁移
-- ✅ 健康检查与依赖等待
-
-**一键启动（推荐）**：
-```bash
-# 使用 Makefile 启动联调环境（最常用）
-make integration
-
-# 或使用 docker-compose 命令
-docker-compose -f docker-compose.integration.yml up -d
-```
-
-**其他常用命令**：
-```bash
-# 查看服务状态
-make status
-# 或
-docker-compose -f docker-compose.integration.yml ps
-
-# 查看实时日志
-make logs
-# 或
-docker-compose -f docker-compose.integration.yml logs -f
-
-# 查看特定服务日志
-docker-compose -f docker-compose.integration.yml logs -f backend
-
-# 停止所有服务
-make down
-# 或
-docker-compose -f docker-compose.integration.yml down
-
-# 停止并清除数据卷（谨慎使用）
-docker-compose -f docker-compose.integration.yml down -v
-```
-
-**服务端口映射**：
-
-| 服务 | 容器名 | 主机端口 | 容器端口 | 说明 |
-|------|--------|----------|----------|------|
-| Backend | stock-race-backend-int | 3001 | 3001 | API 服务 |
-| Trading AI Service | stock-race-trading-ai-int | 8000 | 8000 | AI 决策服务 |
-| Market Data Service | stock-race-market-data-int | 8001 | 8001 | 行情数据服务 |
-| News Service | stock-race-news-int | - | - | 新闻服务（无 HTTP） |
-| Redis | stock-race-redis-int | 6380 | 6379 | 缓存（注意：宿主机 6379 已被占用） |
-| PostgreSQL | stock-race-postgres-int | 5434 | 5432 | 主数据库 |
-| TimescaleDB | stock-race-timescaledb-int | 5433 | 5432 | 时序数据库 |
-
-**健康检查**：
-```bash
-# Backend
-curl http://localhost:3001/api/health
-
-# Trading AI Service
-curl http://localhost:8000/api/v1/health/
-
-# Market Data Service
-curl http://localhost:8001/health
-```
-
-**常见问题解决**：
-```bash
-# 端口冲突（如 6379 被宿主机 Redis 占用）
-# 已在配置中修改为 6380，无需额外操作
-
-# 重建镜像（代码变更后）
-docker-compose -f docker-compose.integration.yml build
-
-# 强制重启特定服务
-docker-compose -f docker-compose.integration.yml up -d --force-recreate backend
-
-# 进入容器调试
-docker exec -it stock-race-backend-int sh
-docker exec -it stock-race-market-data-int bash
-```
-
----
-
-### 生产环境部署
-
-**部署文件**：
-- `docker-compose.prod.yml` - 生产环境配置
-- `backend/Dockerfile` - Backend 生产镜像
-- `trading-ai-service/Dockerfile` - AI 服务生产镜像
-- `market-data-service/Dockerfile` - 数据服务生产镜像
-- `news-service/Dockerfile` - 新闻服务生产镜像
-
-**启动步骤**：
-```bash
-# 1. 设置环境变量
-export NODE_ENV=production
-export DATABASE_URL=postgresql://user:pass@postgres:5432/stock_race
-export REDIS_URL=redis://redis:6379
-
-# 2. 启动基础设施
-docker-compose -f docker-compose.prod.yml up -d postgres redis timescaledb
-
-# 3. 等待数据库就绪（约 10 秒）
-sleep 10
-
-# 4. 执行数据库迁移
-docker-compose -f docker-compose.prod.yml run --rm backend npx prisma migrate deploy
-
-# 5. 启动所有服务
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-**生产环境检查清单**：
-- [ ] 修改默认密码（PostgreSQL、Redis）
-- [ ] 配置 SSL/TLS 证书
-- [ ] 设置资源限制（CPU/内存）
-- [ ] 配置日志收集（ELK/Loki）
-- [ ] 启用监控告警（Prometheus/Grafana）
-- [ ] 配置备份策略
-
----
-
-### 开发环境（基础设施 only）
-
-**适用场景**：
-- 单服务本地开发调试
-- 快速启动基础设施
-
-**启动方式**：
-```bash
-# 仅启动基础设施（PostgreSQL、Redis、TimescaleDB）
-docker-compose up -d
-
-# 服务在宿主机本地运行，便于调试
-# Backend: cd backend && npm run dev
-# Market Data: cd market-data-service && python -m uvicorn data_service.main:app --reload
-```
-
-### 服务访问地址
+## 🌐 服务访问地址
 - **前端**：http://localhost:3000
 - **后端API**：http://localhost:3001
 - **交易AI服务**：http://localhost:8000 (AI账户交易决策)
@@ -442,298 +269,9 @@ curl http://localhost:8001/health
 - 微信小程序：`docs/miniprogram/`
 - 脚本工具：`scripts/` ([脚本说明](scripts/README.md))
 
-### 脚本目录结构
-
-所有脚本按功能分类存放在 `scripts/` 目录下：
-
-| 目录 | 用途 | 说明 |
-|------|------|------|
-| `scripts/dev/` | 开发工具 | 启动/停止服务、环境检查 |
-| `scripts/install/` | 环境安装 | 数据库、Docker 安装脚本 |
-| `scripts/test/` | 测试脚本 | E2E 测试、AI 测试、验证脚本 |
-| `scripts/mcp/` | MCP 测试 | MCP 连通性测试脚本 |
-| `scripts/deploy/` | 部署脚本 | 生产环境部署 |
-| `scripts/archive/` | 归档脚本 | 早期演示脚本（不再维护） |
-
-**快速命令（推荐优先使用 Makefile）**：
-```bash
-make integration    # 启动联调环境
-make status         # 查看服务状态
-make health         # 健康检查
-```
-
 ## 📈 近期开发进展
 
-### Docker 全容器化联调环境配置完成
-**项目状态**：✅ **联调环境全 Docker 化完成（2026-02-13）**
-
-**关键成果**：完成所有业务服务的 Docker 容器化配置，支持一键启动全服务联调环境。
-
-**解决的问题**：
-1. **Backend 容器化** - 添加 OpenSSL 支持 Prisma，自动生成 Prisma Client，启动时自动运行 migrations
-2. **Market Data Service 容器化** - 添加缺失依赖（`python-jose`, `pydantic-settings`, `akshare`, `baostock`, `tushare`, `asyncpg`）
-3. **Trading AI Service 容器化** - 修正依赖安装方式，支持 infra SDK 本地挂载
-4. **News Service 容器化** - 修正依赖安装顺序和 PYTHONPATH 配置
-5. **Redis 端口冲突** - 将 Docker Redis 映射到宿主机 6380 端口，避免与宿主机 Redis 冲突
-
-**配置文件**：
-- `docker-compose.integration.yml` - 联调测试专用配置（全容器化）
-- `backend/Dockerfile.dev` - Backend 开发镜像
-- `market-data-service/Dockerfile.dev` - 数据服务开发镜像
-- `trading-ai-service/Dockerfile.dev` - AI 服务开发镜像
-- `news-service/Dockerfile` - 新闻服务镜像
-
-**快速启动命令**：
-```bash
-# 一键启动所有服务
-docker-compose -f docker-compose.integration.yml up -d
-
-# 验证所有服务健康状态
-curl http://localhost:3001/api/health
-curl http://localhost:8000/api/v1/health/
-curl http://localhost:8001/health
-```
-
----
-
-### 五服务架构冲突分析与解决方案制定
-**项目状态**：✅ **架构审查完成，6个冲突全部解决（2026-02-11）**
-
-**关键成果**：首席架构师完成Backend、Market Data Service、Trading AI Service、News Service、Miniprogram五个服务的TODO.md综合审查，识别6个架构冲突并提供完整解决方案。
-
-**解决的架构冲突**：
-1. ✅ **循环依赖问题** - 采用"共享Redis + 冷启动"混合方案（方案C）
-2. ✅ **事件总线设计不一致** - 统一采用Redis Streams事件总线
-3. ✅ **AI Service双向依赖过多** - 基于事件总线的完全解耦
-4. ✅ **AI对话服务职责分歧** - 确定由Backend实现AI对话功能
-5. ✅ **Miniprogram公开API冲突** - 三层API架构 + 智能游客模式
-6. ✅ **接口定义重复/不一致** - AI决策服务广度查询需求确认
-
-**关键架构决策**：
-- 统一事件总线架构：所有服务通过Redis Streams通信，消除直接依赖
-- AI对话服务：由Backend实现，避免Backend ↔ Trading AI循环依赖
-- Miniprogram游客模式：支持24h/72h智能过期，80%功能无需登录
-- 数据流优化：行情直连Market Data，Backend负载降低90%
-- Redis部署：渐进式策略，从单节点¥0起步到Cluster集群
-
-**详细文档**：
-- 📋 [服务依赖冲突分析](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 主文档，6个冲突完整分析
-- 📋 [六服务架构设计](docs/architecture/CURRENT/SERVICE_ARCHITECTURE.md) - 关键决策更新
-- 📋 [循环依赖解决方案](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md)
-- 📋 [事件总线风险分析](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md)
-- 📋 [AI对话服务职责划分](docs/architecture/CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md)
-- 📋 [Miniprogram游客模式设计](docs/architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md)
-- 📋 [Miniprogram数据流优化](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md)
-- 📋 [AI Service双向依赖解耦](docs/architecture/CURRENT/DECISIONS/004-AI-DECOUPLING.md)
-- 📋 [AI决策广度查询需求](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md)
-- 📋 [Redis渐进式部署策略](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md)
-
----
-
-### Market Data Service 代码审查与文档重构
-**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
-
-**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，测试覆盖率96%。
-
-**审查结论**：
-- 多数据源架构（6源）设计成熟，智能路由与动态权重机制完善
-- 三层缓存策略（Redis/TimescaleDB/内存回退）确保高可用性
-- 数据质量评估与降级策略有效保障数据可靠性
-- 单元测试通过率95.8%，核心功能100%覆盖
-
-**详细文档**：
-- 📋 [已完成功能记录](docs/modules/market-data-service/HAVE_DONE.md)
-- 📋 [待办任务追踪](docs/modules/market-data-service/TODO.md)
-- 📋 [测试脚本索引](docs/modules/market-data-service/TEST_SCRIPTS.md)
-
----
-
-### News Service 代码审查与文档重构
-**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
-
-**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，创建TEST_SCRIPTS.md索引测试脚本。
-
-**审查结论**：
-- 完全符合统一数据平台精简情报架构设计
-- DeepSeek流式处理，Token严格控制（单条<2000 tokens）
-- 分层存储策略合理（Redis 24h + PostgreSQL 7d），节省98%存储空间
-- 采集器、处理器、存储层设计规范，易于扩展
-
-**详细文档**：
-- 📋 [已完成功能记录](docs/modules/news-service/HAVE_DONE.md)
-- 📋 [待办任务追踪](docs/modules/news-service/TODO.md)
-- 📋 [测试脚本索引](docs/modules/news-service/TEST_SCRIPTS.md)
-
----
-
-### Trading AI Service 代码审查与文档重构
-**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
-
-**关键成果**：首席架构师完成全面代码审查，服务达到生产就绪标准。重构TODO.md，创建HAVE_DONE.md记录已完成功能，更新TEST_SCRIPTS.md索引测试脚本。
-
-**审查结论**：
-- 多模型适配器架构优秀（6大AI提供商统一接口）
-- Token成本控制精准（预算估算→限额控制→分级告警）
-- 数据融合设计合理（Market Data + News Service双源聚合）
-- 提示词工程成熟（基金经理画像自动提炼）
-- 综合功能测试32项全部通过（100%通过率）
-
-**详细文档**：
-- 📋 [已完成功能记录](docs/modules/trading-ai-service/HAVE_DONE.md)
-- 📋 [待办任务追踪](docs/modules/trading-ai-service/TODO.md)
-- 📋 [测试脚本索引](docs/modules/trading-ai-service/TEST_SCRIPTS.md)
-
----
-
-### Miniprogram 代码审查与文档重构
-**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
-
-**关键成果**：首席架构师完成全面代码审查。重构TODO.md，创建HAVE_DONE.md记录已完成功能（T-001~T-011），更新TEST_SCRIPTS.md索引测试脚本。
-
-**审查结论**：
-- 游客模式设计优秀，无需登录即可访问公开数据，降低用户使用门槛
-- Pinia状态管理规范，5个Store职责分明，持久化配置合理
-- 代码规范统一，TypeScript类型完善，Vue 3 Composition API使用规范
-- UI设计符合A股习惯（红涨绿跌），西式复古精英风格独特
-- E2E测试覆盖游客模式7个场景（20+子测试全部通过）
-
-**待完成工作**：
-- AI经理详情页（T-007）需要完善收益曲线和持仓列表
-- 排行榜/行情页需等待Backend提供公开API
-- 单元测试待补充（T-001~T-010）
-
-**详细文档**：
-- 📋 [已完成功能记录](docs/modules/miniprogram/HAVE_DONE.md)
-- 📋 [待办任务追踪](docs/modules/miniprogram/TODO.md)
-- 📋 [测试脚本索引](docs/modules/miniprogram/TEST_SCRIPTS.md)
-
----
-
-### Backend 代码审查与文档重构
-**项目状态**：✅ **审查完成，已合并到develop分支（2026-02-11）**
-
-**关键成果**：首席架构师完成全面代码审查。重构TODO.md，创建HAVE_DONE.md记录已完成功能（T-001~T-015），更新TEST_SCRIPTS.md索引测试脚本（新增7个测试文件/90个测试用例）。
-
-**审查结论**：
-- 交易规则引擎精准：完整支持A股市场各类规则（主板/创业板/科创板/北交所），涨跌停计算准确，特殊场景（ST/停牌/新股）处理完善
-- 服务通信可靠：SDK封装完善，熔断降级策略合理，服务间调用健壮
-- 动态配置灵活：分层配置架构优雅（默认→会员→账户），支持会员级别和账户级别的灵活控制
-- WebSocket设计成熟：Socket.io使用规范，订阅管理精细化，实时推送稳定
-- 测试覆盖率高：单元测试195个全部通过，新增测试90个，生产就绪度90%
-
-**待完成工作**：
-- 完善集成测试环境（9个测试需完整Docker Compose环境）
-- 对接trading-ai-service对话接口（T-011）
-- 对接market-data-service交易状态接口（T-015）
-
-**详细文档**：
-- 📋 [已完成功能记录](docs/modules/backend/HAVE_DONE.md)
-- 📋 [待办任务追踪](docs/modules/backend/TODO.md)
-- 📋 [测试脚本索引](docs/modules/backend/TEST_SCRIPTS.md)
-
----
-
-### 六数据源鲁棒性测试项目（分层采集验证）
-**项目状态**：✅ 测试中，v1.1方案已制定（2026-02-10）
-
-**关键成果**：制定中频层（10秒/300只）+ 低频层（60秒/全量）分层采集方案，新浪财经生产就绪（100%成功率/0.33s响应）。
-
-**详细报告**：
-- 📋 [v1.1分层采集方案](data-service/docs/HYBRID_DATA_SOURCE_SOLUTION_v1.1.md)
-- 📋 [六数据源测试报告](data-service/docs/SIX_SOURCES_ROBUSTNESS_TEST_REPORT.md)
-
----
-
-### 股票数据源采集测试项目（集合竞价专项）
-**项目状态**：✅ 修复完成，连续测试中（2026-02-10）
-
-**关键成果**：修复腾讯财经和东方财富字段解析问题，所有3个数据源在集合竞价时段均正常工作。
-
-**详细报告**：
-- 📋 [混合数据源采集方案](data-service/docs/HYBRID_DATA_SOURCE_SOLUTION.md)
-- 📋 [测试报告](data-service/docs/DATA_SOURCE_TEST_REPORT_20260210.md)
-
----
-
-### 微信小程序项目
-**项目状态**：✅ **全部完成，等待微信审核（2026-02-09）**
-
-**关键成果**：UniApp + Vue 3小程序全部功能开发完成（P0/P1/P2），ucharts图表集成，西式复古精英风格UI设计，审核材料准备完毕。
-
-**详细文档**：
-- 📋 [隐私保护指引](docs/miniprogram/PRIVACY.md)
-- 📋 [用户服务协议](docs/miniprogram/TERMS.md)
-- 📋 [审核指南](docs/miniprogram/WECHAT_AUDIT_GUIDE.md)
-- 📋 [开发进度](docs/miniprogram/DEVELOPMENT_PROGRESS.md)
-
----
-
-### 数据源扩展计划取消（2026-02-13）
-**项目状态**: ❌ **计划取消**
-
-**背景**: 计划利用春节期间将数据源从4个扩展到6-8个，提升系统容灾能力。
-
-**调研结果**: 对7个潜在数据源（网易财经、金融界、中国证券网、同花顺、和讯网、中金在线、雪球）进行详细调研和POC测试，结果如下：
-- ❌ 网易财经：API已失效，域名无法解析
-- ❌ 金融界：无官方开放API
-- ❌ 中国证券网：无公开接口
-- ⚠️ 同花顺：需付费（298-60,000元/年）
-- ❌ 和讯网：API已停用
-- ❌ 中金在线：无公开接口
-- ❌ 雪球：反爬过于严格（4/5级）
-
-**结论**: 7个调研数据源中6个完全不可行，仅同花顺可用但需付费。由于无法找到可用的免费数据源，**本计划正式取消**。
-
-**后续方案**: 保持现有4数据源系统（新浪、腾讯、东方财富、Baostock），如需扩展考虑采购同花顺官方API或联系券商获取Level-2接口。
-
-**归档文档**:
-- 📋 [调研报告](docs/architecture/HISTORICAL/V2026-02-13-DATA_SOURCE_SURVEY_REPORTS.md)
-- 📋 [可行性评估](docs/architecture/HISTORICAL/V2026-02-13-NEW_DATA_SOURCE_FEASIBILITY.md)
-- 📋 [完整规划](docs/architecture/HISTORICAL/V2026-02-13-DATA_SOURCE_EXPANSION_PLAN_V2-CANCELLED.md)
-
----
-
-📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含前端模拟数据改造、紧急系统修复、Docker容器化、内存持久化优化等15个历史项目详细记录。
-
----
-
----
-
-### 项目根目录整理完成（2026-02-25）
-**项目状态**：✅ **根目录脚本整理完成**
-
-**关键成果**：
-1. **创建 Makefile** - 统一命令入口，简化常用操作
-2. **整理 scripts 目录** - 按功能分类存放脚本
-3. **归档过时脚本** - 早期演示脚本移至 `scripts/archive/`
-4. **删除重复脚本** - 移除功能重复的启动脚本
-
-**整理后的项目结构**：
-```
-stock-race/
-├── Makefile                    # 统一命令入口（新增）
-├── docker-compose*.yml         # Docker 编排配置（4个）
-├── CLAUDE.md                   # 项目导航中心
-├── README.md                   # 项目说明
-├── .env / .env.production      # 环境变量
-├── .gitignore / .gitattributes # Git 配置
-└── scripts/                    # 分类存放的脚本
-    ├── README.md               # 脚本目录说明
-    ├── dev/                    # 开发工具
-    ├── install/                # 环境安装
-    ├── test/                   # 测试脚本
-    ├── mcp/                    # MCP 测试
-    ├── deploy/                 # 部署脚本
-    └── archive/                # 归档脚本
-```
-
-**常用命令（优先使用 Makefile）**：
-```bash
-make integration    # 启动联调环境
-make status         # 查看服务状态
-make logs           # 查看实时日志
-make health         # 健康检查
-```
+📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含Docker容器化、架构冲突解决、代码审查、自动化开发系统、数据源测试等15+历史项目详细记录。
 
 ---
 

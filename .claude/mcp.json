@@ -3,12 +3,13 @@
     "weixin-devtools": {
       "command": "node",
       "args": [
-        "C:\\dev\\projects\\weixin-devtools-mcp\\build\\server.js"
+        "/c/dev/projects/weixin-devtools-mcp/build/server.js",
+        "--tools-profile=full"
       ],
       "env": {
-        "WEIXIN_MCP_TOOLS_PROFILE": "core"
+        "WEIXIN_MCP_TOOLS_PROFILE": "full"
       },
-      "description": "微信开发者工具自动化控制 - Windows 本地"
+      "description": "微信开发者工具自动化控制 - Windows 本地（完整功能）"
     }
   }
 }

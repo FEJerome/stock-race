@@ -1,7 +1,10 @@
 # Miniprogram 测试脚本文档
 
 > 本文档索引 Miniprogram 模块的所有测试脚本。
-> 最后更新：2026-02-11
+>
+> 📚 **MCP 自动化测试指南**: [MCP_GUIDE.md](./MCP_GUIDE.md) - weixin-devtools-mcp 完整使用文档
+>
+> 最后更新：2026-02-25
 
 ---
 
@@ -11,7 +14,8 @@
 |------|---------|--------|-----------|------|
 | Phase 6 | E2E测试 | 1 | 7个场景/约30个子测试 | ✅ 已完成 |
 | Phase 1-5 | 单元测试 | 2 | 30个 | ✅ 已补充T-007测试、环境配置测试 |
-| **总计** | - | **2** | **约42** | **E2E+单元测试覆盖** |
+| **MCP自动化测试** | E2E + 截图 | 1 | 31工具/图表专项 | 🔄 待UC-V2完成后启用 |
+| **总计** | - | **3** | **约50+** | **增加MCP测试覆盖** |
 
 ---
 
@@ -146,6 +150,39 @@
 
 ---
 
+### MCP 自动化测试（新增 2026-02-25）
+
+#### test-mcp-valid.mjs
+**文件位置**: `scripts/mcp/test-mcp-valid.mjs`
+**文档位置**: [MCP_GUIDE.md](./MCP_GUIDE.md)
+
+**测试功能**:
+- MCP 服务连接有效性验证
+- 31 个工具可用性检查
+- screenshot 功能验证
+- 连接状态获取测试
+
+**核心测试用例**:
+- TC-MCP-001: 创建 StdioClientTransport - 验证传输层
+- TC-MCP-002: 创建 MCP 客户端 - 验证客户端初始化
+- TC-MCP-003: 连接 MCP 服务器 - 验证服务启动
+- TC-MCP-004: 获取工具列表 - 验证 31 个工具加载
+- TC-MCP-005: 检查关键工具 - 验证 screenshot 等存在
+- TC-MCP-006: 工具调用测试 - 验证 get_connection_status
+
+**运行方式**:
+```bash
+cd /c/dev/projects/weixin-devtools-mcp
+node /c/dev/projects/stock-race/scripts/mcp/test-mcp-valid.mjs
+```
+
+**依赖**: @modelcontextprotocol/sdk, weixin-devtools-mcp
+**状态**: ✅ MCP 服务连接测试通过（full profile, 31工具）
+
+**备注**: 此测试脚本需要 MCP SDK 依赖，必须在 weixin-devtools-mcp 目录下运行
+
+---
+
 ## 运行测试
 
 ### 环境准备
@@ -234,8 +271,28 @@ const mockUni = {
 
 ---
 
-*文档版本: v1.1*
-*最后更新: 2026-02-11*
+*文档版本: v1.2*
+*最后更新: 2026-02-25*
 *维护者: 首席架构师*
+
+---
+
+## 更新记录
+
+| 日期 | 更新内容 | 更新人 |
+|------|---------|--------|
+| 2026-02-25 | 新增 MCP 自动化测试章节，添加 test-mcp-valid.mjs 索引 | 首席架构师 |
+| 2026-02-25 | 添加 MCP_GUIDE.md 文档引用 | 首席架构师 |
+| 2026-02-11 | 初始版本，记录测试脚本索引 | 首席架构师 |
+
+---
+
+## 文档索引
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| **MCP 使用指南** | [MCP_GUIDE.md](./MCP_GUIDE.md) | weixin-devtools-mcp 完整使用文档 |
+| 测试任务追踪 | [TODO.md](./TODO.md) | 开发任务与测试要求 |
+| 已完成功能 | [HAVE_DONE.md](./HAVE_DONE.md) | 已完成功能与架构师评价 |
 
 **详细测试用例说明请查阅测试源码文件。**

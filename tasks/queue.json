@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "project": "stock-race",
+  "created_at": "2026-02-25T20:00:00Z",
+  "last_updated": "2026-02-25T22:00:00Z",
+  "stats": {
+    "total": 1,
+    "pending": 1,
+    "in_progress": 0,
+    "completed": 0,
+    "blocked": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "tasks": [
+    {
+      "id": "MINI-UC-V2-001",
+      "module": "miniprogram",
+      "type": "fix",
+      "title": "创建 uCharts v2.x 通用工具模块",
+      "description": "解决小程序白屏问题，创建通用图表工具模块，封装uCharts v2.x API。创建 src/utils/ucharts.ts 通用模块，封装 initChart 和 getCanvasContext 函数，处理平台差异，导出 uCharts 实例创建辅助函数。",
+      "status": "pending",
+      "priority": "P0",
+      "todo_ref": "UC-V2-001",
+      "tdd": true,
+      "mcp_required": true,
+      "can_skip": false,
+      "skip_count": 0,
+      "retry_count": 0,
+      "max_retries": 3,
+      "dependencies": [],
+      "estimated_hours": 4,
+      "test_cases": [
+        "TC-UCV2-001-01: getCanvasContext 在微信开发者工具能正确获取 canvas 2d 上下文",
+        "TC-UCV2-001-02: getCanvasContext 在真机环境（iOS/Android）能正确获取上下文",
+        "TC-UCV2-001-03: 错误处理 - canvasId 不存在时返回有意义的错误信息",
+        "TC-UCV2-001-04: 多次调用同一 canvasId 不会创建重复实例",
+        "TC-UCV2-001-05: 页面卸载时正确销毁 uCharts 实例（避免内存泄漏）"
+      ],
+      "created_at": "2026-02-25T22:00:00Z",
+      "started_at": null,
+      "completed_at": null,
+      "blocked_at": null,
+      "block_reason": null,
+      "error_log": null,
+      "execution_log": null
+    }
+  ]
+}
