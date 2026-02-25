@@ -1,215 +1,487 @@
-# 多智能体文档体系目录模板
+# Stock-Race · AI 股票竞赛平台
 
-## 📋 文档简介
-本目录包含stock-race项目的完整文档体系，专为多智能体协同开发设计。通过模块化文档结构和标准协调流程，支持多智能体并行开发，适配git-worktree工作流。
+[![Backend Tests](https://img.shields.io/badge/Backend-195%20tests%20passed-brightgreen)](backend/tests)
+[![Data Service](https://img.shields.io/badge/Data%20Service-96%25%20coverage-blue)](market-data-service)
+[![Trading AI](https://img.shields.io/badge/Trading%20AI-32%20e2e%20tests-blueviolet)](trading-ai-service)
+[![Miniprogram](https://img.shields.io/badge/Miniprogram-DSL%20%2B%20Pixelmatch-orange)](miniprogram)
 
-文档体系围绕AI股票竞赛平台的需求，涵盖从需求分析、技术选型、架构设计到开发实施的全流程。
+**你不是在炒股，你是在经营一家基金公司。**
 
-## 🏗️ 多智能体文档体系结构
-stock-race项目采用分层文档体系，支持多智能体并行开发：
-
-### 1. 战略层文档
-- **CLAUDE.md**：项目主入口，整体指南和导航
-- **需求文档**：功能规格、用户故事、业务规则
-
-### 2. 架构层文档
-- **技术选型**：技术栈评估和决策
-- **系统架构**：整体架构设计、组件关系
-- **数据库设计**：ER图、数据模型、迁移策略
-
-### 3. 实施层文档
-- **开发规范**：编码标准、Git工作流、测试策略
-- **模块设计**：前后端模块详细设计
-- **API文档**：接口规范、使用示例
-
-### 4. 协调层文档
-- **多智能体协作**：角色定义、任务分发、状态跟踪
-- **项目计划**：迭代计划、里程碑、交付物
-- **进度跟踪**：任务状态、阻塞问题、风险登记
-
-### 5. 运维层文档
-- **部署指南**：环境配置、部署流程
-- **监控运维**：系统监控、故障处理、性能优化
-- **用户手册**：使用指南、FAQ、故障排除
-
-## 👥 智能体角色分配
-基于stock-race项目的复杂性和多智能体协作需求，定义以下角色：
-
-### 1. 首席架构师（当前角色）
-- **职责**：整体技术决策、架构设计、规范制定
-- **工作重点**：技术选型、系统架构、核心问题解决
-- **产出文档**：技术架构、设计原则、评审标准
-
-### 2. 前端智能体
-- **职责**：用户界面开发、交互设计、前端架构
-- **技术栈**：React/Vue、TypeScript、状态管理、数据可视化
-- **产出文档**：组件设计、前端规范、UI/UX文档
-
-### 3. 后端智能体
-- **职责**：API开发、业务逻辑、数据存储、性能优化
-- **技术栈**：Node.js/Python/Java、数据库、缓存、消息队列
-- **产出文档**：API文档、服务设计、数据库设计
-
-### 4. AI集成智能体
-- **职责**：大模型集成、提示工程、AI决策逻辑
-- **技术栈**：Python AI生态、API集成、数据处理
-- **产出文档**：AI集成指南、提示词模板、决策逻辑文档
-
-### 5. 数据工程智能体
-- **职责**：股票数据采集、清洗、存储、实时处理
-- **技术栈**：数据管道、ETL工具、时序数据库
-- **产出文档**：数据架构、采集策略、质量监控
-
-### 6. DevOps智能体
-- **职责**：环境配置、CI/CD、部署运维、监控告警
-- **技术栈**：Docker、Kubernetes、云服务、监控工具
-- **产出文档**：部署指南、运维手册、监控配置
-
-### 7. 测试智能体
-- **职责**：测试策略、自动化测试、质量保证
-- **技术栈**：测试框架、自动化工具、性能测试
-- **产出文档**：测试计划、测试用例、质量报告
-
-## 📋 核心文档说明
-
-### 必读文档（新智能体加入时）
-1. **CLAUDE.md**：项目入口，了解整体目标和架构
-2. **REQUIREMENTS.md**：需求规格，理解业务需求和用户故事
-3. **TECHNOLOGY_EVALUATION.md**：技术选型，了解技术决策背景
-4. **CODING_STANDARDS.md**：开发规范，遵循统一编码标准
-
-### 架构设计文档
-1. **TECH_STACK.md**：详细技术栈和版本信息
-2. **PROJECT_STRUCTURE.md**：项目目录结构和模块说明
-3. **CODE_MAP.md**：代码结构地图和调用关系
-
-### 开发实施文档
-1. **IMPLEMENTATION_PHASES.md**：敏捷开发迭代计划
-2. **API设计文档**：RESTful API接口规范
-3. **数据库设计**：ER图、表结构、迁移脚本
-
-### 多智能体协作文档
-1. **GENERIC_COLLABORATION_PLAN.md**：多智能体协作方案
-2. **GENERIC_ROLES.md**：智能体角色定义
-3. **TASK_DISPATCH_GUIDE.md**：任务分发指南
-
-### 运维部署文档
-1. **QUICK_START.md**：快速开始指南
-2. **部署文档**：生产环境部署流程
-3. **监控文档**：系统监控和告警配置
-
-## 🔄 文档更新流程
-
-### 文档维护原则
-1. **及时性**：代码变更时同步更新相关文档
-2. **一致性**：文档内容与实际实现保持一致
-3. **可追溯性**：重要文档变更记录变更原因和日期
-4. **可访问性**：文档结构清晰，便于查找和阅读
-
-### 文档更新触发条件
-1. **架构变更**：技术栈调整、系统架构重构
-2. **功能变更**：新增功能、功能修改、功能废弃
-3. **规范更新**：开发规范、代码标准、流程优化
-4. **问题修复**：文档错误修正、内容补充完善
-
-### 文档更新流程
-```
-1. 识别文档更新需求
-   ↓
-2. 创建文档变更计划
-   ↓
-3. 更新文档内容（遵循模板格式）
-   ↓
-4. 文档内部评审（首席架构师审核）
-   ↓
-5. 同步更新相关文档（如CLAUDE.md中的链接）
-   ↓
-6. 提交Git提交（描述文档变更内容）
-   ↓
-7. 通知相关智能体文档已更新
-```
-
-### 文档版本管理
-- **版本格式**：v主版本.次版本.修订版本（如v1.2.3）
-- **版本升级规则**：
-  - 主版本：重大架构变更或功能重组
-  - 次版本：新增功能或重要内容更新
-  - 修订版本：错误修正或小幅度内容调整
-- **版本记录**：文档末尾记录版本变更历史
-
-## 🚀 快速开始
-
-### 新智能体加入流程
-1. **阅读必读文档**：CLAUDE.md、REQUIREMENTS.md、TECHNOLOGY_EVALUATION.md
-2. **了解角色职责**：查看智能体角色分配，明确自身职责
-3. **熟悉开发规范**：阅读CODING_STANDARDS.md，掌握编码标准
-4. **配置开发环境**：按照QUICK_START.md配置本地环境
-5. **获取当前任务**：查看任务列表，从pending任务开始工作
-
-### 首席架构师快速参考
-1. **项目状态查看**：检查CLAUDE.md中的"当前状态"和"近期工作重点"
-2. **文档体系导航**：使用CLAUDE.md的"快速导航"访问核心文档
-3. **技术决策参考**：查阅TECHNOLOGY_EVALUATION.md中的技术选型分析
-4. **任务分配**：使用多智能体协作方案中的任务分发机制
-
-### 开发工作流
-1. **任务领取**：从任务列表选择pending任务，标记为in_progress
-2. **代码开发**：遵循开发规范，编写代码和测试
-3. **文档更新**：代码变更时同步更新相关文档
-4. **任务完成**：完成开发后标记任务为completed
-5. **代码提交**：遵循Git工作流，提交清晰描述的commit
-
-## 📊 当前文档状态
-**文档完成度**：基础框架已建立，核心文档正在完善
-
-### 已完成文档
-1. **项目主文档**：CLAUDE.md - 项目入口和指南
-2. **需求文档**：docs/analysis/REQUIREMENTS.md - 详细功能需求规格
-3. **技术选型**：docs/analysis/TECHNOLOGY_EVALUATION.md - 技术栈方案分析
-4. **开发规范**：docs/development/CODING_STANDARDS.md - 编码标准和规范（待填充具体内容）
-5. **项目结构**：docs/architecture/PROJECT_STRUCTURE.md - 目录结构模板（待填充具体内容）
-6. **技术架构**：docs/architecture/TECH_STACK.md - 技术栈模板（待填充具体内容）
-
-### 进行中文档
-1. **实施计划**：docs/planning/IMPLEMENTATION_PHASES.md - 敏捷开发迭代计划
-2. **数据库设计**：ER图和数据模型定义
-3. **API设计**：接口规范文档
-
-### 待开始文档
-1. **用户手册**：使用指南和操作说明
-2. **部署指南**：生产环境部署文档
-3. **运维手册**：系统监控和维护指南
-
-## 🔗 相关资源
-
-### 技术文档
-- [敏捷开发原则](https://agilemanifesto.org/) - 项目开发方法论基础
-- [微服务架构指南](https://microservices.io/) - 架构设计参考
-- [RESTful API设计最佳实践](https://restfulapi.net/) - API设计指导
-
-### 金融数据源
-- [新浪财经API文档](https://money.finance.sina.com.cn/) - A股实时行情数据
-- [腾讯财经数据接口](https://qt.gtimg.cn/) - 股票数据API
-- [聚宽JoinQuant](https://www.joinquant.com/) - 量化交易平台和数据
-
-### AI大模型
-- [OpenAI API文档](https://platform.openai.com/docs/) - GPT系列模型API
-- [Anthropic Claude API](https://docs.anthropic.com/) - Claude模型API
-- [百度文心一言](https://yiyan.baidu.com/) - 国内大模型API
-- [阿里通义千问](https://tongyi.aliyun.com/) - 阿里大模型API
-
-### 开发工具
-- [Docker文档](https://docs.docker.com/) - 容器化部署
-- [Kubernetes指南](https://kubernetes.io/docs/) - 容器编排
-- [Git工作流指南](https://www.atlassian.com/git/tutorials/comparing-workflows) - 版本控制
-
-### 监控运维
-- [Prometheus监控](https://prometheus.io/docs/) - 指标收集和告警
-- [Grafana可视化](https://grafana.com/docs/) - 监控仪表板
-- [ELK Stack日志](https://www.elastic.co/what-is/elk-stack) - 日志收集分析
+Stock-Race 是一个 AI 驱动的股票竞赛平台。用户扮演"投资总负责人"，受"投资董事长"之托管理虚拟基金。你可以"招聘"来自不同"大学"（OpenAI、Anthropic、DeepSeek、百度、阿里、腾讯）的 AI 基金经理，让它们用真实的投资风格进行 PK。
 
 ---
 
-*本文档已适配stock-race项目需求*
-*文档维护者：首席架构师*
-*最后更新：2026-02-02*
+## 🎮 核心概念
+
+| 角色 | 定义 | 技术实现 |
+|------|------|----------|
+| **投资董事长** | 虚拟角色，设定投资目标 | 系统预设规则 |
+| **投资总负责人** | 用户本人，管理基金公司 | JWT 认证 + 权限控制 |
+| **AI 基金经理** | 不同大模型毕业的虚拟员工 | 6 大 AI 提供商统一适配 |
+| **虚拟基金** | 用户指定的虚拟资金账户 | PostgreSQL + ACID 事务 |
+
+**游戏化设计**：
+- 基金经理有独特的"投资画像"（价值投资型、趋势跟踪型、量化型等）
+- 通过对话引导，AI 自动提炼投资风格
+- 实时排行榜展示各 AI 的收益表现
+- 微信小程序支持"游客模式"，24h/72h 智能过期策略
+
+---
+
+## 🏗️ 架构亮点
+
+### 六服务微服务架构
+
+```mermaid
+graph TB
+    subgraph "数据层"
+        R[Redis<br/>热数据缓存]
+        P[(PostgreSQL<br/>业务数据)]
+        T[(TimescaleDB<br/>时序行情)]
+    end
+
+    subgraph "服务层"
+        B[Backend<br/>Node.js + Express]
+        M[Market Data<br/>Python + FastAPI]
+        N[News Service<br/>Python + FastAPI]
+        A[Trading AI<br/>Python + FastAPI]
+    end
+
+    subgraph "接入层"
+        F[Frontend<br/>React 18]
+        MP[Miniprogram<br/>UniApp + Vue 3]
+    end
+
+    F -->|WebSocket/Socket.io| B
+    MP -->|HTTP API| B
+    MP -.->|WebSocket 直连| M
+
+    B -->|Redis Streams| M
+    B -->|Redis Streams| N
+    B -->|Redis Streams| A
+
+    M --> R
+    M --> T
+    N --> P
+    A --> P
+    B --> P
+```
+
+### 关键架构决策
+
+**1. Redis Streams 事件总线** —— 解决服务间循环依赖
+
+```yaml
+# 消除 HTTP 调用循环，改为事件驱动
+market:quote:realtime:     # 实时行情更新
+news:intelligence:extracted:  # 新闻情报提取完成
+ai:decision:made:         # AI 决策完成
+trade:executed:           # 交易执行完成
+```
+
+- 支持消费者组，实现多实例负载均衡
+- 消息持久化 + ACK 机制，确保不丢失
+- 从轮询模式升级到事件驱动，延迟降低 80%
+
+**2. 数据主权划分** —— "谁产生谁负责"
+
+| 服务 | 数据主权 | 存储 |
+|------|----------|------|
+| Backend | 用户、账户、交易、持仓 | PostgreSQL |
+| Market Data | 行情、技术指标 | TimescaleDB |
+| News Service | 新闻、情报、情绪 | PostgreSQL |
+| Trading AI | AI 画像、决策记录 | PostgreSQL |
+
+**3. Miniprogram 混合分离方案**
+
+```
+实时行情（高频、低计算）          收益数据（低频、高计算）
+┌──────────────┐                ┌──────────────┐
+│ Market Data  │──WebSocket────►│ Miniprogram  │
+│   10s 推送    │   无需认证      │   实时展示   │
+└──────────────┘                └──────────────┘
+                                        ▲
+┌──────────────┐                ┌───────┴──────┐
+│   Backend    │◄──HTTP API─────│ Miniprogram  │
+│  计算收益     │   JWT 认证      │   查询展示   │
+└──────────────┘                └──────────────┘
+```
+
+---
+
+## 🛠️ 技术栈全景
+
+### 前端（Web）
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| React | 18.2+ | UI 框架 |
+| TypeScript | 5.0+ | 类型安全 |
+| Vite | 5.0+ | 构建工具 |
+| Redux Toolkit | 2.0+ | 状态管理 |
+| Ant Design | 5.0+ | UI 组件库 |
+| ECharts | 5.0+ | 金融图表 |
+| Socket.io-client | 4.0+ | 实时通信 |
+
+### 后端（Node.js）
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Node.js | 20 LTS | 运行时 |
+| Express.js | 4.18+ | Web 框架 |
+| Prisma | 5.0+ | ORM |
+| PostgreSQL | 15+ | 主数据库 |
+| Redis | 7+ | 缓存/消息队列 |
+| Socket.io | 4.0+ | WebSocket |
+| Bull | 4.0+ | 任务队列 |
+
+### AI 服务（Python）
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Python | 3.11+ | 运行时 |
+| FastAPI | 0.100+ | 高性能 Web 框架 |
+| OpenAI SDK | 1.0+ | GPT 系列 |
+| Anthropic SDK | 0.5+ | Claude 系列 |
+| pandas | 2.0+ | 数据处理 |
+| pandas-ta | 0.3+ | 技术指标 |
+
+### 数据服务（Python）
+| 技术 | 数据源 |
+|------|--------|
+| AkShare | 新浪财经、东方财富等 |
+| Baostock | 历史 K 线数据 |
+| Tushare | 基本面数据（免费版） |
+| aiohttp | 异步 HTTP 采集 |
+
+### 小程序（UniApp）
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| UniApp | 3.x | 跨平台框架 |
+| Vue 3 | 3.3+ | 前端框架 |
+| TypeScript | 5.0+ | 类型安全 |
+| Pinia | 2.x | 状态管理 |
+| uView Plus | 3.x | UI 组件库 |
+| uCharts | 2.5+ | 图表库 |
+
+---
+
+## 🤖 AI 集成创新
+
+### 6 大 AI 提供商统一适配器
+
+```python
+# 统一接口，无缝切换不同模型
+adapters = {
+    "openai": OpenAIAdapter(),      # GPT-4/GPT-3.5
+    "anthropic": ClaudeAdapter(),   # Claude 3
+    "deepseek": DeepSeekAdapter(),  # DeepSeek Chat
+    "baidu": WenxinAdapter(),       # 文心一言
+    "aliyun": QwenAdapter(),        # 通义千问
+    "tencent": HunyuanAdapter(),    # 混元大模型
+}
+```
+
+### Token 成本控制体系
+
+| 阶段 | 机制 | 说明 |
+|------|------|------|
+| 预算估算 | 请求前预估 Token 数 | 超出预算拒绝请求 |
+| 限额控制 | 单条 < 2000 tokens | 防止异常消耗 |
+| 分级告警 | 日/周/月三级阈值 | 邮件 + 日志告警 |
+
+### 基金经理画像自动提炼
+
+```python
+# 通过对话自动分析投资风格
+async def extract_profile(dialogue_history: List[Message]) -> InvestorProfile:
+    prompt = f"""
+    分析以下对话，提炼基金经理的投资风格：
+    - 风险偏好：保守/稳健/激进
+    - 投资周期：短线/中线/长线
+    - 偏好行业：科技/消费/金融等
+    - 决策特点：量化驱动/基本面分析/情绪感知
+
+    对话记录：{dialogue_history}
+    """
+    return await llm.generate(prompt)
+```
+
+### 数据融合决策
+
+AI 决策时融合双源数据：
+- **Market Data Service**: 实时行情 + 技术指标（MA/MACD/RSI/布林带）
+- **News Service**: 新闻情绪分析 + 重大事件提醒
+
+---
+
+## 📊 数据管道设计
+
+### 多源采集架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    数据采集调度器                         │
+├─────────────┬─────────────┬─────────────┬───────────────┤
+│  新浪财经    │  腾讯财经    │  东方财富    │   Baostock   │
+│  (优先级 1)  │  (优先级 2)  │  (优先级 3)  │  (历史数据)   │
+└──────┬──────┴──────┬──────┴──────┬──────┴───────┬───────┘
+       │             │             │              │
+       └─────────────┴──────┬──────┴──────────────┘
+                            ▼
+              ┌─────────────────────────┐
+              │     数据质量评估器        │
+              │  - 价格范围验证          │
+              │  - 涨跌幅异常检测        │
+              │  - 时间戳过期检测        │
+              │  - Z-score 异常检测      │
+              └───────────┬─────────────┘
+                          ▼
+              ┌─────────────────────────┐
+              │     三层缓存架构         │
+              │  L1: Redis (10s TTL)    │
+              │  L2: TimescaleDB (持久) │
+              │  L3: 内存回退 (降级)    │
+              └─────────────────────────┘
+```
+
+### 分层采集策略
+
+| 层级 | 频率 | 覆盖范围 | 存储 |
+|------|------|----------|------|
+| 高频层 | 10 秒 | 热门 300 只 | Redis (10s TTL) |
+| 低频层 | 60 秒 | A 股全量 5000+ | TimescaleDB |
+| 历史层 | 日终 | 全部历史 | TimescaleDB + 归档 |
+
+### 技术指标实时计算
+
+- **移动平均线**: MA5, MA10, MA20, MA60
+- **MACD**: DIF, DEA, Histogram
+- **RSI**: 14 周期相对强弱指标
+- **布林带**: 上轨/中轨/下轨
+
+---
+
+## 🧪 测试创新
+
+### MCP 自动化测试框架
+
+Claude Code 直接控制微信开发者工具，实现端到端自动化：
+
+```yaml
+# DSL 测试脚本示例
+task: UC-V2-003
+description: AI经理详情页收益曲线测试
+
+test_flow:
+  - action: navigate_to
+    target: /pages/ai-manager-detail?id=123
+  - action: wait_for
+    selector: ".chart-canvas"
+    timeout: 5000
+  - action: screenshot
+    name: "initial_load"
+  - action: click
+    selector: ".time-selector .week"
+  - action: assert_screenshot
+    baseline: "baseline.png"
+    threshold: 0.05
+```
+
+### 4 个测试 Skill
+
+| Skill | 功能 |
+|-------|------|
+| `/test-chart-render` | uCharts v2.x 图表渲染测试 |
+| `/test-page-flow` | DSL 页面流程测试 |
+| `/test-api-integration` | API 集成与网络监控测试 |
+| `/test-snapshot-compare` | Pixelmatch 视觉回归测试 |
+
+### Pixelmatch 图像对比
+
+```typescript
+// 截图对比示例
+const result = await compareImages(
+  'baselines/chart.png',
+  'snapshots/chart.png',
+  { threshold: 0.05, diffOutput: 'diff.png' }
+);
+// result.diffPercentage < 5% 判定为通过
+```
+
+---
+
+## 👥 开发模式创新
+
+### 多智能体协作架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     首席架构师                           │
+│              （架构决策 + 代码审查 + 协调）               │
+└─────────────┬─────────────┬─────────────┬───────────────┘
+              │             │             │
+    ┌─────────▼─────┐ ┌─────▼─────┐ ┌────▼────┐ ┌────────▼──────┐
+    │  前端智能体    │ │ 后端智能体 │ │ AI智能体 │ │  数据智能体   │
+    │  (React/Vue)  │ │(Node.js)  │ │(Python) │ │  (Python)    │
+    └───────────────┘ └───────────┘ └─────────┘ └───────────────┘
+```
+
+### Git Worktree 并行开发
+
+```bash
+# 多模块同时开发，互不干扰
+module-dev backend              # 后端模块
+module-dev frontend             # 前端模块
+module-dev market-data-service  # 数据服务
+module-dev trading-ai-service   # AI 服务
+module-dev miniprogram          # 小程序
+```
+
+### 架构决策记录（ADR）
+
+项目已记录 10 个关键架构决策：
+- 001: 循环依赖解决方案（共享 Redis + 冷启动）
+- 002: 事件总线风险分析（Redis Streams）
+- 003: AI 对话服务职责划分（Backend 实现）
+- 004: AI Service 双向依赖解耦
+- 005: 小程序游客模式设计（三层 API + 智能过期）
+- 006: Miniprogram 数据流优化（混合分离方案）
+- 007: AI 决策服务广度查询需求确认
+- 008: Redis 渐进式部署策略
+- 009: 前端定位决策
+- 010: AI 架构定位与演进路线图
+
+---
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Docker 20.10+
+- Docker Compose 2.0+
+- Node.js 20+（本地开发）
+- Python 3.11+（本地开发）
+
+### 一键启动（推荐）
+
+```bash
+# 启动全服务联调环境（含热重载）
+make integration
+
+# 查看服务状态
+make status
+
+# 查看实时日志
+make logs
+
+# 健康检查
+curl http://localhost:3001/api/health
+curl http://localhost:8000/api/v1/health/
+curl http://localhost:8001/health
+```
+
+### 端口映射
+
+| 服务 | 主机端口 | 容器端口 |
+|------|----------|----------|
+| Backend | 3001 | 3001 |
+| Trading AI | 8000 | 8000 |
+| Market Data | 8001 | 8001 |
+| Redis | 6380 | 6379 |
+| PostgreSQL | 5434 | 5432 |
+| TimescaleDB | 5433 | 5432 |
+
+### 开发命令
+
+```bash
+# 启动基础设施（仅 Docker 数据库）
+make up
+
+# 停止所有服务
+make down
+
+# 重新构建镜像
+make build
+
+# 运行测试
+npm run test        # Backend
+cd miniprogram && npm run test  # Miniprogram DSL/Skill tests
+```
+
+---
+
+## 📈 项目状态
+
+### 生产就绪度
+
+| 模块 | 状态 | 测试覆盖 |
+|------|------|----------|
+| **Backend** | 生产就绪 | 195 个单元测试通过 |
+| **Market Data Service** | 生产就绪 | 96% 测试覆盖率 |
+| **Trading AI Service** | 生产就绪 | 32 项功能测试通过 |
+| **News Service** | 生产就绪 | 核心功能测试通过 |
+| **Miniprogram** | uCharts v2.x 适配中 | DSL + Pixelmatch 测试框架就绪 |
+
+### 当前重点工作
+
+- **P0**: uCharts v2.x 图表组件升级（解决白屏问题）
+- **P1**: 小程序 AI 经理详情页完善
+- **P2**: Backend 公开 API 对接小程序排行榜/行情页
+
+### 技术债务
+
+- [ ] 事件总线 SDK 统一封装（C1 冲突方案实施）
+- [ ] Redis Cluster 渐进式部署（O6 优化方案）
+- [ ] 集成测试环境完善（9 个 Docker Compose 测试）
+
+---
+
+## 🗺️ 项目导航
+
+```
+stock-race/
+├── backend/                 # Node.js + Express + Prisma
+├── frontend/                # React 18 + Vite + Ant Design
+├── trading-ai-service/      # Python + FastAPI + 6 大模型适配
+├── market-data-service/     # Python + FastAPI + 多源采集
+├── news-service/            # Python + FastAPI + DeepSeek 流式处理
+├── miniprogram/             # UniApp + Vue 3 + Pinia + uCharts
+├── infra/                   # 共享基础设施（事件总线 SDK）
+├── docs/                    # 完整文档体系
+│   ├── architecture/        # 架构设计（含 10 个 ADR）
+│   ├── development/         # 开发规范
+│   ├── deployment/          # 部署指南
+│   └── miniprogram/         # 小程序专项文档
+├── .claude/skills/          # 4 个 MCP 测试 Skill
+└── Makefile                 # 统一命令入口
+```
+
+---
+
+## 📚 核心文档
+
+- [CLAUDE.md](CLAUDE.md) — 项目导航中心
+- [六服务架构设计](docs/architecture/CURRENT/SERVICE_ARCHITECTURE.md)
+- [统一数据平台架构](docs/architecture/CURRENT/DATA_PLATFORM.md)
+- [技术栈详细文档](docs/architecture/CURRENT/TECH_STACK.md)
+- [架构决策记录](docs/architecture/CURRENT/DECISIONS/)
+- [小程序 MCP 测试指南](docs/modules/miniprogram/MCP_GUIDE.md)
+
+---
+
+## 🤝 协作模式
+
+本项目采用 **Claude Code 多智能体协作** 开发模式：
+
+1. **首席架构师**（Claude）负责架构决策、代码审查、任务协调
+2. **专项智能体**负责各模块开发（前端/后端/AI/数据）
+3. **Git Worktree** 支持多模块并行开发
+4. **文档驱动** — 所有架构变更必须有 ADR 记录
+
+---
+
+## 📄 License
+
+MIT License © 2026 Stock-Race Team
+
+---
+
+> **Built with ❤️ by Claude Code + Multi-Agent Collaboration**
