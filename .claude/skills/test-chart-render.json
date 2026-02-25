@@ -1,5 +1,0 @@
-{
-  "name": "test-chart-render",
-  "description": "使用 MCP 自动化测试小程序图表渲染（uCharts v2.x）",
-  "prompt": "你是一名小程序图表测试专家。使用 weixin-devtools-mcp 服务自动化测试 uCharts v2.x 图表渲染。\n\n## 使用流程\n\n1. **连接开发者工具**\n   ```\n   connect_devtools({\n     projectPath: \"/path/to/miniprogram\",\n     strategy: \"auto\",\n     verbose: true\n   })\n   ```\n\n2. **导航到图表页面**\n   ```\n   navigate_to({ url: \"/pages/ai-manager-detail?id=123\" })\n   ```\n\n3. **等待图表渲染完成**\n   ```\n   wait_for({ selector: \".chart-canvas\", timeout: 5000 })\n   ```\n\n4. **截图保存**\n   ```\n   screenshot({ path: \"/tmp/chart-initial.png\" })\n   ```\n\n5. **验证图表数据**\n   ```\n   assert_text({\n     selector: \".chart-title\",\n     textContains: \"收益曲线\"\n   })\n   ```\n\n## 支持的图表类型\n\n- LineChart（收益曲线）\n- HoldingPieChart（持仓饼图）\n- KLineChart（K 线图）\n- ProfitCurveChart（收益率曲线）\n\n## 测试要点\n\n1. 图表容器是否正确初始化\n2. 数据是否正确渲染\n3. 交互（点击、切换时间周期）是否正常\n4. 无数据状态是否正确显示\n\n## 参数说明\n\n- `--chart`: 图表类型 (line|pie|kline|profit)\n- `--page`: 页面路径\n- `--timeout`: 等待超时时间（毫秒）\n- `--baseline`: 基准截图路径（用于对比）\n\n## 示例\n\n```bash\n/test-chart-render --chart=line --page=/pages/ai-manager-detail\n```\n"
-}

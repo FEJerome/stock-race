@@ -8,46 +8,99 @@ import * as path from 'path'
 import { DSLParser, parseDSL, executeDSL } from '../../src/utils/dsl/parser'
 import { compareImages, createPlaceholderBaseline } from '../../src/utils/image-compare'
 
+/**
+ * 解析 Markdown Front Matter
+ * 支持 Windows (\r\n) 和 Unix (\n) 换行符
+ */
+function parseFrontMatter(content: string): { frontmatter: Record<string, string>; body: string } {
+  // 统一换行符为 \n
+  const normalizedContent = content.replace(/\r\n/g, '\n')
+  const match = normalizedContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
+  if (!match) {
+    return { frontmatter: {}, body: content }
+  }
+
+  const frontmatter: Record<string, string> = {}
+  const fmContent = match[1]
+  const body = match[2].trim()
+
+  // 简单解析 YAML 格式的 frontmatter
+  fmContent.split('\n').forEach(line => {
+    // 匹配 key: value 格式，key 只能是字母、数字、下划线、横线
+    const match = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/)
+    if (match) {
+      const key = match[1].trim()
+      const value = match[2].trim()
+      // 去除引号
+      frontmatter[key] = value.replace(/^["']|["']$/g, '')
+    }
+  })
+
+  return { frontmatter, body }
+}
+
 describe('TC-SKILL-001: Skill 配置文件验证', () => {
   const skillsDir = path.join(__dirname, '../../../.claude/skills')
 
-  it('应存在 test-chart-render Skill', () => {
-    const skillPath = path.join(skillsDir, 'test-chart-render.json')
+  it('应存在 test-chart-render Skill (Markdown 格式)', () => {
+    const skillPath = path.join(skillsDir, 'test-chart-render.md')
     expect(fs.existsSync(skillPath)).toBe(true)
 
-    const skill = JSON.parse(fs.readFileSync(skillPath, 'utf-8'))
-    expect(skill.name).toBe('test-chart-render')
-    expect(skill.description).toBeDefined()
-    expect(skill.prompt).toContain('uCharts')
+    const content = fs.readFileSync(skillPath, 'utf-8')
+    const { frontmatter, body } = parseFrontMatter(content)
+
+    expect(frontmatter.name).toBe('test-chart-render')
+    expect(frontmatter.description).toBeDefined()
+    expect(body).toContain('uCharts')
   })
 
-  it('应存在 test-page-flow Skill', () => {
-    const skillPath = path.join(skillsDir, 'test-page-flow.json')
+  it('应存在 test-page-flow Skill (Markdown 格式)', () => {
+    const skillPath = path.join(skillsDir, 'test-page-flow.md')
     expect(fs.existsSync(skillPath)).toBe(true)
 
-    const skill = JSON.parse(fs.readFileSync(skillPath, 'utf-8'))
-    expect(skill.name).toBe('test-page-flow')
-    expect(skill.prompt).toContain('DSL')
-    expect(skill.prompt).toContain('test_flow')
+    const content = fs.readFileSync(skillPath, 'utf-8')
+    const { frontmatter, body } = parseFrontMatter(content)
+
+    expect(frontmatter.name).toBe('test-page-flow')
+    expect(body).toContain('DSL')
+    expect(body).toContain('test_flow')
   })
 
-  it('应存在 test-api-integration Skill', () => {
-    const skillPath = path.join(skillsDir, 'test-api-integration.json')
+  it('应存在 test-api-integration Skill (Markdown 格式)', () => {
+    const skillPath = path.join(skillsDir, 'test-api-integration.md')
     expect(fs.existsSync(skillPath)).toBe(true)
 
-    const skill = JSON.parse(fs.readFileSync(skillPath, 'utf-8'))
-    expect(skill.name).toBe('test-api-integration')
-    expect(skill.prompt).toContain('API')
-    expect(skill.prompt).toContain('network')
+    const content = fs.readFileSync(skillPath, 'utf-8')
+    const { frontmatter, body } = parseFrontMatter(content)
+
+    expect(frontmatter.name).toBe('test-api-integration')
+    expect(body).toContain('API')
+    expect(body).toContain('network')
   })
 
-  it('应存在 test-snapshot-compare Skill', () => {
-    const skillPath = path.join(skillsDir, 'test-snapshot-compare.json')
+  it('应存在 test-snapshot-compare Skill (Markdown 格式)', () => {
+    const skillPath = path.join(skillsDir, 'test-snapshot-compare.md')
     expect(fs.existsSync(skillPath)).toBe(true)
 
-    const skill = JSON.parse(fs.readFileSync(skillPath, 'utf-8'))
-    expect(skill.name).toBe('test-snapshot-compare')
-    expect(skill.prompt).toContain('Pixelmatch')
+    const content = fs.readFileSync(skillPath, 'utf-8')
+    const { frontmatter, body } = parseFrontMatter(content)
+
+    expect(frontmatter.name).toBe('test-snapshot-compare')
+    expect(body).toContain('Pixelmatch')
+  })
+
+  it('不应存在旧的 JSON 格式 Skill 文件', () => {
+    const jsonFiles = [
+      'test-chart-render.json',
+      'test-page-flow.json',
+      'test-api-integration.json',
+      'test-snapshot-compare.json'
+    ]
+
+    jsonFiles.forEach(file => {
+      const jsonPath = path.join(skillsDir, file)
+      expect(fs.existsSync(jsonPath)).toBe(false)
+    })
   })
 })
 
