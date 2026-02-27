@@ -26,6 +26,34 @@
 
 ## 变更记录
 
+### [v2.0-init] - 2026-02-28
+
+#### 代码归档（里程碑）
+- **Git标签**: `v0.9-legacy-archived` 已创建
+- **归档操作**: 旧代码移至 `archive/v0.9-legacy/`
+  - `backend/` → `archive/v0.9-legacy/services/backend/` (Node.js)
+  - `trading-ai-service/` → `archive/v0.9-legacy/services/trading-ai-service/` (Python)
+  - `market-data-service/` → `archive/v0.9-legacy/services/market-data-service/` (Python)
+  - `news-service/` → `archive/v0.9-legacy/services/news-service/` (Python)
+  - `infra/` → `archive/v0.9-legacy/infra/`
+
+#### v2.0新目录结构初始化
+- `backend/` - Go + Gin + GORM + Wire
+- `trading-ai-service/` - Python + FastAPI + SQLAlchemy
+- `market-data-service/` - Python + FastAPI + TimescaleDB
+- `news-service/` - Python + FastAPI
+- `config-center/` - Go + Gin
+- `notification-service/` - Go + Gin
+
+#### 技术栈决策
+- Backend: Node.js → Go (Gin框架)
+- Trading AI: 保留Python，框架升级至FastAPI
+- Database: PostgreSQL → PostgreSQL + TimescaleDB
+- DI: 手动 → Wire
+- Config: 手动 → Viper + Config Center
+
+---
+
 ### [v1.0-draft.5] - 2026-02-28
 
 #### 新增（重大功能）
