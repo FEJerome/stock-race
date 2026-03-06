@@ -57,6 +57,78 @@
 
 ---
 
+## Local 用户体验与技术实现
+
+### 产品形态：本地服务 + 自动打开浏览器
+
+**使用流程**：
+```bash
+$ python local.py
+Starting Local AI Trading Platform...
+Server running at http://localhost:8000
+Opening browser... ✓
+```
+
+**用户体验**：
+- 双击/命令行启动后，自动弹出浏览器新标签页
+- 用户直接使用，无需关心"服务"概念
+- 地址栏显示 `localhost:8000`（开发者自用场景可接受）
+- 提供 `--headless` 参数（仅启动服务，不打开浏览器）
+
+**不采用的方案**：
+- ❌ 系统托盘应用（当前阶段不需要后台常驻）
+- ❌ Electron/Tauri（技术栈冲突，增加复杂度）
+- ❌ PyQt桌面（Vue前端已选，无需内嵌WebView）
+
+### 技术实现细节
+
+**后端架构**：FastAPI 单体 + 模块化设计
+
+```
+local/backend/
+├── api/                   # API路由层
+│   ├── market.py         # 行情接口（WebSocket + REST）
+│   ├── news.py           # 新闻/舆论接口
+│   ├── ai.py             # AI交易员管理
+│   ├── trade.py          # 交易执行
+│   └── strategy.py       # 策略配置
+├── services/             # 业务逻辑层（从legacy复用）
+│   ├── market_collector.py   # 原market-data-service
+│   ├── news_collector.py     # 原news-service
+│   ├── ai_adapter.py         # 原trading-ai-service
+│   └── trading_engine.py     # 原backend简化
+├── models/               # 数据模型（与core/复用）
+├── db/                   # SQLite连接
+└── main.py               # FastAPI入口 + 自动打开浏览器
+```
+
+**关键技术点**：
+
+| 技术点 | 实现 | 理由 |
+|--------|------|------|
+| **异步架构** | FastAPI async/await | 行情采集、AI调用都是IO密集型 |
+| **实时通信** | WebSocket | 前端实时接收行情推送 |
+| **模块化** | APIRouter拆分 | 便于后续拆微服务 |
+| **依赖注入** | FastAPI Depends | 管理数据库、配置、客户端 |
+
+**性能评估**：
+- 并发量：1（单用户自用）
+- 数据存储：SQLite（GB级以下无压力）
+- 采集频率：即使每秒采集，Python asyncio轻松处理
+
+### 复用 Legacy 代码策略
+
+**直接迁移的模块**（业务逻辑不变，换框架）：
+- `legacy/services/market-data-service/` → `services/market_collector.py`
+- `legacy/services/trading-ai-service/` → `services/ai_adapter.py`
+- `legacy/services/news-service/` → `services/news_collector.py`
+
+**演进保障**：
+- Local阶段模块边界清晰 → Full阶段直接拆成微服务
+- 不需要重写业务逻辑，仅需调整通信方式（函数调用 → HTTP/gRPC）
+
+---
+
 ## 技术栈定义
 
 ### Local 技术栈（2026-03-06确定）
