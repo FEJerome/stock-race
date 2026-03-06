@@ -6,6 +6,9 @@
 - **状态**：框架搭建中（Layer 1-2 填充中，Layer 3 待细化）
 - **下次评审日期**：待定
 
+> 📋 **多形态交付说明**：本文档描述产品完整功能（Full版）。
+> 如需了解 Local/MVP/Full 三种形态的交付边界，请参考 [DELIVERY_PLAN.md](./DELIVERY_PLAN.md)。
+
 ---
 
 ## 目录
