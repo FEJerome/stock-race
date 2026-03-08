@@ -1,278 +1,254 @@
-# stock-race项目 - 文档导航中心
+# Stock-Race v2.0 - 项目导航中心
+
+> ⚠️ **重要提示：项目已进入 v2.0 重组阶段**  
+> v0.9 旧架构代码已归档至 `archive/v0.9-legacy/`，当前开发基于全新技术栈。
+
+---
 
 ## 📋 项目概览
 
-**项目简介**：AI股票竞赛平台，支持用户分配虚拟人民币账号给AI大模型进行虚拟股票交易，集成多种数据源和AI模型。
+**项目名称**：Stock-Race · AI 股票竞赛平台  
+**当前版本**：v2.0 重组阶段  
+**核心定位**："AI 模型农场"——用户作为"投资经理"招聘 AI 作为"交易员"进行虚拟股票交易
 
-**核心功能**：
-- 用户管理与AI账户管理
-- 多模型AI集成与交易决策
-- 实时股票数据采集与推送
-- 虚拟交易与持仓管理
-- 实时监控与收益分析
-- 多智能体协作架构
+### 三形态交付策略
+
+| 形态 | 定位 | 当前状态 | 技术栈 |
+|------|------|----------|--------|
+| **Local** | 本地自用验证版 | 🔥 **Phase 1 当前** | FastAPI + Vue 3 + SQLite |
+| **MVP** | 微信小程序合规验证 | 📋 Phase 2 规划中 | 微信云 + DeepSeek 单一模型 |
+| **Full** | 完整商业版 | 📋 Phase 3 规划中 | Go + Gin + GORM + 微服务 |
+
+### v2.0 技术栈变更（2026-02-28）
+
+| 服务 | v0.9（已归档） | v2.0（当前） |
+|------|----------------|--------------|
+| **Backend** | Node.js + Express + Prisma | **Go + Gin + GORM + Wire** |
+| **Trading AI** | Python + FastAPI | Python + FastAPI（保留，升级） |
+| **Market Data** | Python + FastAPI | Python + FastAPI + TimescaleDB |
+| **Database** | PostgreSQL | PostgreSQL + TimescaleDB |
+| **DI/配置** | 手动管理 | **Wire + Viper + Config Center** |
+| **Local 版** | 无 | **FastAPI + Vue 3 + SQLite** |
+
+### 代码归档
+- **Git 标签**: `v0.9-legacy-archived`
+- **归档位置**: `archive/v0.9-legacy/`（包含 backend、trading-ai-service、market-data-service、news-service、infra）
+- **新代码位置**: `local/`（Local 版）、`backend/`（Go 重构）、各服务新目录
+
+---
 
 ## 🚀 快速导航
 
-### 核心文档
-- [**代码结构地图**](docs/architecture/CODE_MAP.md) - 项目结构与文件功能
-- [**架构文档总入口**](docs/architecture/README.md) - 架构文档导航中心
-- [**六服务架构详细设计**](docs/architecture/CURRENT/SERVICE_ARCHITECTURE.md) - 服务间调用与数据流设计（最新）
-- [**统一数据平台架构**](docs/architecture/CURRENT/DATA_PLATFORM.md) - 四服务数据架构设计
-- [**技术架构**](docs/architecture/CURRENT/TECH_STACK.md) - 技术栈与架构设计
-- [**API规范**](docs/architecture/CURRENT/API_SPECIFICATION.md) - RESTful API与WebSocket设计
-- [**数据库设计**](docs/architecture/CURRENT/DATABASE_DESIGN.md) - 数据库ER图与表结构
-- [**配置中心架构设计**](docs/architecture/CURRENT/CONFIG_CENTER/README.md) - 配置中心规划与各服务配置设计（持续更新）
+### v2.0 核心文档（必读）
+- [**📘 PRD 产品需求文档**](docs/v1/PRD.md) - v1.0-MVP 完整需求规格
+- [**📗 交付策略**](docs/v1/DELIVERY_PLAN.md) - Local/MVP/Full 三形态边界定义
+- [**📙 变更记录**](docs/v1/CHANGELOG.md) - PRD 版本演进与决策历史
+- [**📕 讨论日志**](docs/v1/discussion-log.md) - 详细讨论过程记录
 
-### 架构决策文档（2026-02-13更新）
-- [**服务依赖冲突分析**](docs/architecture/ANALYSIS/SERVICE_DEPENDENCY.md) - 五服务外部依赖对接需求分析与6个冲突解决方案
-- [**循环依赖解决方案**](docs/architecture/CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md) - 三种方案详细对比分析
-- [**事件总线风险分析**](docs/architecture/CURRENT/DECISIONS/002-EVENT-BUS.md) - Redis Streams事件总线的风险点、成本、性能分析
-- [**AI对话服务职责划分**](docs/architecture/CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md) - AI对话功能放在Backend还是Trading AI Service的详细分析
-- [**AI Service双向依赖解耦**](docs/architecture/CURRENT/DECISIONS/004-AI-DECOUPLING.md) - 基于事件总线的完全解耦方案，消除3个双向依赖环
-- [**微信小程序游客模式设计**](docs/architecture/CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md) - 三层API架构 + 智能过期策略（24h/72h）设计
-- [**Miniprogram数据流优化方案**](docs/architecture/CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) - 混合分离方案：行情直连+收益后端计算
-- [**AI决策服务广度查询需求确认**](docs/architecture/CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) - News Service和Market Data Service的广度数据查询需求确认
-- [**Redis渐进式部署策略**](docs/architecture/CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) - 从单节点到Cluster的渐进式部署方案，成本可控平滑扩容
-- [**六数据源频率限制策略**](docs/architecture/CURRENT/DATA_SOURCE_RATE_LIMITING_STRATEGY.md) - A股全量数据采集方案，6数据源智能调度与分层采集
-- [**AI架构定位与演进路线图**](docs/architecture/CURRENT/DECISIONS/010-AI-ARCHITECTURE-POSITIONING.md) - 当前"LLM as a Service"定位确认，三阶段演进路线图（上线→轻量Agent→观望），避免过度工程化决策
+### Local 版本开发（当前重点）
+- **代码位置**: `local/`
+- **后端**: FastAPI + Python（单体服务，模块化设计）
+- **前端**: Vue 3 + Vite + WebSocket
+- **数据库**: SQLite
+- **目标**: 验证所有技术点，自用完整体验
 
-### 历史架构文档
-历史架构文档已归档至 [docs/architecture/HISTORICAL/](docs/architecture/HISTORICAL/) 目录：
-- **V2026-02-10-SERVICE_ARCHITECTURE.md** - 六服务架构详细设计初版
-- **V1-SYSTEM_ARCHITECTURE.md** - 早期系统架构（历史版本）
-- **V1-SERVICE_COMMUNICATION.md** - 早期服务通信设计（历史版本）
-- **V1-DATA_FLOW.md** - 早期数据流设计（历史版本）
-- **V1-PROJECT_STRUCTURE.md** - 早期项目结构（历史版本）
-- **V1-DATA_SERVICE_INTEGRATION.md** - 早期集成方案（历史版本）
-
-### 需求与分析
-- [**需求规格说明书**](docs/analysis/REQUIREMENTS.md) - 详细功能需求
-- [**技术选型分析**](docs/analysis/TECHNOLOGY_EVALUATION.md) - 技术方案对比
-
-### 微信小程序
-- [**小程序需求规格**](docs/miniprogram/REQUIREMENTS.md) - 小程序功能需求
-- [**小程序技术栈**](docs/miniprogram/TECH_STACK.md) - 小程序技术方案
-- [**小程序可行性报告**](docs/miniprogram/FEASIBILITY_REPORT.md) - 小程序可行性分析
-
-### 开发指南
-- [**开发规范**](docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
-- [**模块化分支开发规范**](docs/development/MODULE_DEVELOPMENT_WORKFLOW.md) - Git Worktree多模块并行开发规范
-- [**产出物管理规范**](docs/development/ARTIFACT_MANAGEMENT.md) - 产出物存储、日志与留痕管理
-- [**当前功能清单**](docs/development/CURRENT_FUNCTIONALITY_INVENTORY.md) - 系统当前业务功能详细清单
-- [**内存持久化优化产出物记录**](docs/development/MEMORY_PERSISTENCE_OPTIMIZATION_ARTIFACTS.md) - 优化功能产出物详细记录
-- [**新手指南**](docs/usage/QUICK_START.md) - 环境搭建与快速上手
-
-### 智能体协作
-- [**通用协作方案**](docs/agents/GENERIC_COLLABORATION_PLAN.md) - 多智能体工作流程
-- [**角色定义**](docs/agents/GENERIC_ROLES.md) - 智能体角色与职责
-- [**任务分发**](docs/agents/TASK_DISPATCH_GUIDE.md) - 任务分配与协调
-
-### 部署与运维
-- [**部署指南**](docs/deployment/DEPLOYMENT_GUIDE.md) - 生产环境部署
-- [**生产部署指南**](docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md) - 快速部署流程
-- [**生产就绪测试报告**](docs/deployment/SYSTEM_INTEGRATION_TEST_REPORT_COMPLETE.md) - 完整系统集成测试
-- [**TimescaleDB修复记录**](docs/deployment/TIMESCALEDB_FIX_RECORD.md) - 时序数据库问题修复
-- [**AI服务数据库修复记录**](docs/deployment/AI_SERVICE_DATABASE_FIX_RECORD.md) - AI服务数据库连接修复
-- [**生产检查清单**](docs/deployment/PRODUCTION_CHECKLIST.md) - 部署前检查项
-
-### 代码审查
-- [**数据服务代码审查报告**](docs/reviews/DATA_SERVICE_CODE_REVIEW_REPORT.md) - 数据服务功能审查与修复记录
-- [**故障排除指南**](docs/operations/TROUBLESHOOTING.md) - 系统故障处理手册
-- [**部署文档总结**](docs/deployment/PRODUCTION_DEPLOYMENT_DOCUMENTATION_SUMMARY.md) - 生产环境部署文档完整总结
-
-### 数据管理
-- [**多源数据策略**](docs/data_sources/MULTI_SOURCE_STRATEGY.md) - 数据采集方案
-- [**数据流架构**](docs/architecture/DATA_FLOW_ARCHITECTURE.md) - 数据流程设计
-
-### 测试与验证
-- [**功能验证记录**](docs/testing/VALIDATION_HISTORY.md) - 功能测试结果
-
-## 📁 文档分层结构
-
-### 一级文档（概览与导航）
-- **CLAUDE.md** - 项目文档导航中心（本文件）
-- **README.md** - 项目基本信息
-
-### 二级文档（核心信息）
-- **CODE_MAP.md** - 代码结构与文件功能
-- **TECH_STACK.md** - 技术架构与选型
-- **QUICK_START.md** - 快速上手指南
-
-### 三级文档（详细说明）
-- **REQUIREMENTS.md** - 详细需求规格
-- **DEPLOYMENT_GUIDE.md** - 部署详细步骤
-- **CODING_STANDARDS.md** - 编码规范细节
-- **ARTIFACT_MANAGEMENT.md** - 产出物管理规范
-
-## 🎯 核心模块位置
-
-| 模块 | 代码位置 | 详细结构 |
-|------|----------|----------|
-| **前端** | `frontend/src/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#前端) |
-| **后端** | `backend/src/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#后端) |
-| **交易AI服务** | `trading-ai-service/src/ai_service/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#交易ai服务) |
-| **数据服务** | `market-data-service/src/data_service/` | [CODE_MAP.md](docs/architecture/CODE_MAP.md#数据服务) |
-| **微信小程序** | `miniprogram/src/` | [需求规格](docs/miniprogram/REQUIREMENTS.md) · [技术栈](docs/miniprogram/TECH_STACK.md) |
-| **基础设施** | `docs/modules/infra/` | [TODO](docs/modules/infra/TODO.md) |
-
-> 📚 完整代码结构请参考 [CODE_MAP.md](docs/architecture/CODE_MAP.md)
+### 历史文档（v0.9 已归档）
+> ⚠️ 以下文档仅作历史参考，当前开发以 v1/ 目录文档为准
+- ~~六服务架构~~ → 已简化为 Local 单体 / Full 微服务
+- ~~Node.js Backend~~ → 已替换为 Go / FastAPI
+- ~~Redis Streams 事件总线~~ → Local 版简化实现
 
 ---
 
-## 🛠️ 环境工具清单
+## 📁 项目结构
 
-**⚠️ 智能体必看**：操作项目数据时，请优先使用以下已安装的工具，避免重复实现。
-
-### JSON 处理工具
-
-| 工具 | 版本 | 用途 | 常用命令示例 |
-|------|------|------|-------------|
-| **jq** | 1.7.1 | JSON 查询、过滤、修改 | `jq '.tasks[0]' tasks/queue.json` |
-| | | | `jq '.tasks[] | select(.status=="pending")' tasks/queue.json` |
-| | | | `jq '.stats.completed += 1' tasks/queue.json` |
-
-> 💡 **优先使用 jq**：操作 `tasks/queue.json` 等 JSON 文件时，**必须使用 jq**，禁止手动字符串拼接。
-
-### 版本控制工具
-
-| 工具 | 用途 | 常用命令示例 |
-|------|------|-------------|
-| **git** | 代码版本管理 | `git status` / `git add .` / `git commit -m "msg"` |
-| | | `git log --oneline -5` / `git diff HEAD~1` |
-
-### 构建与运行工具
-
-| 工具 | 用途 | 常用命令示例 |
-|------|------|-------------|
-| **make** | 统一命令入口 | `make help` / `make integration` / `make status` |
-| **node/npm** | JavaScript 运行时 | `node scripts/test.js` / `npm run dev` |
-| **python** | Python 运行时 | `python -m uvicorn main:app` / `pip install` |
-| **docker-compose** | 容器编排 | `docker-compose up -d` / `docker-compose ps` |
-
-### 文本处理工具（Git Bash 内置）
-
-| 工具 | 用途 | 常用命令示例 |
-|------|------|-------------|
-| **grep** | 文本搜索 | `grep -r "TODO" src/` / `grep -n "function" file.ts` |
-| **sed** | 流编辑器 | `sed -i 's/old/new/g' file.txt` |
-| **awk** | 文本处理 | `awk '{print $1}' file.txt` |
-| **curl** | HTTP 请求 | `curl http://localhost:3001/api/health` |
-
-### 自动化开发工具
-
-| 工具/脚本 | 用途 | 文档链接 |
-|-----------|------|----------|
-| **dev-loop.sh** | 自动化任务循环执行 | [使用指南](docs/agents/AUTO_DEV_USAGE_GUIDE.md) |
-| **resume-task.sh** | 恢复被阻塞的任务 | [使用指南](docs/agents/AUTO_DEV_USAGE_GUIDE.md) |
-
-### 开发环境说明
-
-- **Shell 环境**：Git Bash（Windows）- **不支持 WSL**，因微信开发者工具 MCP 需 Windows 原生环境
-- **项目根目录**：脚本自动检测，无需手动 `cd`
-- **配置文件加载**：`.claude/skills/` 和 `.claude/mcp.json` 由脚本自动加载
-
----
-
-## 🔧 快速操作指南
-
-### 智能体上岗（必需首先执行）
-
-```bash
-/pro-init
+```
+stock-race/
+├── 📂 docs/v1/                    # v2.0 当前文档
+│   ├── PRD.md                     # 产品需求文档（核心）
+│   ├── DELIVERY_PLAN.md           # 交付策略（Local/MVP/Full）
+│   ├── CHANGELOG.md               # 变更记录
+│   └── discussion-log.md          # 讨论日志
+│
+├── 📂 local/                      # 🔥 Local 版本（当前开发）
+│   ├── backend/                   # FastAPI 单体后端
+│   │   ├── api/                   # API 路由层
+│   │   ├── services/              # 业务逻辑层
+│   │   ├── models/                # 数据模型
+│   │   └── main.py                # 入口 + 自动浏览器
+│   └── frontend/                  # Vue 3 前端
+│
+├── 📂 archive/v0.9-legacy/        # ⛔ v0.9 已归档（勿动）
+│   └── services/                  # 旧 Node.js/Python 代码
+│
+├── 📂 backend/                    # Go 重构（Full 版预留）
+├── 📂 trading-ai-service/         # Python AI 服务
+├── 📂 market-data-service/        # Python 数据服务
+├── 📂 config-center/              # Go 配置中心
+├── 📂 notification-service/       # Go 通知服务
+│
+└── 📄 CLAUDE.md                   # 本文件（项目导航）
 ```
 
-### 模块开发命令
+---
 
+## 🎯 智能体任务指引
+
+### 如果你刚进入项目
+
+**第一步：阅读核心文档**
+1. 阅读 [docs/v1/DELIVERY_PLAN.md](docs/v1/DELIVERY_PLAN.md) 了解三形态交付策略
+2. 阅读 [docs/v1/PRD.md](docs/v1/PRD.md) 了解产品需求（重点关注【已冻结】章节）
+3. 确认当前开发阶段：**Local 版本 Phase 1**
+
+**第二步：确认技术栈**
+- Local 版 = FastAPI + Vue 3 + SQLite
+- 不要参考 v0.9 的 Node.js/Prisma 代码（已归档）
+- 不要实现多用户、订阅、等级等商业功能（Full 版特性）
+
+**第三步：开始开发**
 ```bash
-# 格式：module-dev <服务名>
-module-dev backend              # 后端模块开发
-module-dev frontend             # 前端模块开发
-module-dev market-data-service  # 市场行情数据服务开发
-module-dev trading-ai-service   # 交易AI服务开发
-module-dev news-service         # 新闻服务开发
-module-dev miniprogram          # 微信小程序开发
+# Local 版本启动
+cd local/backend
+python main.py  # 自动打开浏览器
 ```
 
-**模块规划文档**：
-- [Backend](docs/modules/backend/TODO.md) · [Frontend](docs/modules/frontend/TODO.md) · [Market Data](docs/modules/market-data-service/TODO.md) · [AI Service](docs/modules/trading-ai-service/TODO.md) · [News](docs/modules/news-service/TODO.md) · [Miniprogram](docs/modules/miniprogram/TODO.md) · [Infra](docs/modules/infra/TODO.md)
+### Local 版本功能边界
 
-### Makefile 常用命令
-
-| 命令 | 用途 |
-|------|------|
-| `make integration` | 启动联调环境（全容器化，推荐） |
-| `make status` | 查看服务状态 |
-| `make logs` | 查看实时日志 |
-| `make health` | 健康检查 |
-| `make help` | 查看所有命令 |
-
-> 📚 [Docker 部署详细指南](docs/usage/DOCKER_GUIDE.md) | [新手指南](docs/usage/QUICK_START.md)
+| 功能 | Local | 说明 |
+|------|-------|------|
+| AI 交易员创建 | ✅ | Web 界面，多模型选择 |
+| 策略收集对话 | ✅ | 五维度策略收集 |
+| 实时行情 | ✅ | 多数据源混合采集 |
+| 新闻/舆论 | ✅ | 数据整合验证 |
+| 虚拟交易 | ✅ | 实时数据驱动 |
+| 多 AI 并行对比 | ✅ | 单机多 AI 收益排行 |
+| AI 职级晋升 | ✅ | 实习生/经理/合伙人 |
+| 用户登录 | ❌ | 自用版无需登录 |
+| 订阅/等级 | ❌ | Full 版特性 |
+| 微信小程序 | ❌ | MVP/Full 特性 |
 
 ---
 
-## 🌐 服务访问地址
-- **前端**：http://localhost:3000
-- **后端API**：http://localhost:3001
-- **交易AI服务**：http://localhost:8000 (AI账户交易决策)
-- **市场行情数据服务**：http://localhost:8001 (A股实时行情)
+## 🛠️ 开发规范
 
-### 健康检查
-```bash
-# 后端健康检查
-curl http://localhost:3001/api/health
+### 模块边界（Local → Full 演进保障）
 
-# 交易AI服务健康检查
-curl http://localhost:8000/api/v1/health/
-
-# 市场行情数据服务健康检查
-curl http://localhost:8001/health
+```
+Local（单体）                      Full（微服务）
+├── api/market.py  ───────────────→  market-data-service
+├── api/news.py    ───────────────→  news-service
+├── api/ai.py      ───────────────→  trading-ai-service
+├── api/trade.py   ───────────────→  trading-service
+└── api/strategy.py ──────────────→  strategy-service
 ```
 
-## 📝 文档使用建议
+**原则**：Local 阶段模块边界清晰 → Full 阶段直接拆分，不重写业务逻辑
 
-1. **新会话快速入门**：
-   - 首先阅读 [新手指南](docs/usage/QUICK_START.md)
-   - 参考 [代码结构地图](docs/architecture/CODE_MAP.md) 了解项目结构
+### 代码复用策略
 
-2. **开发流程**：
-   - 遵循 [开发规范](docs/development/CODING_STANDARDS.md)
-
-3. **部署流程**：
-   - 参考 [部署指南](docs/deployment/DEPLOYMENT_GUIDE.md)
-   - 执行 [生产部署](docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md)
-
-4. **智能体协作**：
-   - 查看 [协作方案](docs/agents/GENERIC_COLLABORATION_PLAN.md)
-   - 了解 [角色定义](docs/agents/GENERIC_ROLES.md)
-
-## 🎨 文档设计原则
-
-- **分层组织**：从概览到详细，逐步深入
-- **信息压缩**：核心信息前置，详细信息后置
-- **链接导航**：通过链接减少重复内容
-- **结构清晰**：统一文档格式与命名规范
-- **易于维护**：模块化设计，便于更新
-
-## 🔍 搜索与定位
-
-**快速定位文件**：
-- 使用文档导航链接直接访问
-- 按功能模块分类查找
-- 核心文件通过 CODE_MAP.md 统一索引
-
-**常用搜索路径**：
-- 架构相关：`docs/architecture/` ([README](docs/architecture/README.md))
-- 开发相关：`docs/development/`
-- 部署相关：`docs/deployment/`
-- 智能体相关：`docs/agents/`
-- 微信小程序：`docs/miniprogram/`
-- 脚本工具：`scripts/` ([脚本说明](scripts/README.md))
-
-## 📈 近期开发进展
-
-📚 **[查看完整项目历史](docs/development/PROJECT_HISTORY.md)** - 包含Docker容器化、架构冲突解决、代码审查、自动化开发系统、数据源测试等15+历史项目详细记录。
+从 `archive/v0.9-legacy/` 直接迁移业务逻辑（换框架不换逻辑）：
+- `legacy/services/market-data-service/` → `local/backend/services/market_collector.py`
+- `legacy/services/trading-ai-service/` → `local/backend/services/ai_adapter.py`
+- `legacy/services/news-service/` → `local/backend/services/news_collector.py`
 
 ---
 
-*本文档最后更新于：2026-02-25*
+## 📋 PRD 章节状态速查
+
+阅读 PRD 时，注意章节状态标记：
+
+| 状态 | 含义 | 行动 |
+|------|------|------|
+| **【已冻结】** | 已确定，可直接实现 | 按文档实现 |
+| **【待细化】** | 方向确定，需产出实施清单 | 开发前确认细节 |
+| **【待讨论】** | 概念未定，不得擅自实现 | 讨论后再决定 |
+
+**关键已冻结章节**（可直接实现）：
+- 2.1 产品定位、2.2 产品边界、2.3 商业模式
+- 2.4 用户准入、2.5 合规声明
+- 4.1.5 AI 激励机制、4.1.6 称号系统、4.1.7 自填 API
+
+**关键待讨论章节**（实现前必须确认）：
+- 3.1 系统架构（Local 版简化）
+- 4.3 交易系统（虚拟资金与交易执行逻辑）
+- 4.4 排行榜系统
+
+---
+
+## 🔄 版本演进路线
+
+```
+Local（当前）
+├── Phase 1: 基础架构搭建
+│   ├── FastAPI + Vue 3 搭建
+│   ├── SQLite 存储初始化
+│   └── 多数据源行情采集
+│
+├── Phase 2: AI 与交易系统
+│   ├── 多模型适配器（DeepSeek/通义/Kimi）
+│   ├── AI 交易员创建与管理
+│   └── 虚拟交易执行
+│
+└── Phase 3: 数据展示与验证
+    ├── 实时行情面板
+    ├── 收益图表
+    └── 多 AI 对比排行
+        │
+        ▼
+MVP（微信小程序）
+├── 接入微信登录
+├── 单一模型支持（DeepSeek）
+└── 7 天试用限制
+        │
+        ▼
+Full（商业版）
+├── 微服务拆分（基于 Local 模块边界）
+├── 用户系统完善
+├── 订阅支付系统
+└── 等级/社交功能
+```
+
+---
+
+## 📝 重要决策摘要
+
+| 日期 | 决策 | 影响 |
+|------|------|------|
+| 2026-02-28 | v2.0 技术栈重构 | Node.js → Go，Python 保留，DI 改为 Wire |
+| 2026-02-28 | 代码归档 | v0.9 代码移至 archive/，创建 legacy 标签 |
+| 2026-02-28 | 自填 API 模式 | 新增用户自备 API Key 功能 |
+| 2026-02-28 | 称号系统 | 低成本高情感回报激励体系 |
+| 2026-03-04 | 商业模式调整 | 订阅为主体，等级为粘性，引入周薪制度 |
+| 2026-03-04 | 周薪制度 | A 股交易日计费，11:30 Cutoff，周一凌晨扣费 |
+| 2026-03-06 | Local 重新定义 | 从"离线 CLI"改为"本地服务版"，功能对标 Full |
+
+---
+
+## 🆘 常见误区提醒
+
+**❌ 不要做的事**：
+1. 不要修改 `archive/v0.9-legacy/` 下的代码（已归档）
+2. 不要基于 Node.js/Prisma 开发（技术栈已变更）
+3. 不要实现多用户/登录功能（Local 版自用无需登录）
+4. 不要实现订阅/等级/周薪（Full 版商业功能）
+5. 不要参考 v0.9 的架构文档（已过时）
+
+**✅ 应该做的事**：
+1. 优先阅读 `docs/v1/` 目录下的 PRD/DELIVERY_PLAN
+2. 基于 FastAPI + Vue 3 开发 Local 版
+3. 保持模块边界清晰，便于后续拆分
+4. 复用 legacy 的业务逻辑（仅换框架）
+
+---
+
+## 📞 文档维护
+
+- **本文件维护者**: 项目团队
+- **最后更新**: 2026-03-08（v2.0 导航更新）
+- **更新方式**: 项目重大阶段变更时同步更新
+- **变更记录**: 见 [docs/v1/CHANGELOG.md](docs/v1/CHANGELOG.md)
+
+---
+
+*智能体进入项目时，请先确认当前阶段（Local/MVP/Full），再选择对应文档阅读。*
