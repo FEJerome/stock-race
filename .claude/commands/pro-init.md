@@ -7,9 +7,9 @@ description: 项目参与者上岗流程。阅读CLAUDE.md导航中心，理解v
 ## 第一步：熟悉项目与文档体系
 1.  **阅读导航中心**：仔细阅读 `CLAUDE.md`（项目文档导航中心），了解文档分层结构。
 2.  **查阅核心文档**：
-    - 根据 `CLAUDE.md` 的指引，重点阅读 `docs/architecture/CODE_MAP.md`（代码结构地图）
-    - 参考 `docs/usage/QUICK_START.md`（新手指南）快速了解环境搭建
-    - 阅读 `docs/architecture/TECH_STACK.md`（技术架构）了解技术栈
+    - 根据 `CLAUDE.md` 的指引，阅读 `docs/PRD.md`（产品需求文档）
+    - 阅读 `docs/DELIVERY_PLAN.md`（三形态交付计划）了解 Local/MVP/Full 边界
+    - 参考 `docs/architecture/CURRENT/LOCAL/` 了解 Local 形态架构
 3.  **总结**：请用几句话总结项目的核心目标、技术栈和主要模块。
 
 ## 第二步：理解 v1 产品需求文档（PRD）体系
@@ -17,9 +17,9 @@ description: 项目参与者上岗流程。阅读CLAUDE.md导航中心，理解v
 本项目采用 **单一 PRD 文档 + 分层冻结** 机制，这是项目的**核心宪章**，你必须严格遵守：
 
 ### 文档位置
-- **PRD 主文档**：`docs/v1/PRD.md`（唯一产品需求源）
-- **变更记录**：`docs/v1/CHANGELOG.md`（仅记录修改）
-- **讨论历史**：`docs/v1/discussion-log.md`（参考用，不直接用于开发）
+- **PRD 主文档**：`docs/PRD.md`（唯一产品需求源）
+- **变更记录**：`docs/CHANGELOG.md`（仅记录修改）
+- **讨论历史**：`docs/discussion/discussion-log.md`（参考用，不直接用于开发）
 
 ### 核心规则（禁止违反）
 1. **禁止创建额外需求文档** - 所有需求必须在 `PRD.md` 中，不得在别处写"需求分析.md"
@@ -50,16 +50,17 @@ description: 项目参与者上岗流程。阅读CLAUDE.md导航中心，理解v
 ---
 
 ## 第三步：开发规范与流程
+
 在后续的所有开发活动中，**必须**严格遵守以下规范性文档：
-- **开发规范**：`docs/development/CODING_STANDARDS.md`
-- **智能体协作**：`docs/agents/GENERIC_COLLABORATION_PLAN.md`
-- **架构规范**：`docs/architecture/` 目录下的架构文档
+- **核心文档**：`docs/PRD.md`、`docs/DELIVERY_PLAN.md`、`docs/CHANGELOG.md`
+- **架构规范**：`docs/architecture/CURRENT/` 目录下的三形态架构文档
+- **模块任务**：`docs/modules/{local,mvp,full}/TODO.md` 形态特定的开发任务
 
 ## 第四步：产出物管理
 任何开发、测试或文档编写工作结束后，必须：
 1.  **规范存储**：将新的测试脚本、文档等产出物，分门别类地存储到项目规范中定义的对应目录。
 2.  **更新日志**：按要求更新各模块的进度文档。
 3.  **规范留痕**：在对应的文档中清晰留痕（例如，在API文档中记录变更，在测试报告中记录测试时间和结果），以便其他智能体追溯和调用。
-4.  **PRD 同步**：如实现与 PRD 有偏差，必须同步更新 `docs/v1/PRD.md` 和 `docs/v1/CHANGELOG.md`
+4.  **PRD 同步**：如实现与 PRD 有偏差，必须同步更新 `docs/PRD.md` 和 `docs/CHANGELOG.md`
 
 **请确认您已理解上述流程，并开始执行第一步。**
