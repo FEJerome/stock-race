@@ -32,8 +32,8 @@
 
 ### 代码归档
 - **Git 标签**: `v0.9-legacy-archived`
-- **归档位置**: `archive/v0.9-legacy/`（包含 backend、trading-ai-service、market-data-service、news-service、infra）
-- **新代码位置**: `local/`（Local 版）、`backend/`（Go 重构）、各服务新目录
+- **归档位置**: `archive/v0.9-legacy/`（v0.9 旧代码）
+- **新代码位置**: `local/`（Local 版）、`mvp/`（小程序）、`full/`（Full 版微服务）
 
 ---
 
@@ -78,14 +78,19 @@ stock-race/
 │   │   └── main.py                # 入口 + 自动浏览器
 │   └── frontend/                  # Vue 3 前端
 │
+├── 📂 mvp/                        # 📋 MVP 版本（Phase 2 规划）
+│   └── miniprogram/               # 微信小程序
+│
+├── 📂 full/                       # 📋 Full 版本（Phase 3 规划）
+│   ├── backend/                   # Go 后端服务
+│   ├── trading-ai-service/        # Python AI 服务
+│   ├── market-data-service/       # Python 数据服务
+│   ├── news-service/              # Python 新闻服务
+│   ├── notification-service/      # Go 通知服务
+│   └── config-center/             # Go 配置中心
+│
 ├── 📂 archive/v0.9-legacy/        # ⛔ v0.9 已归档（勿动）
 │   └── services/                  # 旧 Node.js/Python 代码
-│
-├── 📂 backend/                    # Go 重构（Full 版预留）
-├── 📂 trading-ai-service/         # Python AI 服务
-├── 📂 market-data-service/        # Python 数据服务
-├── 📂 config-center/              # Go 配置中心
-├── 📂 notification-service/       # Go 通知服务
 │
 └── 📄 CLAUDE.md                   # 本文件（项目导航）
 ```
