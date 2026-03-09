@@ -62,17 +62,18 @@ allowed-tools: [Bash, Read, Write, Edit, WebFetch]
    - README 内容
 
 2. **分析技术栈**
-   - 检查 package.json（Node.js 项目）
+   - 检查 go.mod（Go 项目）
    - 检查 requirements.txt / pyproject.toml（Python 项目）
-   - 识别框架：Express、FastAPI、React、Vue 等
+   - 检查 package.json（Node.js/前端项目）
+   - 识别框架：Gin、FastAPI、Vue、SQLAlchemy 等
 
 3. **评估适配度（1-5星）**
 
    **技术栈匹配度（40%）**：
-   - Node.js/Express/TypeScript 项目：+1
-   - Python/FastAPI 项目：+1
-   - 使用 Prisma/SQLAlchemy：+0.5
-   - 使用 Redis/PostgreSQL：+0.5
+   - Go/Gin/GORM 项目（Full 后端）：+1.5
+   - Python/FastAPI 项目（Local/AI 服务）：+1.5
+   - Vue 3/Vite/TypeScript 项目（前端）：+1
+   - 使用 SQLAlchemy/PostgreSQL：+0.5
    - Docker 支持：+0.5
 
    **功能关联度（40%）**：
@@ -88,7 +89,7 @@ allowed-tools: [Bash, Read, Write, Edit, WebFetch]
 
 ### 步骤 4：生成 Markdown 报告
 
-**报告路径**：`docs/development/claude-code-trending/YYYY-MM-DD-report.md`
+**报告路径**：`.claude/data/claude-code-trending/YYYY-MM-DD-report.md`
 
 **报告结构**：
 
@@ -183,7 +184,7 @@ allowed-tools: [Bash, Read, Write, Edit, WebFetch]
 
 ### 2. Markdown 报告（供用户阅读）
 
-**路径**：`docs/development/claude-code-trending/YYYY-MM-DD-report.md`
+**路径**：`.claude/data/claude-code-trending/YYYY-MM-DD-report.md`
 
 包含：
 - 扫描概览统计
@@ -215,16 +216,23 @@ allowed-tools: [Bash, Read, Write, Edit, WebFetch]
 
 ## 技术栈参考（用于适配度评估）
 
-本项目使用的技术栈：
+本项目使用的技术栈（v2.0）：
 
-| 类别 | 技术 |
-|-----|------|
-| 后端 | Node.js 20+, Express, TypeScript, Prisma, Socket.io |
-| Python 服务 | Python 3.11+, FastAPI, Pydantic, Anthropic SDK 0.8 |
-| 前端 | React 18, Vue 3, TypeScript, Vite, Zustand |
-| 小程序 | UniApp, Vue 3, Pinia |
-| 数据库 | PostgreSQL 15, TimescaleDB, Redis 7 |
-| 部署 | Docker Compose |
+| 类别 | Local 形态 | Full 形态 |
+|-----|------------|-----------|
+| 后端 | Python 3.11+, FastAPI, SQLAlchemy | Go 1.21+, Gin, GORM, Wire |
+| Python 服务 | FastAPI, Pydantic, Anthropic SDK | FastAPI, Pydantic, OpenAI SDK |
+| 前端 | Vue 3, TypeScript, Vite, Pinia | Vue 3, TypeScript, Vite, Pinia |
+| 小程序 | - | 微信原生 / UniApp |
+| 数据库 | SQLite | PostgreSQL 15, TimescaleDB |
+| 部署 | 本地运行 | Docker Compose, K8s |
+
+**技术栈匹配度评分标准**：
+- FastAPI/Python 项目：+1.5（与 Local 后端直接匹配）
+- Go/Gin/GORM 项目：+1.5（与 Full 后端直接匹配）
+- Vue 3/Vite 项目：+1（与前端技术栈匹配）
+- 使用 SQLAlchemy/PostgreSQL：+0.5
+- Docker 支持：+0.5
 
 ---
 

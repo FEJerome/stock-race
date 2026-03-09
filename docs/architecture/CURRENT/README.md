@@ -1,13 +1,12 @@
 # 架构文档 - 当前版本
 
-本文档中心提供 stock-race 项目 **三种产品形态** 的架构文档统一入口。
+本文档中心提供 stock-race 项目 **三种产品形态** 的架构总览。
 
-> **重要**: 项目正处于 v2.0 重构阶段，文档已按产品形态重新组织。
-> - v0.9 历史文档已归档至 [HISTORICAL/](../HISTORICAL/)
+> **重要**: 各形态的详细架构文档已移至 `docs/modules/{形态}/` 目录下
 
 ---
 
-## 🎯 三种产品形态
+## 三形态架构总览
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -24,7 +23,19 @@
 └──────────────┴──────────────┴───────────────────────────────────┘
 ```
 
-### 形态关系与演进路径
+---
+
+## 详细架构文档
+
+| 形态 | 文档位置 | 状态 |
+|------|---------|------|
+| **Local** | [modules/local/ARCHITECTURE.md](../../modules/local/ARCHITECTURE.md) | 🚧 Phase 1 开发中 |
+| **MVP** | [modules/mvp/ARCHITECTURE.md](../../modules/mvp/ARCHITECTURE.md) | 📋 Phase 2 规划中 |
+| **Full** | [modules/full/ARCHITECTURE.md](../../modules/full/ARCHITECTURE.md) | 📋 Phase 3 规划中 |
+
+---
+
+## 形态演进路径
 
 ```
 Phase 1: Local (当前)
@@ -50,89 +61,69 @@ Phase 3: Full (商业运营)
 
 ---
 
-## 📂 文档结构
+## 技术栈对比
 
-```
-docs/architecture/CURRENT/
-├── README.md              # 本文档 - 三种形态总览
-├── LOCAL/                 # Local 形态架构（当前重点）
-│   ├── README.md         # Local 架构概述
-│   ├── ARCHITECTURE.md   # 单体架构详细设计
-│   ├── TECH_STACK.md     # 技术栈选型
-│   └── DATA_FLOW.md      # 数据流设计
-├── MVP/                   # MVP 形态架构
-│   └── README.md         # MVP 架构概述（小程序）
-└── FULL/                  # Full 形态架构（规划中）
-    └── README.md         # v2.0 微服务架构规划
-```
+| 维度 | Local | MVP | Full |
+|------|-------|-----|------|
+| **后端** | FastAPI (Python) | 微信云函数 | Go + Gin |
+| **前端** | Vue 3 + Vite | 微信小程序 | Vue 3 + 小程序 + App |
+| **数据库** | SQLite | 微信云数据库 | PostgreSQL + TimescaleDB |
+| **AI 服务** | Python FastAPI | Python FastAPI | Python FastAPI |
+| **部署** | 本地运行 | 微信云托管 | Kubernetes |
 
 ---
 
-## 🚀 快速导航
+## 模块边界（三种形态共用）
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      前端层 (Vue 3)                       │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
+│  │  Agent管理   │  │  行情展示    │  │    交易执行      │  │
+│  └─────────────┘  └─────────────┘  └─────────────────┘  │
+├─────────────────────────────────────────────────────────┤
+│                      API 层                              │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │
+│  │ market-data │  │ trading-ai  │  │  news-service   │  │
+│  │  -service   │  │  -service   │  │                 │  │
+│  └─────────────┘  └─────────────┘  └─────────────────┘  │
+├─────────────────────────────────────────────────────────┤
+│                    数据层                                │
+│              (SQLite / PostgreSQL)                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+**演进策略**：
+- Local：单体部署，模块间函数调用
+- Full：微服务拆分，模块间 HTTP/gRPC 调用
+
+---
+
+## 快速导航
 
 ### Local 形态（当前重点）
 
-| 文档 | 说明 | 状态 |
+| 文档 | 位置 | 说明 |
 |------|------|------|
-| [LOCAL/README.md](./LOCAL/README.md) | Local 架构总览与使用指南 | 🚧 待创建 |
-| [LOCAL/ARCHITECTURE.md](./LOCAL/ARCHITECTURE.md) | FastAPI 单体架构详细设计 | 🚧 待创建 |
-| [LOCAL/TECH_STACK.md](./LOCAL/TECH_STACK.md) | 技术栈选型与 rationale | 🚧 待创建 |
-| [LOCAL/DATA_FLOW.md](./LOCAL/DATA_FLOW.md) | 数据采集与处理流程 | 🚧 待创建 |
+| README | [modules/local/README.md](../../modules/local/README.md) | 入口导航 |
+| 架构设计 | [modules/local/ARCHITECTURE.md](../../modules/local/ARCHITECTURE.md) | 技术架构 |
+| 实施规划 | [modules/local/IMPLEMENTATION_PLAN.md](../../modules/local/IMPLEMENTATION_PLAN.md) | 开发计划 |
+| 任务追踪 | [modules/local/TODO.md](../../modules/local/TODO.md) | 执行清单 |
 
-**Local 核心特征**:
-- **后端**: FastAPI (Python) 单体服务
-- **前端**: Vue 3 + Vite
-- **存储**: SQLite (本地文件)
-- **部署**: 本地运行 (`python local.py`)
-- **目标**: 自用、验证技术、多模型对比
+### 历史文档
 
-### MVP 形态
-
-| 文档 | 说明 | 状态 |
-|------|------|------|
-| [MVP/README.md](./MVP/README.md) | 微信小程序架构概述 | 🚧 待创建 |
-
-**MVP 核心特征**:
-- **平台**: 微信小程序
-- **登录**: 微信授权
-- **模型**: 单一 DeepSeek
-- **限制**: 7天试用期
-- **目标**: 合规验证、快速上线
-
-### Full 形态（v2.0 规划）
-
-| 文档 | 说明 | 状态 |
-|------|------|------|
-| [FULL/README.md](./FULL/README.md) | v2.0 微服务架构规划 | 🚧 待创建 |
-
-**Full 核心特征**:
-- **Backend**: Go + Gin + GORM + Wire
-- **AI Service**: Python + FastAPI
-- **数据服务**: Python + TimescaleDB
-- **部署**: Kubernetes 微服务
-- **目标**: 生产环境、商业运营
+- v0.9 架构文档：[architecture/HISTORICAL/](../HISTORICAL/)
 
 ---
 
-## 📋 架构演进时间线
+## 相关文档
 
-| 时间 | 事件 | 说明 |
-|------|------|------|
-| 2026-02-28 | v0.9 归档 | 旧代码移至 `archive/v0.9-legacy/`，git 标签 `v0.9-legacy-archived` |
-| 2026-02-28 | v2.0 启动 | 新目录结构初始化，技术栈变更规划 |
-| 2026-03-06 | Local 重新定义 | 从"离线CLI"改为"本地服务版"，功能对标 Full |
-| 2026-03-09 | 文档清理 | v0.9 文档归档到 HISTORICAL/，创建新 CURRENT/ 结构 |
-
----
-
-## 🔗 相关文档
-
-- [项目导航中心](../../CLAUDE.md) - 项目级文档总入口
-- [v1 PRD](../../v1/PRD.md) - 产品需求文档（三种形态需求来源）
-- [交付计划](../../v1/DELIVERY_PLAN.md) - 三种形态交付边界详细定义
-- [历史文档](../HISTORICAL/) - v0.9 时代归档文档
+- [项目导航中心](../../../CLAUDE.md) - 项目级文档总入口
+- [PRD](../../PRD.md) - 产品需求文档
+- [交付计划](../../DELIVERY_PLAN.md) - 三形态交付边界
 
 ---
 
 *本文档最后更新于：2026-03-09*
-*维护者：项目架构团队*
