@@ -120,12 +120,15 @@ local/
 │   ├── news.py                # 新闻/舆论接口
 │   ├── trade.py               # 交易执行接口
 │   └── strategy.py            # 策略配置接口
-├── services/                   # 业务逻辑层
+├── services/                   # 业务逻辑层（按微服务边界组织，便于演进）
 │   ├── __init__.py
-│   ├── market_collector.py    # 行情数据采集（复用 legacy）
-│   ├── news_collector.py      # 新闻/舆论采集（复用 legacy）
-│   ├── ai_adapter.py          # AI 模型适配器（复用 legacy）
-│   └── trading_engine.py      # 交易引擎
+│   ├── market_collector.py    # 行情数据采集 → 复用到 market-data-service
+│   ├── news_collector.py      # 新闻/舆论采集 → 复用到 news-service
+│   ├── ai_adapter.py          # AI 模型适配器 → 复用到 trading-ai-service
+│   ├── trading_engine.py      # 交易引擎 → 参考逻辑到 trading-service (Go)
+│   ├── token_tracker.py       # Token 消耗统计 → Local 特有
+│   ├── promotion_service.py   # 职级晋升服务 → Local 特有
+│   └── portfolio_service.py   # 收益指标计算 → 复用到 portfolio-service
 ├── core/                       # 核心领域（与三种形态共用）
 │   ├── domain/
 │   │   ├── models.py          # Pydantic 模型
@@ -139,9 +142,16 @@ local/
 │   ├── storage/
 │   │   ├── interface.py       # 存储接口
 │   │   └── sqlite.py          # SQLite 实现
-│   └── datasource/
-│       ├── interface.py       # 数据源接口
-│       └── csv.py             # CSV 数据源（Local 开发用）
+│   └── datasource/            # 数据源适配器（完整复刻 v0.9）
+│       ├── interface.py       # DataSource 抽象接口
+│       ├── router.py          # DataSourceRouter 路由管理器
+│       ├── csv.py             # CSV 数据源（离线测试/回测）
+│       ├── sina.py            # 新浪财经数据源
+│       ├── tencent.py         # 腾讯财经数据源
+│       ├── eastmoney.py       # 东方财富数据源
+│       ├── akshare.py         # AkShare 数据源
+│       ├── baostock.py        # Baostock 数据源
+│       └── tushare.py         # Tushare 数据源
 ├── db/                         # 数据库
 │   └── sqlite.py              # SQLAlchemy 配置
 ├── config/
@@ -166,14 +176,56 @@ local/
 # POST /api/agents
 class CreateAgentRequest(BaseModel):
     name: str
-    initial_capital: Decimal
+    initial_capital: Decimal  # 用户设置，范围 1万-10亿
     strategy: Strategy
     model_provider: str = "deepseek"  # deepseek/qwen/kimi/glm
     model_name: str = "deepseek-chat"
+    agent_level: AgentLevel = AgentLevel.INTERN  # 职级：实习生/经理/合伙人
+    incentive_level: IncentiveLevel = IncentiveLevel.STANDARD  # 档位：标准/积极/激进
+
+    @validator('initial_capital')
+    def validate_capital(cls, v):
+        MIN_CAPITAL = 10000      # 1万
+        MAX_CAPITAL = 1000000000 # 10亿
+        if v < MIN_CAPITAL:
+            raise ValueError(f'初始资金不能低于 {MIN_CAPITAL}')
+        if v > MAX_CAPITAL:
+            raise ValueError(f'初始资金不能超过 {MAX_CAPITAL}，大额资金存在风险')
+        return v
+
+# 职级默认初始资金（前端表单默认值）
+DEFAULT_CAPITAL_BY_LEVEL = {
+    AgentLevel.INTERN: 500000,    # 实习生：50万
+    AgentLevel.MANAGER: 1000000,  # 经理：100万
+    AgentLevel.PARTNER: 5000000,  # 合伙人：500万
+}
 
 # GET /api/agents
 # GET /api/agents/{agent_id}
+# PUT /api/agents/{agent_id}/incentive  # 调整激励档位
 # DELETE /api/agents/{agent_id}
+```
+
+#### Token 统计
+
+```python
+# GET /api/tokens/stats?agent_id=xxx&period=today
+class TokenStatsResponse(BaseModel):
+    agent_id: UUID
+    period: str  # today/week/month
+    input_tokens: int
+    output_tokens: int
+    total_cost: Decimal  # 人民币
+    by_model: Dict[str, ModelTokenStats]  # 按模型统计
+    by_action: Dict[str, ActionTokenStats]  # 按功能统计
+
+# GET /api/tokens/global?period=today
+class GlobalTokenStats(BaseModel):
+    period: str
+    total_input_tokens: int
+    total_output_tokens: int
+    total_cost: Decimal
+    by_model: Dict[str, ModelTokenStats]
 ```
 
 #### 交易执行
@@ -196,6 +248,91 @@ class ExecuteTradeRequest(BaseModel):
 # WS /ws/market
 # 订阅: {"action": "subscribe", "symbols": ["sh000001", "sz399001"]}
 # 推送: {"symbol": "sh000001", "price": 3000.5, "timestamp": "..."}
+```
+
+### 3.4 数据源架构（复刻 v0.9）
+
+Local 形态完整复刻 v0.9 的六数据源架构，用于技术验证和 fallback 机制。
+
+#### DataSourceRouter 设计
+
+```python
+class DataSourceRouter:
+    """数据源路由器 - 管理多数据源选择、故障转移"""
+
+    def __init__(self):
+        self.sources: Dict[str, DataSource] = {
+            'sina': SinaDataSource(),
+            'tencent': TencentDataSource(),
+            'eastmoney': EastMoneyDataSource(),
+            'akshare': AkShareDataSource(),
+            'baostock': BaostockDataSource(),
+            'tushare': TushareDataSource(),
+            'csv': CSVDataSource(),  # 离线备用
+        }
+        self.weights = {
+            'sina': 0.35, 'tencent': 0.30, 'eastmoney': 0.35,  # 实时源
+            'akshare': 0.0, 'baostock': 0.0, 'tushare': 0.0,   # 按需启用
+            'csv': 0.0,  # 最后 fallback
+        }
+        self.health_status = {name: True for name in self.sources}
+
+    async def fetch_quotes(self, symbols: List[str]) -> Dict[str, Quote]:
+        """多源聚合获取行情，自动故障转移"""
+        results = {}
+        active_sources = self._get_active_sources()
+
+        for symbol in symbols:
+            for source_name in active_sources:
+                try:
+                    quote = await self.sources[source_name].fetch(symbol)
+                    if quote:
+                        results[symbol] = quote
+                        break
+                except Exception as e:
+                    self._mark_unhealthy(source_name)
+                    continue
+
+        return results
+```
+
+#### 数据源分类
+
+| 类别 | 数据源 | 特点 | 用途 |
+|------|--------|------|------|
+| **实时行情** | 新浪财经 | 速度快、稳定 | 主要实时数据 |
+| | 腾讯财经 | 备用 | failover |
+| | 东方财富 | 数据全 | 补充数据 |
+| **历史数据** | AkShare | 免费、Python 友好 | 历史行情、技术指标 |
+| | Baostock | 免费、长期历史 | 基本面数据 |
+| **财务数据** | Tushare | 专业（需 Token）| 财务报表、公告 |
+| **离线/测试** | CSV | 本地文件 | 开发调试、回测 |
+
+#### 熔断降级策略
+
+```python
+class CircuitBreaker:
+    """熔断器 - 检测数据源健康状态"""
+
+    def __init__(self, failure_threshold=5, recovery_timeout=60):
+        self.failure_count = {}
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.last_failure_time = {}
+
+    def record_failure(self, source_name: str):
+        self.failure_count[source_name] = self.failure_count.get(source_name, 0) + 1
+        self.last_failure_time[source_name] = time.time()
+
+    def is_healthy(self, source_name: str) -> bool:
+        if self.failure_count.get(source_name, 0) >= self.failure_threshold:
+            # 检查是否超过恢复时间
+            last_fail = self.last_failure_time.get(source_name, 0)
+            if time.time() - last_fail < self.recovery_timeout:
+                return False
+            # 重置计数，尝试恢复
+            self.failure_count[source_name] = 0
+        return True
 ```
 
 ---
@@ -304,8 +441,8 @@ export const useMarketStore = defineStore('market', {
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  数据源      │────▶│  Collector  │────▶│  WebSocket  │
-│ (东方财富等) │     │ (Service层) │     │  (推送前端) │
+│  多数据源    │────▶│  Collector  │────▶│  WebSocket  │
+│ (六源聚合)   │     │ (Service层) │     │  (推送前端) │
 └─────────────┘     └─────────────┘     └─────────────┘
                                                │
                                                ▼
@@ -415,7 +552,40 @@ adapters/ ───┘
 
 ---
 
-## 7. 演进策略
+## 7. 功能边界
+
+### 7.1 Local 支持的功能
+
+| 功能模块 | 状态 | 说明 |
+|---------|------|------|
+| AI 交易员创建 | ✅ | Web界面，多模型选择（DeepSeek/通义/Kimi/GLM） |
+| 策略收集对话 | ✅ | 五维度策略收集（风险/板块/周期/仓位/止损） |
+| AI 职级系统 | ✅ | 实习生/经理/合伙人三级晋升（仅能力差异，无工资成本） |
+| 激励档位 | ✅ | 标准/积极/激进三档（仅决策频率差异，无工资成本） |
+| 虚拟交易执行 | ✅ | 基于实时数据的虚拟买卖、持仓管理、收益计算 |
+| 实时行情数据 | ✅ | 六数据源聚合（完整复刻 v0.9：新浪/腾讯/东方财富/AkShare/Baostock/Tushare） |
+| 新闻/舆论数据 | ✅ | 财经新闻采集、社交媒体情绪数据 |
+| Token 统计 | ✅ | API 调用成本统计（仅供参考） |
+| 排行榜 | ✅ | 本地单机多 AI 对比排行 |
+| AI 决策理由展示 | ✅ | 内心戏展示（决策原因） |
+
+### 7.2 Local 不支持的功能
+
+| 功能模块 | 原因 | 归属形态 |
+|---------|------|---------|
+| 用户登录/注册 | 自用版无需登录 | - |
+| 周薪/工资系统 | 无商业成本约束 | MVP/Full |
+| 预算约束 | 用户自付 API 成本 | MVP/Full |
+| 试用期机制 | Local 无试用期概念 | MVP/Full |
+| 等级系统（30级用户等级） | 多用户粘性工具 | Full |
+| 订阅/付费功能 | 商业功能 | MVP/Full |
+| 称号系统 | 非核心功能 | 可延后 |
+| 邀请系统 | 社交裂变 | Full |
+| 广告接入 | 商业功能 | MVP/Full |
+
+---
+
+## 8. 演进策略
 
 ### 7.1 Local → Full 演进检查清单
 
