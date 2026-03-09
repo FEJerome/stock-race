@@ -12,15 +12,6 @@
 | [DELIVERY_PLAN.md](./DELIVERY_PLAN.md) | 三形态交付边界定义 |
 | [CHANGELOG.md](./CHANGELOG.md) | 变更记录与决策历史 |
 
-### 开发指南
-
-| 文档 | 说明 |
-|------|------|
-| [guides/CODING_STANDARDS.md](./guides/CODING_STANDARDS.md) | 编码规范 |
-| [guides/AGENT_COLLABORATION.md](./guides/AGENT_COLLABORATION.md) | 智能体协作 |
-| [guides/TASK_DISPATCH_GUIDE.md](./guides/TASK_DISPATCH_GUIDE.md) | 任务分发 |
-| [guides/DATA_SOURCES.md](./guides/DATA_SOURCES.md) | 数据源策略 |
-
 ### 架构文档
 
 | 形态 | 位置 |
@@ -51,14 +42,6 @@ docs/
 │
 ├── discussion/               # 讨论记录
 │   └── discussion-log.md
-│
-├── guides/                   # 开发指南
-│   ├── CODING_STANDARDS.md
-│   ├── AGENT_COLLABORATION.md
-│   ├── TASK_DISPATCH_GUIDE.md
-│   ├── GENERIC_ROLES.md
-│   ├── GENERIC_WORKTREE_GUIDE.md
-│   └── DATA_SOURCES.md
 │
 ├── architecture/             # 架构文档
 │   ├── CURRENT/             # 当前三形态架构
