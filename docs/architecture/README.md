@@ -1,101 +1,103 @@
 # 架构文档导航
 
-本文档中心提供stock-race项目所有架构相关文档的统一入口。
+本文档中心提供 stock-race 项目所有架构相关文档的统一入口。
+
+> **重要**: 项目正处于 v2.0 重构阶段，采用 **三种产品形态** 交付策略。
+>
+> 文档已按形态重新组织：
+> - [CURRENT/](./CURRENT/) - 当前版本架构文档（Local/MVP/Full）
+> - [HISTORICAL/](./HISTORICAL/) - v0.9 历史归档文档
+
+---
 
 ## 📂 文档结构
 
 ```
 docs/architecture/
 ├── README.md                    # 本文档 - 架构文档总入口
-├── CODE_MAP.md                  # 代码结构地图（保留根目录）
-├── CURRENT/                     # 当前活跃架构文档
-│   ├── SERVICE_ARCHITECTURE.md      # 六服务架构详细设计（最新）
-│   ├── DATA_PLATFORM.md             # 统一数据平台架构
-│   ├── TECH_STACK.md                # 技术架构与选型
-│   ├── API_SPECIFICATION.md         # RESTful API与WebSocket设计
-│   ├── DATABASE_DESIGN.md           # 数据库ER图与表结构
-│   ├── CONFIG_CENTER/               # 配置中心架构设计（规划中）
-│   │   ├── README.md                    # 配置中心文档总入口
-│   │   └── MODEL_VISIBILITY_CONFIG.md   # 模型可见性配置化方案
-│   └── DECISIONS/                   # 架构决策记录(ADR)
-│       ├── 001-CIRCULAR-DEPENDENCY.md    # 循环依赖解决方案
-│       ├── 002-EVENT-BUS.md              # 事件总线风险分析
-│       ├── 003-AI-DIALOGUE-LOCATION.md   # AI对话服务职责划分
-│       ├── 004-AI-DECOUPLING.md          # AI Service双向依赖解耦
-│       ├── 005-MINIPROGRAM-GUEST-MODE.md # 微信小程序游客模式
-│       ├── 006-MINIPROGRAM-DATA-FLOW.md  # Miniprogram数据流优化
-│       ├── 007-BREADTH-QUERY-REQUIREMENTS.md # AI决策广度查询需求
-│       └── 008-REDIS-DEPLOYMENT.md       # Redis渐进式部署策略
-├── ANALYSIS/                    # 架构分析报告
-│   └── SERVICE_DEPENDENCY.md    # 服务依赖冲突分析（精简版）
-└── HISTORICAL/                  # 历史归档文档
+├── CURRENT/                     # 【当前版本】三种形态架构文档
+│   ├── README.md                # 三种形态总览与导航
+│   ├── LOCAL/                   # Local 形态（当前重点）
+│   │   ├── README.md           # Local 架构概述
+│   │   ├── ARCHITECTURE.md     # 单体架构详细设计（待创建）
+│   │   ├── TECH_STACK.md       # 技术栈选型（待创建）
+│   │   └── DATA_FLOW.md        # 数据流设计（待创建）
+│   ├── MVP/                     # MVP 形态（规划中）
+│   │   └── README.md           # MVP 架构概述
+│   └── FULL/                    # Full 形态（规划中）
+│       └── README.md           # v2.0 微服务架构规划
+└── HISTORICAL/                  # 【历史归档】v0.9 时代文档
     ├── README.md                # 历史版本说明
-    ├── V2026-02-10-SERVICE_ARCHITECTURE.md  # 2026-02-10版本
-    ├── V1-SYSTEM_ARCHITECTURE.md            # V1系统架构
-    ├── V1-SERVICE_COMMUNICATION.md          # V1服务通信
-    ├── V1-DATA_FLOW.md                      # V1数据流
-    ├── V1-PROJECT_STRUCTURE.md              # V1项目结构
-    └── V1-DATA_SERVICE_INTEGRATION.md       # V1数据服务集成
+    ├── V0.9-CODE_MAP.md         # v0.9 代码地图
+    ├── V0.9-SERVICE_ARCHITECTURE.md  # 六服务架构
+    ├── V0.9-TECH_STACK.md       # v0.9 技术栈
+    ├── V0.9-*                   # 其他 v0.9 文档
+    └── V1-*                     # V1 历史文档
 ```
+
+---
 
 ## 🚀 快速导航
 
-### 核心架构文档
-| 文档 | 说明 | 最后更新 |
-|------|------|----------|
-| [SERVICE_ARCHITECTURE.md](./CURRENT/SERVICE_ARCHITECTURE.md) | 六服务架构详细设计，包含服务间调用与数据流 | 2026-02-11 |
-| [DATA_PLATFORM.md](./CURRENT/DATA_PLATFORM.md) | 四服务数据架构，数据主权与分层存储设计 | 2026-02-10 |
-| [TECH_STACK.md](./CURRENT/TECH_STACK.md) | 技术栈选型与架构设计 rationale | 2026-02-03 |
-| [API_SPECIFICATION.md](./CURRENT/API_SPECIFICATION.md) | RESTful API与WebSocket设计规范 | 2026-02-03 |
-| [DATABASE_DESIGN.md](./CURRENT/DATABASE_DESIGN.md) | 数据库ER图与表结构设计 | 2026-02-03 |
+### 三种产品形态
 
-### 架构决策记录(ADR)
+| 形态 | 定位 | 技术栈 | 当前状态 |
+|------|------|--------|----------|
+| **[Local](./CURRENT/LOCAL/)** | 本地自用版 | FastAPI + Vue 3 + SQLite | 🚧 Phase 1 开发中 |
+| **[MVP](./CURRENT/MVP/)** | 小程序合规版 | 微信小程序 + 云服务 | 📋 Phase 2 规划中 |
+| **[Full](./CURRENT/FULL/)** | 商业运营版 | Go + Python 微服务 | 📋 Phase 3 规划中 |
 
-所有重大架构决策均记录在 [DECISIONS/](./CURRENT/DECISIONS/) 目录：
+**详细定义**: [交付计划](../v1/DELIVERY_PLAN.md)
 
-| ADR | 决策主题 | 状态 |
-|-----|----------|------|
-| [001](./CURRENT/DECISIONS/001-CIRCULAR-DEPENDENCY.md) | 循环依赖解决方案 - 采用"共享Redis + 冷启动"混合方案 | ✅ 已决策 |
-| [002](./CURRENT/DECISIONS/002-EVENT-BUS.md) | 事件总线设计 - 统一采用Redis Streams | ✅ 已决策 |
-| [003](./CURRENT/DECISIONS/003-AI-DIALOGUE-LOCATION.md) | AI对话服务职责 - 由Backend实现 | ✅ 已决策 |
-| [004](./CURRENT/DECISIONS/004-AI-DECOUPLING.md) | AI Service解耦 - 基于事件总线完全解耦 | ✅ 已决策 |
-| [005](./CURRENT/DECISIONS/005-MINIPROGRAM-GUEST-MODE.md) | 小程序游客模式 - 三层API架构+智能过期 | ✅ 已决策 |
-| [006](./CURRENT/DECISIONS/006-MINIPROGRAM-DATA-FLOW.md) | 小程序数据流 - 混合分离方案 | ✅ 已决策 |
-| [007](./CURRENT/DECISIONS/007-BREADTH-QUERY-REQUIREMENTS.md) | AI决策查询需求 - 广度数据查询确认 | ✅ 已决策 |
-| [008](./CURRENT/DECISIONS/008-REDIS-DEPLOYMENT.md) | Redis部署策略 - 渐进式从单节点到Cluster | ✅ 已决策 |
+---
 
-### 配置中心设计（规划中）
-
-配置中心是未来基础设施的核心组件，用于集中管理各服务的动态配置。
+### Local 形态（当前重点）
 
 | 文档 | 说明 | 状态 |
 |------|------|------|
-| [CONFIG_CENTER/README.md](./CURRENT/CONFIG_CENTER/README.md) | 配置中心架构设计文档总入口 | 🔄 设计中 |
-| [MODEL_VISIBILITY_CONFIG.md](./CURRENT/CONFIG_CENTER/MODEL_VISIBILITY_CONFIG.md) | Trading AI Service - 模型可见性配置化方案 | 🔄 待评审 |
+| [LOCAL/README.md](./CURRENT/LOCAL/README.md) | Local 架构总览 | ✅ 已创建 |
+| [LOCAL/ARCHITECTURE.md](./CURRENT/LOCAL/ARCHITECTURE.md) | 单体架构详细设计 | 🚧 待创建 |
+| [LOCAL/TECH_STACK.md](./CURRENT/LOCAL/TECH_STACK.md) | 技术栈选型 | 🚧 待创建 |
+| [LOCAL/DATA_FLOW.md](./CURRENT/LOCAL/DATA_FLOW.md) | 数据流设计 | 🚧 待创建 |
 
-> **说明**: 配置中心相关文档会持续增加，几乎每个服务都会涉及配置中心的设计。详见 [CONFIG_CENTER/README.md](./CURRENT/CONFIG_CENTER/README.md) 中的文档清单。
+**核心特征**:
+- 本地部署，开箱即用
+- FastAPI 单体架构
+- 多 AI 模型对比
+- 技术验证平台
 
-### 分析报告
-| 文档 | 说明 |
-|------|------|
-| [SERVICE_DEPENDENCY.md](./ANALYSIS/SERVICE_DEPENDENCY.md) | 五服务外部依赖冲突分析，6个冲突解决方案索引 |
+---
 
 ### 历史归档
-历史版本文档已归档至 [HISTORICAL/](./HISTORICAL/) 目录，包含版本标记和指向最新文档的链接。
+
+v0.9 时代文档已归档至 [HISTORICAL/](./HISTORICAL/)，包含：
+
+| 文档 | 说明 |
+|------|------|
+| [V0.9-SERVICE_ARCHITECTURE.md](./HISTORICAL/V0.9-SERVICE_ARCHITECTURE.md) | v0.9 六服务架构（Node.js Backend）|
+| [V0.9-TECH_STACK.md](./HISTORICAL/V0.9-TECH_STACK.md) | v0.9 技术栈 |
+| [V0.9-CODE_MAP.md](./HISTORICAL/V0.9-CODE_MAP.md) | v0.9 代码地图 |
+| [V1-SYSTEM_ARCHITECTURE.md](./HISTORICAL/V1-SYSTEM_ARCHITECTURE.md) | V1 系统架构 |
+
+---
 
 ## 📋 架构演进时间线
 
-- **2026-02-11**: 架构审查完成，6个冲突全部解决，创建架构决策记录
-- **2026-02-10**: 六服务架构详细设计完成
-- **2026-02-04**: 统一数据平台架构设计完成
-- **2026-02-03**: 早期架构文档创建（已归档至HISTORICAL/）
+| 时间 | 事件 | 说明 |
+|------|------|------|
+| 2026-02-28 | v0.9 归档 | 旧代码移至 `archive/v0.9-legacy/`，git 标签 `v0.9-legacy-archived` |
+| 2026-03-06 | Local 重新定义 | 从"离线CLI"改为"本地服务版"，功能对标 Full |
+| 2026-03-09 | 文档清理完成 | v0.9 文档归档，创建新的 CURRENT/ 结构 |
+
+---
 
 ## 🔗 相关文档
 
 - [项目导航中心](../../CLAUDE.md) - 项目级文档总入口
-- [开发规范](../development/CODING_STANDARDS.md) - 编码标准与最佳实践
-- [部署指南](../deployment/DEPLOYMENT_GUIDE.md) - 生产环境部署
+- [交付计划](../v1/DELIVERY_PLAN.md) - 三种形态交付边界
+- [v1 PRD](../v1/PRD.md) - 产品需求文档
+- [开发规范](../development/CODING_STANDARDS.md) - 编码标准
 
 ---
 
-*本文档最后更新于：2026-02-11*
+*本文档最后更新于：2026-03-09*
