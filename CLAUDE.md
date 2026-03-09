@@ -40,10 +40,10 @@
 ## 🚀 快速导航
 
 ### v2.0 核心文档（必读）
-- [**📘 PRD 产品需求文档**](docs/v1/PRD.md) - v1.0-MVP 完整需求规格
-- [**📗 交付策略**](docs/v1/DELIVERY_PLAN.md) - Local/MVP/Full 三形态边界定义
-- [**📙 变更记录**](docs/v1/CHANGELOG.md) - PRD 版本演进与决策历史
-- [**📕 讨论日志**](docs/v1/discussion-log.md) - 详细讨论过程记录
+- [**📘 PRD 产品需求文档**](docs/PRD.md) - v1.0-MVP 完整需求规格
+- [**📗 交付策略**](docs/DELIVERY_PLAN.md) - Local/MVP/Full 三形态边界定义
+- [**📙 变更记录**](docs/CHANGELOG.md) - PRD 版本演进与决策历史
+- [**📕 讨论日志**](docs/discussion/discussion-log.md) - 详细讨论过程记录
 
 ### Local 版本开发（当前重点）
 - **代码位置**: `local/`
@@ -53,7 +53,7 @@
 - **目标**: 验证所有技术点，自用完整体验
 
 ### 历史文档（v0.9 已归档）
-> ⚠️ 以下文档仅作历史参考，当前开发以 v1/ 目录文档为准
+> ⚠️ 以下文档仅作历史参考，当前开发以 docs/ 目录文档为准
 - ~~六服务架构~~ → 已简化为 Local 单体 / Full 微服务
 - ~~Node.js Backend~~ → 已替换为 Go / FastAPI
 - ~~Redis Streams 事件总线~~ → Local 版简化实现
@@ -64,11 +64,15 @@
 
 ```
 stock-race/
-├── 📂 docs/v1/                    # v2.0 当前文档
+├── 📂 docs/                       # v2.0 当前文档
 │   ├── PRD.md                     # 产品需求文档（核心）
 │   ├── DELIVERY_PLAN.md           # 交付策略（Local/MVP/Full）
 │   ├── CHANGELOG.md               # 变更记录
-│   └── discussion-log.md          # 讨论日志
+│   ├── README.md                  # 文档导航
+│   ├── discussion/                # 讨论记录
+│   ├── guides/                    # 开发指南
+│   ├── architecture/              # 架构文档
+│   └── modules/                   # 模块开发任务
 │
 ├── 📂 local/                      # 🔥 Local 版本（当前开发）
 │   ├── backend/                   # FastAPI 单体后端
@@ -252,7 +256,7 @@ Full（商业版）
 - **本文件维护者**: 项目团队
 - **最后更新**: 2026-03-08（v2.0 导航更新）
 - **更新方式**: 项目重大阶段变更时同步更新
-- **变更记录**: 见 [docs/v1/CHANGELOG.md](docs/v1/CHANGELOG.md)
+- **变更记录**: 见 [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
 ---
 
