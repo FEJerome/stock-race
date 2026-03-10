@@ -228,6 +228,33 @@ class GlobalTokenStats(BaseModel):
     by_model: Dict[str, ModelTokenStats]
 ```
 
+#### AI 适配器容错配置
+
+```python
+class AIAdapterConfig:
+    """AI 适配器容错配置 - 用户可在 Settings.vue 中调整"""
+
+    # 超时与重试
+    timeout: int = 30              # 单次调用超时（秒）
+    max_retries: int = 2           # 最大重试次数
+    retry_delay: float = 1.0       # 退避基数（秒）
+
+    # Token 预算（用户可配置，默认较高）
+    token_budget_per_day: int = 1_000_000  # 默认 100万 Token/天
+
+    # 熔断机制
+    circuit_breaker_threshold: int = 5     # 5次失败后熔断
+    circuit_breaker_recovery: int = 300    # 5分钟后尝试恢复
+
+    # 成本预警（可选）
+    daily_cost_alert_threshold: Decimal = Decimal("50.0")  # 日消费超过50元提醒
+```
+
+**用户配置界面**（Settings.vue）：
+- Token 日预算上限：滑块选择（10万 ~ 1000万，默认100万）
+- API 调用超时：输入框（10 ~ 120秒，默认30秒）
+- 启用成本预警：开关（默认开启，阈值可设）
+
 #### 交易执行
 
 ```python
@@ -242,25 +269,270 @@ class ExecuteTradeRequest(BaseModel):
 # GET /api/portfolio/{agent_id}
 ```
 
-#### 实时行情（WebSocket）
+#### 实时行情（WebSocket - Local 激进版）
+
+**Local 场景优化**：单用户无连接数限制，最大化实时性
 
 ```python
 # WS /ws/market
-# 订阅: {"action": "subscribe", "symbols": ["sh000001", "sz399001"]}
-# 推送: {"symbol": "sh000001", "price": 3000.5, "timestamp": "..."}
+# 客户端订阅: {"action": "subscribe", "symbols": ["sh000001", "sz399001", "000001.SZ"]}
+# 服务端推送: {
+#   "type": "quote_update",
+#   "data": [
+#     {"symbol": "sh000001", "price": 3050.12, "change": 0.32, "volume": 1520000, "timestamp": "2026-03-09T14:30:00"},
+#     {"symbol": "000001.SZ", "price": 13.25, "change": 1.12, "volume": 850000, "timestamp": "2026-03-09T14:30:00"}
+#   ]
+# }
 ```
 
-### 3.4 数据源架构（复刻 v0.9）
+**WebSocket 连接管理（Local 优化）**：
 
-Local 形态完整复刻 v0.9 的六数据源架构，用于技术验证和 fallback 机制。
+```python
+class WebSocketManager:
+    """Local 版 WebSocket 管理 - 最大化实时性体验"""
 
-#### DataSourceRouter 设计
+    # 激进的心跳配置（单用户无压力）
+    HEARTBEAT_INTERVAL = 15       # 15秒一次心跳（普通WebSocket 30秒）
+    HEARTBEAT_TIMEOUT = 5         # 5秒无响应判定断开
+    HEARTBEAT_MISS_THRESHOLD = 2  # 连续丢失2次心跳则断开
+
+    # 快速重连策略
+    RECONNECT_INTERVAL_INITIAL = 2      # 首次重连2秒
+    RECONNECT_INTERVAL_MAX = 10         # 最大重连间隔10秒
+    RECONNECT_BACKOFF_MULTIPLIER = 2    # 指数退避基数
+    RECONNECT_MAX_ATTEMPTS = 10         # 最大重试次数（Local持续尝试）
+
+    # 数据推送配置
+    BROADCAST_INTERVAL = 5        # 5秒批量推送（高频）
+    MAX_SUBSCRIPTIONS = 100       # 最大订阅股票数（Local放宽到100）
+
+    async def handle_connection(self, websocket: WebSocket):
+        """处理 WebSocket 连接生命周期"""
+        await websocket.accept()
+
+        # 初始化连接状态
+        connection = ConnectionState(
+            websocket=websocket,
+            subscribed_symbols=set(),
+            last_heartbeat=time.time(),
+            is_healthy=True
+        )
+
+        # 启动三个协程
+        await asyncio.gather(
+            self._heartbeat_loop(connection),
+            self._message_handler(connection),
+            self._broadcast_loop(connection)
+        )
+
+    async def _heartbeat_loop(self, connection: ConnectionState):
+        """心跳检测循环"""
+        while connection.is_healthy:
+            try:
+                # 发送 ping
+                await connection.websocket.send_json({"type": "ping", "timestamp": time.time()})
+
+                # 等待 pong（5秒超时）
+                response = await asyncio.wait_for(
+                    connection.websocket.receive_json(),
+                    timeout=self.HEARTBEAT_TIMEOUT
+                )
+
+                if response.get("type") == "pong":
+                    connection.last_heartbeat = time.time()
+
+                await asyncio.sleep(self.HEARTBEAT_INTERVAL)
+
+            except asyncio.TimeoutError:
+                # 心跳超时，标记不健康
+                connection.is_healthy = False
+                break
+
+    async def on_reconnect(self, connection: ConnectionState):
+        """重连后数据补偿"""
+        # 1. 推送断线期间缓存的最新行情
+        cached_quotes = await self.get_cached_quotes(connection.subscribed_symbols)
+        await connection.websocket.send_json({
+            "type": "batch_update",
+            "data": cached_quotes,
+            "message": "重连后数据补偿"
+        })
+
+        # 2. 推送断线期间错过的交易执行结果
+        missed_trades = await self.get_missed_trades(connection.agent_ids)
+        if missed_trades:
+            await connection.websocket.send_json({
+                "type": "trade_updates",
+                "data": missed_trades
+            })
+
+        # 3. 推送断线期间的AI决策更新
+        missed_decisions = await self.get_missed_decisions(connection.agent_ids)
+        if missed_decisions:
+            await connection.websocket.send_json({
+                "type": "decision_updates",
+                "data": missed_decisions
+            })
+```
+
+**前端 WebSocket 客户端**：
+
+```javascript
+// stores/market.js - WebSocket 管理
+export const useMarketStore = defineStore('market', {
+  state: () => ({
+    ws: null,
+    isConnected: false,
+    subscribedSymbols: [],
+    quotes: {},           // 实时行情数据
+    reconnectAttempts: 0,
+    lastHeartbeat: null
+  }),
+
+  actions: {
+    connect() {
+      const ws = new WebSocket('ws://localhost:8000/ws/market')
+
+      ws.onopen = () => {
+        this.isConnected = true
+        this.reconnectAttempts = 0
+        // 恢复订阅
+        if (this.subscribedSymbols.length > 0) {
+          this.subscribe(this.subscribedSymbols)
+        }
+      }
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data)
+        this.handleMessage(message)
+      }
+
+      ws.onclose = () => {
+        this.isConnected = false
+        this.attemptReconnect()
+      }
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error)
+      }
+
+      this.ws = ws
+    },
+
+    attemptReconnect() {
+      // 指数退避重连
+      const delay = Math.min(
+        2 * Math.pow(2, this.reconnectAttempts),
+        10 // 最大10秒
+      )
+      this.reconnectAttempts++
+
+      setTimeout(() => {
+        console.log(`Reconnecting... attempt ${this.reconnectAttempts}`)
+        this.connect()
+      }, delay * 1000)
+    },
+
+    handleMessage(message) {
+      switch (message.type) {
+        case 'ping':
+          // 响应心跳
+          this.ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }))
+          break
+        case 'quote_update':
+          // 更新行情数据
+          message.data.forEach(quote => {
+            this.quotes[quote.symbol] = quote
+          })
+          break
+        case 'batch_update':
+          // 重连后批量更新
+          message.data.forEach(quote => {
+            this.quotes[quote.symbol] = quote
+          })
+          break
+        case 'trade_updates':
+          // 交易执行通知
+          useTradeStore().handleTradeUpdates(message.data)
+          break
+        case 'decision_updates':
+          // AI决策更新
+          useAgentStore().handleDecisionUpdates(message.data)
+          break
+      }
+    },
+
+    subscribe(symbols) {
+      this.subscribedSymbols = [...new Set([...this.subscribedSymbols, ...symbols])]
+      if (this.isConnected) {
+        this.ws.send(JSON.stringify({
+          action: 'subscribe',
+          symbols: symbols
+        }))
+      }
+    }
+  }
+})
+```
+
+**消息类型定义**：
+
+| 消息类型 | 方向 | 说明 |
+|---------|------|------|
+| `ping` | 服务端→客户端 | 心跳检测（15秒间隔） |
+| `pong` | 客户端→服务端 | 心跳响应 |
+| `subscribe` | 客户端→服务端 | 订阅股票列表 |
+| `unsubscribe` | 客户端→服务端 | 取消订阅 |
+| `quote_update` | 服务端→客户端 | 行情数据更新（5秒推送） |
+| `batch_update` | 服务端→客户端 | 重连后批量补偿 |
+| `trade_updates` | 服务端→客户端 | 交易执行结果 |
+| `decision_updates` | 服务端→客户端 | AI决策结果 |
+| `error` | 服务端→客户端 | 错误通知 |
+
+### 3.4 数据源架构（复刻 v0.9 完整机制）
+
+Local 形态完整复刻 v0.9 的六数据源架构，包括动态权重、质量评估、熔断恢复等完整机制。
+
+#### 整体架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DataSourceRouter                              │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              动态权重管理器                                │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │   │
+│  │  │   新浪   │  │   腾讯   │  │ 东方财富 │  │ AkShare  │ │   │
+│  │  │  Sina    │  │ Tencent  │  │EastMoney │  │(历史)    │ │   │
+│  │  │ (主实时) │  │ (备实时) │  │ (备实时) │  │          │ │   │
+│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘ │   │
+│  │       └─────────────┴─────────────┴─────────────┘       │   │
+│  │                      ↓                                   │   │
+│  │              ┌──────────────────────┐                   │   │
+│  │              │   数据质量评估引擎    │                   │   │
+│  │              │  - 多源数据比对       │                   │   │
+│  │              │  - 异常值检测         │                   │   │
+│  │              │  - 置信度评分(0-100)  │                   │   │
+│  │              └──────────────────────┘                   │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                              ↓                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              三层缓存架构                                  │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │  L1 内存缓存  │  │ L2 SQLite    │  │ L3 远程数据源 │    │   │
+│  │  │   (5秒TTL)   │  │ (本地存储)   │  │ (新浪/腾讯)  │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### DataSourceRouter 完整实现
 
 ```python
 class DataSourceRouter:
-    """数据源路由器 - 管理多数据源选择、故障转移"""
+    """数据源路由器 - 复刻 v0.9 完整机制"""
 
     def __init__(self):
+        # 初始化数据源
         self.sources: Dict[str, DataSource] = {
             'sina': SinaDataSource(),
             'tencent': TencentDataSource(),
@@ -270,69 +542,385 @@ class DataSourceRouter:
             'tushare': TushareDataSource(),
             'csv': CSVDataSource(),  # 离线备用
         }
+
+        # 动态权重配置（实时调整）
         self.weights = {
-            'sina': 0.35, 'tencent': 0.30, 'eastmoney': 0.35,  # 实时源
-            'akshare': 0.0, 'baostock': 0.0, 'tushare': 0.0,   # 按需启用
-            'csv': 0.0,  # 最后 fallback
+            'sina': 0.40,      # 新浪财经 - 主实时源
+            'tencent': 0.35,   # 腾讯财经 - 备实时源
+            'eastmoney': 0.25, # 东方财富 - 补充数据
+            'akshare': 0.0,    # 历史数据（按需启用）
+            'baostock': 0.0,   # 基本面数据（日终）
+            'tushare': 0.0,    # 财务数据（需 Token）
+            'csv': 0.0,        # 离线兜底
         }
-        self.health_status = {name: True for name in self.sources}
+
+        # 健康状态管理
+        self.health_status: Dict[str, HealthStatus] = {}
+        for name in self.sources:
+            self.health_status[name] = HealthStatus(
+                is_healthy=True,
+                success_rate=1.0,
+                avg_latency_ms=0,
+                last_failure=None,
+                consecutive_failures=0
+            )
+
+        # 熔断器配置
+        self.circuit_breakers: Dict[str, CircuitBreaker] = {
+            name: CircuitBreaker(
+                failure_threshold=10,      # 10次失败后熔断
+                recovery_timeout=300,      # 5分钟后尝试恢复
+                half_open_max_calls=3      # 半开状态最多3次试探
+            )
+            for name in self.sources
+        }
+
+        # 并发控制
+        self.semaphore = asyncio.Semaphore(3)  # 最多3个数据源并发
 
     async def fetch_quotes(self, symbols: List[str]) -> Dict[str, Quote]:
-        """多源聚合获取行情，自动故障转移"""
+        """多源聚合获取行情，智能故障转移"""
         results = {}
-        active_sources = self._get_active_sources()
+        failed_symbols = set(symbols)
 
-        for symbol in symbols:
-            for source_name in active_sources:
+        # 获取按权重排序的可用数据源
+        active_sources = self._get_active_sources_by_weight()
+
+        for source_name in active_sources:
+            if not failed_symbols:
+                break
+
+            # 检查熔断器状态
+            cb = self.circuit_breakers[source_name]
+            if cb.state == CircuitState.OPEN:
+                continue
+
+            async with self.semaphore:  # 并发控制
                 try:
-                    quote = await self.sources[source_name].fetch(symbol)
-                    if quote:
-                        results[symbol] = quote
-                        break
+                    # 批量获取（最大50只/批次）
+                    batch_size = 50
+                    source_results = {}
+
+                    for i in range(0, len(failed_symbols), batch_size):
+                        batch = list(failed_symbols)[i:i+batch_size]
+                        batch_results = await self.sources[source_name].fetch_batch(batch)
+                        source_results.update(batch_results)
+
+                    # 数据质量评估
+                    for symbol, quote in source_results.items():
+                        if self._validate_quote(quote):
+                            results[symbol] = quote
+                            failed_symbols.discard(symbol)
+
+                    # 记录成功
+                    self._record_success(source_name, len(source_results))
+                    cb.record_success()
+
                 except Exception as e:
-                    self._mark_unhealthy(source_name)
-                    continue
+                    # 记录失败
+                    self._record_failure(source_name, str(e))
+                    cb.record_failure()
+
+        # 对未获取到的股票使用缓存数据
+        for symbol in failed_symbols:
+            cached = await self._get_cached_quote(symbol)
+            if cached:
+                results[symbol] = cached
 
         return results
+
+    def _get_active_sources_by_weight(self) -> List[str]:
+        """按权重排序获取可用数据源"""
+        active = []
+        for name, weight in sorted(self.weights.items(), key=lambda x: -x[1]):
+            if weight > 0 and self.health_status[name].is_healthy:
+                # 检查熔断器
+                if self.circuit_breakers[name].state != CircuitState.OPEN:
+                    active.append(name)
+        return active
+
+    def _validate_quote(self, quote: Quote) -> bool:
+        """数据质量验证"""
+        # 价格范围检查
+        if quote.price <= 0 or quote.price > 100000:
+            return False
+        # 涨跌幅检查（A股 ±10%，创业板 ±20%）
+        if abs(quote.change_percent) > 20:
+            return False
+        # 成交量检查
+        if quote.volume < 0:
+            return False
+        return True
+
+    async def _dynamic_weight_adjustment(self):
+        """动态权重调整（每5分钟执行）"""
+        for name, status in self.health_status.items():
+            if name == 'csv':  # 离线源不参与调整
+                continue
+
+            # 基于成功率和延迟调整权重
+            success_weight = status.success_rate
+            latency_weight = 1.0 / (1 + status.avg_latency_ms / 100)
+
+            new_weight = (success_weight * 0.7 + latency_weight * 0.3)
+
+            # 平滑过渡
+            old_weight = self.weights[name]
+            self.weights[name] = old_weight * 0.8 + new_weight * 0.2
+
+        # 归一化
+        total = sum(w for w in self.weights.values() if w > 0)
+        if total > 0:
+            for name in self.weights:
+                if self.weights[name] > 0:
+                    self.weights[name] /= total
 ```
 
-#### 数据源分类
+#### 数据源分类与用途
 
-| 类别 | 数据源 | 特点 | 用途 |
-|------|--------|------|------|
-| **实时行情** | 新浪财经 | 速度快、稳定 | 主要实时数据 |
-| | 腾讯财经 | 备用 | failover |
-| | 东方财富 | 数据全 | 补充数据 |
-| **历史数据** | AkShare | 免费、Python 友好 | 历史行情、技术指标 |
-| | Baostock | 免费、长期历史 | 基本面数据 |
-| **财务数据** | Tushare | 专业（需 Token）| 财务报表、公告 |
-| **离线/测试** | CSV | 本地文件 | 开发调试、回测 |
+| 类别 | 数据源 | 特点 | 用途 | 默认权重 |
+|------|--------|------|------|---------|
+| **实时主源** | 新浪财经 | 速度快、稳定性高 | 主要实时行情 | 40% |
+| **实时备源** | 腾讯财经 | 速度快、数据格式一致 | 实时 failover | 35% |
+| **实时补充** | 东方财富 | 数据全面、含板块信息 | 补充/校验 | 25% |
+| **历史数据** | AkShare | Python友好、免费 | 历史K线、技术指标 | 按需启用 |
+| **基本面** | Baostock | 长期历史数据 | 基本面分析、回测 | 日终采集 |
+| **财务数据** | Tushare | 专业（需Token）| 财务报表、公告 | 按需启用 |
+| **离线兜底** | CSV | 本地文件 | 无网络/测试环境 | 0% |
 
-#### 熔断降级策略
+#### 熔断器完整实现（复刻 v0.9）
 
 ```python
-class CircuitBreaker:
-    """熔断器 - 检测数据源健康状态"""
+from enum import Enum
 
-    def __init__(self, failure_threshold=5, recovery_timeout=60):
-        self.failure_count = {}
+class CircuitState(Enum):
+    CLOSED = "closed"       # 正常状态
+    OPEN = "open"          # 熔断状态
+    HALF_OPEN = "half_open" # 半开状态（试探恢复）
+
+class CircuitBreaker:
+    """熔断器 - 复刻 v0.9 完整机制"""
+
+    def __init__(self, failure_threshold: int = 10, recovery_timeout: int = 300,
+                 half_open_max_calls: int = 3):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
-        self.last_failure_time = {}
+        self.half_open_max_calls = half_open_max_calls
 
-    def record_failure(self, source_name: str):
-        self.failure_count[source_name] = self.failure_count.get(source_name, 0) + 1
-        self.last_failure_time[source_name] = time.time()
+        self.state = CircuitState.CLOSED
+        self.failure_count = 0
+        self.success_count = 0
+        self.last_failure_time = None
+        self.half_open_calls = 0
 
-    def is_healthy(self, source_name: str) -> bool:
-        if self.failure_count.get(source_name, 0) >= self.failure_threshold:
+    def record_success(self):
+        """记录成功调用"""
+        if self.state == CircuitState.HALF_OPEN:
+            self.success_count += 1
+            if self.success_count >= self.half_open_max_calls:
+                # 恢复成功，关闭熔断
+                self.state = CircuitState.CLOSED
+                self.failure_count = 0
+                self.success_count = 0
+                self.half_open_calls = 0
+        else:
+            self.failure_count = max(0, self.failure_count - 1)
+
+    def record_failure(self):
+        """记录失败调用"""
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+
+        if self.state == CircuitState.HALF_OPEN:
+            # 半开状态失败，立即重新熔断
+            self.state = CircuitState.OPEN
+        elif self.failure_count >= self.failure_threshold:
+            # 达到阈值，开启熔断
+            self.state = CircuitState.OPEN
+
+    def can_execute(self) -> bool:
+        """检查是否允许执行"""
+        if self.state == CircuitState.CLOSED:
+            return True
+
+        if self.state == CircuitState.OPEN:
             # 检查是否超过恢复时间
-            last_fail = self.last_failure_time.get(source_name, 0)
-            if time.time() - last_fail < self.recovery_timeout:
-                return False
-            # 重置计数，尝试恢复
-            self.failure_count[source_name] = 0
-        return True
+            if time.time() - self.last_failure_time >= self.recovery_timeout:
+                # 进入半开状态
+                self.state = CircuitState.HALF_OPEN
+                self.half_open_calls = 0
+                self.success_count = 0
+                return True
+            return False
+
+        if self.state == CircuitState.HALF_OPEN:
+            # 限制半开状态的调用次数
+            if self.half_open_calls < self.half_open_max_calls:
+                self.half_open_calls += 1
+                return True
+            return False
+
+        return False
+
+    @property
+    def is_healthy(self) -> bool:
+        return self.state != CircuitState.OPEN
+```
+
+#### 分层采集策略
+
+```python
+class CollectionScheduler:
+    """分层采集调度器 - 复刻 v0.9"""
+
+    def __init__(self):
+        self.scheduler = AsyncIOScheduler()
+
+        # 高频层：持仓+关注的股票（约20-50只）
+        self.scheduler.add_job(
+            self._collect_high_frequency,
+            'interval',
+            seconds=10,
+            id='high_freq_collection'
+        )
+
+        # 中频层：观察列表股票（约100只）
+        self.scheduler.add_job(
+            self._collect_medium_frequency,
+            'interval',
+            seconds=60,
+            id='medium_freq_collection'
+        )
+
+        # 低频层：全市场股票（日终）
+        self.scheduler.add_job(
+            self._collect_low_frequency,
+            'cron',
+            hour=15, minute=30,
+            id='daily_collection'
+        )
+
+        # 历史数据更新（每日收盘后）
+        self.scheduler.add_job(
+            self._update_historical_data,
+            'cron',
+            hour=16, minute=0,
+            id='historical_update'
+        )
+
+    async def _collect_high_frequency(self):
+        """高频采集：持仓股票"""
+        symbols = await self._get_watchlist_symbols()  # 持仓+关注
+        quotes = await self.router.fetch_quotes(symbols)
+        await self._update_memory_cache(quotes)
+        await self._broadcast_to_websocket(quotes)
+
+    async def _collect_medium_frequency(self):
+        """中频采集：观察列表"""
+        symbols = await self._get_observation_symbols()
+        quotes = await self.router.fetch_quotes(symbols)
+        await self._update_sqlite_cache(quotes)
+
+    async def _collect_low_frequency(self):
+        """低频采集：全市场（收盘后）"""
+        symbols = await self._get_all_market_symbols()
+        quotes = await self.router.fetch_quotes(symbols)
+        await self._update_sqlite_cache(quotes, ttl=86400)  # 24小时
+
+    async def _update_historical_data(self):
+        """更新历史数据"""
+        # 使用 Baostock/Tushare 获取当日K线
+        for source in ['baostock', 'tushare']:
+            try:
+                await self.sources[source].update_daily_kline()
+            except Exception as e:
+                logger.warning(f"{source} 历史数据更新失败: {e}")
+```
+
+#### 三层缓存架构
+
+```python
+class DataCacheManager:
+    """三层缓存管理器"""
+
+    def __init__(self):
+        # L1: 内存缓存（热数据）
+        self.memory_cache: Dict[str, CachedQuote] = {}
+        self.memory_ttl = 10  # 10秒
+
+        # L2: SQLite 本地缓存（温数据）
+        self.sqlite_ttl = 300  # 5分钟
+
+        # L3: 远程数据源（冷数据）
+        # 由 DataSourceRouter 管理
+
+    async def get_quote(self, symbol: str) -> Optional[Quote]:
+        """三级缓存查询"""
+        # 1. 查内存缓存
+        if symbol in self.memory_cache:
+            cached = self.memory_cache[symbol]
+            if cached.is_valid():
+                return cached.quote
+
+        # 2. 查 SQLite 缓存
+        quote = await self._query_sqlite_cache(symbol)
+        if quote:
+            # 回填内存缓存
+            self.memory_cache[symbol] = CachedQuote(quote, ttl=self.memory_ttl)
+            return quote
+
+        # 3. 从数据源获取
+        return None
+
+    async def set_quote(self, symbol: str, quote: Quote, level: str = "memory"):
+        """写入缓存"""
+        if level in ["memory", "all"]:
+            self.memory_cache[symbol] = CachedQuote(quote, ttl=self.memory_ttl)
+
+        if level in ["sqlite", "all"]:
+            await self._save_to_sqlite(symbol, quote)
+```
+
+#### 数据质量评估
+
+```python
+class DataQualityEngine:
+    """数据质量评估引擎"""
+
+    def evaluate(self, quotes: Dict[str, Quote]) -> Dict[str, QualityScore]:
+        """评估数据质量"""
+        scores = {}
+
+        for symbol, quote in quotes.items():
+            score = QualityScore()
+
+            # 1. 时效性（30%）
+            data_age = time.time() - quote.timestamp.timestamp()
+            score.freshness = max(0, 1 - data_age / 60)  # 60秒内满分
+
+            # 2. 完整性（30%）
+            required_fields = ['price', 'volume', 'change_percent']
+            score.completeness = sum(1 for f in required_fields if getattr(quote, f)) / len(required_fields)
+
+            # 3. 合理性（40%）
+            checks = [
+                0 < quote.price < 100000,
+                abs(quote.change_percent) <= 20,
+                quote.volume >= 0,
+                quote.high >= quote.low >= 0
+            ]
+            score.reasonableness = sum(checks) / len(checks)
+
+            # 综合得分
+            score.total = (
+                score.freshness * 0.3 +
+                score.completeness * 0.3 +
+                score.reasonableness * 0.4
+            ) * 100
+
+            scores[symbol] = score
+
+        return scores
 ```
 
 ---
@@ -476,47 +1064,262 @@ export const useMarketStore = defineStore('market', {
    - 更新持仓和现金
    - 记录交易历史
 
-4. 持久化到 SQLite
-   - trades 表：插入交易记录
-   - positions 表：更新持仓
-   - agents 表：更新当前资金
+4. **事务包裹执行**（保证原子性）
+   ```python
+   async with self.db.transaction():  # BEGIN TRANSACTION
+       # 4.1 插入交易记录
+       await self.db.execute(
+           "INSERT INTO trades (id, agent_id, symbol, action, quantity, price, realized_pnl, timestamp) VALUES (...)",
+           trade_data
+       )
+       # 4.2 更新持仓（买入新增/卖出减少）
+       await self.update_position(agent_id, symbol, quantity, action, avg_price)
+       # 4.3 更新现金余额
+       await self.db.execute(
+           "UPDATE agents SET current_capital = current_capital - ? WHERE id = ?",
+           (trade_amount, agent_id)
+       )
+       # 4.4 更新收益指标
+       await self.portfolio_service.update_metrics(agent_id)
+   # COMMIT - 全部成功或全部回滚
+   ```
 
 5. 返回结果给前端
    {success: true, trade_id, realized_pnl}
+
+**并发控制**：SQLite 单文件不支持高并发写，使用 `aiosqlite` + `asyncio.Lock` 保护关键写操作：
+```python
+class TradingEngine:
+    def __init__(self):
+        self._trade_lock = asyncio.Lock()  # 保护交易执行
+
+    async def execute_trade(self, trade: Trade):
+        async with self._trade_lock:  # 串化交易执行
+            async with self.db.transaction():
+                # 执行交易...
 ```
 
 ### 5.3 AI 决策流程
 
+#### 5.3.1 决策触发机制
+
+| 触发方式 | 说明 | 频率控制 |
+|---------|------|---------|
+| 定时触发 | APScheduler 按激励档位调度 | 标准60min/积极30min/激进20min |
+| 手动触发 | 用户点击"获取决策" | 无限制，但受 Token 预算约束 |
+| 事件触发 | 重大新闻/行情异动（可选）| Phase 1.3 实现 |
+
+#### 5.3.2 AI 决策上下文构建
+
+```python
+class DecisionContext:
+    """AI 决策上下文 - 控制在 4000 tokens 以内"""
+
+    # 1. 系统角色（固定，~500 tokens）
+    system_prompt: str = """
+    你是AI股票交易员，严格遵循以下原则：
+    - 只交易用户指定的市场范围
+    - 严格遵守仓位限制和止损纪律
+    - 基于数据理性分析，不情绪化决策
+    """
+
+    # 2. 策略文档（创建时生成，~800 tokens）
+    strategy: Dict = {
+        "risk_tolerance": "稳健",           # 保守/稳健/激进/极度
+        "sectors": ["科技", "消费"],        # 关注板块
+        "holding_period": "中期",           # 超短/短/中/长
+        "position_limit": "单股不超过30%",  # 仓位控制
+        "stop_loss": "8%止损",              # 止损纪律
+        "market_scope": "主板+创业板"       # 交易范围
+    }
+
+    # 3. 当前持仓（动态，~300 tokens）
+    portfolio: Dict = {
+        "cash": 500000,                     # 可用现金
+        "total_value": 550000,              # 总资产
+        "total_return": "+10%",             # 总收益率
+        "positions": [
+            {
+                "symbol": "000001.SZ",
+                "name": "平安银行",
+                "quantity": 1000,
+                "avg_cost": 12.5,
+                "current_price": 13.2,
+                "unrealized_pnl": "+5.6%"
+            }
+        ]
+    }
+
+    # 4. 市场数据（动态，~600 tokens）
+    market: Dict = {
+        "watchlist": [
+            {"symbol": "000001.SZ", "price": 13.2, "change": "+1.2%", "volume": "15.2万手"},
+            {"symbol": "000002.SZ", "price": 25.8, "change": "-0.5%", "volume": "8.5万手"}
+        ],
+        "market_overview": {
+            "shanghai_index": {"price": 3050, "change": "+0.3%"},
+            "shenzhen_index": {"price": 9850, "change": "+0.1%"},
+            "market_sentiment": "震荡整理"    # 从新闻/数据计算
+        },
+        "hot_sectors": ["人工智能", "新能源"],  # 资金流向
+        "news_highlights": [                  # 重要新闻摘要（Phase 1.3）
+            "央行降准0.5个百分点",
+            "新能源补贴政策延续"
+        ]
+    }
+
+    # 5. 历史决策（最近3次，~400 tokens）
+    recent_decisions: List[Dict] = [
+        {
+            "timestamp": "2026-03-09T10:30:00",
+            "action": "buy",
+            "symbol": "000001.SZ",
+            "quantity": 500,
+            "reason": "银行股估值修复，技术面突破"
+        }
+    ]
+
+    # 6. 当前时间信息（~100 tokens）
+    context_info: Dict = {
+        "current_time": "2026-03-09T14:30:00",
+        "is_trading_time": True,
+        "time_to_market_close": "30分钟",
+        "trading_day_count": 15   # 已运行交易日数
+    }
 ```
-1. 定时触发（或手动触发）
-   Scheduler / 用户点击"获取决策"
+
+#### 5.3.3 Token 管理策略
+
+```python
+class TokenBudgetManager:
+    """Token 预算管理 - 确保总 tokens 控制在限制内"""
+
+    TOKEN_LIMITS = {
+        "deepseek-chat": 4000,      # 常规上下文
+        "deepseek-coder": 8000,     # 长上下文（如有）
+        "default": 4000
+    }
+
+    def optimize_context(self, context: DecisionContext, model: str) -> Dict:
+        """根据模型限制优化上下文"""
+        limit = self.TOKEN_LIMITS.get(model, 4000)
+        estimated = self._estimate_tokens(context)
+
+        if estimated <= limit:
+            return context
+
+        # 逐层截断，保留核心信息
+        strategies = [
+            # 1. 截断历史决策（3次 -> 2次 -> 1次 -> 0次）
+            lambda ctx: ctx.recent_decisions[:-1] if len(ctx.recent_decisions) > 0 else ctx,
+            # 2. 精简观察列表（保留前5只）
+            lambda ctx: ctx.market["watchlist"][:5],
+            # 3. 移除新闻摘要
+            lambda ctx: ctx.market.pop("news_highlights", None),
+            # 4. 截断策略文档详细描述
+            lambda ctx: {k: v for k, v in ctx.strategy.items() if k in ["risk_tolerance", "position_limit", "stop_loss"]}
+        ]
+
+        for strategy in strategies:
+            context = strategy(context)
+            if self._estimate_tokens(context) <= limit:
+                break
+
+        return context
+```
+
+#### 5.3.4 决策缓存机制
+
+```python
+class DecisionCache:
+    """决策缓存 - 减少重复 API 调用"""
+
+    def __init__(self):
+        self._cache: Dict[str, CachedDecision] = {}
+        self._ttl_seconds = 300  # 5分钟默认TTL
+
+    def _make_cache_key(self, agent_id: str, market_snapshot: Dict) -> str:
+        """生成缓存 key"""
+        # 关键市场数据哈希
+        key_data = {
+            "agent_id": agent_id,
+            "market_prices": {s["symbol"]: s["price"] for s in market_snapshot.get("watchlist", [])},
+            "timestamp": int(time.time() / 60) * 60  # 按分钟取整
+        }
+        return hashlib.md5(json.dumps(key_data, sort_keys=True).encode()).hexdigest()
+
+    def get(self, agent_id: str, market_snapshot: Dict) -> Optional[Decision]:
+        """获取缓存决策"""
+        key = self._make_cache_key(agent_id, market_snapshot)
+        cached = self._cache.get(key)
+
+        if cached and cached.is_valid():
+            # 检查市场变化是否过大（>1% 则失效）
+            if self._market_changed_little(cached.market_snapshot, market_snapshot):
+                return cached.decision
+
+        return None
+
+    def set(self, agent_id: str, market_snapshot: Dict, decision: Decision):
+        """缓存决策结果"""
+        key = self._make_cache_key(agent_id, market_snapshot)
+        self._cache[key] = CachedDecision(
+            decision=decision,
+            market_snapshot=market_snapshot,
+            expires_at=time.time() + self._ttl_seconds
+        )
+```
+
+#### 5.3.5 决策执行流程
+
+```
+1. 触发决策
+   └─▶ 检查 Token 日预算（是否超标）
+   └─▶ 检查缓存（是否存在有效缓存）
 
 2. 构建上下文
-   - 当前持仓（Portfolio）
-   - 策略文档（Strategy，五维度配置）
-   - 市场数据（实时行情、新闻）
+   └─▶ 查询当前持仓
+   └─▶ 查询策略配置
+   └─▶ 查询实时行情
+   └─▶ 组装上下文对象
+   └─▶ Token 优化（如需截断）
 
 3. 调用 AI 适配器
-   ai_adapter.decide(agent, context)
+   └─▶ 组装 Prompt（系统+策略+数据+历史）
+   └─▶ 异步调用 LLM API
+   └─▶ 超时/重试/熔断处理
+   └─▶ 解析决策结果
 
-   3.1 组装 Prompt
-       - 系统 Prompt（角色设定）
-       - 策略 Prompt（用户五维度配置）
-       - 数据 Prompt（当前市场数据）
+4. 决策结果处理
+   └─▶ 记录 Token 消耗
+   └─▶ 缓存决策结果
+   └─▶ 前端展示"内心戏"
+   └─▶ 用户确认 / 自动执行（按档位）
 
-   3.2 调用 LLM API
-       - DeepSeek / 通义 / Kimi / GLM
-       - 异步调用，超时处理
+5. 执行交易（如用户确认）
+   └─▶ 调用 TradingEngine.execute_trade()
+```
 
-   3.3 解析决策结果
-       - action: buy/sell/hold/watch
-       - confidence: 0-1
-       - reason: 决策理由
-       - suggested_position_size: 建议仓位
+#### 5.3.6 决策输出格式
 
-4. 返回决策结果
-   - 前端展示"内心戏"（决策理由）
-   - 用户确认后执行交易
+```python
+class Decision(BaseModel):
+    """AI 决策结果"""
+
+    action: Literal["buy", "sell", "hold", "watch"]
+    symbol: Optional[str]          # 目标股票代码（buy/sell时必填）
+    quantity: Optional[int]        # 建议数量
+    confidence: float              # 置信度 0-1
+    reason: str                    # 决策理由（内心戏展示）
+    analysis: str                  # 详细分析（可选展开）
+    risk_assessment: str           # 风险评估
+    suggested_position_size: str   # 建议仓位占比
+
+    # 元数据
+    input_tokens: int              # 输入 token 数
+    output_tokens: int             # 输出 token 数
+    cost: Decimal                  # API 调用成本
+    latency_ms: int                # 响应延迟
 ```
 
 ---
