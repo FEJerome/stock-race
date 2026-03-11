@@ -93,6 +93,56 @@
       --radius-full: 9999px;
     }
 
+    /* Light Theme */
+    .light-theme {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --bg-tertiary: #e2e8f0;
+
+      --surface-primary: #ffffff;
+      --surface-secondary: #f8fafc;
+      --surface-elevated: #ffffff;
+      --surface-hover: #f1f5f9;
+
+      --glass-bg: rgba(255, 255, 255, 0.9);
+      --glass-border: rgba(0, 0, 0, 0.08);
+
+      --up-primary: #059669;
+      --up-secondary: #047857;
+      --up-glow: rgba(5, 150, 105, 0.3);
+      --up-bg: rgba(5, 150, 105, 0.12);
+
+      --down-primary: #dc2626;
+      --down-secondary: #b91c1c;
+      --down-glow: rgba(220, 38, 38, 0.3);
+      --down-bg: rgba(220, 38, 38, 0.12);
+
+      --neutral-primary: #64748b;
+      --neutral-secondary: #94a3b8;
+      --neutral-muted: #cbd5e1;
+
+      --accent-cyan: #0891b2;
+      --accent-cyan-glow: rgba(8, 145, 178, 0.3);
+      --accent-cyan-bg: rgba(8, 145, 178, 0.12);
+
+      --accent-gold: #b45309;
+      --accent-gold-light: #d97706;
+
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --text-disabled: #cbd5e1;
+
+      --border-primary: rgba(0, 0, 0, 0.1);
+      --border-secondary: rgba(0, 0, 0, 0.06);
+      --border-accent: rgba(8, 145, 178, 0.3);
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+      --shadow-glow-cyan: 0 0 20px rgba(8, 145, 178, 0.2);
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -146,6 +196,62 @@
       gap: 4px;
       cursor: help;
       border-bottom: 1px dashed var(--text-muted);
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .light-theme .modal-overlay {
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .modal-container {
+      background: var(--surface-primary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-primary);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-primary);
+      display: flex;
+      justify-content: flex-end;
     }
 
     /* Typography */
@@ -584,6 +690,10 @@
       background: var(--surface-hover);
     }
 
+    .sort-active {
+      color: var(--accent-cyan) !important;
+    }
+
     /* Chart containers */
     .chart-container {
       background: var(--surface-primary);
@@ -635,6 +745,501 @@
       opacity: 0;
       transform: translateX(-20px);
     }
+
+    /* Create Agent Modal Styles */
+    .create-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 20px;
+    }
+
+    .light-theme .create-modal-overlay {
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    .create-modal {
+      background: var(--surface-primary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .create-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-primary);
+    }
+
+    .create-modal-header h2 {
+      margin: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--neutral-muted);
+      transition: all 0.3s;
+    }
+
+    .step-dot.active {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan-glow);
+    }
+
+    .create-modal-body {
+      padding: 24px;
+    }
+
+    /* Wizard Styles */
+    .wizard-welcome {
+      text-align: center;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--accent-cyan-bg);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-lg);
+    }
+
+    .wizard-welcome h3 {
+      margin: 0 0 8px;
+      color: var(--accent-cyan);
+    }
+
+    .wizard-welcome p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .dimension-section {
+      margin-bottom: 24px;
+    }
+
+    .dimension-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .dimension-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .dimension-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .dimension-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: 38px;
+      margin-bottom: 12px;
+    }
+
+    /* Preset Cards */
+    .preset-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .preset-card {
+      border: 2px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-card:hover {
+      border-color: var(--border-accent);
+    }
+
+    .preset-card.active {
+      border-color: var(--accent-cyan);
+      background: var(--accent-cyan-bg);
+    }
+
+    .preset-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .preset-name {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .preset-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Radio/Checkbox Cards */
+    .option-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .option-card {
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .option-card:hover {
+      border-color: var(--border-accent);
+    }
+
+    .option-card.active {
+      border-color: var(--accent-cyan);
+      background: var(--accent-cyan-bg);
+    }
+
+    .option-card input {
+      display: none;
+    }
+
+    .option-icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    .option-text {
+      font-size: 13px;
+      font-weight: 500;
+      display: block;
+    }
+
+    .option-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Sector Tags */
+    .sector-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .sector-tag {
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+    }
+
+    .sector-tag:hover {
+      border-color: var(--border-accent);
+    }
+
+    .sector-tag.active {
+      border-color: var(--accent-cyan);
+      background: var(--accent-cyan-bg);
+    }
+
+    .sector-tag input {
+      display: none;
+    }
+
+    .sector-icon {
+      font-size: 18px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Slider */
+    .slider-container {
+      padding: 8px 0;
+    }
+
+    .slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface-secondary);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 212, 255, 0.4);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      cursor: pointer;
+      border: none;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .slider-value {
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-secondary);
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .summary-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Modal Actions */
+    .create-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 20px 24px;
+      border-top: 1px solid var(--border-primary);
+    }
+
+    .btn-prev {
+      padding: 10px 20px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-prev:hover {
+      border-color: var(--text-muted);
+      color: var(--text-primary);
+    }
+
+    .btn-next {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-cyan));
+      border: none;
+      border-radius: var(--radius-md);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-next:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-cyan-glow);
+    }
+
+    .btn-next:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-create {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--up-primary), #00ff9d);
+      border: none;
+      border-radius: var(--radius-md);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-create:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--up-glow);
+    }
+
+    /* Independence Notice */
+    .independence-notice {
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Granularity Tabs */
+    .granularity-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 8px;
+      background: var(--surface-secondary);
+      border: 2px solid var(--border-primary);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .granularity-tab:hover {
+      border-color: var(--border-accent);
+    }
+
+    .granularity-tab.active {
+      border-color: var(--accent-cyan);
+      background: var(--accent-cyan-bg);
+    }
+
+    .granularity-tab span:first-child {
+      font-size: 20px;
+    }
+
+    .granularity-tab span:nth-child(2) {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .preset-cards,
+      .option-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .sector-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -657,9 +1262,13 @@
       <div class="nav-links">
         <span class="nav-link" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'">仪表盘</span>
         <span class="nav-link" :class="{ active: currentPage === 'agents' || currentPage === 'agent-detail' }" @click="currentPage = 'agents'">AI交易员</span>
-        <span class="nav-link" :class="{ active: currentPage === 'market' }" @click="currentPage = 'market'">行情中心</span>
+        <span class="nav-link" :class="{ active: currentPage === 'ranking' }" @click="currentPage = 'ranking'">🏆 排行榜</span>
+        <span class="nav-link" :class="{ active: currentPage === 'compliance' }" @click="currentPage = 'compliance'">合规声明</span>
       </div>
       <div class="nav-actions">
+        <button class="btn btn-secondary" @click="toggleTheme" style="margin-right: 8px;" title="切换主题">
+          <span>{{ isDark ? '☀️' : '🌙' }}</span>
+        </button>
         <button class="btn btn-secondary">
           <span>⚙️</span>
           <span>设置</span>
@@ -676,55 +1285,75 @@
         <!-- Metric Cards -->
         <div class="metric-grid">
           <div class="metric-card">
-            <div class="metric-label">总资产 (研究点数)</div>
-            <div class="metric-value">{{ formatPoints(animatedTotalPoints) }}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">今日收益</div>
-            <div class="metric-value text-up">+{{ animatedReturn.toFixed(2) }}%</div>
-          </div>
-          <div class="metric-card">
             <div class="metric-label">活跃AI数</div>
-            <div class="metric-value">{{ Math.round(animatedAgents) }}</div>
+            <div class="metric-value">{{ agents.length }}</div>
           </div>
           <div class="metric-card">
-            <div class="metric-label">胜率</div>
-            <div class="metric-value">{{ animatedWinRate.toFixed(1) }}%</div>
+            <div class="metric-label">平均收益率</div>
+            <div class="metric-value" :class="averageReturnRate >= 0 ? 'text-up' : 'text-down'">
+              {{ (averageReturnRate >= 0 ? '+' : '') + (averageReturnRate * 100).toFixed(2) }}%
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">策略验证次数</div>
+            <div class="metric-value">{{ totalDecisions }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">运行中AI数</div>
+            <div class="metric-value">{{ activeAgentsCount }}</div>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-          <!-- Chart -->
-          <div class="chart-container">
-            <h3 style="margin-bottom: 16px; font-size: 16px;">收益曲线</h3>
-            <canvas ref="chartCanvas" style="width: 100%; height: calc(100% - 40px);"></canvas>
+        <!-- AI Traders Comparison -->
+        <div class="card" style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; margin: 0;">AI 交易员策略对比</h3>
+            <div style="font-size: 11px; color: var(--text-muted); padding: 4px 8px; background: var(--surface-secondary); border-radius: 4px;"
+                 title="每个AI独立运行，点数仅作为该策略的研究基准">
+              ℹ️ 每个AI独立运行，策略表现互不干扰
+            </div>
           </div>
 
-          <!-- Top Agents -->
-          <div>
-            <h3 style="margin-bottom: 16px; font-size: 16px;">AI 交易员排行</h3>
-            <div v-for="(agent, index) in topAgents" :key="agent.id"
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+            <div v-for="(agent, index) in agents" :key="agent.id"
                  class="agent-card"
                  @click="viewAgent(agent.id)"
                  :style="{ animationDelay: (index * 0.1) + 's' }"
-                 style="animation: fadeIn 0.5s ease forwards; opacity: 0;">
-              <div class="agent-avatar" :style="{ background: 'linear-gradient(135deg, hsl(' + (index * 60) + ', 70%, 50%), hsl(' + (index * 60 + 40) + ', 70%, 40%))' }">
-                {{ ['🥇', '🥈', '🥉'][index] }}
+                 style="animation: fadeIn 0.5s ease forwards; opacity: 0; margin-bottom: 0;">
+              <div class="agent-avatar" :style="{ background: 'linear-gradient(135deg, hsl(' + (index * 90) + ', 70%, 50%), hsl(' + (index * 90 + 40) + ', 70%, 40%))' }">
+                {{ agent.name.charAt(0) }}
               </div>
-              <div class="agent-info">
-                <div class="agent-name">{{ agent.name }}</div>
-                <div class="agent-model">{{ agent.model }}</div>
+              <div class="agent-info" style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <div class="agent-name">{{ agent.name }}</div>
+                  <span :class="'badge badge-' + agent.badgeClass" style="font-size: 10px; padding: 2px 6px;">
+                    {{ agent.levelName }}
+                  </span>
+                  <span v-if="agent.status === 'active'" class="status-dot active" style="width: 6px; height: 6px;"></span>
+                </div>
+                <div class="agent-model" style="margin-bottom: 4px;">{{ agent.model }} · {{ agent.strategy.style }}</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <span v-for="sector in agent.strategy.sectors.slice(0, 2)" :key="sector"
+                        style="font-size: 11px; color: var(--accent-cyan); background: var(--accent-cyan-bg); padding: 2px 6px; border-radius: 4px;">
+                    {{ sector }}
+                  </span>
+                </div>
               </div>
-              <div class="agent-return">
+              <div class="agent-return" style="text-align: right;">
                 <div class="return-value" :class="agent.returnRate >= 0 ? 'text-up' : 'text-down'">
                   {{ (agent.returnRate >= 0 ? '+' : '') + (agent.returnRate * 100).toFixed(1) }}%
                 </div>
-                <span :class="'badge badge-' + agent.badgeClass" style="margin-top: 4px;">
-                  {{ agent.levelName }}
-                </span>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                  基准: {{ formatPoints(agent.initialPoints) }}
+                </div>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px; background: var(--surface-secondary); border-radius: 8px;">
+          ⚠️ 每个AI交易员独立运行，投资研究点数仅作为该策略的研究基准，不同AI的点数相互独立，不设用户级汇总账户
         </div>
       </div>
 
@@ -732,7 +1361,7 @@
       <div v-else-if="currentPage === 'agents'" class="container fade-enter">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
           <h1 class="page-title" style="margin-bottom: 0;">AI 交易员农场</h1>
-          <button class="btn btn-primary">
+          <button class="btn btn-primary" @click="showCreateModal = true">
             <span>+</span>
             <span>创建AI交易员</span>
           </button>
@@ -840,6 +1469,18 @@
               <span>策略配置</span>
             </h3>
 
+            <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+              <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">
+                ℹ️ <strong>AI仅执行用户预设规则</strong>，不提供选股建议。策略由用户自主配置，AI作为执行工具在虚拟环境中自动化运行。
+              </p>
+            </div>
+
+            <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+              <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">
+                🔒 <strong>AI独立运行</strong>：每个AI交易员独立运行，投资研究点数仅作为该策略的研究基准。不同AI之间的点数<strong style="color: var(--accent-gold);">相互独立、不可互通</strong>，收益数据仅供策略验证参考。
+              </p>
+            </div>
+
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px;">
               <div style="background: var(--surface-secondary); padding: 12px; border-radius: 8px;">
                 <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">投资风格</div>
@@ -875,10 +1516,6 @@
                 {{ selectedAgent.strategy.description }}
               </div>
             </div>
-
-            <button class="btn btn-secondary" style="margin-top: 16px; width: 100%;">
-              查看完整对话记录
-            </button>
           </div>
         </div>
 
@@ -886,7 +1523,7 @@
         <div class="card" style="margin-bottom: 24px;">
           <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
             <span>📊</span>
-            <span>决策时间线</span>
+            <span>策略执行记录</span>
           </h3>
 
           <div class="timeline">
@@ -910,7 +1547,7 @@
                   <div class="timeline-time">{{ decision.timestamp }}</div>
                 </div>
                 <div class="timeline-reason">
-                  <div style="font-size: 11px; color: var(--accent-cyan); margin-bottom: 4px;">AI 决策理由：</div>
+                  <div style="font-size: 11px; color: var(--accent-cyan); margin-bottom: 4px;">策略执行说明：</div>
                   {{ decision.reason }}
                 </div>
                 <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted);">
@@ -930,71 +1567,625 @@
         </div>
       </div>
 
-      <!-- Market Page -->
-      <div v-else-if="currentPage === 'market'" class="container fade-enter">
-        <h1 class="page-title">行情中心</h1>
+      <!-- Ranking Page -->
+      <div v-else-if="currentPage === 'ranking'" class="container fade-enter">
+        <h1 class="page-title">🏆 AI收益排行榜</h1>
 
-        <!-- Data Source Status -->
+        <!-- Ranking Description -->
+        <div class="card" style="margin-bottom: 24px; padding: 16px; background: var(--accent-cyan-bg); border-left: 4px solid var(--accent-cyan);">
+          <p style="font-size: 14px; color: var(--text-secondary); margin: 0 0 8px 0; line-height: 1.6;">
+            <strong style="color: var(--text-primary);">📊 排行榜说明：</strong>
+            本排行榜仅展示各AI交易员<strong style="color: var(--text-primary);">独立运行</strong>的收益表现对比。
+            数据仅用于<strong style="color: var(--accent-cyan);">策略验证</strong>，不构成任何投资建议。
+          </p>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.5;">
+            💡 采用T+1结算机制，收益数据于下一个交易日开盘后更新。排名默认按总收益率排序，辅以夏普比率评估风险调整后收益。
+          </p>
+        </div>
+
+        <!-- Time Period Tabs -->
         <div class="card" style="margin-bottom: 24px; padding: 16px;">
-          <div style="display: flex; align-items: center; gap: 24px; font-size: 14px;">
-            <span style="color: var(--text-muted);">数据源状态:</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="status-dot active"></span>
-              <span>Sina</span>
-              <span style="color: var(--up-primary); font-size: 12px;">健康</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <!-- Period Tabs -->
+            <div style="display: flex; gap: 8px;">
+              <button
+                v-for="period in rankingPeriods"
+                :key="period.value"
+                @click="currentRankingPeriod = period.value"
+                class="btn"
+                :class="currentRankingPeriod === period.value ? 'btn-primary' : 'btn-secondary'"
+                style="padding: 8px 16px; font-size: 14px;"
+              >
+                {{ period.label }}
+              </button>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="status-dot active"></span>
-              <span>腾讯</span>
-              <span style="color: var(--up-primary); font-size: 12px;">健康</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="status-dot" style="background: var(--accent-cyan);"></span>
-              <span>东方财富</span>
-              <span style="color: var(--accent-cyan); font-size: 12px;">正常</span>
+
+            <!-- Date Selector (for daily ranking) -->
+            <div v-if="currentRankingPeriod === 'daily'" style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 13px; color: var(--text-muted);">历史日期：</span>
+              <input
+                type="date"
+                v-model="selectedRankingDate"
+                :max="today"
+                style="padding: 6px 12px; border: 1px solid var(--border-primary); border-radius: 6px; background: var(--surface-primary); color: var(--text-primary); font-size: 13px;"
+              >
             </div>
           </div>
         </div>
 
-        <!-- Market Table -->
+        <!-- TOP 3 Podium -->
+        <div v-if="currentRankedAgents.length >= 3" class="podium-container" style="display: flex; justify-content: center; align-items: flex-end; gap: 16px; margin-bottom: 32px; padding: 24px;">
+          <!-- 2nd Place -->
+          <div class="podium-item" style="text-align: center;">
+            <div class="podium-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #c0c0c0, #e8e8e8); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 12px; box-shadow: 0 4px 12px rgba(192,192,192,0.4);">🥈</div>
+            <div style="font-weight: 600; color: var(--text-primary);">{{ currentRankedAgents[1].name }}</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ currentRankedAgents[1].levelName }}</div>
+            <div class="font-mono" :class="currentRankedAgents[1].returnRate >= 0 ? 'text-up' : 'text-down'" style="font-size: 18px; font-weight: 700; margin-top: 8px;">
+              {{ (currentRankedAgents[1].returnRate >= 0 ? '+' : '') + (currentRankedAgents[1].returnRate * 100).toFixed(2) }}%
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">夏普 {{ currentRankedAgents[1].sharpeRatio.toFixed(2) }}</div>
+            <div class="podium-base" style="width: 100px; height: 80px; background: linear-gradient(180deg, #c0c0c0, #a0a0a0); border-radius: 8px 8px 0 0; margin-top: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">2</div>
+          </div>
+
+          <!-- 1st Place -->
+          <div class="podium-item" style="text-align: center;">
+            <div class="podium-avatar" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ffed4a); display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 12px; box-shadow: 0 4px 16px rgba(255,215,0,0.5);">🥇</div>
+            <div style="font-weight: 600; color: var(--text-primary); font-size: 18px;">{{ currentRankedAgents[0].name }}</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ currentRankedAgents[0].levelName }}</div>
+            <div class="font-mono" :class="currentRankedAgents[0].returnRate >= 0 ? 'text-up' : 'text-down'" style="font-size: 24px; font-weight: 700; margin-top: 8px;">
+              {{ (currentRankedAgents[0].returnRate >= 0 ? '+' : '') + (currentRankedAgents[0].returnRate * 100).toFixed(2) }}%
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">夏普 {{ currentRankedAgents[0].sharpeRatio.toFixed(2) }}</div>
+            <div class="podium-base" style="width: 120px; height: 120px; background: linear-gradient(180deg, #ffd700, #daa520); border-radius: 8px 8px 0 0; margin-top: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 24px;">1</div>
+          </div>
+
+          <!-- 3rd Place -->
+          <div class="podium-item" style="text-align: center;">
+            <div class="podium-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #cd7f32, #daa520); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 12px; box-shadow: 0 4px 12px rgba(205,127,50,0.4);">🥉</div>
+            <div style="font-weight: 600; color: var(--text-primary);">{{ currentRankedAgents[2].name }}</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ currentRankedAgents[2].levelName }}</div>
+            <div class="font-mono" :class="currentRankedAgents[2].returnRate >= 0 ? 'text-up' : 'text-down'" style="font-size: 18px; font-weight: 700; margin-top: 8px;">
+              {{ (currentRankedAgents[2].returnRate >= 0 ? '+' : '') + (currentRankedAgents[2].returnRate * 100).toFixed(2) }}%
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">夏普 {{ currentRankedAgents[2].sharpeRatio.toFixed(2) }}</div>
+            <div class="podium-base" style="width: 100px; height: 60px; background: linear-gradient(180deg, #cd7f32, #a0522d); border-radius: 8px 8px 0 0; margin-top: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">3</div>
+          </div>
+        </div>
+
+        <!-- Ranking Table -->
         <div class="card" style="padding: 0; overflow: hidden;">
-          <table class="data-table">
+          <table class="data-table ranking-table">
             <thead>
               <tr>
-                <th>代码</th>
-                <th>名称</th>
-                <th style="text-align: right;">价格</th>
-                <th style="text-align: right;">涨跌</th>
-                <th style="text-align: right;">涨跌幅</th>
-                <th style="text-align: right;">成交量</th>
-                <th style="text-align: center;">趋势</th>
+                <th style="text-align: center; width: 60px;">排名</th>
+                <th>AI名称</th>
+                <th>职级</th>
+                <th style="text-align: right; cursor: pointer;" @click="sortBy = 'return'" :class="{ 'sort-active': sortBy === 'return' }">
+                  收益率 {{ sortBy === 'return' ? '▼' : '' }}
+                </th>
+                <th style="text-align: right; cursor: pointer;" @click="sortBy = 'sharpe'" :class="{ 'sort-active': sortBy === 'sharpe' }">
+                  夏普比率 {{ sortBy === 'sharpe' ? '▼' : '' }}
+                </th>
+                <th style="text-align: right; cursor: pointer;" @click="sortBy = 'drawdown'" :class="{ 'sort-active': sortBy === 'drawdown' }">
+                  最大回撤 {{ sortBy === 'drawdown' ? '▼' : '' }}
+                </th>
+                <th style="text-align: right; cursor: pointer;" @click="sortBy = 'winRate'" :class="{ 'sort-active': sortBy === 'winRate' }">
+                  胜率 {{ sortBy === 'winRate' ? '▼' : '' }}
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(stock, index) in market" :key="stock.symbol"
-                  :style="{ animationDelay: (index * 0.05) + 's' }"
-                  style="animation: fadeIn 0.3s ease forwards; opacity: 0;">
-                <td class="font-mono">{{ stock.symbol }}</td>
-                <td>{{ stock.name }}</td>
-                <td style="text-align: right;" class="font-mono">¥{{ stock.price.toFixed(2) }}</td>
-                <td style="text-align: right;" class="font-mono" :class="stock.change >= 0 ? 'text-up' : 'text-down'">
-                  {{ (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2) }}
-                </td>
-                <td style="text-align: right;" class="font-mono" :class="stock.changePercent >= 0 ? 'text-up' : 'text-down'">
-                  {{ (stock.changePercent >= 0 ? '+' : '') + stock.changePercent.toFixed(2) }}%
-                </td>
-                <td style="text-align: right;" class="font-mono">{{ (stock.volume / 10000).toFixed(0) }}万</td>
+              <tr v-for="(agent, index) in currentRankedAgents" :key="agent.id"
+                  :style="{ animationDelay: (index * 0.1) + 's' }"
+                  style="animation: fadeIn 0.5s ease forwards; opacity: 0;"
+                  :class="{ 'top3': index < 3 }">
                 <td style="text-align: center;">
-                  <span :style="{ color: stock.trend === 'up' ? 'var(--up-primary)' : stock.trend === 'down' ? 'var(--down-primary)' : 'var(--neutral-primary)', fontSize: '16px' }">
-                    {{ stock.trend === 'up' ? '↑' : stock.trend === 'down' ? '↓' : '→' }}
+                  <span v-if="index === 0" style="font-size: 20px;">🥇</span>
+                  <span v-else-if="index === 1" style="font-size: 20px;">🥈</span>
+                  <span v-else-if="index === 2" style="font-size: 20px;">🥉</span>
+                  <span v-else style="font-weight: 600; color: var(--text-muted);">{{ index + 1 }}</span>
+                </td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div :style="{ width: '32px', height: '32px', borderRadius: '50%', background: getAvatarColor(agent.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: '12px' }">
+                      {{ agent.name.charAt(0) }}
+                    </div>
+                    <span style="font-weight: 600;">{{ agent.name }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span :class="'badge badge-' + agent.badgeClass">{{ agent.levelName }}</span>
+                </td>
+                <td style="text-align: right;">
+                  <span class="font-mono" :class="agent.returnRate >= 0 ? 'text-up' : 'text-down'" style="font-weight: 600;">
+                    {{ (agent.returnRate >= 0 ? '+' : '') + (agent.returnRate * 100).toFixed(2) }}%
                   </span>
+                </td>
+                <td style="text-align: right;" class="font-mono" :class="agent.sharpeRatio >= 1 ? 'text-up' : agent.sharpeRatio >= 0 ? '' : 'text-down'">
+                  {{ agent.sharpeRatio.toFixed(2) }}
+                </td>
+                <td style="text-align: right;" class="font-mono text-down">
+                  {{ agent.maxDrawdown.toFixed(2) }}%
+                </td>
+                <td style="text-align: right;" class="font-mono">
+                  {{ (agent.winRate * 100).toFixed(1) }}%
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <!-- Ranking Legend -->
+        <div class="card" style="margin-top: 16px; padding: 16px;">
+          <div style="display: flex; gap: 24px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted);">
+            <div><strong style="color: var(--text-secondary);">夏普比率：</strong>风险调整后收益，>1优秀，>2卓越</div>
+            <div><strong style="color: var(--text-secondary);">最大回撤：</strong>峰值到谷底最大跌幅，越小越好</div>
+            <div><strong style="color: var(--text-secondary);">胜率：</strong>盈利交易占比</div>
+          </div>
+        </div>
+
+        <!-- Statistics Summary -->
+        <div class="card" style="margin-top: 24px; padding: 20px;">
+          <h3 style="margin-bottom: 16px; font-size: 16px;">📈 收益分布统计</h3>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; text-align: center;">
+            <div>
+              <div style="font-size: 32px; font-weight: 700; color: var(--up-primary);">{{ currentRankedAgents.filter(a => a.returnRate > 0).length }}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">盈利AI</div>
+            </div>
+            <div>
+              <div style="font-size: 32px; font-weight: 700; color: var(--down-primary);">{{ currentRankedAgents.filter(a => a.returnRate < 0).length }}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">亏损AI</div>
+            </div>
+            <div>
+              <div class="font-mono" style="font-size: 32px; font-weight: 700; color: var(--accent-cyan);">
+                {{ (currentRankedAgents.reduce((acc, a) => acc + a.returnRate, 0) / currentRankedAgents.length * 100).toFixed(2) }}%
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">平均收益率</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compliance Page -->
+      <div v-else-if="currentPage === 'compliance'" class="container fade-enter">
+        <h1 class="page-title">合规声明</h1>
+
+        <!-- Product Positioning -->
+        <div class="card" style="margin-bottom: 24px;">
+          <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>🎯</span>
+            <span>产品定位声明</span>
+          </h3>
+          <div style="background: var(--accent-cyan-bg); border-left: 4px solid var(--accent-cyan); padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 16px;">
+            <p style="font-size: 16px; font-weight: 600; color: var(--accent-cyan); margin-bottom: 8px;">
+              AI财商训练场 = 用户投资策略的AI沙盒试验环境
+            </p>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+              我们是"<strong style="color: var(--text-primary);">策略验证工具</strong>"，不是"<strong style="color: var(--text-primary);">投资服务提供者</strong>"。
+              用户投入的是"<strong style="color: var(--accent-cyan);">策略设计精力</strong>"，获得的是"<strong style="color: var(--accent-cyan);">策略验证数据</strong>"，全程无资金往来。
+            </p>
+          </div>
+        </div>
+
+        <!-- Sandbox Isolation -->
+        <div class="card" style="margin-bottom: 24px;">
+          <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>🔒</span>
+            <span>沙盒隔离机制</span>
+          </h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+            <div style="background: var(--surface-secondary); padding: 16px; border-radius: 8px;">
+              <div style="font-size: 14px; font-weight: 600; color: var(--up-primary); margin-bottom: 8px;">💰 资金隔离</div>
+              <div style="font-size: 13px; color: var(--text-secondary);">纯虚拟资金，完全隔离真实资金，用户可进行零风险试错</div>
+            </div>
+            <div style="background: var(--surface-secondary); padding: 16px; border-radius: 8px;">
+              <div style="font-size: 14px; font-weight: 600; color: var(--up-primary); margin-bottom: 8px;">📈 市场隔离</div>
+              <div style="font-size: 13px; color: var(--text-secondary);">仅模拟真实市场，不产生实际交易，不影响真实证券价格</div>
+            </div>
+            <div style="background: var(--surface-secondary); padding: 16px; border-radius: 8px;">
+              <div style="font-size: 14px; font-weight: 600; color: var(--up-primary); margin-bottom: 8px;">🔄 环境隔离</div>
+              <div style="font-size: 13px; color: var(--text-secondary);">每个AI交易策略独立运行，互不影响</div>
+            </div>
+            <div style="background: var(--surface-secondary); padding: 16px; border-radius: 8px;">
+              <div style="font-size: 14px; font-weight: 600; color: var(--up-primary); margin-bottom: 8px;">📊 数据隔离</div>
+              <div style="font-size: 13px; color: var(--text-secondary);">完整记录决策过程用于学习复盘，数据不出沙盒环境</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk Exclusions -->
+        <div class="card" style="margin-bottom: 24px;">
+          <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>❌</span>
+            <span>明确不存在的风险</span>
+          </h3>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">为避免误解，以下风险在本项目中<strong style="color: var(--text-primary);">绝对不存在</strong>：</p>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">虚拟货币可兑换</div>
+                <div style="font-size: 12px; color: var(--text-muted);">绝对不可兑换现金/实物</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">用户间交易转让</div>
+                <div style="font-size: 12px; color: var(--text-muted);">完全没有资金/点数转让功能</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">真实资金交易</div>
+                <div style="font-size: 12px; color: var(--text-muted);">纯虚拟环境，不涉及真实账户</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">跟单/反向跟单</div>
+                <div style="font-size: 12px; color: var(--text-muted);">平台不提供任何跟单功能</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">收益承诺</div>
+                <div style="font-size: 12px; color: var(--text-muted);">明确声明"胜率≈投骰子"</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">杠杆/T+0/做空</div>
+                <div style="font-size: 12px; color: var(--text-muted);">严格遵循A股规则</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">境外市场/加密货币</div>
+                <div style="font-size: 12px; color: var(--text-muted);">仅涉及A股主板/创业板/科创板</div>
+              </div>
+            </div>
+            <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--up-primary); font-weight: 600;">❌</span>
+              <div>
+                <div style="font-size: 13px; font-weight: 500;">代客理财</div>
+                <div style="font-size: 12px; color: var(--text-muted);">用户自主配置，AI仅执行</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan A Description -->
+        <div class="card" style="margin-bottom: 24px;">
+          <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>☁️</span>
+            <span>Plan A：网络服务版（Full 形态）</span>
+          </h3>
+          <div style="background: var(--surface-secondary); padding: 16px; border-radius: 8px;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">技术架构</div>
+                <div style="font-size: 14px; color: var(--accent-cyan);">微信小程序 + 云后端</div>
+              </div>
+              <div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">商业模式</div>
+                <div style="font-size: 14px; color: var(--accent-cyan);">订阅制收费</div>
+              </div>
+              <div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">用户感知</div>
+                <div style="font-size: 14px; color: var(--accent-cyan);">SaaS服务，开箱即用</div>
+              </div>
+            </div>
+            <div style="border-top: 1px solid var(--border-primary); padding-top: 16px;">
+              <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.6;">
+                <strong>说明：</strong>本演示展示的是 <strong style="color: var(--text-primary);">Plan A（网络服务版）</strong> 的用户界面和交互体验。
+                用户通过小程序使用服务，平台提供完整的技术基础设施和AI算力支持。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="card">
+          <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>⚠️</span>
+            <span>核心免责声明</span>
+          </h3>
+          <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); padding: 16px; border-radius: 8px;">
+            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 14px;">
+              本平台仅为用户提供<strong style="color: var(--text-primary);">策略验证工具</strong>，所有交易均在<strong style="color: var(--text-primary);">虚拟环境</strong>中进行，<strong style="color: var(--text-primary);">不涉及真实资金</strong>。
+              AI生成的任何内容仅供<strong style="color: var(--text-primary);">研究参考</strong>，<strong style="color: var(--down-primary);">不构成投资建议</strong>。
+              虚拟交易结果<strong style="color: var(--text-primary);">不代表</strong>真实市场收益。
+            </p>
+            <p style="color: var(--text-muted); font-size: 12px; margin-top: 12px;">
+              投资有风险，入市需谨慎。过往业绩不代表未来表现。
+            </p>
+          </div>
+        </div>
       </div>
     </main>
+
+    <!-- Product Statement Modal (First Visit) -->
+    <div v-if="showProductModal" class="modal-overlay">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2>🎯 欢迎使用 AI 财商训练场</h2>
+        </div>
+        <div class="modal-body">
+          <div style="background: var(--accent-cyan-bg); border-left: 4px solid var(--accent-cyan); padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+            <p style="font-size: 16px; font-weight: 600; color: var(--accent-cyan); margin-bottom: 8px;">
+              AI财商训练场 = 用户投资策略的AI沙盒试验环境
+            </p>
+          </div>
+
+          <h4 style="margin-bottom: 12px; color: var(--text-primary);">🔒 沙盒隔离机制</h4>
+          <ul style="color: var(--text-secondary); line-height: 1.8; margin-bottom: 20px; padding-left: 20px;">
+            <li><strong>资金隔离</strong>：纯虚拟资金，完全隔离真实资金</li>
+            <li><strong>市场隔离</strong>：仅模拟真实市场，不产生实际交易</li>
+            <li><strong>环境隔离</strong>：每个AI交易策略独立运行</li>
+            <li><strong>数据隔离</strong>：完整记录决策过程用于学习复盘</li>
+          </ul>
+
+          <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="color: var(--text-secondary); line-height: 1.6; font-size: 14px;">
+              <strong>核心声明：</strong>用户投入的是"<strong style="color: var(--text-primary);">策略设计精力</strong>"，获得的是"<strong style="color: var(--text-primary);">策略验证数据</strong>"，全程无资金往来。
+            </p>
+            <p style="color: var(--text-secondary); line-height: 1.6; font-size: 14px; margin-top: 8px;">
+              我们是"<strong style="color: var(--text-primary);">策略验证工具</strong>"，不是"<strong style="color: var(--down-primary);">投资服务提供者</strong>"。
+            </p>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <input type="checkbox" id="understand" v-model="productModalChecked" style="width: 18px; height: 18px;">
+            <label for="understand" style="color: var(--text-secondary); cursor: pointer;">我已阅读并理解以上内容</label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary" @click="showProductModal = false" :disabled="!productModalChecked">
+            进入演示
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Research Points Info Modal -->
+    <div v-if="showPointsInfo" class="modal-overlay" @click.self="showPointsInfo = false">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2>💰 投资研究点数说明</h2>
+          <button class="btn btn-secondary" @click="showPointsInfo = false" style="padding: 4px 8px;">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="background: var(--accent-cyan-bg); border-left: 4px solid var(--accent-cyan); padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 16px;">
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">
+              <strong>重要：</strong>投资研究点数<strong style="color: var(--text-primary);">仅属于该AI个体</strong>，作为该策略的<strong style="color: var(--text-primary);">研究基准</strong>。
+              不同AI的点数<strong style="color: var(--text-primary);">相互独立</strong>，不设用户级汇总账户。
+            </p>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr style="border-bottom: 1px solid var(--border-primary);">
+              <td style="padding: 12px 0; color: var(--text-muted); width: 80px;">归属</td>
+              <td style="padding: 12px 0; color: var(--text-primary);">仅属于该AI个体，作为策略回测基准</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-primary);">
+              <td style="padding: 12px 0; color: var(--text-muted);">性质</td>
+              <td style="padding: 12px 0; color: var(--text-primary);">纯虚拟交易资金，仅用于该AI的虚拟股票交易</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-primary);">
+              <td style="padding: 12px 0; color: var(--text-muted);">设置</td>
+              <td style="padding: 12px 0; color: var(--text-primary);">创建时任意指定（1万-10亿），仅作为该策略的研究基准</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-primary);">
+              <td style="padding: 12px 0; color: var(--text-muted);">独立性</td>
+              <td style="padding: 12px 0; color: var(--text-primary);">不同AI的点数相互独立，无汇总关系</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-primary);">
+              <td style="padding: 12px 0; color: var(--text-muted);">兑换</td>
+              <td style="padding: 12px 0; color: var(--down-primary); font-weight: 600;">完全不可兑换现金/实物</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; color: var(--text-muted);">互通</td>
+              <td style="padding: 12px 0; color: var(--text-primary);">与任何其他系统完全隔离</td>
+            </tr>
+          </table>
+
+          <div style="background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.3); padding: 12px; border-radius: 8px; margin-top: 16px;">
+            <p style="color: var(--up-primary); font-size: 13px; margin: 0;">
+              ✅ 用户可进行零风险试错，全程无资金往来
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create AI Agent Modal -->
+    <div v-if="showCreateModal" class="create-modal-overlay" @click.self="closeCreateModal">
+      <div class="create-modal">
+        <!-- Header -->
+        <div class="create-modal-header">
+          <h2>
+            <span>🤖</span>
+            <span v-if="createStep === 1">创建AI交易员</span>
+            <span v-else-if="createStep === 2">AI策略收集演示</span>
+            <span v-else>确认创建</span>
+          </h2>
+          <div class="step-indicator">
+            <div class="step-dot" :class="{ active: createStep >= 1 }"></div>
+            <div class="step-dot" :class="{ active: createStep >= 2 }"></div>
+            <div class="step-dot" :class="{ active: createStep >= 3 }"></div>
+          </div>
+          <button class="btn btn-secondary" @click="closeCreateModal" style="padding: 4px 8px; margin-left: 12px;">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div class="create-modal-body">
+          <!-- Step 1: Basic Info -->
+          <div v-if="createStep === 1">
+            <div class="wizard-welcome">
+              <h3>欢迎来到AI财商训练场</h3>
+              <p>您将通过3个步骤创建第一个AI交易员。每个AI独立运行，研究点数仅作为策略验证基准。</p>
+            </div>
+
+            <div class="form-group">
+              <label>AI名称 <span style="color: var(--down-primary);">*</span></label>
+              <input v-model="createForm.name" type="text" placeholder="给您的AI起个名字，如：保守策略一号" maxlength="20">
+            </div>
+
+            <div class="form-group">
+              <label>选择AI模型</label>
+              <select v-model="createForm.model">
+                <option value="kimi-k2-5">Kimi K2.5 - 长文本理解强</option>
+                <option value="deepseek-chat">DeepSeek Chat - 深度推理</option>
+                <option value="qwen-max">通义千问 Max - 中文优化</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>初始研究点数</label>
+              <select v-model.number="createForm.initialPoints">
+                <option value="100000">10万点（小额验证）</option>
+                <option value="500000">50万点（标准配置）</option>
+                <option value="1000000">100万点（完整验证）</option>
+                <option value="10000000">1000万点（压力测试）</option>
+              </select>
+              <div class="form-hint">仅作为该AI策略的研究基准，不同AI的点数相互独立</div>
+            </div>
+          </div>
+
+          <!-- Step 2: AI Strategy Collection Demo -->
+          <div v-if="createStep === 2">
+            <!-- Introduction -->
+            <div class="wizard-welcome">
+              <h3>🤖 AI对话式策略收集</h3>
+              <p>系统支持从明确指令到概念描述的多种策略表达。通过AI对话智能识别策略意图，确保在合规框架内执行。</p>
+            </div>
+
+            <!-- Granularity Tabs -->
+            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+              <button class="granularity-tab" :class="{ active: selectedGranularity === 'fine' }" @click="selectedGranularity = 'fine'">
+                <span>🎯</span>
+                <span>细力度</span>
+                <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">(用户明确指定)</span>
+              </button>
+              <button class="granularity-tab" :class="{ active: selectedGranularity === 'medium' }" @click="selectedGranularity = 'medium'">
+                <span>⚖️</span>
+                <span>中力度</span>
+                <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">(用户指定范围)</span>
+              </button>
+              <button class="granularity-tab" :class="{ active: selectedGranularity === 'coarse' }" @click="selectedGranularity = 'coarse'">
+                <span>🌊</span>
+                <span>粗力度</span>
+                <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">(概念性描述)</span>
+              </button>
+            </div>
+
+            <!-- Chat Demo -->
+            <div style="background: var(--surface-secondary); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px;">
+              <!-- User Message -->
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                <div style="background: var(--up-bg); border: 1px solid var(--up-primary); border-radius: 16px 16px 4px 16px; padding: 12px 16px; max-width: 80%;">
+                  <div style="font-size: 12px; color: var(--up-primary); margin-bottom: 4px;">👤 用户</div>
+                  <div style="color: var(--text-primary); font-size: 14px;">{{ currentExample.userInput }}</div>
+                </div>
+              </div>
+
+              <!-- AI Processing -->
+              <div style="display: flex; justify-content: flex-start; margin-bottom: 16px;">
+                <div style="background: var(--accent-cyan-bg); border: 1px solid var(--accent-cyan); border-radius: 16px 16px 16px 4px; padding: 12px 16px; max-width: 85%;">
+                  <div style="font-size: 12px; color: var(--accent-cyan); margin-bottom: 8px;">🤖 AI处理逻辑</div>
+                  <div v-for="(step, idx) in currentExample.aiProcess" :key="idx" style="color: var(--text-primary); font-size: 13px; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;">
+                    <span style="color: var(--accent-cyan);">{{ idx === currentExample.aiProcess.length - 1 ? '→' : '✓' }}</span>
+                    <span>{{ step }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI Follow-up (for medium/coarse) -->
+              <div v-if="currentExample.aiFollowUp" style="display: flex; justify-content: flex-start;">
+                <div style="background: var(--surface-primary); border: 1px dashed var(--border-accent); border-radius: 16px 16px 16px 4px; padding: 12px 16px; max-width: 85%;">
+                  <div style="font-size: 12px; color: var(--accent-gold); margin-bottom: 8px;">💬 AI追问/引导</div>
+                  <div style="color: var(--text-secondary); font-size: 13px;">{{ currentExample.aiFollowUp }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compliance Note -->
+            <div :style="{ background: selectedGranularity === 'fine' ? 'rgba(0, 208, 132, 0.1)' : selectedGranularity === 'medium' ? 'rgba(255, 193, 7, 0.1)' : 'rgba(255, 87, 87, 0.1)', border: '1px solid', borderColor: selectedGranularity === 'fine' ? 'var(--up-primary)' : selectedGranularity === 'medium' ? '#ffc107' : 'var(--down-primary)', borderRadius: 'var(--radius-md)', padding: '12px', marginBottom: '20px' }">
+              <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;" :style="{ color: selectedGranularity === 'fine' ? 'var(--up-primary)' : selectedGranularity === 'medium' ? '#ffc107' : 'var(--down-primary)' }">
+                {{ selectedGranularity === 'fine' ? '✅ 合规说明' : selectedGranularity === 'medium' ? '⚠️ 合规设计' : '🛡️ 风险规避' }}
+              </div>
+              <div style="font-size: 13px; color: var(--text-secondary);">{{ currentExample.complianceNote }}</div>
+            </div>
+
+            <!-- User Try Input -->
+            <div style="border-top: 1px solid var(--border-primary); padding-top: 16px;">
+              <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">💡 尝试输入您的策略描述：</div>
+              <div style="display: flex; gap: 8px;">
+                <input v-model="userStrategyInput" type="text" placeholder="例如：我想买新能源板块的龙头股..." style="flex: 1; padding: 10px 12px; background: var(--surface-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); color: var(--text-primary); font-size: 14px;">
+                <button @click="simulateStrategyParse" style="padding: 10px 16px; background: var(--accent-cyan); border: none; border-radius: var(--radius-md); color: white; font-size: 13px; cursor: pointer;">模拟解析</button>
+              </div>
+              <div v-if="parsedStrategy" style="margin-top: 12px; padding: 12px; background: var(--surface-secondary); border-radius: var(--radius-md); font-size: 13px;">
+                <div style="color: var(--text-muted); margin-bottom: 6px;">AI解析结果：</div>
+                <div style="color: var(--text-primary);">{{ parsedStrategy }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Summary & Confirm -->
+          <div v-if="createStep === 3">
+            <div class="wizard-welcome" style="background: rgba(0, 208, 132, 0.1); border-color: rgba(0, 208, 132, 0.3);">
+              <h3 style="color: var(--up-primary);">✓ 策略配置完成</h3>
+              <p>请确认以下配置，创建后AI将立即开始在虚拟环境中执行您的策略。</p>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-item">
+                <span class="summary-label">AI名称</span>
+                <span class="summary-value">{{ createForm.name }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">AI模型</span>
+                <span class="summary-value">{{ createForm.model }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">初始研究点数</span>
+                <span class="summary-value">{{ formatPoints(createForm.initialPoints) }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">策略收集方式</span>
+                <span class="summary-value"
+                      :style="{ color: selectedGranularity === 'fine' ? 'var(--up-primary)' : selectedGranularity === 'medium' ? '#ffc107' : 'var(--down-primary)' }"
+                >
+                  {{ selectedGranularity === 'fine' ? '细力度（明确指令）' : selectedGranularity === 'medium' ? '中力度（范围指定）' : '粗力度（概念描述→细化）' }}
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">策略描述</span>
+                <span class="summary-value" style="max-width: 60%; text-align: right;">{{ currentExample.userInput }}</span>
+              </div>
+            </div>
+
+            <div class="independence-notice">
+              <strong>🔒 独立性声明：</strong>该AI交易员将独立运行，研究点数仅作为该策略的研究基准，与其他AI互不影响、不可互通。虚拟交易结果不代表真实市场收益。
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="create-modal-actions">
+          <button v-if="createStep > 1" class="btn-prev" @click="createStep--">上一步</button>
+          <button v-if="createStep < 3" class="btn-next" @click="nextStep" :disabled="!canProceed">下一步</button>
+          <button v-if="createStep === 3" class="btn-create" @click="createAgent">创建AI交易员</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Demo Data and Logic -->
@@ -1184,30 +2375,339 @@
     ];
 
     // Vue App
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed, onMounted, watch } = Vue;
 
     createApp({
       setup() {
         const currentPage = ref('dashboard');
         const selectedAgentId = ref(null);
 
+        // Modals state
+        const showPointsInfo = ref(false);
+        const showProductModal = ref(true); // Show on first visit
+        const productModalChecked = ref(false);
+
+        // Create Agent Modal state
+        const showCreateModal = ref(false);
+        const createStep = ref(1);
+        const selectedPreset = ref(null);
+
+        // Create Agent Form
+        const createForm = ref({
+          name: '',
+          model: 'kimi-k2-5',
+          initialPoints: 500000,
+          strategy: {
+            riskTolerance: '',
+            holdingPeriod: '',
+            sectors: [],
+            positionLimit: 30,
+            stopLoss: 8
+          }
+        });
+
+        // Sector options
+        const sectorOptions = [
+          { value: '金融', label: '金融', icon: '🏦' },
+          { value: '科技', label: '科技', icon: '💻' },
+          { value: '医药', label: '医药', icon: '💊' },
+          { value: '消费', label: '消费', icon: '🛒' },
+          { value: '能源', label: '能源', icon: '⚡' },
+          { value: '材料', label: '材料', icon: '🏭' },
+          { value: '工业', label: '工业', icon: '🔧' },
+          { value: '地产', label: '地产', icon: '🏠' }
+        ];
+
+        // Canvas refs
+        const chartCanvas = ref(null);
+        const agentChartCanvas = ref(null);
+
+        // Theme state
+        const isDark = ref(true);
+
+        // Theme toggle
+        function toggleTheme() {
+          isDark.value = !isDark.value;
+          if (isDark.value) {
+            document.documentElement.classList.remove('light-theme');
+          } else {
+            document.documentElement.classList.add('light-theme');
+          }
+          localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
+          // Redraw charts if they exist
+          setTimeout(() => {
+            drawAgentChart();
+          }, 50);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+          const savedTheme = localStorage.getItem('theme');
+          if (savedTheme === 'light') {
+            isDark.value = false;
+            document.documentElement.classList.add('light-theme');
+          }
+        }
+
+        // Strategy Collection Granularity Examples
+        const strategyExamples = {
+          fine: {
+            userInput: '买入比亚迪(002594)和宁德时代(300750)，各50万，长期持有，跌10%止损',
+            aiProcess: [
+              '识别标的：比亚迪(002594)、宁德时代(300750)',
+              '识别金额：各50万，共100万',
+              '识别周期：长期持有(>3个月)',
+              '识别风控：10%止损线',
+              '执行模式：✅ 完全按用户指令执行'
+            ],
+            aiFollowUp: null,
+            complianceNote: 'AI完全按用户明确指令执行，不涉及选股建议。用户自行决定标的和参数，合规风险最低。'
+          },
+          medium: {
+            userInput: '关注新能源板块，找两只龙头股，各买40万，长期持有',
+            aiProcess: [
+              '识别板块：新能源',
+              '识别策略：龙头股、长期持有',
+              '识别金额：共80万，单股40万',
+              'AI推荐：比亚迪(002594)、宁德时代(300750)',
+              '执行模式：⚠️ 需用户确认后执行'
+            ],
+            aiFollowUp: '为您推荐比亚迪和宁德时代，请问是否符合您的预期？您也可以指定其他具体股票。',
+            complianceNote: 'AI在限定板块内提供选项，但最终决策权在用户手中。用户确认或修改后才执行，避免AI擅自荐股。'
+          },
+          coarse: {
+            userInput: '做价值投资，买消费板块的白马股，稳健一点',
+            aiProcess: [
+              '识别意图：价值投资、消费板块、稳健型',
+              '⚠️ 检测到模糊指令：未指定具体标的',
+              '系统响应：拒绝直接选股',
+              '引导方案：提供预设策略或要求明确标的'
+            ],
+            aiFollowUp: '为了合规运营，系统需要您提供具体股票代码。或者您可以选择以下预设策略模板：[保守型][稳健型][积极型]',
+            complianceNote: '系统拒绝模糊策略，通过对话机制强制收敛到细力度。禁止AI在无明确范围时自主大量选股，有效规避荐股合规风险。'
+          }
+        };
+
+        const selectedGranularity = ref('fine');
+        const currentExample = computed(() => strategyExamples[selectedGranularity.value]);
+
+        // User input simulation
+        const userStrategyInput = ref('');
+        const parsedStrategy = ref('');
+
+        function simulateStrategyParse() {
+          const input = userStrategyInput.value.toLowerCase();
+          if (!input.trim()) {
+            parsedStrategy.value = '请输入策略描述';
+            return;
+          }
+
+          // Simple parsing simulation
+          if (input.includes('比亚迪') || input.includes('茅台') || input.match(/\d{6}/)) {
+            parsedStrategy.value = '检测到具体股票代码 → 细力度模式：AI将完全按指令执行';
+          } else if (input.includes('板块') || input.includes('行业') || input.includes('龙头')) {
+            parsedStrategy.value = '检测到板块范围 → 中力度模式：AI将在限定范围内提供选项供您确认';
+          } else if (input.includes('价值') || input.includes('稳健') || input.includes('白马')) {
+            parsedStrategy.value = '检测到概念性描述 → 粗力度模式：系统将引导您明确具体标的或选择预设策略';
+          } else {
+            parsedStrategy.value = '正在分析您的策略意图... 建议使用更明确的描述，或选择预设策略模板';
+          }
+        }
+
+        // Ranking System
+        const rankingPeriods = [
+          { value: 'daily', label: '日榜' },
+          { value: 'weekly', label: '周榜' },
+          { value: 'monthly', label: '月榜' },
+          { value: 'total', label: '总榜' }
+        ];
+        const currentRankingPeriod = ref('monthly'); // Default to monthly as per PRD
+        const selectedRankingDate = ref(new Date().toISOString().split('T')[0]);
+        const today = new Date().toISOString().split('T')[0];
+        const sortBy = ref('return'); // 'return', 'sharpe', 'drawdown', 'winRate'
+
+        // Extended agent data with performance metrics
+        const agentMetrics = {
+          'alpha-1': { sharpeRatio: 1.25, maxDrawdown: -5.2, winRate: 0.68 },
+          'beta-2': { sharpeRatio: 0.89, maxDrawdown: -8.5, winRate: 0.55 },
+          'gamma-3': { sharpeRatio: 1.68, maxDrawdown: -3.8, winRate: 0.72 },
+          'delta-4': { sharpeRatio: -0.35, maxDrawdown: -15.2, winRate: 0.42 }
+        };
+
+        // Calculate period-specific returns
+        const periodReturns = {
+          daily: {
+            'alpha-1': 0.015, 'beta-2': -0.008, 'gamma-3': 0.032, 'delta-4': -0.025
+          },
+          weekly: {
+            'alpha-1': 0.038, 'beta-2': 0.022, 'gamma-3': 0.058, 'delta-4': -0.042
+          },
+          monthly: {
+            'alpha-1': 0.152, 'beta-2': 0.087, 'gamma-3': 0.258, 'delta-4': -0.070
+          },
+          total: {
+            'alpha-1': 0.152, 'beta-2': 0.087, 'gamma-3': 0.258, 'delta-4': -0.070
+          }
+        };
+
+        const currentRankedAgents = computed(() => {
+          const period = currentRankingPeriod.value;
+          const returns = periodReturns[period];
+
+          const agentsWithMetrics = agentsData.map(agent => ({
+            ...agent,
+            returnRate: returns[agent.id] || agent.returnRate,
+            sharpeRatio: agentMetrics[agent.id]?.sharpeRatio || 0,
+            maxDrawdown: agentMetrics[agent.id]?.maxDrawdown || 0,
+            winRate: agentMetrics[agent.id]?.winRate || 0
+          }));
+
+          // Sort based on selected criteria
+          const sorted = [...agentsWithMetrics].sort((a, b) => {
+            switch (sortBy.value) {
+              case 'return':
+                return b.returnRate - a.returnRate;
+              case 'sharpe':
+                return b.sharpeRatio - a.sharpeRatio;
+              case 'drawdown':
+                return a.maxDrawdown - b.maxDrawdown; // Lower drawdown is better
+              case 'winRate':
+                return b.winRate - a.winRate;
+              default:
+                return b.returnRate - a.returnRate;
+            }
+          });
+
+          return sorted;
+        });
+
+        // Create Agent Methods
+        function closeCreateModal() {
+          showCreateModal.value = false;
+          resetCreateForm();
+        }
+
+        function resetCreateForm() {
+          createStep.value = 1;
+          selectedPreset.value = null;
+          selectedGranularity.value = 'fine';
+          userStrategyInput.value = '';
+          parsedStrategy.value = '';
+          createForm.value = {
+            name: '',
+            model: 'kimi-k2-5',
+            initialPoints: 500000,
+            strategy: {
+              riskTolerance: '稳健',
+              holdingPeriod: '中线',
+              sectors: ['科技', '消费'],
+              positionLimit: 30,
+              stopLoss: 8
+            }
+          };
+        }
+
+        function applyPreset(preset) {
+          selectedPreset.value = preset;
+          if (preset === 'conservative') {
+            createForm.value.strategy.riskTolerance = '保守';
+            createForm.value.strategy.holdingPeriod = '长线';
+            createForm.value.strategy.sectors = ['金融', '医药'];
+            createForm.value.strategy.positionLimit = 20;
+            createForm.value.strategy.stopLoss = 5;
+          } else if (preset === 'balanced') {
+            createForm.value.strategy.riskTolerance = '稳健';
+            createForm.value.strategy.holdingPeriod = '中线';
+            createForm.value.strategy.sectors = ['科技', '消费', '医药'];
+            createForm.value.strategy.positionLimit = 30;
+            createForm.value.strategy.stopLoss = 8;
+          } else if (preset === 'aggressive') {
+            createForm.value.strategy.riskTolerance = '积极';
+            createForm.value.strategy.holdingPeriod = '短线';
+            createForm.value.strategy.sectors = ['科技', '能源', '材料'];
+            createForm.value.strategy.positionLimit = 50;
+            createForm.value.strategy.stopLoss = 15;
+          }
+        }
+
+        const canProceed = computed(() => {
+          if (createStep.value === 1) {
+            return createForm.value.name.trim().length >= 2;
+          }
+          return true;
+        });
+
+        function nextStep() {
+          if (createStep.value < 3) {
+            createStep.value++;
+          }
+        }
+
+        function createAgent() {
+          const granNames = { fine: '细力度', medium: '中力度', coarse: '粗力度' };
+          const currentEx = strategyExamples[selectedGranularity.value];
+
+          // Generate new agent data
+          const newAgent = {
+            id: 'agent-' + Date.now(),
+            name: createForm.value.name,
+            model: createForm.value.model === 'kimi-k2-5' ? 'Kimi K2.5' :
+                   createForm.value.model === 'deepseek-chat' ? 'DeepSeek Chat' : '通义千问 Max',
+            level: 'intern',
+            levelName: '实习生',
+            badgeClass: 'bronze',
+            initialPoints: createForm.value.initialPoints,
+            currentPoints: createForm.value.initialPoints,
+            returnRate: 0,
+            status: 'active',
+            strategy: {
+              style: createForm.value.strategy.riskTolerance,
+              riskTolerance: createForm.value.strategy.riskTolerance,
+              holdingPeriod: createForm.value.strategy.holdingPeriod,
+              sectors: [...createForm.value.strategy.sectors],
+              positionLimit: createForm.value.strategy.positionLimit + '%',
+              stopLoss: createForm.value.strategy.stopLoss,
+              granularity: selectedGranularity.value,
+              granularityName: granNames[selectedGranularity.value],
+              description: `${granNames[selectedGranularity]}策略：${currentEx.userInput.substring(0, 30)}...`
+            },
+            performance: {
+              totalTrades: 0,
+              winRate: 0,
+              profitFactor: 0,
+              maxDrawdown: 0
+            },
+            portfolio: [],
+            decisions: []
+          };
+
+          // Add to agents data
+          agentsData.push(newAgent);
+
+          // Close modal and reset
+          showCreateModal.value = false;
+          resetCreateForm();
+
+          // Navigate to agents page to show the new agent
+          currentPage.value = 'agents';
+
+          // Show success feedback (simple alert for demo)
+          setTimeout(() => {
+            alert('AI交易员创建成功！');
+          }, 100);
+        }
+
         // Animated numbers
-        const animatedTotalPoints = ref(0);
-        const animatedReturn = ref(0);
         const animatedAgents = ref(0);
         const animatedWinRate = ref(0);
 
         onMounted(() => {
+          // Load saved theme
+          loadTheme();
+
           // Animate dashboard numbers
-          animateNumber(animatedTotalPoints, 16850000, 1500);
-          animateNumber(animatedReturn, 2.34, 1500);
           animateNumber(animatedAgents, 4, 1500);
           animateNumber(animatedWinRate, 68.5, 1500);
-
-          // Draw chart after mount
-          setTimeout(() => {
-            drawChart();
-          }, 100);
         });
 
         function animateNumber(target, endValue, duration) {
@@ -1229,7 +2729,7 @@
         }
 
         function drawChart() {
-          const canvas = document.querySelector('canvas[ref="chartCanvas"]');
+          const canvas = chartCanvas.value;
           if (!canvas) return;
 
           const ctx = canvas.getContext('2d');
@@ -1255,11 +2755,17 @@
           const min = Math.min(...data) * 0.95;
           const max = Math.max(...data) * 1.05;
 
+          // Get theme colors
+          const isDarkTheme = document.documentElement.classList.contains('light-theme') === false;
+          const gridColor = isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+          const textColor = isDarkTheme ? '#64748b' : '#94a3b8';
+          const lineColor = isDarkTheme ? '#00d4ff' : '#0891b2';
+
           // Clear
           ctx.clearRect(0, 0, width, height);
 
           // Draw grid
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+          ctx.strokeStyle = gridColor;
           ctx.lineWidth = 1;
 
           for (let i = 0; i <= 5; i++) {
@@ -1270,7 +2776,7 @@
             ctx.stroke();
 
             // Y axis labels
-            ctx.fillStyle = '#64748b';
+            ctx.fillStyle = textColor;
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'right';
             const label = (max - (max - min) * i / 5).toFixed(0);
@@ -1279,10 +2785,10 @@
 
           // Draw line
           ctx.beginPath();
-          ctx.strokeStyle = '#00d4ff';
+          ctx.strokeStyle = lineColor;
           ctx.lineWidth = 3;
-          ctx.shadowColor = 'rgba(0, 212, 255, 0.5)';
-          ctx.shadowBlur = 10;
+          ctx.shadowColor = lineColor;
+          ctx.shadowBlur = isDarkTheme ? 10 : 6;
 
           data.forEach((value, index) => {
             const x = padding.left + (width - padding.left - padding.right) * index / (data.length - 1);
@@ -1316,13 +2822,13 @@
           ctx.closePath();
 
           const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-          gradient.addColorStop(0, 'rgba(0, 212, 255, 0.3)');
-          gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
+          gradient.addColorStop(0, isDarkTheme ? 'rgba(0, 212, 255, 0.3)' : 'rgba(8, 145, 178, 0.25)');
+          gradient.addColorStop(1, isDarkTheme ? 'rgba(0, 212, 255, 0)' : 'rgba(8, 145, 178, 0)');
           ctx.fillStyle = gradient;
           ctx.fill();
 
           // X axis labels
-          ctx.fillStyle = '#64748b';
+          ctx.fillStyle = textColor;
           ctx.textAlign = 'center';
           for (let i = 0; i < 5; i++) {
             const x = padding.left + (width - padding.left - padding.right) * i / 4;
@@ -1349,7 +2855,39 @@
 
         const market = computed(() => marketData);
 
+        // Ranking page computed property
+        const rankedAgents = computed(() => {
+          return [...agentsData].sort((a, b) => b.returnRate - a.returnRate);
+        });
+
+        // New computed properties for AI-level stats
+        const averageReturnRate = computed(() => {
+          if (agentsData.length === 0) return 0;
+          const sum = agentsData.reduce((acc, agent) => acc + agent.returnRate, 0);
+          return sum / agentsData.length;
+        });
+
+        const totalDecisions = computed(() => {
+          return Object.values(decisionsData).reduce((acc, decisions) => acc + decisions.length, 0);
+        });
+
+        const activeAgentsCount = computed(() => {
+          return agentsData.filter(agent => agent.status === 'active').length;
+        });
+
         // Methods
+        function getAvatarColor(name) {
+          const colors = [
+            '#00d084', '#00d4ff', '#ffd700', '#ff6b6b', '#9b59b6',
+            '#3498db', '#e74c3c', '#1abc9c', '#f39c12', '#8e44ad'
+          ];
+          let hash = 0;
+          for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+          }
+          return colors[Math.abs(hash) % colors.length];
+        }
+
         function viewAgent(id) {
           selectedAgentId.value = id;
           currentPage.value = 'agent-detail';
@@ -1359,7 +2897,7 @@
         }
 
         function drawAgentChart() {
-          const canvas = document.querySelector('canvas[ref="agentChartCanvas"]');
+          const canvas = agentChartCanvas.value;
           if (!canvas) return;
 
           const ctx = canvas.getContext('2d');
@@ -1374,6 +2912,14 @@
           const height = rect.height;
           const padding = { top: 20, right: 20, bottom: 40, left: 60 };
 
+          // Get theme colors from CSS variables
+          const styles = getComputedStyle(document.documentElement);
+          const isDarkTheme = document.documentElement.classList.contains('light-theme') === false;
+          const gridColor = isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+          const textColor = styles.getPropertyValue('--text-muted').trim() || (isDarkTheme ? '#64748b' : '#94a3b8');
+          const upColor = styles.getPropertyValue('--up-primary').trim() || '#00d084';
+          const downColor = styles.getPropertyValue('--down-primary').trim() || '#ff4757';
+
           // Generate data based on agent return
           const data = [];
           let value = 100;
@@ -1386,11 +2932,13 @@
           const min = Math.min(...data) * 0.95;
           const max = Math.max(...data) * 1.05;
           const isUp = selectedAgent.value.returnRate >= 0;
+          const lineColor = isUp ? upColor : downColor;
 
           ctx.clearRect(0, 0, width, height);
 
           // Grid
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+          ctx.strokeStyle = gridColor;
+          ctx.lineWidth = 1;
           for (let i = 0; i <= 5; i++) {
             const y = padding.top + (height - padding.top - padding.bottom) * i / 5;
             ctx.beginPath();
@@ -1398,7 +2946,7 @@
             ctx.lineTo(width - padding.right, y);
             ctx.stroke();
 
-            ctx.fillStyle = '#64748b';
+            ctx.fillStyle = textColor;
             ctx.font = '10px sans-serif';
             ctx.textAlign = 'right';
             ctx.fillText((max - (max - min) * i / 5).toFixed(0), padding.left - 10, y + 3);
@@ -1406,10 +2954,10 @@
 
           // Line
           ctx.beginPath();
-          ctx.strokeStyle = isUp ? '#00d084' : '#ff4757';
+          ctx.strokeStyle = lineColor;
           ctx.lineWidth = 3;
-          ctx.shadowColor = isUp ? 'rgba(0, 208, 132, 0.5)' : 'rgba(255, 71, 87, 0.5)';
-          ctx.shadowBlur = 10;
+          ctx.shadowColor = lineColor;
+          ctx.shadowBlur = isDarkTheme ? 10 : 6;
 
           data.forEach((value, index) => {
             const x = padding.left + (width - padding.left - padding.right) * index / (data.length - 1);
@@ -1434,13 +2982,15 @@
           ctx.closePath();
 
           const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-          gradient.addColorStop(0, isUp ? 'rgba(0, 208, 132, 0.3)' : 'rgba(255, 71, 87, 0.3)');
+          gradient.addColorStop(0, isUp ?
+            (isDarkTheme ? 'rgba(0, 208, 132, 0.3)' : 'rgba(5, 150, 105, 0.25)') :
+            (isDarkTheme ? 'rgba(255, 71, 87, 0.3)' : 'rgba(220, 38, 38, 0.25)'));
           gradient.addColorStop(1, 'transparent');
           ctx.fillStyle = gradient;
           ctx.fill();
 
           // X labels
-          ctx.fillStyle = '#64748b';
+          ctx.fillStyle = textColor;
           ctx.textAlign = 'center';
           for (let i = 0; i < 5; i++) {
             const x = padding.left + (width - padding.left - padding.right) * i / 4;
@@ -1457,6 +3007,15 @@
           return value.toLocaleString('zh-CN') + '点';
         }
 
+        // Watch for selected agent changes to redraw chart
+        watch(selectedAgent, () => {
+          if (selectedAgent.value) {
+            setTimeout(() => {
+              drawAgentChart();
+            }, 50);
+          }
+        });
+
         return {
           currentPage,
           selectedAgentId,
@@ -1465,12 +3024,45 @@
           selectedAgent,
           selectedAgentDecisions,
           market,
-          animatedTotalPoints,
-          animatedReturn,
+          rankedAgents,
           animatedAgents,
           animatedWinRate,
+          averageReturnRate,
+          totalDecisions,
+          activeAgentsCount,
           viewAgent,
-          formatPoints
+          getAvatarColor,
+          formatPoints,
+          showPointsInfo,
+          showProductModal,
+          productModalChecked,
+          agentChartCanvas,
+          isDark,
+          toggleTheme,
+          // Create agent modal
+          showCreateModal,
+          createStep,
+          createForm,
+          selectedPreset,
+          sectorOptions,
+          canProceed,
+          closeCreateModal,
+          applyPreset,
+          nextStep,
+          createAgent,
+          // Strategy collection granularity
+          selectedGranularity,
+          currentExample,
+          userStrategyInput,
+          parsedStrategy,
+          simulateStrategyParse,
+          // Ranking system
+          rankingPeriods,
+          currentRankingPeriod,
+          selectedRankingDate,
+          today,
+          sortBy,
+          currentRankedAgents
         };
       }
     }).mount('#app');

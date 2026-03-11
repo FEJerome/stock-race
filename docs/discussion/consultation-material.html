@@ -23,10 +23,32 @@
 
         @media print {
             body {
-                padding: 15mm;
+                padding: 12mm;
+                font-size: 10.5pt;
+                line-height: 1.6;
             }
             .page-break {
                 page-break-before: always;
+            }
+            h2 {
+                page-break-after: avoid;
+                margin-top: 15px;
+            }
+            h3, h4 {
+                page-break-after: avoid;
+            }
+            table {
+                page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+            .highlight-box, .risk-yes, .risk-no {
+                page-break-inside: avoid;
+            }
+            img {
+                max-height: 220mm;
+                page-break-inside: avoid;
             }
         }
 
@@ -185,6 +207,111 @@
             margin: 20px 0;
             color: #555;
         }
+
+        /* 讨论指引页样式 */
+        .discussion-guide {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .guide-title {
+            font-size: 14pt;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1a1a1a;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .guide-section {
+            margin-bottom: 20px;
+        }
+
+        .guide-section h4 {
+            font-size: 11pt;
+            color: #495057;
+            margin-bottom: 12px;
+            padding-left: 10px;
+            border-left: 3px solid #0066cc;
+        }
+
+        .guide-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10pt;
+            background: #fff;
+        }
+
+        .guide-table th {
+            background: #e9ecef;
+            font-weight: 600;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ced4da;
+        }
+
+        .guide-table td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+
+        .guide-table td:first-child {
+            font-weight: 500;
+            background: #fff;
+        }
+
+        .priority-box, .strategy-box {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .priority-box {
+            border-left: 4px solid #dc3545;
+        }
+
+        .strategy-box {
+            border-left: 4px solid #ffc107;
+        }
+
+        .priority-box h4, .strategy-box h4 {
+            font-size: 10.5pt;
+            margin-bottom: 10px;
+            margin-top: 0;
+            border-left: none;
+            padding-left: 0;
+        }
+
+        .priority-box h4 {
+            color: #dc3545;
+        }
+
+        .strategy-box h4 {
+            color: #856404;
+        }
+
+        .guide-note {
+            font-size: 9.5pt;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .guide-ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .guide-ol li {
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -201,11 +328,71 @@
     <div class="meta-info">
         版本：v1.0<br>
         日期：2026年3月<br>
-        状态：初稿
+        状态：初稿<br>
+        <span style="color: #0066cc;">📋 讨论指引见第2页 —— 可撕下边聊边勾画</span>
     </div>
 </div>
 
 <div class="page-break"></div>
+
+<!-- 讨论指引 -->
+<h2>讨论指引：本次咨询焦点</h2>
+
+<div class="discussion-guide">
+    <div class="guide-title">📋 项目核心要点 · 咨询问题清单</div>
+
+    <div class="guide-section">
+        <h4>一、项目核心要点（介绍时参考）</h4>
+        <table class="guide-table">
+            <tr>
+                <th style="width: 50%;">我们是什么</th>
+                <th style="width: 50%;">我们绝对不做</th>
+            </tr>
+            <tr>
+                <td>✅ AI策略<b>仿真实验室</b></td>
+                <td>❌ 不涉及<b>真实资金</b>交易</td>
+            </tr>
+            <tr>
+                <td>✅ 用户雇AI执行<b>自己</b>的策略</td>
+                <td>❌ 不提供<b>选股建议</b>（非荐股）</td>
+            </tr>
+            <tr>
+                <td>✅ <b>订阅制</b>工具服务（卖使用权）</td>
+                <td>❌ 不承诺收益、不投资分成</td>
+            </tr>
+            <tr>
+                <td>✅ Plan A在线服务 / Plan B本地开源</td>
+                <td>❌ 无杠杆、无T+0、无跟单</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="guide-section">
+        <h4>二、待请教问题</h4>
+
+        <div class="priority-box">
+            <h4>🔴 优先级问题（最想请教）</h4>
+            <ol class="guide-ol">
+                <li>收益排行功能是否触碰"业绩展示"或"诱导性宣传"红线？</li>
+                <li>AI解释交易逻辑（非荐股），是否构成"投资建议"？</li>
+                <li>纯虚拟产品在现行监管下，运营风险有多大？</li>
+            </ol>
+        </div>
+
+        <div class="strategy-box">
+            <h4>🟡 策略问题（如时间允许）</h4>
+            <ol class="guide-ol">
+                <li>免责声明如何设计才有效？有无行业参考范本？</li>
+                <li>Plan A（在线服务）vs Plan B（本地开源），您建议哪条路径？</li>
+                <li>小规模测试观察监管反应，是否可行？</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="guide-note">
+        以上为本人初步思考，非常期待您的专业意见 | 本页可撕下或复印，方便讨论时参考
+    </div>
+</div>
 
 <!-- 第一章 -->
 <h2>第一章：项目全景介绍</h2>
@@ -213,7 +400,7 @@
 <h3>1.1 产品定位</h3>
 
 <div class="highlight-box">
-    <strong>AI财商训练场 = 用户投资策略的AI沙盒试验环境</strong>
+    <strong>AI财商训练场 = 用户投资策略的AI模拟试验环境</strong>
 </div>
 
 <p><strong>核心体验：</strong>用户通过AI对话形成投资策略，AI作为执行工具在虚拟环境中自动化运行。</p>
@@ -222,10 +409,10 @@
 
 <p><strong>技术载体：</strong>利用不同AI大模型的理解和执行能力，帮助用户测试策略有效性。</p>
 
-<h4>沙盒隔离机制（安全试验环境）</h4>
+<h4>环境隔离机制（安全试验环境）</h4>
 
 <div class="risk-no">
-    <strong>沙盒（Sandbox）设计理念：</strong>所有交易均在完全隔离的虚拟环境中进行，与真实证券市场零连接、零影响、零风险传递。
+    <strong>模拟环境（Simulation）设计理念：</strong>所有交易均在完全隔离的虚拟环境中进行，与真实证券市场零连接、零影响、零风险传递。
 </div>
 
 <table>
@@ -247,7 +434,7 @@
     </tr>
     <tr>
         <td><strong>数据隔离</strong></td>
-        <td>完整记录决策过程用于学习复盘，数据不出沙盒环境</td>
+        <td>完整记录决策过程用于学习复盘，数据不出模拟环境</td>
     </tr>
 </table>
 
@@ -255,8 +442,12 @@
 
 <div class="highlight-box">
     <strong>策略思维训练：</strong>通过AI对话形成策略的过程，帮助用户系统梳理投资逻辑，建立策略化思维框架。<br><br>
-    <strong>零成本试错学习：</strong>沙盒环境支持长期观察策略效果，让用户在实践中理解策略与市场波动的关系。<br><br>
+    <strong>零成本试错学习：</strong>模拟环境支持长期观察策略效果，让用户在实践中理解策略与市场波动的关系。<br><br>
     <strong>决策复盘能力：</strong>完整记录AI决策过程与理由，辅助用户复盘分析，提升投资决策的纪律性。
+</div>
+
+<div class="highlight-box" style="background: #e7f3ff; border-left: 4px solid #0066cc;">
+    <strong>关于本材料：</strong>坦白说，我对金融合规的理解主要来自纸面研究，缺乏一线实操经验。准备这份材料的目的是想请您这位"业内人士"帮忙把把关——哪些是我过于乐观的，哪些是我完全没意识到的坑。非常期待您的直觉判断和坦诚反馈。
 </div>
 
 <h3>1.2 用户旅程</h3>
@@ -265,7 +456,45 @@
     注册 → 创建AI交易员 → 借助AI对话向交易员传达投资策略 → AI自动化虚拟交易 → 查看策略回测结果
 </div>
 
-<h3>1.3 虚拟资金体系</h3>
+<h3>1.3 策略输入边界机制</h3>
+
+<div class="highlight-box">
+    <strong>设计目的：</strong>为防止AI被动进入"荐股"场景，平台设计了策略输入边界机制，确保AI仅执行用户明确预设的规则，而非主动提供投资建议。
+</div>
+
+<table>
+    <tr>
+        <th style="width: 25%;">场景</th>
+        <th style="width: 35%;">用户输入示例</th>
+        <th style="width: 40%;">平台处理方式</th>
+    </tr>
+    <tr class="risk-no">
+        <td><strong>明确策略</strong></td>
+        <td>"茅台股价跌破1600元时买入10%，止损线1500元"</td>
+        <td>✅ 接受并执行——包含具体标的、触发条件、仓位</td>
+    </tr>
+    <tr class="risk-no">
+        <td><strong>中等精确</strong></td>
+        <td>"关注新能源板块，找两只龙头股长期持有"</td>
+        <td>⚠️ 引导细化——AI追问"请指定具体股票代码"</td>
+    </tr>
+    <tr class="risk-yes">
+        <td><strong>模糊策略</strong></td>
+        <td>"消费板块做价值投资，科技板块买涨杀跌"</td>
+        <td>❌ 拒绝执行——提示"策略需包含具体标的和触发条件"</td>
+    </tr>
+</table>
+
+<div class="risk-no">
+    <strong>核心原则：</strong>
+    <ul style="margin-top: 10px;">
+        <li>仅接受包含<strong>具体股票代码/名称</strong>和<strong>明确触发条件</strong>的策略指令</li>
+        <li>当用户输入模糊策略时，AI拒绝执行并引导用户明确具体标的</li>
+        <li>AI角色定位为<strong>"策略执行者"</strong>而非<strong>"选股顾问"</strong></li>
+    </ul>
+</div>
+
+<h3>1.4 虚拟资金体系</h3>
 
 <table>
     <tr>
@@ -298,153 +527,132 @@
     <strong>核心隔离声明：</strong>用户投入的是"策略设计精力"，获得的是"策略验证数据"，全程无资金往来。
 </div>
 
-<div class="page-break"></div>
+<div class="highlight-box" style="font-size: 10.5pt;">
+    <strong>关于"工资/周薪"概念的说明：</strong>本项目中使用的"工资""周薪"等表述仅为<b>角色扮演设计</b>，用于增强用户体验的沉浸感。实际法律意义上，用户支付的是<b>AI服务的算力消耗费用</b>（技术服务费），不构成《劳动法》意义上的雇佣关系，平台与AI之间也不存在任何形式的劳动或劳务关系。
+</div>
 
-<!-- 第二章 -->
-<h2>第二章：明确澄清"本项目不存在"的风险</h2>
+<h3>1.5 Demo功能预览（开发中）</h3>
 
-<p>为避免评估时的误解和误判，以下风险在本项目中<strong>绝对不存在</strong>：</p>
+<div class="highlight-box">
+    <strong>演示内容：</strong>以下为实际Demo界面截图，用于直观展示产品的核心流程和合规设计。
+</div>
 
 <table>
     <tr>
-        <th style="width: 25%;">风险点</th>
-        <th style="width: 35%;">本项目实际情况</th>
-        <th style="width: 40%;">关键说明</th>
+        <th style="width: 25%;">截图位置</th>
+        <th style="width: 40%;">展示内容</th>
+        <th style="width: 35%;">合规要点</th>
     </tr>
     <tr>
-        <td><strong>虚拟货币可兑换</strong></td>
-        <td class="risk-no">❌ <strong>绝对不可兑换</strong></td>
-        <td>投资研究点数、任何平台积分均<strong>完全不能</strong>兑换现金或实物</td>
+        <td><strong>图1：仪表盘</strong></td>
+        <td>AI交易员策略对比与整体概览</td>
+        <td>展示"每个AI独立运行"设计，强调策略互不干扰</td>
     </tr>
     <tr>
-        <td><strong>用户间交易转让</strong></td>
-        <td class="risk-no">❌ <strong>完全没有</strong></td>
-        <td>禁止用户间任何形式的资金/点数/资产转让（防涉赌）</td>
+        <td><strong>图2：策略收集演示</strong></td>
+        <td>细/中/粗力度策略输入边界机制</td>
+        <td>展示AI仅执行用户明确指令，不涉及选股建议（合规核心）</td>
     </tr>
     <tr>
-        <td><strong>真实资金交易</strong></td>
-        <td class="risk-no">❌ <strong>纯虚拟</strong></td>
-        <td>所有交易使用虚拟资金，不涉及真实证券账户</td>
+        <td><strong>图3：收益排行榜</strong></td>
+        <td>排行榜说明、TOP3展示及风险指标</td>
+        <td>展示免责声明位置、夏普比率/最大回撤等风险指标</td>
     </tr>
     <tr>
-        <td><strong>跟单/反向跟单</strong></td>
-        <td class="risk-no">❌ <strong>不存在</strong></td>
-        <td>用户<strong>不能</strong>根据AI决策在真实市场操作，平台不提供跟单</td>
+        <td><strong>图4：合规声明页面</strong></td>
+        <td>产品定位、沙盒隔离机制及核心免责声明</td>
+        <td>展示"策略验证工具"定位、四大隔离及明确不存在的风险</td>
+    </tr>
+</table>
+
+<div style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 20px 0; page-break-inside: auto;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div style="text-align: center; page-break-inside: avoid;">
+            <img src="demo-screenshot-01-dashboard.png" alt="仪表盘界面" style="max-width: 100%; max-height: 90mm; height: auto; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 11px; color: #666; margin-top: 6px; line-height: 1.4;"><strong>图1：仪表盘</strong><br>AI交易员策略对比与整体概览</div>
+        </div>
+
+        <div style="text-align: center; page-break-inside: avoid;">
+            <img src="demo-screenshot-02-strategy.png" alt="策略收集演示" style="max-width: 100%; max-height: 90mm; height: auto; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 11px; color: #666; margin-top: 6px; line-height: 1.4;"><strong>图2：策略收集演示</strong><br>细/中/粗力度策略输入边界机制</div>
+        </div>
+
+        <div style="text-align: center; page-break-inside: avoid;">
+            <img src="demo-screenshot-04-ranking.png" alt="排行榜页面" style="max-width: 100%; max-height: 90mm; height: auto; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 11px; color: #666; margin-top: 6px; line-height: 1.4;"><strong>图3：收益排行榜</strong><br>排行榜说明、风险指标及免责声明</div>
+        </div>
+
+        <div style="text-align: center; page-break-inside: avoid;">
+            <img src="demo-screenshot-03-compliance.png" alt="合规声明页面" style="max-width: 100%; max-height: 90mm; height: auto; border: 1px solid #ddd; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div style="font-size: 11px; color: #666; margin-top: 6px; line-height: 1.4;"><strong>图4：合规声明页面</strong><br>产品定位、沙盒隔离机制及免责声明</div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .screenshot-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .screenshot-grid > div {
+        page-break-inside: avoid;
+    }
+    .screenshot-grid img {
+        max-height: 85mm;
+    }
+}
+</style>
+
+<!-- 第二章：核心合规风险 -->
+<h2>第二章：核心合规风险点</h2>
+
+<h3>2.1 核心合规边界：工具 vs 服务</h3>
+
+<p>本项目最核心的合规风险在于<strong>如何界定"工具"与"证券服务"的边界</strong>。以下从三个维度分析我们的设计如何与监管红线保持距离：</p>
+
+<table>
+    <tr>
+        <th style="width: 20%;">维度</th>
+        <th style="width: 25%;">我们的设计</th>
+        <th style="width: 25%;">监管红线</th>
+        <th style="width: 30%;">距离评估</th>
     </tr>
     <tr>
-        <td><strong>收益承诺</strong></td>
-        <td class="risk-no">❌ <strong>不承诺</strong></td>
-        <td>明确声明"胜率≈投骰子"，仅提供策略验证工具</td>
+        <td><strong>投资建议</strong></td>
+        <td>AI仅解释"为何执行用户已明确的策略"（如"因用户设定跌破20日线卖出，今日收盘价19.8元触发条件"）</td>
+        <td>主动荐股、预测走势、向客户提供证券投资建议（《证券法》第120条）</td>
+        <td class="risk-no">✅ 明确区分——信息来源是用户预设，AI仅做逻辑复述</td>
     </tr>
     <tr>
-        <td><strong>杠杆/T+0/做空</strong></td>
-        <td class="risk-no">❌ <strong>不存在</strong></td>
-        <td>严格遵循A股规则，不涉及杠杆、T+0、做空等</td>
+        <td><strong>自动化执行</strong></td>
+        <td>用户确认策略后，AI在虚拟环境中按预设规则自动执行</td>
+        <td>代客理财、全权委托、程序化交易（《证券法》第137条）</td>
+        <td class="risk-no">✅ 明确区分——虚拟环境、用户预设规则、可随时人工干预</td>
     </tr>
     <tr>
-        <td><strong>境外市场/加密货币</strong></td>
-        <td class="risk-no">❌ <strong>不存在</strong></td>
-        <td>仅涉及A股主板/创业板/科创板，不涉及美股、加密货币</td>
-    </tr>
-    <tr>
-        <td><strong>代客理财</strong></td>
-        <td class="risk-no">❌ <strong>用户自主</strong></td>
-        <td>用户自主配置策略参数，AI仅执行用户预设规则</td>
+        <td><strong>收费模式</strong></td>
+        <td>按月付费解锁"创建更多AI席位"的权限，卖的是工具使用权</td>
+        <td>从事经营性证券业务、收取投资咨询费（《证券法》第118条）</td>
+        <td class="risk-yes">⚠️ 需确认——"软件服务"与"证券服务"的定性边界</td>
     </tr>
 </table>
 
 <div class="highlight-box">
-    <strong>核心定位强调：</strong>我们是"策略验证工具"，不是"投资服务提供者"。
-</div>
-
-<div class="page-break"></div>
-
-<!-- 第三章 -->
-<h2>第三章：真实存在的合规风险点</h2>
-
-<h3>3.1 投资咨询业务风险</h3>
-
-<table>
-    <tr>
-        <td style="width: 20%;"><strong>功能描述</strong></td>
-        <td>AI基于用户策略生成交易决策理由（解释买卖逻辑）</td>
-    </tr>
-    <tr>
-        <td><strong>风险描述</strong></td>
-        <td>可能被认定为"向客户提供证券投资建议"</td>
-    </tr>
-    <tr>
-        <td><strong>相关法规</strong></td>
-        <td>《证券法》第120条（投资咨询业务需持牌）</td>
-    </tr>
-</table>
-
-<div class="highlight-box">
-    <strong>用户输入颗粒度与风险分层示例：</strong>
-    <table style="margin-top: 10px;">
-        <tr>
-            <th style="width: 15%;">颗粒度</th>
-            <th style="width: 35%;">用户输入示例</th>
-            <th style="width: 50%;">AI决策内容</th>
-        </tr>
-        <tr>
-            <td><strong>精确</strong></td>
-            <td>"茅台股价跌破1600元时买入10%，止损线1500元"</td>
-            <td>完全按用户指令执行，AI仅做执行记录</td>
-        </tr>
-        <tr>
-            <td><strong>中等</strong></td>
-            <td>"关注新能源板块，找两只龙头股长期持有"</td>
-            <td>在指定板块内选股，给出具体标的建议</td>
-        </tr>
-        <tr class="risk-yes">
-            <td><strong>模糊</strong></td>
-            <td>"消费板块做价值投资，科技板块买涨杀跌"</td>
-            <td><strong>需自主选股并给出买卖建议，可能触碰"荐股"红线</strong></td>
-        </tr>
-    </table>
-</div>
-
-<div class="risk-no">
-    <strong>规避思路：</strong>通过AI对话引导机制，要求用户必须明确具体投资标的（股票代码或名称），不接受纯板块/概念的模糊策略。将AI角色定位为"策略执行者"而非"选股顾问"。
+    <strong>策略输入边界机制：</strong>为防止AI被动进入"荐股"场景，平台仅接受包含<strong>具体股票代码/名称</strong>和<strong>明确触发条件</strong>的策略指令。当用户输入模糊策略（如"帮我看看有什么好股票"），AI将拒绝执行并引导用户明确具体标的。
 </div>
 
 <div class="question-list">
     <strong>咨询问题：</strong>
     <ol>
-        <li>AI解释策略执行逻辑，是否构成"投资建议"？</li>
-        <li>"策略执行报告"与"投资建议"的界限在哪里？</li>
-        <li>要求用户明确具体标的（禁止纯板块策略），是否能有效规避荐股风险？</li>
-        <li>如何设计才能明确属于"工具"而非"咨询服务"？</li>
+        <li>上述三个维度的设计，在您的经验中是否足以与"证券服务"划清界限？哪个维度的风险最高？</li>
+        <li>"软件服务"与"证券服务"的核心界限，是从"服务内容"（工具 vs 建议）判断，还是从"用户感知"（自主操作 vs 委托决策）判断？</li>
+        <li>如果平台明确声明"仅提供技术工具，不对任何投资决策负责"，并要求用户签署电子协议确认理解，这种措施在您的经验中是否有效？</li>
     </ol>
 </div>
 
-<h3>3.2 自动化交易执行风险</h3>
-
-<table>
-    <tr>
-        <td style="width: 20%;"><strong>功能描述</strong></td>
-        <td>AI根据用户预设策略自动执行虚拟买卖</td>
-    </tr>
-    <tr>
-        <td><strong>风险描述</strong></td>
-        <td>"自动化执行"概念可能被关联到"程序化交易"或"代客操作"</td>
-    </tr>
-    <tr>
-        <td><strong>相关法规</strong></td>
-        <td>《证券法》第137条、程序化交易相关监管规定</td>
-    </tr>
-</table>
-
-<div class="question-list">
-    <strong>咨询问题：</strong>
-    <ol>
-        <li>虚拟环境的自动化执行，是否触碰任何监管红线？</li>
-        <li>"用户策略的自动化执行工具"与"代客理财"的核心区别是什么？</li>
-    </ol>
-</div>
-
-<h3>3.3 排行榜与收益展示风险</h3>
+<h3>2.2 排行榜与收益展示风险</h3>
 
 <table>
     <tr>
@@ -453,81 +661,138 @@
     </tr>
     <tr>
         <td><strong>风险描述</strong></td>
-        <td>可能被视为"业绩展示"或"诱导性宣传"</td>
-    </tr>
-    <tr>
-        <td><strong>相关法规</strong></td>
-        <td>《广告法》第25条（金融广告不得承诺收益）</td>
+        <td>可能被视为"业绩展示"或"诱导性宣传"（《广告法》第25条）</td>
     </tr>
 </table>
+
+<div class="risk-no">
+    <strong>风险缓释措施：</strong>强制免责声明（"虚拟交易结果不构成投资建议"+"过往表现不代表未来收益"）、禁止一键复制策略、T+1延迟展示、强制展示风险指标（最大回撤/夏普比率）、匿名展示AI名称。
+</div>
 
 <div class="question-list">
     <strong>咨询问题：</strong>
     <ol>
-        <li>虚拟策略回测结果的排行榜，是否违规？</li>
-        <li>需要哪些免责声明才能合规？</li>
-        <li>展示"夏普比率"等风险调整指标是否能降低风险？</li>
+        <li>上述缓释措施在您的经验中是否足够规避风险？还需要哪些补充？</li>
+        <li>如果采用"延迟展示"（T+1展示收益数据）而非实时排行，是否能有效降低诱导性？</li>
     </ol>
 </div>
 
-<h3>3.4 经营性证券业务风险</h3>
+
+<h3>2.3 风险承受声明与退出机制</h3>
+
+<div class="highlight-box">
+    <strong>风险底线声明：</strong>本项目已充分考虑合规风险，并制定明确的退出预案，确保不会将用户或团队置于不可控的境地。
+</div>
 
 <table>
     <tr>
-        <td style="width: 20%;"><strong>功能描述</strong></td>
-        <td>收费提供虚拟策略验证服务</td>
+        <th style="width: 25%;">风险场景</th>
+        <th>应对措施</th>
     </tr>
     <tr>
-        <td><strong>风险描述</strong></td>
-        <td>可能被认定为"从事经营性证券业务"</td>
+        <td><strong>Plan A被监管叫停</strong></td>
+        <td>30天内全面转向Plan B模式；在线服务停止；已付费用户按比例退还剩余期限费用；转型成本已预留，不会引发资金链断裂</td>
     </tr>
     <tr>
-        <td><strong>相关法规</strong></td>
-        <td>《证券法》第118条（证券业务经营许可）</td>
+        <td><strong>用户数据安全</strong></td>
+        <td>用户可随时导出策略数据为CSV格式；服务终止后平台30天内删除所有服务端数据；承诺不向第三方出售或提供用户数据</td>
+    </tr>
+    <tr>
+        <td><strong>费用退还机制</strong></td>
+        <td>按剩余订阅期限比例退还，不扣除已使用部分；退款流程公开透明，7个工作日内完成；预留3个月运营资金作为风险准备金</td>
+    </tr>
+    <tr>
+        <td><strong>Plan B过渡保障</strong></td>
+        <td>开源版本代码托管至GitHub；用户可继续本地使用所有功能；提供详细的本地部署文档；社区支持渠道保持开放</td>
     </tr>
 </table>
 
 <div class="question-list">
     <strong>咨询问题：</strong>
     <ol>
-        <li>收费提供"策略验证工具"是否属于经营性证券业务？</li>
-        <li>"软件服务"与"证券服务"的界限在哪里？</li>
+        <li>上述退出机制和风险预案，在您看来是否足够体现项目的"风险可控性"？还有哪些环节需要加强？</li>
+        <li>对于预留3个月运营资金作为风险准备金的规模，您认为是否合理？行业通常的做法是什么？</li>
     </ol>
 </div>
 
-<div class="page-break"></div>
+<!-- 第四章：行业对标 -->
+<h2>第三章：行业对标与竞品参考</h2>
 
-<!-- 第四章 -->
-<h2>第四章：灰色地带研究</h2>
+<div class="highlight-box">
+    <strong>研究目的：</strong>通过分析市场上已存在的模拟交易类产品，了解其合规边界和免责声明设计，为本项目提供参考基准。
+</div>
 
-<h3>4.1 无牌照产品生存现状研究</h3>
+<h3>3.1 持牌机构运营的模拟平台</h3>
+
+<table>
+    <tr>
+        <th style="width: 18%;">产品</th>
+        <th style="width: 22%;">运营方</th>
+        <th style="width: 35%;">核心功能</th>
+        <th style="width: 25%;">合规基础</th>
+    </tr>
+    <tr>
+        <td><strong>雪球组合</strong></td>
+        <td>雪球（持牌基金销售机构）</td>
+        <td>虚拟组合创建、收益排行、组合风云榜、调仓记录</td>
+        <td>基金销售牌照+信息服务资质</td>
+    </tr>
+    <tr>
+        <td><strong>同花顺模拟炒股</strong></td>
+        <td>同花顺（上市公司）</td>
+        <td>虚拟资金交易、模拟大赛、收益率排行</td>
+        <td>信息服务资质+券商合作</td>
+    </tr>
+    <tr>
+        <td><strong>东方财富模拟炒股</strong></td>
+        <td>东方财富（券商）</td>
+        <td>虚拟交易、组合分析、收益对比</td>
+        <td>券商牌照</td>
+    </tr>
+</table>
+
+<h3>3.2 非持牌机构/工具类产品</h3>
+
+<table>
+    <tr>
+        <th style="width: 18%;">产品</th>
+        <th style="width: 15%;">形态</th>
+        <th style="width: 42%;">运营模式</th>
+        <th style="width: 25%;">观察</th>
+    </tr>
+    <tr>
+        <td><strong>游侠股市</strong></td>
+        <td>独立App</td>
+        <td>纯虚拟交易、虚拟资金、模拟A股规则、无真实资金关联</td>
+        <td>存活多年，功能单一但稳定</td>
+    </tr>
+    <tr>
+        <td><strong>各类虚拟炒股小程序</strong></td>
+        <td>微信小程序</td>
+        <td>纯虚拟资金、排行榜、收益率展示；通常无真实资金关联</td>
+        <td>部分被下架，存活者多在免责声明上强化</td>
+    </tr>
+</table>
+
+<div class="risk-no">
+    <strong>关键观察：</strong>持牌机构运营的模拟平台通常有完整的免责声明和风险提示；非持牌产品存活的关键在于<strong>纯虚拟、无资金往来、不承诺收益</strong>。
+</div>
+
+<h3>3.3 咨询问题</h3>
 
 <div class="question-list">
     <strong>咨询问题：</strong>
     <ol>
-        <li>市场上无牌照的"虚拟炒股"、"AI选股"类产品是如何规避监管的？</li>
-        <li>它们的合规边界在哪里？有无被监管点名或下架的案例？</li>
-        <li>它们的免责声明通常怎么写？（详见附录D：灰色地带产品参考）</li>
+        <li>您观察到的持牌机构模拟平台（如雪球组合、同花顺模拟炒股），其免责声明通常如何设计？有哪些表述是必备的？</li>
+        <li>从您的行业经验来看，非持牌机构运营的虚拟交易工具能够存活的关键边界是什么？哪些红线一旦触碰就会被整治？</li>
+        <li>雪球组合的"组合风云榜"展示用户创建的虚拟组合收益率，这种设计在合规上是如何把握的？</li>
     </ol>
 </div>
-
-<h3>4.2 监管容忍度与审核实践</h3>
-
-<div class="question-list">
-    <strong>咨询问题：</strong>
-    <ol>
-        <li>对于"纯虚拟、无资金往来"的产品，监管态度通常是？</li>
-        <li>微信小程序对"虚拟炒股"类应用的审核标准是什么？</li>
-        <li>什么情况下会从"默许"变为"整治"？</li>
-    </ol>
-</div>
-
-<div class="page-break"></div>
 
 <!-- 第五章 -->
-<h2>第五章：双轨方案咨询</h2>
+<h2>第四章：双轨方案咨询</h2>
 
-<h3>5.1 Plan A：网络服务版</h3>
+<h3>4.1 Plan A：网络服务版</h3>
 
 <table>
     <tr>
@@ -557,7 +822,7 @@
     </ol>
 </div>
 
-<h3>5.2 Plan B：开源本地版</h3>
+<h3>4.2 Plan B：开源本地版</h3>
 
 <table>
     <tr>
@@ -598,7 +863,7 @@
     </ol>
 </div>
 
-<h3>5.3 决策建议</h3>
+<h3>4.3 决策建议</h3>
 
 <div class="question-list">
     <strong>咨询问题：</strong>
@@ -609,7 +874,43 @@
     </ol>
 </div>
 
-<div class="page-break"></div>
+<h3>4.4 业务终止预案</h3>
+
+<div class="highlight-box">
+    <strong>退出机制设计：</strong>如项目因合规原因需终止运营，制定以下预案保障用户权益和团队退路。
+</div>
+
+<table>
+    <tr>
+        <th style="width: 25%;">场景</th>
+        <th>具体措施</th>
+    </tr>
+    <tr>
+        <td><strong>用户数据处理</strong></td>
+        <td>所有用户策略数据可导出为CSV/JSON格式；服务终止后平台30天内删除所有服务端数据；不提供用户数据给任何第三方</td>
+    </tr>
+    <tr>
+        <td><strong>费用退还机制</strong></td>
+        <td>按剩余订阅期限比例退还，不扣除已使用部分；退款流程公开透明，7个工作日内完成原路退回</td>
+    </tr>
+    <tr>
+        <td><strong>Plan B过渡保障</strong></td>
+        <td>开源版本代码托管至GitHub；提供详细的本地部署文档和视频教程；用户可继续本地使用所有功能；社区支持渠道保持开放</td>
+    </tr>
+    <tr>
+        <td><strong>风险准备金</strong></td>
+        <td>预留3个月运营成本作为风险准备金；确保即使突发下架也能完成用户退款和数据清理；团队转型期间的基本运营保障</td>
+    </tr>
+</table>
+
+<div class="question-list">
+    <strong>咨询问题：</strong>
+    <ol>
+        <li>上述业务终止预案在您的经验中是否足够完善？还有哪些潜在风险点需要考虑？</li>
+        <li>预留3个月运营资金作为风险准备金的规模，您认为是否合理？</li>
+        <li>如果必须与持牌机构合作才能合规，您建议寻求哪类合作伙伴？（券商/基金/投顾公司）</li>
+    </ol>
+</div>
 
 <!-- 附录 -->
 <h2>附录：关键文档摘录</h2>
