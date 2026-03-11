@@ -29,6 +29,24 @@ class DeepSeekAdapter(AIAdapter):
     API_BASE = "https://api.deepseek.com"
     DEFAULT_MODEL = "deepseek-chat"
 
+    # 事件舆情分析段落模板
+    EVENT_ANALYSIS_SECTION = """
+## 事件舆情分析
+{event_narrative}
+
+关键指标:
+- 净预期强度: {net_expectation:+.2f}（正=利好，负=利空，0=中性）
+- 主导情绪: {dominant_sentiment}（positive/negative/neutral）
+- 逻辑一致性: {logical_consistency:.0%}（高=事件逻辑自洽，低=存在矛盾信号）
+
+时间模式: {temporal_pattern}
+- Reversal(反转): 先负后正，可能形成转折点
+- Cumulative(累积): 同向事件连续，趋势强化
+- Conflict(博弈): 正负交替，市场分歧较大
+"""
+
+    NO_EVENT_ANALYSIS = "## 事件舆情分析\n近30天内无重大事件记录。\n"
+
     DECISION_PROMPT_TEMPLATE = """你是一位专业的AI股票交易员。请基于以下信息做出交易决策。
 
 ## AI交易员信息
@@ -63,6 +81,8 @@ class DeepSeekAdapter(AIAdapter):
 {trade_history}
 
 {technical_analysis}
+
+{event_analysis}
 
 ---
 
@@ -239,6 +259,18 @@ class DeepSeekAdapter(AIAdapter):
                 direction = "上涨" if m.price_change_1h > 0 else "下跌"
                 tech_section += f"- 1小时{direction}: {m.price_change_1h:+.2f}%\n"
 
+        # 新增：事件舆情分析段落
+        event_section = self.NO_EVENT_ANALYSIS
+        if hasattr(request, 'event_analysis') and request.event_analysis:
+            ea = request.event_analysis
+            event_section = self.EVENT_ANALYSIS_SECTION.format(
+                event_narrative=ea.get('narrative', '无事件数据'),
+                net_expectation=ea.get('net_expectation', 0.0),
+                dominant_sentiment=ea.get('dominant_sentiment', 'neutral'),
+                logical_consistency=ea.get('logical_consistency', 0.0),
+                temporal_pattern=ea.get('temporal_pattern', 'Unknown')
+            )
+
         portfolio = request.portfolio_summary
 
         return self.DECISION_PROMPT_TEMPLATE.format(
@@ -262,6 +294,7 @@ class DeepSeekAdapter(AIAdapter):
             position_count=portfolio.get("position_count", 0),
             trade_history=history_str,
             technical_analysis=tech_section,
+            event_analysis=event_section,
         )
 
     def _translate_trend(self, trend: str) -> str:

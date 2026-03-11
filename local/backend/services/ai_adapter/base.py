@@ -75,7 +75,8 @@ class DecisionRequest:
     strategy: Dict[str, Any]  # 策略配置
     portfolio_summary: Dict[str, Any]  # 组合概览
     trade_history: List[Dict[str, Any]]  # 最近交易历史
-    news_sentiment: Optional[str] = None  # 新闻情绪
+    news_sentiment: Optional[str] = None  # 新闻情绪（旧版，将逐步替换）
+    event_analysis: Optional[Dict[str, Any]] = None  # 事件舆情分析（新增）
     agent_level: str = "intern"  # 职级
     incentive_level: str = "standard"  # 档位
 

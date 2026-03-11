@@ -12,6 +12,10 @@
 - [1. 架构概览](#1-架构概览)
 - [2. 技术栈选型](#2-技术栈选型)
 - [3. 后端架构](#3-后端架构)
+  - [3.1 目录结构](#31-目录结构)
+  - [3.2 分层职责](#32-分层职责)
+  - [3.3 关键接口设计](#33-关键接口设计)
+  - [3.4 事件舆情系统架构](#34-事件舆情系统架构)
 - [4. 前端架构](#4-前端架构)
 - [5. 数据流设计](#5-数据流设计)
 - [6. 模块边界](#6-模块边界)
@@ -922,6 +926,661 @@ class DataQualityEngine:
 
         return scores
 ```
+
+---
+
+## 3.4 事件舆情系统架构
+
+> **新增章节**（2026-03-11）：基于学术论文"多事件时序关系"分析范式
+
+### 3.4.1 系统定位
+
+事件舆情系统是新闻采集的增强版，突破"整篇文本情感打分"的粗放模式，建立**"多事件时序关系"**的精细分析范式。
+
+**核心职责**：
+1. 从新闻文本中**抽取独立事件**（触发词、主体、客体、时间、强度）
+2. **判断事件间时序关系**（Before/After/Equal/Vague）
+3. 维护**30天滚动窗口**的事件记忆
+4. 向AI决策引擎输出**结构化事件时序图谱**
+
+### 3.4.2 模块结构
+
+```
+services/
+├── news_collector.py          # 新闻采集（现有）
+├── event_extractor.py         # 事件抽取（新增）
+├── temporal_analyzer.py       # 时序分析（新增）
+├── window_manager.py          # 窗口管理（新增）
+└── event_chain_builder.py     # 事件链构建（新增）
+```
+
+### 3.4.3 核心组件设计
+
+#### EventExtractor - 事件抽取器
+
+```python
+class EventExtractor:
+    """事件抽取器 - 基于LLM Few-shot"""
+
+    def __init__(self, llm_adapter: LLMAdapter):
+        self.llm = llm_adapter
+        self.prompt_template = self._load_extraction_prompt()
+
+    async def extract(self, news_text: str, symbol: str) -> List[Event]:
+        """从新闻文本抽取事件列表"""
+        # Few-shot Prompt 调用LLM
+        response = await self.llm.complete(
+            prompt=self.prompt_template.format(text=news_text),
+            temperature=0.1  # 低温度保证稳定性
+        )
+
+        # 解析结构化输出
+        events_data = self._parse_extraction(response)
+
+        events = []
+        for data in events_data:
+            event = Event(
+                id=generate_uuid(),
+                symbol=symbol,
+                trigger_word=data['trigger'],
+                event_type=data['type'],
+                subject=data['subject'],
+                object=data['object'],
+                event_date=parse_date(data['date']),
+                sentiment=data['sentiment'],
+                confidence=data['confidence'],
+                source_text=news_text[:200]  # 原文摘要
+            )
+            # 使用论文公式计算事件强度：Fa = log(Pup/(1-Pup)) - log(Pdown/(1-Pdown))
+            event.intensity = self._calculate_intensity(
+                data['p_up'], data['p_down']
+            )
+            events.append(event)
+
+        return events
+
+    def _calculate_intensity(self, p_up: float, p_down: float) -> float:
+        """
+        计算事件强度（基于论文公式）
+        Fa = log(Pup/(1-Pup)) - log(Pdown/(1-Pdown))
+
+        公式逻辑：
+        - 将涨跌概率映射到对数几率空间
+        - 强度反映"看涨确信度"与"看跌确信度"的差距
+        - 结果标准化到 0.0-1.0 范围
+        """
+        import math
+
+        # 边界保护，避免log(0)
+        p_up = max(0.01, min(0.99, p_up))
+        p_down = max(0.01, min(0.99, p_down))
+
+        # 计算对数几率差
+        logit_up = math.log(p_up / (1 - p_up))
+        logit_down = math.log(p_down / (1 - p_down))
+        fa = logit_up - logit_down
+
+        # 标准化到 0-1 范围（tanh归一化）
+        normalized = (math.tanh(fa / 2) + 1) / 2
+
+        return round(normalized, 4)
+```
+
+#### TemporalAnalyzer - 时序分析器
+
+```python
+class TemporalAnalyzer:
+    """时序关系分析器 - 使用布尔问答策略（基于论文方法）"""
+
+    RELATIONS = ['Before', 'After', 'Equal', 'Vague']
+
+    def __init__(self, llm_adapter: LLMAdapter):
+        self.llm = llm_adapter
+        # 时间关键词映射（快速规则路径）
+        self.time_keywords = {
+            'Before': ['早于', '先于', '之前', '此前'],
+            'After': ['晚于', '后于', '之后', '此后', '随后'],
+            'Equal': ['同时', '同期', '一并', '共同']
+        }
+
+    async def analyze_relations(
+        self,
+        events: List[Event]
+    ) -> List[EventRelation]:
+        """分析事件间的时序关系"""
+        relations = []
+
+        for i, event_a in enumerate(events):
+            for event_b in events[i+1:]:
+                relation = await self._classify_relation(event_a, event_b)
+                if relation:
+                    relations.append(relation)
+
+        return relations
+
+    async def _classify_relation(
+        self,
+        event_a: Event,
+        event_b: Event
+    ) -> Optional[EventRelation]:
+        """
+        判断两个事件的时序关系
+
+        策略：布尔问答（论文推荐方法）
+        - 将4分类转为2个二分类问题，降低LLM判断难度
+        - Q1: 事件A是否发生在事件B之前？
+        - Q2: 事件A是否发生在事件B之后？
+        - 根据答案组合得出最终关系
+        """
+        # 规则1：明确日期比较（快速路径）
+        if event_a.event_date and event_b.event_date:
+            if event_a.event_date < event_b.event_date:
+                return EventRelation(event_a.id, event_b.id, 'Before', 0.9)
+            elif event_a.event_date > event_b.event_date:
+                return EventRelation(event_a.id, event_b.id, 'After', 0.9)
+            else:
+                return EventRelation(event_a.id, event_b.id, 'Equal', 0.95)
+
+        # 规则2：文本关键词匹配（快速路径）
+        relation_type = self._keyword_based_classification(
+            event_a.source_text,
+            event_b.source_text
+        )
+
+        if relation_type:
+            return EventRelation(
+                event_a.id,
+                event_b.id,
+                relation_type,
+                confidence=0.7
+            )
+
+        # 规则3：LLM布尔问答（论文推荐方法）
+        return await self._boolean_qa_classification(event_a, event_b)
+
+    async def _boolean_qa_classification(
+        self,
+        event_a: Event,
+        event_b: Event
+    ) -> EventRelation:
+        """
+        使用布尔问答进行时序分类
+
+        Prompt模板（论文表3）：
+        Q1: [事件A]是否发生在[事件B]之前？回答Yes/No
+        Q2: [事件A]是否发生在[事件B]之后？回答Yes/No
+
+        答案映射：
+        - Yes/No → Before (A在B前)
+        - No/Yes → After (A在B后)
+        - Yes/Yes → Vague (矛盾，标记为模糊)
+        - No/No → Equal (无先后，可能同时)
+        """
+        prompt = f"""判断以下两个事件的时序关系：
+
+事件A：{event_a.subject}{event_a.trigger_word}{event_a.object}（{event_a.event_date or '时间不明'}）
+事件B：{event_b.subject}{event_b.trigger_word}{event_b.object}（{event_b.event_date or '时间不明'}）
+
+请回答两个Yes/No问题：
+Q1: 事件A是否发生在事件B之前？
+Q2: 事件A是否发生在事件B之后？
+
+只回答Yes或No，格式：
+A1: [Yes/No]
+A2: [Yes/No]
+"""
+
+        response = await self.llm.complete(prompt=prompt, temperature=0.0)
+
+        # 解析答案
+        a1 = 'yes' in response.lower() and 'q1' in response.lower()
+        a2 = 'yes' in response.lower() and 'q2' in response.lower()
+
+        # 答案组合映射到关系
+        if a1 and not a2:
+            relation = 'Before'
+            confidence = 0.75
+        elif not a1 and a2:
+            relation = 'After'
+            confidence = 0.75
+        elif not a1 and not a2:
+            relation = 'Equal'
+            confidence = 0.6
+        else:  # a1 and a2 - 矛盾
+            relation = 'Vague'
+            confidence = 0.5
+
+        return EventRelation(event_a.id, event_b.id, relation, confidence)
+```
+
+#### EventWindowManager - 滚动窗口管理器
+
+```python
+class EventWindowManager:
+    """
+    30天滚动窗口事件管理器
+
+    基于论文参数：
+    - 回溯期：30天（滚动窗口）
+    - 加权方式：指数加权平均（时间衰减）
+    - 衰减系数：lambda = 0.05（约13.5天半衰期）
+    """
+
+    WINDOW_DAYS = 30
+    MAX_EVENTS_PER_SYMBOL = 100
+    DECAY_LAMBDA = 0.05  # 指数衰减系数（论文推荐）
+
+    def __init__(self, storage: StorageInterface):
+        self.storage = storage
+
+    async def add_events(self, symbol: str, new_events: List[Event]):
+        """添加新事件到窗口"""
+        # 获取当前窗口内事件
+        window_start = datetime.now() - timedelta(days=self.WINDOW_DAYS)
+        existing_events = await self.storage.get_events(
+            symbol=symbol,
+            start_date=window_start
+        )
+
+        # 合并事件（去重）
+        all_events = self._merge_events(existing_events, new_events)
+
+        # 窗口容量控制
+        if len(all_events) > self.MAX_EVENTS_PER_SYMBOL:
+            all_events = self._apply_fifo(all_events)
+
+        # 保存到存储
+        await self.storage.save_events(symbol, all_events)
+
+        # 触发窗口特征重计算
+        await self._recalculate_window_features(symbol, all_events)
+
+    async def get_event_chain(self, symbol: str) -> EventChain:
+        """获取当前事件链"""
+        window_start = datetime.now() - timedelta(days=self.WINDOW_DAYS)
+        events = await self.storage.get_events(
+            symbol=symbol,
+            start_date=window_start
+        )
+
+        # 按时间排序
+        events.sort(key=lambda e: e.event_date or datetime.min)
+
+        # 获取事件关系
+        relations = await self.storage.get_event_relations(
+            [e.id for e in events]
+        )
+
+        # 计算链式特征
+        features = self._calculate_chain_features(events, relations)
+
+        return EventChain(
+            symbol=symbol,
+            window_start=window_start,
+            window_end=datetime.now(),
+            events=events,
+            relations=relations,
+            features=features
+        )
+
+    def _calculate_chain_features(
+        self,
+        events: List[Event],
+        relations: List[EventRelation]
+    ) -> ChainFeatures:
+        """计算事件链特征"""
+        if not events:
+            return ChainFeatures()
+
+        # 净预期强度（指数加权平均）
+        net_expectation = self._calculate_ema_net_expectation(events)
+
+        # 主导情绪
+        sentiment_scores = [e.sentiment_score for e in events]
+        dominant_sentiment = self._classify_dominant_sentiment(sentiment_scores)
+
+        # 逻辑一致性
+        consistency = self._calculate_consistency(events, relations)
+
+        # 对冲效应检测
+        hedging = self._detect_hedging(events, relations)
+
+        return ChainFeatures(
+            net_expectation=net_expectation,
+            dominant_sentiment=dominant_sentiment,
+            logical_consistency=consistency,
+            hedging_effect=hedging,
+            event_count=len(events),
+            sentiment_volatility=np.std(sentiment_scores) if sentiment_scores else 0
+        )
+
+    def _calculate_ema_net_expectation(self, events: List[Event]) -> float:
+        """
+        计算指数加权平均净预期强度
+
+        公式：EMA = Σ(w_i * s_i) / Σ(w_i)
+        其中 w_i = exp(-λ * t_i)，t_i为事件距今天数，λ=0.05
+        """
+        import math
+
+        now = datetime.now()
+        weighted_sum = 0.0
+        weight_sum = 0.0
+
+        for event in events:
+            if event.event_date:
+                days_ago = (now - event.event_date).days
+                weight = math.exp(-self.DECAY_LAMBDA * days_ago)
+            else:
+                weight = 0.5  # 无日期的事件给予中等权重
+
+            weighted_sum += weight * event.sentiment_score
+            weight_sum += weight
+
+        if weight_sum == 0:
+            return 0.0
+
+        return round(weighted_sum / weight_sum, 4)
+```
+
+### 3.4.4 数据模型
+
+```python
+# models/event.py
+
+class Event(BaseModel):
+    """独立事件"""
+    id: str
+    symbol: str
+    news_id: Optional[str]  # 来源新闻ID
+
+    # 事件要素
+    trigger_word: str           # 触发词
+    event_type: str             # 事件类型（业绩/股权/治理/业务/政策）
+    subject: str                # 主体
+    object: str                 # 客体
+    event_date: Optional[datetime]  # 事件发生时间
+
+    # 量化指标
+    intensity: float            # 强度 0.0-1.0
+    sentiment: str              # positive/negative/neutral
+    confidence: float           # 抽取置信度 0.0-1.0
+
+    # 元数据
+    source_text: str            # 原文摘要
+    created_at: datetime = Field(default_factory=datetime.now)
+
+    @property
+    def sentiment_score(self) -> float:
+        """情感分值：-1.0 ~ +1.0"""
+        sentiment_map = {
+            'positive': 1.0,
+            'neutral': 0.0,
+            'negative': -1.0
+        }
+        return sentiment_map.get(self.sentiment, 0.0) * self.intensity
+
+
+class EventRelation(BaseModel):
+    """事件间时序关系"""
+    event_a_id: str
+    event_b_id: str
+    relation: str               # Before/After/Equal/Vague
+    confidence: float           # 判断置信度
+    created_at: datetime = Field(default_factory=datetime.now)
+
+
+class ChainFeatures(BaseModel):
+    """事件链特征"""
+    net_expectation: float = 0.0           # 净预期强度 -1.0 ~ +1.0
+    net_expectation_trend: str = 'stable'  # 趋势：rising/falling/stable
+    dominant_sentiment: str = 'neutral'    # 主导情绪
+    logical_consistency: float = 0.0       # 逻辑一致性 0.0-1.0
+    event_count: int = 0                   # 事件数量
+    sentiment_volatility: float = 0.0      # 情绪波动性
+    hedging_effect: Optional[HedgingEffect] = None  # 对冲效应
+    key_turning_point: Optional[str] = None  # 关键转折事件ID
+    temporal_pattern: str = 'neutral'      # 时间模式：reversal/cumulative/conflict/neutral
+
+
+class EventChain(BaseModel):
+    """完整事件链（输出给AI的格式）"""
+    symbol: str
+    window_start: datetime
+    window_end: datetime
+    events: List[Event]
+    relations: List[EventRelation]
+    features: ChainFeatures
+
+    def to_ai_context(self) -> Dict:
+        """
+        转换为AI决策上下文格式（结构化JSON）
+
+        注意：实际传递给AI时使用to_narrative_summary()生成叙事摘要
+        以避免Token爆炸，仅在调试/日志中使用此方法
+        """
+        return {
+            'symbol': self.symbol,
+            'window': {
+                'start': self.window_start.isoformat(),
+                'end': self.window_end.isoformat()
+            },
+            'net_expectation': self.features.net_expectation,
+            'dominant_sentiment': self.features.dominant_sentiment,
+            'logical_consistency': self.features.logical_consistency,
+            'temporal_pattern': self.features.temporal_pattern,
+            'events_summary': [
+                {
+                    'date': e.event_date.isoformat() if e.event_date else None,
+                    'type': e.event_type,
+                    'sentiment': e.sentiment,
+                    'intensity': e.intensity
+                }
+                for e in sorted(self.events, key=lambda x: x.event_date or datetime.min)
+            ]
+        }
+
+    def to_narrative_summary(self) -> str:
+        """
+        生成叙事摘要供AI交易员阅读（推荐）
+
+        相比原始JSON，叙事摘要：
+        - Token效率更高（减少50-70%）
+        - 自然语言更易于LLM理解
+        - 突出关键决策信号
+        """
+        pattern_desc = {
+            'reversal': '预期反转',
+            'cumulative': '同向累积',
+            'conflict': '多空博弈',
+            'neutral': '影响中性'
+        }
+
+        lines = [
+            f"【{self.symbol}事件驱动分析】",
+            f"监测窗口：{self.window_start.strftime('%m/%d')}-{self.window_end.strftime('%m/%d')}（共{self.features.event_count}起事件）",
+            f"",
+            f"总体判断：{pattern_desc.get(self.features.temporal_pattern, '影响中性')}模式",
+            f"- 净预期强度：{self._format_expectation()}",
+            f"- 逻辑一致性：{self.features.logical_consistency:.0%}",
+        ]
+
+        # 添加关键事件描述
+        if self.events:
+            lines.extend([f"", "关键事件："])
+            for e in sorted(self.events, key=lambda x: x.event_date or datetime.min)[-5:]:
+                sentiment_emoji = {'positive': '↑', 'negative': '↓', 'neutral': '→'}.get(e.sentiment, '•')
+                date_str = e.event_date.strftime('%m/%d') if e.event_date else '近期'
+                lines.append(f"  {sentiment_emoji} {date_str} {e.subject}{e.trigger_word}（强度{e.intensity:.1f}）")
+
+        # 添加时间模式解读
+        lines.extend([f"", "模式解读：", f"  {self._pattern_interpretation()}"])
+
+        return '\n'.join(lines)
+
+    def _format_expectation(self) -> str:
+        """格式化净预期强度"""
+        val = self.features.net_expectation
+        if val > 0.3:
+            return f"积极（{val:+.2f}）"
+        elif val < -0.3:
+            return f"谨慎（{val:+.2f}）"
+        else:
+            return f"中性（{val:+.2f}）"
+
+    def _pattern_interpretation(self) -> str:
+        """生成时间模式的自然语言解读"""
+        pattern = self.features.temporal_pattern
+        expectation = self.features.net_expectation
+
+        interpretations = {
+            'reversal': {
+                'positive': '前期负面因素已被后期利好对冲，形成危机反转预期，关注预期修复动能',
+                'negative': '利好兑现后遭遇利空打压，可能是获利回吐或基本面恶化信号',
+                'neutral': '多空因素交替出现，市场处于分歧期，等待方向明确'
+            },
+            'cumulative': {
+                'positive': '利好事件持续累积，形成趋势强化，但需警惕利好出尽风险',
+                'negative': '利空事件连续发生，下行趋势确立，宜保持观望',
+                'neutral': '事件同向但影响有限，趋势未明'
+            },
+            'conflict': {
+                'positive': '多空博弈激烈，但多头略占上风，关注能否形成突破',
+                'negative': '多空博弈激烈，但空头力量更强，存在下行压力',
+                'neutral': '多空因素相互抵消，股价可能维持震荡'
+            },
+            'neutral': {
+                'positive': '虽有积极信号，但尚未形成明确趋势',
+                'negative': '存在隐忧，但影响有限',
+                'neutral': '事件影响平淡，价格主要由其他因素驱动'
+            }
+        }
+
+        sentiment_key = 'positive' if expectation > 0.2 else ('negative' if expectation < -0.2 else 'neutral')
+        return interpretations.get(pattern, interpretations['neutral']).get(sentiment_key, '影响待观察')
+```
+
+### 3.4.5 数据库表设计
+
+```sql
+-- events 表
+CREATE TABLE events (
+    id TEXT PRIMARY KEY,
+    symbol TEXT NOT NULL,
+    news_id TEXT,
+    trigger_word TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    object TEXT NOT NULL,
+    event_date TIMESTAMP,
+    intensity REAL NOT NULL CHECK (intensity >= 0 AND intensity <= 1),
+    sentiment TEXT NOT NULL CHECK (sentiment IN ('positive', 'negative', 'neutral')),
+    confidence REAL NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
+    source_text TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- event_relations 表
+CREATE TABLE event_relations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_a_id TEXT NOT NULL REFERENCES events(id),
+    event_b_id TEXT NOT NULL REFERENCES events(id),
+    relation TEXT NOT NULL CHECK (relation IN ('Before', 'After', 'Equal', 'Vague')),
+    confidence REAL NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(event_a_id, event_b_id)
+);
+
+-- event_windows 表（每日聚合缓存）
+CREATE TABLE event_windows (
+    symbol TEXT NOT NULL,
+    window_date DATE NOT NULL,
+    net_expectation REAL,
+    dominant_sentiment TEXT,
+    logical_consistency REAL,
+    event_count INTEGER,
+    sentiment_volatility REAL,
+    features_json TEXT,  -- 完整特征JSON
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (symbol, window_date)
+);
+
+-- 索引
+CREATE INDEX idx_events_symbol_date ON events(symbol, event_date);
+CREATE INDEX idx_events_type ON events(event_type);
+CREATE INDEX idx_relations_a ON event_relations(event_a_id);
+CREATE INDEX idx_relations_b ON event_relations(event_b_id);
+CREATE INDEX idx_windows_symbol ON event_windows(symbol, window_date);
+```
+
+### 3.4.6 与AI决策引擎集成
+
+```python
+class AIDecisionContextBuilder:
+    """AI决策上下文构建器 - 增强版（使用叙事摘要）"""
+
+    def __init__(
+        self,
+        market_service: MarketDataService,
+        event_window_manager: EventWindowManager
+    ):
+        self.market = market_service
+        self.event_manager = event_window_manager
+
+    async def build_context(self, agent: AIAgent) -> DecisionContext:
+        """构建AI决策上下文"""
+        # 1. 基础市场数据
+        market_data = await self.market.get_market_overview()
+
+        # 2. 持仓相关信息
+        portfolio_data = await self._get_portfolio_context(agent)
+
+        # 3. 【新增】事件链信号 - 使用叙事摘要格式
+        event_narratives = []
+        for symbol in portfolio_data.watchlist:
+            chain = await self.event_manager.get_event_chain(symbol)
+            if chain.events:  # 只有有事件时才添加
+                # 使用叙事摘要替代原始JSON，节省Token
+                event_narratives.append(chain.to_narrative_summary())
+
+        return DecisionContext(
+            agent=agent,
+            market=market_data,
+            portfolio=portfolio_data,
+            event_narratives=event_narratives,  # 叙事摘要列表
+            timestamp=datetime.now()
+        )
+
+    def _format_events_for_prompt(self, narratives: List[str]) -> str:
+        """
+        格式化事件叙事摘要到Prompt
+
+        优势（vs原始JSON）：
+        - Token效率：叙事摘要比JSON节省50-70% Token
+        - 可读性：自然语言更适合LLM理解
+        - 聚焦性：突出关键决策信号，减少噪声
+        """
+        if not narratives:
+            return "【事件驱动信号】无近期相关事件"
+
+        sections = []
+        for narrative in narratives:
+            sections.append(narrative)
+            sections.append("---")
+
+        return "\n".join(sections)
+```
+
+### 3.4.7 性能与降级策略
+
+| 场景 | 策略 | 说明 |
+|------|------|------|
+| LLM调用失败 | 规则兜底 | 关键词匹配提取事件 |
+| 时序判断置信度低 | 标记为Vague | 不误导AI决策 |
+| 窗口内事件过多 | FIFO淘汰 | 保留最新100条 |
+| 事件抽取超时 | 异步处理 | 先返回空列表，后台补抽 |
+| 存储压力过大 | 聚合归档 | 30天前事件转为日聚合 |
 
 ---
 

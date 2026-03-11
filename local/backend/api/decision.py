@@ -187,9 +187,28 @@ async def make_decision(
             api_key=api_key
         )
 
-        # Get news sentiment summary
+        # Get news sentiment summary (旧版，将逐步替换为事件舆情)
         news_service = get_news_service()
         news_sentiment = await news_service.get_intelligence_summary(request.symbol, db)
+
+        # 获取事件舆情分析（基于学术论文的时序分析）
+        from services.event_analysis.window_manager import get_window_manager
+        window_manager = get_window_manager()
+        narrative_summary = await window_manager.get_narrative_summary(request.symbol, db)
+
+        # 构建事件分析数据
+        event_analysis = None
+        if narrative_summary:
+            # 获取事件链详情
+            event_chain = await window_manager.get_event_chain(request.symbol, db)
+            if event_chain:
+                event_analysis = {
+                    'narrative': narrative_summary,
+                    'net_expectation': event_chain.features.net_expectation,
+                    'dominant_sentiment': event_chain.features.dominant_sentiment,
+                    'logical_consistency': event_chain.features.logical_consistency,
+                    'temporal_pattern': 'Complex'  # 简化处理
+                }
 
         # Trigger news collection in background (don't wait)
         import asyncio
@@ -204,7 +223,8 @@ async def make_decision(
             strategy=agent.strategy,
             portfolio_summary=portfolio,
             trade_history=trade_history,
-            news_sentiment=news_sentiment,
+            news_sentiment=news_sentiment,  # 旧版兼容
+            event_analysis=event_analysis,  # 新版事件舆情
         )
 
         # Make decision
