@@ -1,0 +1,484 @@
+/**
+ * Stock-Race Design System - Animations
+ * Professional trading interface animations
+ */
+
+/* ============================================
+   BREATHING LIGHT - Running Status Indicator
+   ============================================ */
+@keyframes breathing {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 5px var(--up-primary), 0 0 10px var(--up-glow);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 2px var(--up-primary), 0 0 5px var(--up-glow);
+  }
+}
+
+.breathing-light {
+  animation: breathing 2s ease-in-out infinite;
+}
+
+/* ============================================
+   PULSE GLOW - AI Decision Notification
+   ============================================ */
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(0, 212, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 1.5s ease-out infinite;
+}
+
+/* ============================================
+   NUMBER ROLLING - Value Changes
+   ============================================ */
+@keyframes number-roll-up {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes number-roll-down {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.number-roll-up {
+  animation: number-roll-up 0.3s var(--transition-bounce);
+}
+
+.number-roll-down {
+  animation: number-roll-down 0.3s var(--transition-bounce);
+}
+
+/* ============================================
+   3D CARD LIFT - Hover Effect
+   ============================================ */
+@keyframes card-lift {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: var(--shadow-md);
+  }
+  100% {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-xl), var(--shadow-glow-cyan);
+  }
+}
+
+.card-lift-hover {
+  transition: transform 0.3s var(--transition-bounce),
+              box-shadow 0.3s var(--transition-base);
+}
+
+.card-lift-hover:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-xl), 0 0 30px rgba(0, 212, 255, 0.15);
+}
+
+/* ============================================
+   SHIMMER LOADING - Skeleton Screen
+   ============================================ */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-primary) 25%,
+    var(--surface-elevated) 50%,
+    var(--surface-primary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ============================================
+   TOAST SLIDE IN/OUT
+   ============================================ */
+@keyframes toast-slide-in {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-out {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toast-slide-in 0.3s var(--transition-bounce);
+}
+
+.toast-exit {
+  animation: toast-slide-out 0.2s ease-in;
+}
+
+/* ============================================
+   SPINNER - Loading Indicator
+   ============================================ */
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--surface-elevated);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+.spinner-lg {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
+}
+
+/* ============================================
+   PROGRESS FILL - Progress Bar Animation
+   ============================================ */
+@keyframes progress-fill {
+  0% {
+    width: 0%;
+  }
+}
+
+.progress-fill-animate {
+  animation: progress-fill 1s var(--transition-bounce);
+}
+
+/* ============================================
+   FADE IN UP - Content Entry
+   ============================================ */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-in-up 0.4s var(--transition-bounce);
+}
+
+/* Staggered children */
+.fade-in-up-stagger > * {
+  opacity: 0;
+  animation: fade-in-up 0.4s var(--transition-bounce) forwards;
+}
+
+.fade-in-up-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.fade-in-up-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.fade-in-up-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.fade-in-up-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.fade-in-up-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.fade-in-up-stagger > *:nth-child(6) { animation-delay: 250ms; }
+
+/* ============================================
+   SCALE IN - Modal/Popover Entry
+   ============================================ */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scale-in 0.2s var(--transition-bounce);
+}
+
+/* ============================================
+   ROTATE GLOW - Real-time Data Indicator
+   ============================================ */
+@keyframes rotate-glow {
+  0% {
+    transform: rotate(0deg);
+    box-shadow: 0 0 5px var(--accent-cyan);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--accent-cyan), 0 0 30px var(--accent-cyan-glow);
+  }
+  100% {
+    transform: rotate(360deg);
+    box-shadow: 0 0 5px var(--accent-cyan);
+  }
+}
+
+.rotate-glow {
+  animation: rotate-glow 2s linear infinite;
+}
+
+/* ============================================
+   DATA FLASH - Value Update Highlight
+   ============================================ */
+@keyframes data-flash-green {
+  0% {
+    background-color: var(--up-bg);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes data-flash-red {
+  0% {
+    background-color: var(--down-bg);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.data-flash-up {
+  animation: data-flash-green 0.5s ease-out;
+}
+
+.data-flash-down {
+  animation: data-flash-red 0.5s ease-out;
+}
+
+/* ============================================
+   BORDER GLOW - Focus/Hover States
+   ============================================ */
+@keyframes border-glow {
+  0%, 100% {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 5px var(--accent-cyan-glow);
+  }
+  50% {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 20px var(--accent-cyan-glow), 0 0 40px var(--accent-cyan-glow);
+  }
+}
+
+.border-glow {
+  animation: border-glow 2s ease-in-out infinite;
+}
+
+/* ============================================
+   FLOAT - Subtle Floating Animation
+   ============================================ */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ============================================
+   METALLIC SHINE - Level Badges
+   ============================================ */
+@keyframes metallic-shine {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.metallic-shine {
+  background-size: 200% 100%;
+  animation: metallic-shine 3s linear infinite;
+}
+
+/* ============================================
+   SCAN LINE - Tech Effect
+   ============================================ */
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.scan-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent-cyan),
+    transparent
+  );
+  animation: scan-line 3s linear infinite;
+}
+
+/* ============================================
+   HEARTBEAT - Urgent Notification
+   ============================================ */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1);
+  }
+  75% {
+    transform: scale(1.05);
+  }
+}
+
+.heartbeat {
+  animation: heartbeat 1s ease-in-out infinite;
+}
+
+/* ============================================
+   SLIDE DOWN - Dropdown/Accordion
+   ============================================ */
+@keyframes slide-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+.slide-down {
+  animation: slide-down 0.3s var(--transition-bounce);
+}
+
+/* ============================================
+   BLINK - Cursor/Indicator
+   ============================================ */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ============================================
+   GRADIENT SHIFT - Background Animation
+   ============================================ */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* ============================================
+   TRANSITION UTILITIES
+   ============================================ */
+.transition-colors {
+  transition: color var(--transition-fast),
+              background-color var(--transition-fast),
+              border-color var(--transition-fast);
+}
+
+.transition-transform {
+  transition: transform var(--transition-base);
+}
+
+.transition-shadow {
+  transition: box-shadow var(--transition-base);
+}
+
+.transition-all {
+  transition: all var(--transition-base);
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

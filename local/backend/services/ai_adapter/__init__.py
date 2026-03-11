@@ -5,6 +5,9 @@ Supports: Kimi K2.5, DeepSeek, Qwen, GLM
 """
 from .base import AIAdapter, DecisionRequest, DecisionResponse, TokenUsage, DecisionAction, MarketContext, PositionContext
 from .kimi_adapter import KimiAdapter
+from .deepseek_adapter import DeepSeekAdapter
+from .qwen_adapter import QwenAdapter
+from .glm_adapter import GLMAdapter
 
 __all__ = [
     'AIAdapter',
@@ -15,6 +18,9 @@ __all__ = [
     'MarketContext',
     'PositionContext',
     'KimiAdapter',
+    'DeepSeekAdapter',
+    'QwenAdapter',
+    'GLMAdapter',
 ]
 
 # Factory function
@@ -29,7 +35,14 @@ def get_ai_adapter(provider: str = "kimi", model: str = "kimi-k2-5", api_key: st
     """
     provider = provider.lower()
 
-    if provider == "kimi":
-        return KimiAdapter(model_name=model, api_key=api_key)
+    adapters = {
+        "kimi": KimiAdapter,
+        "deepseek": DeepSeekAdapter,
+        "qwen": QwenAdapter,
+        "glm": GLMAdapter,
+    }
+
+    if provider in adapters:
+        return adapters[provider](model_name=model, api_key=api_key)
     else:
-        raise ValueError(f"Unsupported provider: {provider}")
+        raise ValueError(f"Unsupported provider: {provider}. Supported: {list(adapters.keys())}")

@@ -1,0 +1,255 @@
+/**
+ * Stock-Race Design System - CSS Variables
+ * Theme: Digital Farm - Dark Professional Trading Interface
+ */
+
+:root {
+  /* ============================================
+     BACKGROUND COLORS - Deep Space Blue Black
+     ============================================ */
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #0d1220;
+  --bg-tertiary: #111827;
+
+  /* Surface Colors - Card backgrounds */
+  --surface-primary: #141b2d;
+  --surface-secondary: #1a2332;
+  --surface-elevated: #1e2943;
+  --surface-hover: #252f4a;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(20, 27, 45, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+
+  /* ============================================
+     FUNCTIONAL COLORS - Trading Semantics
+     ============================================ */
+  /* Growth - Professional Trading Green */
+  --up-primary: #00d084;
+  --up-secondary: #00b870;
+  --up-glow: rgba(0, 208, 132, 0.4);
+  --up-bg: rgba(0, 208, 132, 0.15);
+
+  /* Decline - Professional Trading Red */
+  --down-primary: #ff4757;
+  --down-secondary: #e03e4c;
+  --down-glow: rgba(255, 71, 87, 0.4);
+  --down-bg: rgba(255, 71, 87, 0.15);
+
+  /* Neutral */
+  --neutral-primary: #8b9dc3;
+  --neutral-secondary: #5a6a8a;
+  --neutral-muted: #3d4a63;
+
+  /* ============================================
+     ACCENT COLORS - AI Tech & Gamification
+     ============================================ */
+  /* Electric Cyan - AI Interaction */
+  --accent-cyan: #00d4ff;
+  --accent-cyan-glow: rgba(0, 212, 255, 0.5);
+  --accent-cyan-bg: rgba(0, 212, 255, 0.15);
+
+  /* Gold Gradient - VIP/Achievement */
+  --accent-gold: #ffd700;
+  --accent-gold-light: #ffed4e;
+  --accent-gold-dark: #b39700;
+  --accent-gold-glow: rgba(255, 215, 0, 0.5);
+
+  /* Purple Tech */
+  --accent-purple: #8b5cf6;
+  --accent-purple-glow: rgba(139, 92, 246, 0.4);
+
+  /* ============================================
+     LEVEL BADGES - Metallic System
+     ============================================ */
+  /* Bronze - Intern */
+  --bronze-base: #cd7f32;
+  --bronze-light: #e6a855;
+  --bronze-dark: #8b5a1f;
+  --bronze-gradient: linear-gradient(135deg, #cd7f32 0%, #e6a855 50%, #cd7f32 100%);
+  --bronze-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
+
+  /* Silver - Manager */
+  --silver-base: #c0c0c0;
+  --silver-light: #e8e8e8;
+  --silver-dark: #808080;
+  --silver-gradient: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 50%, #c0c0c0 100%);
+  --silver-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+
+  /* Gold - Partner */
+  --gold-base: #ffd700;
+  --gold-light: #ffed4e;
+  --gold-dark: #b39700;
+  --gold-gradient: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+  --gold-shadow: 0 2px 12px rgba(255, 215, 0, 0.5);
+
+  /* ============================================
+     TEXT COLORS
+     ============================================ */
+  --text-primary: #ffffff;
+  --text-secondary: #a0aec0;
+  --text-muted: #64748b;
+  --text-disabled: #475569;
+
+  /* Inverted text for colored backgrounds */
+  --text-on-dark: #ffffff;
+  --text-on-light: #0a0e1a;
+
+  /* ============================================
+     BORDER & DIVIDERS
+     ============================================ */
+  --border-primary: rgba(255, 255, 255, 0.1);
+  --border-secondary: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(0, 212, 255, 0.3);
+  --border-glow: 0 0 0 1px var(--accent-cyan-glow);
+
+  /* ============================================
+     SHADOWS
+     ============================================ */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+  --shadow-glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
+  --shadow-glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
+
+  /* ============================================
+     TYPOGRAPHY
+     ============================================ */
+  /* Font Families */
+  --font-display: 'DIN Alternate', 'DIN', 'Roboto Condensed', system-ui, sans-serif;
+  --font-mono: 'Roboto Mono', 'SF Mono', 'Fira Code', monospace;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+  --text-5xl: 3rem;        /* 48px */
+  --text-6xl: 3.75rem;     /* 60px */
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* ============================================
+     SPACING SYSTEM
+     ============================================ */
+  --space-0: 0;
+  --space-1: 0.25rem;      /* 4px */
+  --space-2: 0.5rem;       /* 8px */
+  --space-3: 0.75rem;      /* 12px */
+  --space-4: 1rem;         /* 16px */
+  --space-5: 1.25rem;      /* 20px */
+  --space-6: 1.5rem;       /* 24px */
+  --space-8: 2rem;         /* 32px */
+  --space-10: 2.5rem;      /* 40px */
+  --space-12: 3rem;        /* 48px */
+  --space-16: 4rem;        /* 64px */
+  --space-20: 5rem;        /* 80px */
+
+  /* ============================================
+     BORDER RADIUS
+     ============================================ */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* ============================================
+     TRANSITIONS
+     ============================================ */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 350ms ease;
+  --transition-bounce: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ============================================
+     Z-INDEX SCALE
+     ============================================ */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+
+  /* ============================================
+     LAYOUT
+     ============================================ */
+  --header-height: 64px;
+  --sidebar-width: 240px;
+  --content-max-width: 1600px;
+  --card-min-width: 280px;
+
+  /* ============================================
+     CHART COLORS
+     ============================================ */
+  --chart-line-primary: #667eea;
+  --chart-line-secondary: #00d084;
+  --chart-line-tertiary: #ed8936;
+  --chart-grid: rgba(255, 255, 255, 0.05);
+  --chart-text: #8b9dc3;
+}
+
+/* ============================================
+   ELEMENT PLUS THEME OVERRIDES
+   ============================================ */
+:root {
+  /* Button */
+  --el-button-primary-bg-color: var(--accent-cyan);
+  --el-button-primary-border-color: var(--accent-cyan);
+  --el-button-primary-hover-bg-color: #33ddff;
+  --el-button-primary-hover-border-color: #33ddff;
+
+  /* Input */
+  --el-input-bg-color: var(--surface-primary);
+  --el-input-border-color: var(--border-primary);
+  --el-input-hover-border-color: var(--border-accent);
+  --el-input-focus-border-color: var(--accent-cyan);
+
+  /* Card */
+  --el-card-bg-color: var(--surface-primary);
+  --el-card-border-color: var(--border-primary);
+
+  /* Table */
+  --el-table-bg-color: var(--surface-primary);
+  --el-table-header-bg-color: var(--surface-secondary);
+  --el-table-row-hover-bg-color: var(--surface-hover);
+  --el-table-border-color: var(--border-secondary);
+
+  /* Popover/Dialog */
+  --el-popover-bg-color: var(--surface-elevated);
+  --el-popover-border-color: var(--border-primary);
+
+  /* Text */
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-muted);
+
+  /* Border */
+  --el-border-color: var(--border-primary);
+  --el-border-color-light: var(--border-secondary);
+
+  /* Fill */
+  --el-fill-color: var(--surface-secondary);
+  --el-fill-color-light: var(--surface-elevated);
+}

@@ -1,0 +1,487 @@
+/**
+ * Stock-Race Design System - CSS Mixins
+ * Reusable CSS patterns and utilities
+ *
+ * Note: These are CSS custom properties that can be used
+ * with the @apply directive or as reference values
+ */
+
+/* ============================================
+   GLASSMORPHISM
+   ============================================ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-strong {
+  background: rgba(20, 27, 45, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+}
+
+/* ============================================
+   GRADIENT TEXT
+   ============================================ */
+.gradient-text-cyan {
+  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-gold {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 50%, var(--accent-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-green {
+  background: linear-gradient(135deg, var(--up-primary) 0%, #00ff9d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   METALLIC BADGES - Level System
+   ============================================ */
+.badge-bronze {
+  background: var(--bronze-gradient);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--bronze-shadow);
+  border: 1px solid var(--bronze-light);
+}
+
+.badge-silver {
+  background: var(--silver-gradient);
+  color: #333;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  box-shadow: var(--silver-shadow);
+  border: 1px solid var(--silver-light);
+}
+
+.badge-gold {
+  background: var(--gold-gradient);
+  color: #333;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  box-shadow: var(--gold-shadow);
+  border: 1px solid var(--gold-light);
+}
+
+/* ============================================
+   GLOW EFFECTS
+   ============================================ */
+.glow-cyan {
+  box-shadow: 0 0 10px var(--accent-cyan-glow),
+              0 0 20px var(--accent-cyan-glow);
+}
+
+.glow-cyan-sm {
+  box-shadow: 0 0 5px var(--accent-cyan-glow);
+}
+
+.glow-green {
+  box-shadow: 0 0 10px var(--up-glow),
+              0 0 20px var(--up-glow);
+}
+
+.glow-red {
+  box-shadow: 0 0 10px var(--down-glow),
+              0 0 20px var(--down-glow);
+}
+
+.glow-gold {
+  box-shadow: 0 0 10px var(--accent-gold-glow),
+              0 0 20px var(--accent-gold-glow);
+}
+
+/* ============================================
+   STATUS INDICATORS
+   ============================================ */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot-running {
+  background: var(--up-primary);
+  box-shadow: 0 0 5px var(--up-primary), 0 0 10px var(--up-glow);
+  animation: breathing 2s ease-in-out infinite;
+}
+
+.status-dot-paused {
+  background: var(--neutral-muted);
+}
+
+.status-dot-error {
+  background: var(--down-primary);
+  box-shadow: 0 0 5px var(--down-primary);
+}
+
+/* ============================================
+   RETURN BADGES
+   ============================================ */
+.return-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+}
+
+.return-badge-up {
+  background: var(--up-bg);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
+}
+
+.return-badge-down {
+  background: var(--down-bg);
+  color: var(--down-primary);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+/* ============================================
+   CARD STYLES
+   ============================================ */
+.card-base {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-base),
+              box-shadow var(--transition-base);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-accent);
+}
+
+.card-elevated {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+.btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.btn-primary-gradient {
+  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
+  color: var(--text-on-dark);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.btn-primary-gradient:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+}
+
+.btn-success-gradient {
+  background: linear-gradient(135deg, var(--up-primary) 0%, #00b870 100%);
+  color: var(--text-on-dark);
+  box-shadow: 0 4px 15px rgba(0, 208, 132, 0.3);
+}
+
+.btn-danger-gradient {
+  background: linear-gradient(135deg, var(--down-primary) 0%, #e03e4c 100%);
+  color: var(--text-on-dark);
+  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+}
+
+.btn-glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  backdrop-filter: blur(8px);
+}
+
+.btn-glass:hover {
+  background: var(--glass-highlight);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   FORM INPUTS
+   ============================================ */
+.input-dark {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.input-dark:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+.input-dark::placeholder {
+  color: var(--text-muted);
+}
+
+/* ============================================
+   TABLE STYLES
+   ============================================ */
+.table-dark {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table-dark th {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.table-dark td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.table-dark tr:hover td {
+  background: var(--surface-hover);
+}
+
+/* ============================================
+   PROGRESS BARS
+   ============================================ */
+.progress-container {
+  width: 100%;
+  height: 8px;
+  background: var(--surface-secondary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.5s var(--transition-bounce);
+}
+
+.progress-fill-cyan {
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  box-shadow: 0 0 10px var(--accent-cyan-glow);
+}
+
+.progress-fill-green {
+  background: linear-gradient(90deg, var(--up-primary), #00ff9d);
+  box-shadow: 0 0 10px var(--up-glow);
+}
+
+.progress-fill-gold {
+  background: linear-gradient(90deg, var(--accent-gold-dark), var(--accent-gold), var(--accent-gold-light));
+  box-shadow: 0 0 10px var(--accent-gold-glow);
+}
+
+/* ============================================
+   DIVIDERS
+   ============================================ */
+.divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--border-primary),
+    transparent
+  );
+  margin: 1rem 0;
+}
+
+.divider-vertical {
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--border-primary),
+    transparent
+  );
+  margin: 0 1rem;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-elevated) var(--surface-primary);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: var(--surface-primary);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--surface-elevated);
+  border-radius: var(--radius-full);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-hover);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.text-gradient-cyan {
+  background: linear-gradient(135deg, var(--accent-cyan) 0%, #33ddff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, #ffed4e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-dark {
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+}
+
+.bg-gradient-card {
+  background: linear-gradient(135deg, var(--surface-primary) 0%, var(--surface-secondary) 100%);
+}
+
+.border-gradient {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--surface-primary), var(--surface-primary)) padding-box,
+              linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)) border-box;
+}
+
+/* ============================================
+   FOCUS STATES
+   ============================================ */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+}
+
+.focus-ring-cyan:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-cyan);
+}
+
+/* ============================================
+   NUMBER DISPLAY (For Financial Data)
+   ============================================ */
+.number-display {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.number-large {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+}
+
+.number-medium {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+/* ============================================
+   TRUNCATE TEXT
+   ============================================ */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+   VISUALLY HIDDEN (Accessibility)
+   ============================================ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

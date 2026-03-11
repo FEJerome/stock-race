@@ -263,3 +263,74 @@ async def resume_agent(
         message="success",
         data=AgentResponse.model_validate(agent)
     )
+
+
+@router.get("/{agent_id}/promotion", response_model=ApiResponse)
+async def get_promotion_status(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get AI agent promotion status and progress
+
+    Returns current rank, level, and promotion requirements.
+    """
+    from services.promotion_service import PromotionService
+
+    result = await db.execute(
+        select(AgentModel).where(AgentModel.id == agent_id)
+    )
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent with id {agent_id} not found"
+        )
+
+    service = PromotionService(db)
+    progress = await service.get_promotion_progress(agent_id)
+    title = await service.get_agent_title(agent_id)
+
+    return ApiResponse(
+        code=0,
+        message="success",
+        data={
+            "agent_id": agent_id,
+            "title": title,
+            **progress
+        }
+    )
+
+
+@router.post("/{agent_id}/promote", response_model=ApiResponse)
+async def promote_agent_endpoint(
+    agent_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Promote AI agent to next rank if eligible
+
+    Requirements:
+    - Intern -> Manager: Lv.6, 5% return, 10 trades
+    - Manager -> Partner: Lv.12, 15% return, 30 trades
+    """
+    from services.promotion_service import promote_agent
+
+    result = await db.execute(
+        select(AgentModel).where(AgentModel.id == agent_id)
+    )
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent with id {agent_id} not found"
+        )
+
+    success, message = await promote_agent(db, agent_id)
+
+    if success:
+        return ApiResponse(code=0, message=message, data={"promoted": True})
+    else:
+        return ApiResponse(code=1, message=message, data={"promoted": False})

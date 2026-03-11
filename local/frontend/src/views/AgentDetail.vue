@@ -4,20 +4,26 @@
     <div class="page-header">
       <div class="header-left">
         <button class="btn-back" @click="goBack">
-          ← 返回
+          <span class="back-icon">←</span>
+          返回
         </button>
-        <h2 v-if="agent">{{ agent.name }}</h2>
+        <div class="header-info" v-if="agent">
+          <div class="agent-avatar" :style="avatarStyle">{{ agent.name.charAt(0).toUpperCase() }}</div>
+          <h2>{{ agent.name }}</h2>
+        </div>
       </div>
       <div class="header-actions" v-if="agent">
         <span class="ws-badge" :class="wsConnected ? 'connected' : 'disconnected'" title="WebSocket 连接状态">
-          {{ wsConnected ? '● 实时' : '○ 离线' }}
+          <span class="ws-dot"></span>
+          {{ wsConnected ? '实时' : '离线' }}
         </span>
         <span class="status-badge" :class="agent.status">
+          <span class="status-dot"></span>
           {{ agent.status === 'active' ? '运行中' : '已暂停' }}
         </span>
         <button
           v-if="agent.status === 'active'"
-          class="btn-warning"
+          class="btn-action warning"
           @click="handlePause"
           :disabled="agentStore.loading"
         >
@@ -25,7 +31,7 @@
         </button>
         <button
           v-else
-          class="btn-success"
+          class="btn-action success"
           @click="handleResume"
           :disabled="agentStore.loading"
         >
@@ -42,6 +48,7 @@
 
     <!-- Error State -->
     <div v-else-if="agentStore.error" class="error-state">
+      <span class="error-icon">⚠</span>
       {{ agentStore.error }}
     </div>
 
@@ -49,17 +56,22 @@
     <div v-else-if="agent" class="detail-content">
       <!-- Level & Promotion Section -->
       <div class="section level-section">
-        <h3>职级与晋升</h3>
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">🏆</span>
+            职级与晋升
+          </h3>
+        </div>
         <div class="level-cards">
-          <div class="level-card current">
-            <div class="level-icon">{{ levelIcon(agent.agent_level) }}</div>
+          <div class="level-card" :class="`level-${agent.agent_level}`">
+            <div class="level-badge-icon">{{ levelIcon(agent.agent_level) }}</div>
             <div class="level-info">
               <span class="level-label">当前职级</span>
               <span class="level-value">{{ levelText(agent.agent_level) }}</span>
             </div>
           </div>
           <div class="level-card incentive">
-            <div class="level-icon">{{ incentiveIcon(agent.incentive_level) }}</div>
+            <div class="level-badge-icon">{{ incentiveIcon(agent.incentive_level) }}</div>
             <div class="level-info">
               <span class="level-label">当前档位</span>
               <span class="level-value">{{ incentiveText(agent.incentive_level) }}</span>
@@ -70,7 +82,10 @@
         <!-- Promotion Progress -->
         <div class="promotion-progress">
           <div class="progress-header">
-            <span>晋升进度</span>
+            <div class="progress-info">
+              <span class="progress-label">晋升进度</span>
+              <span class="progress-target">目标: {{ nextLevelText }}</span>
+            </div>
             <span class="progress-text">{{ promotionProgress }}%</span>
           </div>
           <div class="progress-bar">
@@ -84,25 +99,36 @@
 
       <!-- Performance Charts -->
       <div class="section charts-section">
-        <h3>业绩表现</h3>
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">📈</span>
+            业绩表现
+          </h3>
+        </div>
         <div class="charts-grid">
           <div class="chart-item wide">
-            <ReturnsChart
-              :data="portfolioHistory"
-              :show-legend="true"
-              :height="250"
-            />
+            <div class="chart-card">
+              <ReturnsChart
+                :data="portfolioHistory"
+                :show-legend="true"
+                :height="280"
+              />
+            </div>
           </div>
           <div class="chart-item">
-            <PortfolioPieChart
-              :positions="portfolio?.positions || []"
-              :cash="portfolio?.cash || 0"
-            />
+            <div class="chart-card">
+              <PortfolioPieChart
+                :positions="portfolio?.positions || []"
+                :cash="portfolio?.cash || 0"
+              />
+            </div>
           </div>
           <div class="chart-item">
-            <PerformanceRadar
-              :metrics="performanceMetrics"
-            />
+            <div class="chart-card">
+              <PerformanceRadar
+                :metrics="performanceMetrics"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -114,7 +140,15 @@
 
       <!-- Strategy Config -->
       <div class="section">
-        <h3>策略配置</h3>
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">📋</span>
+            策略配置
+          </h3>
+          <button class="btn-edit" @click="showEditStrategy = true">
+            修改策略
+          </button>
+        </div>
         <div class="strategy-card">
           <div class="strategy-grid">
             <div class="strategy-item">
@@ -142,15 +176,17 @@
               <span class="strategy-value">{{ agent.strategy.market_scope || '全部' }}</span>
             </div>
           </div>
-          <button class="btn-edit" @click="showEditStrategy = true">
-            修改策略
-          </button>
         </div>
       </div>
 
       <!-- Recent Decisions -->
       <div class="section">
-        <h3>最近决策</h3>
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">🤔</span>
+            最近决策
+          </h3>
+        </div>
         <div class="decisions-list" v-if="decisions.length">
           <div
             v-for="decision in decisions"
@@ -173,13 +209,20 @@
               {{ decision.reason }}
             </div>
             <div class="decision-meta">
-              <span>置信度: {{ (decision.confidence * 100).toFixed(0) }}%</span>
-              <span>Token: {{ decision.tokens_used }}</span>
+              <span class="meta-item">
+                <span class="meta-label">置信度:</span>
+                {{ (decision.confidence * 100).toFixed(0) }}%
+              </span>
+              <span class="meta-item">
+                <span class="meta-label">Token:</span>
+                {{ decision.tokens_used }}
+              </span>
             </div>
           </div>
         </div>
         <div v-else class="empty-state">
-          暂无决策记录
+          <div class="empty-icon">📭</div>
+          <p>暂无决策记录</p>
         </div>
       </div>
     </div>
@@ -187,13 +230,18 @@
     <!-- Edit Strategy Modal -->
     <div v-if="showEditStrategy" class="modal-overlay" @click.self="showEditStrategy = false">
       <div class="modal">
-        <h3>修改策略配置</h3>
-        <StrategyWizard
-          :initial-data="agent?.strategy"
-          :loading="updatingStrategy"
-          @submit="handleUpdateStrategy"
-          @change="handleStrategyChange"
-        />
+        <div class="modal-header">
+          <h3>修改策略配置</h3>
+          <button class="btn-close" @click="showEditStrategy = false">×</button>
+        </div>
+        <div class="modal-body">
+          <StrategyWizard
+            :initial-data="agent?.strategy"
+            :loading="updatingStrategy"
+            @submit="handleUpdateStrategy"
+            @change="handleStrategyChange"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -230,7 +278,19 @@ const updatingStrategy = ref(false)
 const wsConnected = ref(false)
 let unsubscribeAgent: (() => void) | null = null
 
-// WebSocket 消息处理
+// Avatar style generation
+const avatarStyle = computed(() => {
+  if (!agent.value) return {}
+  const hash = agent.value.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const hue1 = hash % 360
+  const hue2 = (hash * 7) % 360
+  return {
+    background: `linear-gradient(135deg, hsl(${hue1}, 70%, 50%), hsl(${hue2}, 70%, 40%))`,
+    boxShadow: `0 0 20px hsla(${hue1}, 70%, 50%, 0.4)`,
+  }
+})
+
+// WebSocket handlers
 function handleTradeNotification(message: AgentTradeMessage) {
   const trade = message.data
   showNotification(
@@ -238,7 +298,6 @@ function handleTradeNotification(message: AgentTradeMessage) {
     `${trade.action === 'buy' ? '买入' : '卖出'} ${trade.symbol} ${trade.quantity}股 @ ¥${trade.price.toFixed(2)}`,
     trade.action === 'buy' ? 'success' : 'warning'
   )
-  // 刷新数据
   loadData()
 }
 
@@ -249,11 +308,10 @@ function handleDecisionNotification(message: AgentDecisionMessage) {
     `${decision.symbol}: ${actionText(decision.action)} (置信度 ${(decision.confidence * 100).toFixed(0)}%)`,
     'info'
   )
-  // 刷新决策列表
   loadDecisions()
 }
 
-// 连接 WebSocket
+// Connect WebSocket
 async function connectWebSocket() {
   if (!agentId.value) return
 
@@ -265,14 +323,13 @@ async function connectWebSocket() {
       handleDecisionNotification
     )
     wsConnected.value = true
-    showSuccess('已连接到 AI 交易员实时通知')
   } catch (err) {
     console.error('Failed to connect agent WebSocket:', err)
     wsConnected.value = false
   }
 }
 
-// 断开 WebSocket
+// Disconnect WebSocket
 function disconnectWebSocket() {
   if (unsubscribeAgent) {
     unsubscribeAgent()
@@ -284,7 +341,7 @@ function disconnectWebSocket() {
   wsConnected.value = false
 }
 
-// 加载决策列表
+// Load decisions
 async function loadDecisions() {
   if (!agentId.value) return
   try {
@@ -295,7 +352,7 @@ async function loadDecisions() {
   }
 }
 
-// Promotion thresholds
+// Promotion calculations
 const levelThresholds: Record<string, number> = {
   intern: 20,
   manager: 50,
@@ -404,7 +461,6 @@ async function handleResume() {
 }
 
 function handleStrategyChange(data: StrategyFormData) {
-  // Handle real-time strategy changes if needed
   console.log('Strategy changed:', data)
 }
 
@@ -416,7 +472,6 @@ async function handleUpdateStrategy(data: StrategyFormData) {
       strategy: data,
     })
     showEditStrategy.value = false
-    // Refresh agent data
     await agentStore.fetchAgent(agent.value.id)
   } catch (err) {
     alert('更新策略失败: ' + (err instanceof Error ? err.message : '未知错误'))
@@ -428,10 +483,8 @@ async function handleUpdateStrategy(data: StrategyFormData) {
 async function loadData() {
   if (!agentId.value) return
 
-  // Load agent details
   await agentStore.fetchAgent(agentId.value)
 
-  // Load portfolio data
   try {
     const portfolioRes = await portfolioApi.getPortfolio(agentId.value)
     portfolio.value = portfolioRes.data
@@ -439,7 +492,6 @@ async function loadData() {
     console.error('Failed to load portfolio:', err)
   }
 
-  // Load portfolio history
   try {
     const historyRes = await portfolioApi.getHistory(agentId.value, 30)
     portfolioHistory.value = historyRes.data.history
@@ -447,7 +499,6 @@ async function loadData() {
     console.error('Failed to load portfolio history:', err)
   }
 
-  // Load performance metrics
   try {
     const perfRes = await portfolioApi.getPerformance(agentId.value)
     performanceMetrics.value = perfRes.data
@@ -455,7 +506,6 @@ async function loadData() {
     console.error('Failed to load performance:', err)
   }
 
-  // Load recent decisions
   await loadDecisions()
 }
 
@@ -471,145 +521,265 @@ onUnmounted(() => {
 
 <style scoped>
 .agent-detail-page {
-  padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
+/* Page Header */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .btn-back {
-  background: none;
-  border: none;
-  color: #666;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
   cursor: pointer;
-  font-size: 0.875rem;
-  padding: 0.5rem;
+  transition: all var(--transition-fast);
 }
 
 .btn-back:hover {
-  color: #2c3e50;
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.back-icon {
+  font-size: var(--text-lg);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.agent-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-bold);
+  font-size: var(--text-lg);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .page-header h2 {
   margin: 0;
-  color: #2c3e50;
-  font-size: 1.5rem;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-}
-
-.status-badge {
-  padding: 0.375rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.status-badge.active {
-  background: #e8f5e9;
-  color: #388e3c;
-}
-
-.status-badge.paused {
-  background: #fff3e0;
-  color: #f57c00;
+  gap: var(--space-3);
 }
 
 .ws-badge {
-  padding: 0.375rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
 }
 
 .ws-badge.connected {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: rgba(0, 208, 132, 0.15);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
 }
 
 .ws-badge.disconnected {
-  background: #f5f5f5;
-  color: #9e9e9e;
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-secondary);
 }
 
-.btn-warning {
-  background: #fff3e0;
+.ws-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ws-badge.connected .ws-dot {
+  box-shadow: 0 0 5px currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+}
+
+.status-badge.active {
+  background: rgba(0, 208, 132, 0.15);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
+}
+
+.status-badge.paused {
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-secondary);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-badge.active .status-dot {
+  box-shadow: 0 0 5px currentColor;
+  animation: pulse 2s infinite;
+}
+
+.btn-action {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-action.warning {
+  background: rgba(245, 124, 0, 0.15);
   color: #f57c00;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
+  border: 1px solid rgba(245, 124, 0, 0.3);
 }
 
-.btn-success {
-  background: #e8f5e9;
-  color: #388e3c;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
+.btn-action.warning:hover {
+  background: rgba(245, 124, 0, 0.25);
+}
+
+.btn-action.success {
+  background: rgba(0, 208, 132, 0.15);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
+}
+
+.btn-action.success:hover {
+  background: rgba(0, 208, 132, 0.25);
+}
+
+.btn-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Sections */
 .section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-6);
 }
 
-.section h3 {
-  margin: 0 0 1rem;
-  color: #2c3e50;
-  font-size: 1.125rem;
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.section-header h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.section-icon {
+  font-size: var(--text-xl);
 }
 
 /* Level Section */
 .level-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 .level-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: #f8f9fa;
-  border-radius: 8px;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-fast);
 }
 
-.level-card.current {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+.level-card:hover {
+  border-color: var(--border-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.level-card.level-intern {
+  border-left: 3px solid #cd7f32;
+}
+
+.level-card.level-manager {
+  border-left: 3px solid #c0c0c0;
+}
+
+.level-card.level-partner {
+  border-left: 3px solid #ffd700;
 }
 
 .level-card.incentive {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  color: white;
+  border-left: 3px solid var(--accent-cyan);
 }
 
-.level-icon {
-  font-size: 2rem;
+.level-badge-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-secondary);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-2xl);
 }
 
 .level-info {
@@ -618,61 +788,83 @@ onUnmounted(() => {
 }
 
 .level-label {
-  font-size: 0.75rem;
-  opacity: 0.8;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .level-value {
-  font-size: 1.25rem;
-  font-weight: bold;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
 }
 
 /* Promotion Progress */
 .promotion-progress {
-  background: white;
-  border-radius: 8px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
 }
 
 .progress-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
-  font-weight: 500;
-  color: #2c3e50;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.progress-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+}
+
+.progress-target {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .progress-text {
-  color: #667eea;
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--accent-cyan);
 }
 
 .progress-bar {
-  height: 8px;
-  background: #e0e0e0;
-  border-radius: 4px;
+  height: 10px;
+  background: var(--surface-secondary);
+  border-radius: var(--radius-full);
   overflow: hidden;
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--space-3);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  border-radius: var(--radius-full);
+  transition: width 0.5s var(--transition-bounce);
+  box-shadow: 0 0 10px var(--accent-cyan-glow);
 }
 
 .progress-hint {
   margin: 0;
-  font-size: 0.875rem;
-  color: #666;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
 /* Charts Section */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  gap: var(--space-4);
 }
 
 .chart-item {
@@ -683,143 +875,188 @@ onUnmounted(() => {
   grid-column: span 2;
 }
 
+.chart-card {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  height: 100%;
+}
+
 /* Strategy Card */
+.btn-edit {
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-edit:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.1);
+}
+
 .strategy-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
 }
 
 .strategy-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-4);
 }
 
 .strategy-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .strategy-label {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .strategy-value {
-  font-weight: 500;
-  color: #2c3e50;
-}
-
-.btn-edit {
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
-
-.btn-edit:hover {
-  background: #e0e0e0;
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
 
 /* Decisions */
 .decisions-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .decision-item {
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: all var(--transition-fast);
+}
+
+.decision-item:hover {
+  border-color: var(--border-accent);
 }
 
 .decision-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .decision-time {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
 }
 
 .decision-action {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
 }
 
 .decision-action.buy {
-  background: #e8f5e9;
-  color: #388e3c;
+  background: var(--up-bg);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
 }
 
 .decision-action.sell {
-  background: #ffebee;
-  color: #d32f2f;
+  background: var(--down-bg);
+  color: var(--down-primary);
+  border: 1px solid rgba(255, 71, 87, 0.3);
 }
 
 .decision-action.hold {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-secondary);
 }
 
 .decision-symbol {
-  font-weight: 500;
-  color: #2c3e50;
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
 }
 
 .decision-reason {
-  font-size: 0.875rem;
-  color: #333;
-  line-height: 1.5;
-  margin-bottom: 0.5rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-2);
 }
 
 .decision-meta {
   display: flex;
-  gap: 1rem;
-  font-size: 0.75rem;
-  color: #666;
+  gap: var(--space-4);
+}
+
+.meta-item {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.meta-label {
+  margin-right: var(--space-1);
 }
 
 /* States */
 .loading-state,
 .error-state,
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  color: var(--text-muted);
   text-align: center;
-  padding: 3rem;
-  color: #666;
-}
-
-.error-state {
-  color: #d32f2f;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #667eea;
+  border: 3px solid var(--surface-elevated);
+  border-top-color: var(--accent-cyan);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
+  margin-bottom: var(--space-3);
 }
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.error-state {
+  color: var(--down-primary);
+}
+
+.error-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-2);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-2);
+  opacity: 0.5;
 }
 
 /* Modal */
@@ -829,27 +1066,63 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
+  z-index: var(--z-modal);
+  padding: var(--space-4);
 }
 
 .modal {
-  background: white;
-  border-radius: 12px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 1.5rem;
+  box-shadow: var(--shadow-xl);
 }
 
-.modal h3 {
-  margin: 0 0 1.5rem;
-  color: #2c3e50;
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.btn-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--text-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: var(--space-5);
 }
 
 /* Responsive */
@@ -857,7 +1130,7 @@ onUnmounted(() => {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: var(--space-4);
   }
 
   .charts-grid {

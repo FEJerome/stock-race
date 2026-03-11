@@ -3,7 +3,7 @@ Database configuration and session management
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, String, Integer, Float, DateTime, JSON
+from sqlalchemy import Column, String, Integer, Float, DateTime, JSON, Index, BigInteger
 from datetime import datetime
 import os
 
@@ -82,6 +82,29 @@ class PositionModel(Base):
     current_price = Column(Float, nullable=True)
 
 
+class NewsIntelligenceModel(Base):
+    """新闻结构化情报模型 - 精简情报架构"""
+    __tablename__ = "news_intelligence"
+
+    id = Column(String, primary_key=True)           # URL MD5作为ID
+    symbol = Column(String, index=True)              # 股票代码
+    headline = Column(String)                        # 一句话摘要(≤50字)
+    sentiment = Column(String)                       # positive/negative/neutral
+    confidence = Column(Float)                       # 置信度0-1
+    relevance_score = Column(Float)                  # 关联度0-1
+    key_points = Column(JSON)                        # 关键信息点列表
+    source = Column(String)                          # 来源: sina/eastmoney
+    url = Column(String)                             # 原文链接
+    publish_time = Column(DateTime)                  # 发布时间
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime)                    # 过期时间(7天后)
+
+    __table_args__ = (
+        Index('idx_news_symbol_created', 'symbol', 'created_at'),  # 复合索引：按股票查最新新闻
+        Index('idx_news_expires', 'expires_at'),                   # 过期清理索引
+    )
+
+
 async def init_db():
     """Initialize database tables"""
     async with engine.begin() as conn:
@@ -99,3 +122,20 @@ async def get_db():
             raise
         finally:
             await session.close()
+
+
+class MarketQuoteModel(Base):
+    """行情历史数据模型 - 惰性存储"""
+    __tablename__ = "market_quotes"
+
+    symbol = Column(String, primary_key=True)
+    timestamp = Column(DateTime, primary_key=True)
+    price = Column(Float, nullable=False)
+    change = Column(Float, default=0)
+    change_percent = Column(Float, default=0)
+    volume = Column(BigInteger, default=0)
+    amount = Column(BigInteger, default=0)
+
+    __table_args__ = (
+        Index('idx_quotes_symbol_time', 'symbol', 'timestamp'),
+    )

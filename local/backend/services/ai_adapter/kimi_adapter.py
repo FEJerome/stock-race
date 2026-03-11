@@ -54,11 +54,6 @@ class KimiAdapter(AIAdapter):
 - 当前价格: ¥{current_price}
 - 涨跌幅: {change_percent}%
 - 成交量: {volume}
-- 5日均线: {ma5}
-- 10日均线: {ma10}
-- 20日均线: {ma20}
-- 52周最高: {high_52w}
-- 52周最低: {low_52w}
 
 ## 持仓情况
 {position_info}
@@ -73,6 +68,8 @@ class KimiAdapter(AIAdapter):
 
 ## 新闻情绪
 {news_sentiment}
+
+{technical_analysis}
 
 ---
 
@@ -246,13 +243,31 @@ class KimiAdapter(AIAdapter):
         # Format news sentiment
         news_str = request.news_sentiment or "暂无新闻情绪数据"
 
+        # 新增：技术分析段落
+        tech_section = ""
+        if m.trend != "unknown":
+            tech_section += "## 技术分析\n"
+            tech_section += f"- 短期趋势: {self._translate_trend(m.trend)}\n"
+            if m.ma5:
+                ma_status = "高于" if m.current_price > m.ma5 else "低于"
+                tech_section += f"- MA5: ¥{m.ma5:.2f} (现价{ma_status}均线)\n"
+            if m.ma10:
+                tech_section += f"- MA10: ¥{m.ma10:.2f}\n"
+            if m.ma20:
+                tech_section += f"- MA20: ¥{m.ma20:.2f}\n"
+            if m.volume_ma5:
+                tech_section += f"- 成交量MA5: {m.volume_ma5:,.0f}\n"
+            if m.price_change_1h is not None:
+                direction = "上涨" if m.price_change_1h > 0 else "下跌"
+                tech_section += f"- 1小时{direction}: {m.price_change_1h:+.2f}%\n"
+
         # Format portfolio summary
         portfolio = request.portfolio_summary
 
         return self.DECISION_PROMPT_TEMPLATE.format(
             agent_name=request.agent_name,
             agent_level=request.agent_level,
-            incentive_level=request.incentive_level,
+            incentive_level=request.agent_level,
             risk_tolerance=request.strategy.get("risk_tolerance", "稳健"),
             holding_period=request.strategy.get("holding_period", "中线"),
             sectors=", ".join(request.strategy.get("sectors", ["全市场"])),
@@ -264,18 +279,18 @@ class KimiAdapter(AIAdapter):
             current_price=m.current_price,
             change_percent=m.change_percent,
             volume=m.volume,
-            ma5=m.ma5 or "N/A",
-            ma10=m.ma10 or "N/A",
-            ma20=m.ma20 or "N/A",
-            high_52w=m.high_52w or "N/A",
-            low_52w=m.low_52w or "N/A",
             position_info=position_info,
             total_capital=portfolio.get("total_capital", 0),
             available_capital=portfolio.get("available_capital", 0),
             position_count=portfolio.get("position_count", 0),
             trade_history=history_str,
             news_sentiment=news_str,
+            technical_analysis=tech_section,
         )
+
+    def _translate_trend(self, trend: str) -> str:
+        """翻译趋势为中文"""
+        return {"up": "上涨", "down": "下跌", "sideways": "震荡"}.get(trend, "未知")
 
     def parse_response(self, raw_response: str) -> DecisionResponse:
         """

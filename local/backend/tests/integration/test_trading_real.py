@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy import select, delete
 
 from models.database import Base, AgentModel, TradeModel, PositionModel
-from services.trading_service import TradingService, TradingServiceAsync
+from services.trading_service import TradingService
 from models.schemas import TradeCreate, TradeResponse
 
 
@@ -583,47 +583,6 @@ class TestTradingServicePortfolio:
         summary = await trading_service.get_portfolio_summary(db_session, "invalid-agent")
 
         assert summary is None
-
-
-@pytest.mark.asyncio
-class TestTradingServiceAsync:
-    """Tests for TradingServiceAsync wrapper"""
-
-    async def test_async_wrapper_get_agent(self, db_session, test_agent):
-        """Test async wrapper get_agent method"""
-        service = TradingServiceAsync(db_session)
-
-        agent = await service.get_agent(test_agent.id)
-
-        assert agent is not None
-        assert agent.id == test_agent.id
-        assert agent.name == test_agent.name
-
-    async def test_async_wrapper_get_position(self, db_session, test_agent, trading_service):
-        """Test async wrapper get_position method"""
-        # First create a position
-        await trading_service.execute_buy(
-            db=db_session,
-            agent_id=test_agent.id,
-            symbol="000001.SZ",
-            quantity=100
-        )
-
-        service = TradingServiceAsync(db_session)
-        position = await service.get_position(test_agent.id, "000001.SZ")
-
-        assert position is not None
-        assert position.symbol == "000001.SZ"
-        assert position.quantity == 100
-
-    async def test_async_wrapper_portfolio_summary(self, db_session, test_agent):
-        """Test async wrapper portfolio summary"""
-        service = TradingServiceAsync(db_session)
-
-        summary = await service.get_portfolio_summary(test_agent.id)
-
-        assert summary is not None
-        assert summary["total_capital"] == test_agent.initial_capital
 
 
 @pytest.mark.asyncio

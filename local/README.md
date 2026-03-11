@@ -7,13 +7,13 @@
 ### 1. 安装依赖
 
 ```bash
-cd local
+cd local/backend
 
 # 安装后端依赖
 pip install -r requirements.txt
 
 # 安装前端依赖
-cd frontend
+cd ../frontend
 npm install
 cd ..
 ```
@@ -21,20 +21,18 @@ cd ..
 ### 2. 配置 API Key
 
 ```bash
-# 复制配置文件
-cp config/local.yaml.example config/local.yaml
-
-# 编辑 config/local.yaml，填入你的 API Key
-# deepseek:
-#   api_key: "your-deepseek-key"
-# qwen:
-#   api_key: "your-qwen-key"
+# 设置环境变量（推荐方式）
+export MOONSHOT_API_KEY="your-kimi-api-key"      # Kimi K2.5
+export DEEPSEEK_API_KEY="your-deepseek-api-key"  # DeepSeek
+export DASHSCOPE_API_KEY="your-qwen-api-key"     # 通义千问
+export ZHIPU_API_KEY="your-glm-api-key"          # 智谱GLM
 ```
 
 ### 3. 启动服务（自动打开浏览器）
 
 ```bash
-python local.py
+cd backend
+python main.py
 ```
 
 服务启动后会自动打开浏览器，访问 `http://localhost:8000`
@@ -42,7 +40,7 @@ python local.py
 ### 4. 仅启动服务（不打开浏览器）
 
 ```bash
-python local.py --headless
+python main.py --headless
 ```
 
 然后手动访问 http://localhost:8000
@@ -54,15 +52,16 @@ python local.py --headless
 ### 1. 创建 AI 交易员
 
 - 在 Web 界面点击「创建 AI」
-- 选择 AI 模型（DeepSeek/通义/Kimi/GLM）
+- 选择 AI 模型（Kimi/DeepSeek/通义/GLM）
 - 配置策略（五维度：风险/板块/周期/仓位/止损）
 - 设置初始资金
+- 选择职级：实习生/经理/合伙人
 
 ### 2. 查看实时行情
 
 - 进入「行情」页面
 - 查看多数据源实时推送的股票数据
-- 查看新闻/舆论数据
+- 支持数据源：腾讯财经、新浪财经、东方财富
 
 ### 3. 执行交易
 
@@ -71,7 +70,15 @@ python local.py --headless
 - 查看 AI 决策理由（内心戏）
 - 确认执行
 
-### 4. 查看收益
+### 4. 职级晋升
+
+- 实习生（Lv.1-6）→ 经理（Lv.7-12）→ 合伙人（Lv.13-20）
+- 晋升条件：
+  - 实习生→经理：Lv.6、收益率≥5%、交易次数≥10
+  - 经理→合伙人：Lv.12、收益率≥15%、交易次数≥30
+- 调用 API：`POST /api/agents/{id}/promote`
+
+### 5. 查看收益
 
 - 「仪表盘」查看多 AI 对比
 - 「持仓」查看当前持仓和收益
@@ -86,10 +93,10 @@ python local.py --headless
 ### 技术栈
 
 - **前端**：Vue 3 + Vite + Pinia
-- **后端**：FastAPI (Python)
-- **存储**：SQLite
+- **后端**：FastAPI (Python) + SQLAlchemy (异步)
+- **存储**：SQLite + aiosqlite
 - **实时通信**：WebSocket
-- **数据源**：实时行情 API + 新闻/舆论
+- **数据源**：多源实时行情（腾讯/新浪/东方财富）
 
 ### 与 MVP/Full 的区别
 
@@ -97,8 +104,9 @@ python local.py --headless
 |------|:-----:|:---:|:----:|
 | **部署** | 本地自用 | 微信小程序云端 | 生产环境多用户 |
 | **用户** | 单用户（无登录） | 微信授权 | 完整账号体系 |
-| **数据源** | 实时行情+新闻+舆论 | 实时行情 | 实时行情+新闻+舆论 |
+| **数据源** | 多源实时行情 | 实时行情 | 多源实时行情+新闻 |
 | **AI 模型** | 多模型并行 | DeepSeek 单一模型 | 多模型并行 |
+| **职级系统** | ✅ | ✅ | ✅ |
 | **商业功能** | ❌ | 7 天试用 | 订阅+等级+支付 |
 | **社交功能** | ❌ | ❌ | ✅ |
 | **前端** | Web（Vue） | 小程序 | 小程序+Web+App |
@@ -107,37 +115,52 @@ python local.py --headless
 
 ---
 
-## 开发计划
+## API 端点
 
-- [x] 架构设计（Vue + FastAPI）
-- [ ] FastAPI 后端基础框架
-- [ ] Vue 3 前端基础框架
-- [ ] 多数据源行情采集（复用 legacy）
-- [ ] 新闻/舆论数据采集
-- [ ] AI 适配器（多模型支持）
-- [ ] 交易引擎
-- [ ] 实时 WebSocket 推送
-- [ ] 前端页面实现
-- [ ] 策略收集对话
+### AI 交易员管理
+- `GET/POST /api/agents` - 列表/创建
+- `GET/PATCH/DELETE /api/agents/{id}` - 详情/更新/删除
+- `POST /api/agents/{id}/pause` - 暂停
+- `POST /api/agents/{id}/resume` - 恢复
+- `GET /api/agents/{id}/promotion` - 晋升状态
+- `POST /api/agents/{id}/promote` - 执行晋升
+
+### 行情数据
+- `GET /api/market/quotes` - 获取多股票行情
+- `GET /api/market/quotes/{symbol}` - 获取单股票行情
+- `GET /api/market/health` - 数据源健康状态
+- `GET /api/market/sources` - 数据源列表
+
+### 交易执行
+- `GET /api/agents/{id}/positions` - 持仓列表
+- `GET /api/agents/{id}/trades` - 交易历史
+- `POST /api/agents/{id}/trades` - 执行交易
+
+### AI 决策
+- `POST /api/agents/{id}/decide` - 触发 AI 决策
+- `GET /api/agents/tokens/stats` - Token 使用统计
 
 ---
 
-## 从 Legacy 复用
+## 已实现功能
 
-Local 从 v0.9 遗留代码中复用以下模块：
-
-| Legacy 模块 | Local 复用方式 |
-|------------|--------------|
-| `market-data-service` | `services/market_collector.py` |
-| `trading-ai-service` | `services/ai_adapter.py` |
-| `news-service` | `services/news_collector.py` |
-
-复用策略：业务逻辑不变，仅换框架和存储。
+- [x] FastAPI 后端框架（异步架构）
+- [x] SQLAlchemy ORM + 异步数据库操作
+- [x] 多数据源行情采集（腾讯/新浪/东方财富）
+- [x] 数据源健康检查与熔断降级
+- [x] WebSocket 实时数据推送
+- [x] 多模型 AI 适配器（Kimi/DeepSeek/通义/GLM）
+- [x] 职级晋升系统（实习生/经理/合伙人）
+- [x] 虚拟交易执行与持仓管理
+- [x] Token 使用统计
+- [x] Vue 3 前端框架
 
 ---
 
 ## 参考
 
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - 架构设计说明
+- [API_SPEC.md](../docs/modules/local/API_SPEC.md) - API 规范
 - [MVP](../mvp/) - Phase 2 规划（微信小程序）
 - [Full](../full/) - Phase 3 规划（微服务架构）
 

@@ -46,6 +46,9 @@ class MarketContext:
     ma5: Optional[float] = None
     ma10: Optional[float] = None
     ma20: Optional[float] = None
+    volume_ma5: Optional[float] = None
+    price_change_1h: Optional[float] = None
+    trend: str = "unknown"  # up/down/sideways/unknown
     high_52w: Optional[float] = None
     low_52w: Optional[float] = None
 

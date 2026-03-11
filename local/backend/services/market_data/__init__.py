@@ -7,9 +7,13 @@ from .sina_source import SinaDataSource
 from .tencent_source import TencentDataSource
 from .eastmoney_source import EastMoneyDataSource
 from .router import DataSourceRouter, get_router
+from .cache_service import QuoteCacheService, get_cache_service, init_cache_service
+from .indicators import TechnicalIndicators, TechnicalIndicatorsResult
 
 __all__ = [
     'DataSource', 'Quote', 'MarketData', 'DataSourceHealth', 'DataSourceStatus',
     'CSVDataSource', 'SinaDataSource', 'TencentDataSource', 'EastMoneyDataSource',
-    'DataSourceRouter', 'get_router'
+    'DataSourceRouter', 'get_router',
+    'QuoteCacheService', 'get_cache_service', 'init_cache_service',
+    'TechnicalIndicators', 'TechnicalIndicatorsResult'
 ]

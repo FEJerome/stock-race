@@ -11,7 +11,10 @@ import os
 
 from services.ai_adapter import get_ai_adapter, DecisionRequest, DecisionResponse, DecisionAction
 from services.ai_adapter.base import MarketContext, PositionContext
-from services.trading_service import TradingServiceAsync
+from services.trading_service import TradingService
+from services.news.service import get_news_service
+from services.market_data.cache_service import get_cache_service
+from services.market_data.indicators import TechnicalIndicators
 from models.schemas import ApiResponse, TradeCreate
 from models.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,10 +98,10 @@ async def make_decision(
     """
     try:
         # Get trading service
-        trading_service = TradingServiceAsync(db)
+        trading_service = TradingService()
 
         # Get agent info
-        agent = await trading_service.get_agent(agent_id)
+        agent = await trading_service.get_agent(db, agent_id)
         if not agent:
             raise HTTPException(status_code=404, detail=f"Agent {agent_id} not found")
 
@@ -114,13 +117,13 @@ async def make_decision(
             raise HTTPException(status_code=404, detail=f"Market data not found for {request.symbol}")
 
         # Get position info
-        position = await trading_service.get_position(agent_id, request.symbol)
+        position = await trading_service.get_position(db, agent_id, request.symbol)
 
         # Get portfolio summary
-        portfolio = await trading_service.get_portfolio_summary(agent_id)
+        portfolio = await trading_service.get_portfolio_summary(db, agent_id)
 
         # Get recent trades
-        trades = await trading_service.get_agent_trades(agent_id, limit=5)
+        trades = await trading_service.get_trades(db, agent_id, limit=5)
         trade_history = [
             {
                 "symbol": t.symbol,
@@ -132,6 +135,17 @@ async def make_decision(
             for t in trades
         ]
 
+        # 计算技术指标
+        tech_data = None
+        try:
+            cache_service = get_cache_service()
+            if cache_service:
+                indicators = TechnicalIndicators(cache_service)
+                tech_data = await indicators.calculate(request.symbol)
+        except Exception as e:
+            print(f"[Decision] Technical indicators calculation failed: {e}")
+            # 降级处理：指标计算失败继续决策
+
         # Build decision request
         market_context = MarketContext(
             symbol=quote.symbol,
@@ -139,6 +153,12 @@ async def make_decision(
             current_price=quote.price,
             change_percent=quote.change_percent,
             volume=quote.volume,
+            ma5=tech_data.ma5 if tech_data else None,
+            ma10=tech_data.ma10 if tech_data else None,
+            ma20=tech_data.ma20 if tech_data else None,
+            volume_ma5=tech_data.volume_ma5 if tech_data else None,
+            price_change_1h=tech_data.price_change_1h if tech_data else None,
+            trend=tech_data.trend if tech_data else "unknown",
         )
 
         position_context = None
@@ -167,6 +187,14 @@ async def make_decision(
             api_key=api_key
         )
 
+        # Get news sentiment summary
+        news_service = get_news_service()
+        news_sentiment = await news_service.get_intelligence_summary(request.symbol, db)
+
+        # Trigger news collection in background (don't wait)
+        import asyncio
+        asyncio.create_task(news_service.collect_news(request.symbol, db, limit=10))
+
         decision_request = DecisionRequest(
             agent_id=agent_id,
             agent_name=agent.name,
@@ -176,7 +204,7 @@ async def make_decision(
             strategy=agent.strategy,
             portfolio_summary=portfolio,
             trade_history=trade_history,
-            news_sentiment=None,  # TODO: integrate news sentiment
+            news_sentiment=news_sentiment,
         )
 
         # Make decision
@@ -198,6 +226,7 @@ async def make_decision(
 
                     if qty > 0:
                         trade = await trading_service.execute_trade(
+                            db=db,
                             agent_id=agent_id,
                             trade_data=TradeCreate(
                                 symbol=request.symbol,
@@ -220,6 +249,7 @@ async def make_decision(
                         qty = min(decision.suggested_quantity or position.quantity, position.quantity)
                         if qty > 0:
                             trade = await trading_service.execute_trade(
+                                db=db,
                                 agent_id=agent_id,
                                 trade_data=TradeCreate(
                                     symbol=request.symbol,

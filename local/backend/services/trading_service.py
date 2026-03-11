@@ -400,34 +400,25 @@ class TradingService:
             "updated_at": datetime.utcnow().isoformat()
         }
 
-
-# 全局服务实例
-trading_service = TradingService()
-
-
-def get_trading_service() -> TradingService:
-    """获取交易服务实例"""
-    return trading_service
-
-
-# Async-compatible TradingService wrapper for dependency injection
-class TradingServiceAsync:
-    """Trading service with async DB session support"""
-
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self._service = TradingService()
-
-    async def get_agent(self, agent_id: str):
-        """Get agent by ID"""
-        result = await self.db.execute(
+    async def get_agent(
+        self,
+        db: AsyncSession,
+        agent_id: str
+    ) -> Optional[AgentModel]:
+        """获取AI代理"""
+        result = await db.execute(
             select(AgentModel).where(AgentModel.id == agent_id)
         )
         return result.scalar_one_or_none()
 
-    async def get_position(self, agent_id: str, symbol: str):
-        """Get position for agent and symbol"""
-        result = await self.db.execute(
+    async def get_position(
+        self,
+        db: AsyncSession,
+        agent_id: str,
+        symbol: str
+    ) -> Optional[PositionModel]:
+        """获取特定持仓"""
+        result = await db.execute(
             select(PositionModel).where(
                 PositionModel.agent_id == agent_id,
                 PositionModel.symbol == symbol
@@ -435,56 +426,34 @@ class TradingServiceAsync:
         )
         return result.scalar_one_or_none()
 
-    async def get_portfolio_summary(self, agent_id: str) -> dict:
-        """Get portfolio summary"""
-        agent = await self.get_agent(agent_id)
-        if not agent:
-            return {}
-
-        # Get positions
-        result = await self.db.execute(
-            select(PositionModel).where(PositionModel.agent_id == agent_id)
-        )
-        positions = result.scalars().all()
-
-        # Calculate values
-        position_value = sum(p.quantity * p.current_price for p in positions)
-
-        return {
-            "total_capital": agent.initial_capital,
-            "available_capital": agent.current_capital,
-            "position_value": position_value,
-            "position_count": len(positions),
-        }
-
-    async def get_agent_trades(self, agent_id: str, limit: int = 5):
-        """Get recent trades for agent"""
-        result = await self.db.execute(
-            select(TradeModel)
-            .where(TradeModel.agent_id == agent_id)
-            .order_by(TradeModel.timestamp.desc())
-            .limit(limit)
-        )
-        return result.scalars().all()
-
     async def execute_trade(
         self,
+        db: AsyncSession,
         agent_id: str,
         trade_data: TradeCreate,
         decision_reason: Optional[str] = None
-    ):
-        """Execute trade using the sync service"""
+    ) -> TradeResponse:
+        """执行交易（buy/sell 路由）"""
         if trade_data.action == "buy":
-            success, msg, trade = await self._service.execute_buy(
-                self.db, agent_id, trade_data.symbol,
+            success, msg, trade = await self.execute_buy(
+                db, agent_id, trade_data.symbol,
                 trade_data.quantity, decision_reason
             )
         else:
-            success, msg, trade = await self._service.execute_sell(
-                self.db, agent_id, trade_data.symbol,
+            success, msg, trade = await self.execute_sell(
+                db, agent_id, trade_data.symbol,
                 trade_data.quantity, decision_reason
             )
 
         if not success:
             raise ValueError(msg)
         return trade
+
+
+def get_trading_service() -> TradingService:
+    """获取交易服务实例（依赖注入用）
+
+    2026-03-11: 重构后移除全局实例，每次调用创建新实例
+    保持与 FastAPI Depends 兼容，实际数据库会话由调用方传入
+    """
+    return TradingService()

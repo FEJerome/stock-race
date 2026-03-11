@@ -6,6 +6,11 @@ import router from './router'
 import App from './App.vue'
 import { globalErrorHandler } from './utils/error-handler'
 
+// Import design system
+import './styles/variables.css'
+import './styles/animations.css'
+import './styles/mixins.css'
+
 const app = createApp(App)
 
 // 配置全局错误处理

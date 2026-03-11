@@ -23,7 +23,9 @@ from api.strategy import router as strategy_router
 from api.decision import router as decision_router
 from api.websocket import router as websocket_router, broadcast_market_data_task
 from api.settings import router as settings_router
-from models.database import init_db
+from api.news import router as news_router
+from models.database import init_db, AsyncSessionLocal
+from services.scheduler import DataCleanupScheduler
 
 
 @asynccontextmanager
@@ -34,15 +36,25 @@ async def lifespan(app: FastAPI):
     await init_db()
     print("[DB] Database initialized")
 
+    # 初始化缓存服务
+    from services.market_data.cache_service import init_cache_service
+    init_cache_service(lambda: AsyncSessionLocal())
+    print("[Cache] Quote cache service initialized")
+
     # Start WebSocket background tasks
     import asyncio
     asyncio.create_task(broadcast_market_data_task())
     print("[WS] Market data broadcaster started")
 
+    # 启动数据清理调度器
+    scheduler = DataCleanupScheduler(lambda: AsyncSessionLocal())
+    scheduler.start()
+
     yield
 
     # Shutdown
     print("[STOP] Server shutting down...")
+    scheduler.shutdown()
 
 
 def create_app() -> FastAPI:
@@ -72,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(decision_router)
     app.include_router(websocket_router)
     app.include_router(settings_router)
+    app.include_router(news_router)
 
     return app
 

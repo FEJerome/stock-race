@@ -1,18 +1,18 @@
 <template>
   <div class="returns-chart">
-    <div class="chart-header">
+    <div class="chart-header" v-if="showHeader">
       <h4>收益曲线</h4>
       <div class="chart-legend" v-if="showLegend">
         <div class="legend-item">
-          <span class="legend-color" style="background: #667eea;"></span>
+          <span class="legend-line" style="background: #667eea;"></span>
           <span>总资产</span>
         </div>
         <div class="legend-item">
-          <span class="legend-color" style="background: #48bb78;"></span>
+          <span class="legend-line" style="background: #00d084;"></span>
           <span>现金</span>
         </div>
         <div class="legend-item">
-          <span class="legend-color" style="background: #ed8936;"></span>
+          <span class="legend-line" style="background: #ed8936;"></span>
           <span>持仓市值</span>
         </div>
       </div>
@@ -25,13 +25,17 @@
     <div class="chart-stats" v-if="stats">
       <div class="stat-item">
         <span class="stat-label">总收益</span>
-        <span class="stat-value" :class="stats.total_return >= 0 ? 'positive' : 'negative'">
+        <span class="stat-value" :class="stats.total_return >= 0 ? 'up' : 'down'">
           {{ stats.total_return >= 0 ? '+' : '' }}{{ formatPercent(stats.total_return_percent) }}
         </span>
       </div>
       <div class="stat-item">
         <span class="stat-label">当前净值</span>
         <span class="stat-value">{{ formatMoney(stats.current_value) }}</span>
+      </div>
+      <div class="stat-item" v-if="stats.max_drawdown !== undefined">
+        <span class="stat-label">最大回撤</span>
+        <span class="stat-value down">{{ formatPercent(stats.max_drawdown) }}</span>
       </div>
     </div>
   </div>
@@ -51,13 +55,19 @@ interface ChartStats {
   total_return: number
   total_return_percent: number
   current_value: number
+  max_drawdown?: number
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   data: HistoryPoint[]
   showLegend?: boolean
+  showHeader?: boolean
   height?: number
-}>()
+}>(), {
+  showLegend: true,
+  showHeader: false,
+  height: 300,
+})
 
 const chartContainer = ref<HTMLElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -70,15 +80,34 @@ const stats = computed<ChartStats | null>(() => {
   const totalReturn = last.total_value - first.total_value
   const totalReturnPercent = (totalReturn / first.total_value) * 100
 
+  // Calculate max drawdown
+  let maxDrawdown = 0
+  let peak = first.total_value
+  for (const point of props.data) {
+    if (point.total_value > peak) {
+      peak = point.total_value
+    }
+    const drawdown = (peak - point.total_value) / peak
+    if (drawdown > maxDrawdown) {
+      maxDrawdown = drawdown
+    }
+  }
+
   return {
     total_return: totalReturn,
     total_return_percent: totalReturnPercent,
     current_value: last.total_value,
+    max_drawdown: maxDrawdown * 100,
   }
 })
 
 function formatMoney(value: number): string {
-  return '¥' + value.toLocaleString('zh-CN', { maximumFractionDigits: 0 })
+  if (value >= 100000000) {
+    return '¥' + (value / 100000000).toFixed(2) + '亿'
+  } else if (value >= 10000) {
+    return '¥' + (value / 10000).toFixed(1) + '万'
+  }
+  return '¥' + value.toLocaleString('zh-CN')
 }
 
 function formatPercent(value: number): string {
@@ -96,7 +125,7 @@ function drawChart() {
   // Set canvas size
   const dpr = window.devicePixelRatio || 1
   const rect = container.getBoundingClientRect()
-  const height = props.height || 300
+  const height = props.height
 
   canvas.width = rect.width * dpr
   canvas.height = height * dpr
@@ -114,15 +143,15 @@ function drawChart() {
 
   // Calculate scales
   const values = props.data.flatMap(d => [d.total_value, d.cash, d.market_value])
-  const minValue = Math.min(...values) * 0.95
-  const maxValue = Math.max(...values) * 1.05
+  const minValue = Math.min(...values) * 0.98
+  const maxValue = Math.max(...values) * 1.02
   const valueRange = maxValue - minValue
 
   const xScale = (index: number) => padding.left + (index / (props.data.length - 1)) * chartWidth
   const yScale = (value: number) => padding.top + chartHeight - ((value - minValue) / valueRange) * chartHeight
 
   // Draw grid lines
-  ctx.strokeStyle = '#e0e0e0'
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
   ctx.lineWidth = 1
 
   // Horizontal grid lines
@@ -135,8 +164,8 @@ function drawChart() {
 
     // Y-axis labels
     const value = maxValue - (valueRange / 5) * i
-    ctx.fillStyle = '#666'
-    ctx.font = '12px sans-serif'
+    ctx.fillStyle = '#5a6a8a'
+    ctx.font = '11px Roboto Mono, monospace'
     ctx.textAlign = 'right'
     ctx.fillText(formatMoney(value).replace('¥', ''), padding.left - 10, y + 4)
   }
@@ -146,6 +175,7 @@ function drawChart() {
   const labelStep = Math.floor(props.data.length / labelCount)
 
   ctx.textAlign = 'center'
+  ctx.fillStyle = '#5a6a8a'
   for (let i = 0; i < labelCount; i++) {
     const index = i * labelStep
     const x = xScale(index)
@@ -154,8 +184,11 @@ function drawChart() {
     ctx.fillText(label, x, padding.top + chartHeight + 20)
   }
 
-  // Draw lines
-  const drawLine = (key: keyof HistoryPoint, color: string) => {
+  // Draw lines with glow effect
+  const drawLine = (key: keyof HistoryPoint, color: string, glowColor: string) => {
+    // Draw glow
+    ctx.shadowColor = glowColor
+    ctx.shadowBlur = 10
     ctx.strokeStyle = color
     ctx.lineWidth = 2
     ctx.beginPath()
@@ -172,36 +205,52 @@ function drawChart() {
     })
 
     ctx.stroke()
+    ctx.shadowBlur = 0
 
     // Draw area under line for total_value
     if (key === 'total_value') {
-      ctx.fillStyle = color + '20' // Add transparency
+      const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight)
+      gradient.addColorStop(0, color + '40')
+      gradient.addColorStop(1, color + '05')
+
+      ctx.fillStyle = gradient
+      ctx.beginPath()
+      ctx.moveTo(xScale(0), yScale(props.data[0][key] as number))
+
+      props.data.forEach((point, index) => {
+        ctx.lineTo(xScale(index), yScale(point[key] as number))
+      })
+
       ctx.lineTo(xScale(props.data.length - 1), padding.top + chartHeight)
-      ctx.lineTo(padding.left, padding.top + chartHeight)
+      ctx.lineTo(xScale(0), padding.top + chartHeight)
       ctx.closePath()
       ctx.fill()
     }
   }
 
-  drawLine('total_value', '#667eea')
-  drawLine('cash', '#48bb78')
-  drawLine('market_value', '#ed8936')
+  drawLine('total_value', '#667eea', 'rgba(102, 126, 234, 0.5)')
+  drawLine('cash', '#00d084', 'rgba(0, 208, 132, 0.5)')
+  drawLine('market_value', '#ed8936', 'rgba(237, 137, 54, 0.5)')
 
-  // Draw axes
-  ctx.strokeStyle = '#333'
-  ctx.lineWidth = 1
+  // Draw data points for total_value
+  ctx.fillStyle = '#667eea'
+  props.data.forEach((point, index) => {
+    if (index % Math.ceil(props.data.length / 10) === 0 || index === props.data.length - 1) {
+      const x = xScale(index)
+      const y = yScale(point.total_value)
+      ctx.beginPath()
+      ctx.arc(x, y, 4, 0, Math.PI * 2)
+      ctx.fill()
 
-  // Y-axis
-  ctx.beginPath()
-  ctx.moveTo(padding.left, padding.top)
-  ctx.lineTo(padding.left, padding.top + chartHeight)
-  ctx.stroke()
-
-  // X-axis
-  ctx.beginPath()
-  ctx.moveTo(padding.left, padding.top + chartHeight)
-  ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight)
-  ctx.stroke()
+      // Draw glow around point
+      ctx.shadowColor = 'rgba(102, 126, 234, 0.5)'
+      ctx.shadowBlur = 10
+      ctx.beginPath()
+      ctx.arc(x, y, 4, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.shadowBlur = 0
+    }
+  })
 }
 
 // Redraw on data change or resize
@@ -230,42 +279,40 @@ onUnmounted(() => {
 
 <style scoped>
 .returns-chart {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .chart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .chart-header h4 {
   margin: 0;
-  color: #2c3e50;
-  font-size: 1rem;
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
 }
 
 .chart-legend {
   display: flex;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #666;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+.legend-line {
+  width: 16px;
+  height: 2px;
+  border-radius: var(--radius-full);
 }
 
 .chart-container {
@@ -279,42 +326,47 @@ onUnmounted(() => {
 
 .chart-stats {
   display: flex;
-  gap: 2rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-secondary);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .stat-value {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #2c3e50;
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
 }
 
-.stat-value.positive {
-  color: #48bb78;
+.stat-value.up {
+  color: var(--up-primary);
+  text-shadow: 0 0 10px var(--up-glow);
 }
 
-.stat-value.negative {
-  color: #f56565;
+.stat-value.down {
+  color: var(--down-primary);
+  text-shadow: 0 0 10px var(--down-glow);
 }
 
 @media (max-width: 768px) {
   .chart-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
 
   .chart-legend {
@@ -323,7 +375,7 @@ onUnmounted(() => {
 
   .chart-stats {
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-3);
   }
 }
 </style>

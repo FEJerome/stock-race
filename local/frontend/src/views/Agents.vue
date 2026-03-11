@@ -1,109 +1,153 @@
 <template>
   <div class="agents-page">
+    <!-- Page Header -->
     <div class="page-header">
-      <h2>AI 交易员管理</h2>
-      <button class="btn-primary" @click="showCreateModal = true">
-        + 创建 AI 交易员
+      <div class="header-title">
+        <h2>AI 交易员管理</h2>
+        <span class="header-subtitle">管理您的 AI 交易团队</span>
+      </div>
+      <button class="btn-create" @click="showCreateModal = true">
+        <span class="btn-icon">+</span>
+        <span>创建 AI 交易员</span>
       </button>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Stats Grid -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-value">{{ agentStore.agents.length }}</div>
-        <div class="stat-label">总交易员数</div>
+        <div class="stat-icon">🤖</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ agentStore.agents.length }}</span>
+          <span class="stat-label">总交易员数</span>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ agentStore.activeAgents.length }}</div>
-        <div class="stat-label">运行中</div>
+      <div class="stat-card up">
+        <div class="stat-icon">✓</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ agentStore.activeAgents.length }}</span>
+          <span class="stat-label">运行中</span>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ agentStore.pausedAgents.length }}</div>
-        <div class="stat-label">已暂停</div>
+      <div class="stat-card warning">
+        <div class="stat-icon">⏸</div>
+        <div class="stat-info">
+          <span class="stat-value">{{ agentStore.pausedAgents.length }}</span>
+          <span class="stat-label">已暂停</span>
+        </div>
       </div>
     </div>
 
     <!-- Agents Table -->
     <div class="table-container">
-      <div v-if="agentStore.loading" class="loading">加载中...</div>
-      <div v-else-if="agentStore.error" class="error">{{ agentStore.error }}</div>
+      <div v-if="agentStore.loading" class="loading-state">
+        <div class="spinner"></div>
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="agentStore.error" class="error-state">{{ agentStore.error }}</div>
       <table v-else-if="agentStore.agents.length > 0" class="agents-table">
         <thead>
           <tr>
-            <th>名称</th>
+            <th>AI 名称</th>
             <th>职级</th>
             <th>档位</th>
-            <th>初始资金</th>
-            <th>当前资金</th>
-            <th>收益率</th>
+            <th class="numeric">初始资金</th>
+            <th class="numeric">当前资金</th>
+            <th class="numeric">收益率</th>
             <th>状态</th>
             <th>模型</th>
-            <th>操作</th>
+            <th class="actions">操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="agent in agentStore.agents" :key="agent.id" @click="goToDetail(agent.id)" class="agent-row">
+          <tr
+            v-for="agent in agentStore.agents"
+            :key="agent.id"
+            @click="goToDetail(agent.id)"
+            class="agent-row"
+          >
             <td class="name-cell">
+              <div class="agent-avatar-small" :style="getAvatarStyle(agent.name)">
+                {{ agent.name.charAt(0).toUpperCase() }}
+              </div>
               <router-link :to="`/agents/${agent.id}`" @click.stop>{{ agent.name }}</router-link>
             </td>
             <td>
-              <span class="badge" :class="`level-${agent.agent_level}`">
+              <span class="badge level" :class="`level-${agent.agent_level}`">
+                <span class="level-icon">{{ getLevelIcon(agent.agent_level) }}</span>
                 {{ levelText(agent.agent_level) }}
               </span>
             </td>
             <td>
-              <span class="badge" :class="`incentive-${agent.incentive_level}`">
+              <span class="badge incentive" :class="`incentive-${agent.incentive_level}`">
                 {{ incentiveText(agent.incentive_level) }}
               </span>
             </td>
-            <td>{{ formatMoney(agent.initial_capital) }}</td>
-            <td>{{ formatMoney(agent.current_capital) }}</td>
-            <td :class="returnClass(agent)">
-              {{ formatReturn(agent) }}
+            <td class="numeric">{{ formatMoney(agent.initial_capital) }}</td>
+            <td class="numeric">{{ formatMoney(agent.current_capital) }}</td>
+            <td class="numeric">
+              <span class="return-badge" :class="returnClass(agent)">
+                {{ formatReturn(agent) }}
+              </span>
             </td>
             <td>
-              <span class="status" :class="agent.status">
+              <span class="status-badge" :class="agent.status">
+                <span class="status-dot"></span>
                 {{ agent.status === 'active' ? '运行中' : '已暂停' }}
               </span>
             </td>
-            <td>{{ agent.model_name }}</td>
+            <td>
+              <span class="model-tag">{{ agent.model_name }}</span>
+            </td>
             <td class="actions">
               <button
                 v-if="agent.status === 'active'"
-                class="btn-small btn-warning"
+                class="btn-action warning"
                 @click="handlePause(agent.id)"
+                title="暂停"
               >
-                暂停
+                ⏸
               </button>
               <button
                 v-else
-                class="btn-small btn-success"
+                class="btn-action success"
                 @click="handleResume(agent.id)"
+                title="恢复"
               >
-                恢复
+                ▶
               </button>
-              <button class="btn-small btn-danger" @click="handleDelete(agent.id)">
-                删除
+              <button
+                class="btn-action danger"
+                @click="handleDelete(agent.id)"
+                title="删除"
+              >
+                🗑
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <div v-else class="empty">暂无 AI 交易员，点击上方按钮创建</div>
+      <div v-else class="empty-state">
+        <div class="empty-icon">🌱</div>
+        <h3>还没有 AI 交易员</h3>
+        <p>点击上方按钮创建您的第一个 AI 交易员</p>
+      </div>
     </div>
 
     <!-- Create Modal -->
     <div v-if="showCreateModal" class="modal-overlay" @click.self="showCreateModal = false">
       <div class="modal">
-        <h3>创建 AI 交易员</h3>
+        <div class="modal-header">
+          <h3>创建 AI 交易员</h3>
+          <button class="btn-close" @click="showCreateModal = false">×</button>
+        </div>
         <form @submit.prevent="handleCreate">
           <div class="form-group">
-            <label>名称 *</label>
-            <input v-model="createForm.name" type="text" required minlength="2" maxlength="20" />
+            <label>名称 <span class="required">*</span></label>
+            <input v-model="createForm.name" type="text" required minlength="2" maxlength="20" placeholder="给您的 AI 起个名字" />
           </div>
 
           <div class="form-group">
-            <label>初始资金 * (10,000 - 1,000,000,000)</label>
+            <label>初始资金 <span class="required">*</span></label>
             <input
               v-model.number="createForm.initial_capital"
               type="number"
@@ -112,15 +156,16 @@
               max="1000000000"
               step="10000"
             />
+            <span class="form-hint">10,000 - 1,000,000,000</span>
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>职级</label>
               <select v-model="createForm.agent_level">
-                <option value="intern">实习生</option>
-                <option value="manager">经理</option>
-                <option value="partner">合伙人</option>
+                <option value="intern">🌱 实习生</option>
+                <option value="manager">💼 经理</option>
+                <option value="partner">👑 合伙人</option>
               </select>
             </div>
             <div class="form-group">
@@ -142,29 +187,30 @@
             </select>
           </div>
 
-          <h4 class="section-title">策略配置</h4>
+          <div class="section-title">
+            <span class="section-icon">📋</span>
+            策略配置
+          </div>
 
           <div class="strategy-section">
             <div class="strategy-preview" v-if="!showStrategyWizard">
-              <div class="preview-item">
-                <span class="preview-label">风险承受:</span>
-                <span class="preview-value">{{ strategyForm.risk_tolerance }}</span>
-              </div>
-              <div class="preview-item">
-                <span class="preview-label">持仓周期:</span>
-                <span class="preview-value">{{ strategyForm.holding_period }}</span>
-              </div>
-              <div class="preview-item">
-                <span class="preview-label">关注行业:</span>
-                <span class="preview-value">{{ strategyForm.sectors.join(', ') || '未选择' }}</span>
-              </div>
-              <div class="preview-item">
-                <span class="preview-label">仓位限制:</span>
-                <span class="preview-value">{{ strategyForm.position_limit }}</span>
-              </div>
-              <div class="preview-item">
-                <span class="preview-label">止损策略:</span>
-                <span class="preview-value">{{ strategyForm.stop_loss }}</span>
+              <div class="preview-grid">
+                <div class="preview-item">
+                  <span class="preview-label">风险承受:</span>
+                  <span class="preview-value">{{ strategyForm.risk_tolerance }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">持仓周期:</span>
+                  <span class="preview-value">{{ strategyForm.holding_period }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">关注行业:</span>
+                  <span class="preview-value">{{ strategyForm.sectors.join(', ') || '未选择' }}</span>
+                </div>
+                <div class="preview-item">
+                  <span class="preview-label">仓位限制:</span>
+                  <span class="preview-value">{{ strategyForm.position_limit }}</span>
+                </div>
               </div>
               <button type="button" class="btn-configure" @click="showStrategyWizard = true">
                 配置策略
@@ -188,7 +234,7 @@
               取消
             </button>
             <button type="submit" class="btn-primary" :disabled="agentStore.loading">
-              {{ agentStore.loading ? '创建中...' : '创建' }}
+              {{ agentStore.loading ? '创建中...' : '创建 AI 交易员' }}
             </button>
           </div>
         </form>
@@ -213,9 +259,26 @@ function goToDetail(id: string) {
   router.push(`/agents/${id}`)
 }
 
-// 行业选项（用于显示）
+// Avatar style generation
+function getAvatarStyle(name: string) {
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const hue1 = hash % 360
+  const hue2 = (hash * 7) % 360
+  return {
+    background: `linear-gradient(135deg, hsl(${hue1}, 70%, 50%), hsl(${hue2}, 70%, 40%))`,
+  }
+}
+
+function getLevelIcon(level: string) {
+  const map: Record<string, string> = {
+    intern: '🌱',
+    manager: '💼',
+    partner: '👑',
+  }
+  return map[level] || '🤖'
+}
+
 const sectorOptions = ['科技', '消费', '医药', '金融', '能源', '地产', '材料', '工业']
-// 防止未使用变量警告
 void sectorOptions
 
 const createForm = reactive<CreateAgentRequest>({
@@ -284,7 +347,7 @@ function formatReturn(agent: { initial_capital: number; current_capital: number 
 
 function returnClass(agent: { initial_capital: number; current_capital: number }) {
   const ret = agent.current_capital - agent.initial_capital
-  return ret >= 0 ? 'positive' : 'negative'
+  return ret >= 0 ? 'up' : 'down'
 }
 
 async function handleCreate() {
@@ -362,226 +425,413 @@ onMounted(() => {
 
 <style scoped>
 .agents-page {
-  padding: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
+/* Page Header */
 .page-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-6);
+}
+
+.header-title h2 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.header-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+  display: block;
+}
+
+.btn-create {
+  display: flex;
   align-items: center;
-  margin-bottom: 1.5rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-on-dark);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
 }
 
-.page-header h2 {
-  font-size: 1.5rem;
-  color: #2c3e50;
+.btn-create:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
 }
 
+.btn-icon {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+}
+
+/* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-fast);
+}
+
+.stat-card:hover {
+  border-color: var(--border-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-card.up {
+  border-left: 3px solid var(--up-primary);
+}
+
+.stat-card.warning {
+  border-left: 3px solid #f57c00;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-secondary);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-2xl);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2c3e50;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
 }
 
 .stat-label {
-  color: #666;
-  margin-top: 0.5rem;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
+/* Table */
 .table-container {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
   overflow: hidden;
 }
 
 .agents-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .agents-table th,
 .agents-table td {
-  padding: 1rem;
+  padding: var(--space-4);
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .agents-table th {
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #2c3e50;
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.agents-table tr:hover {
-  background: #f8f9fa;
+.agents-table tr:hover td {
+  background: var(--surface-hover);
 }
 
 .agent-row {
   cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
 .name-cell {
-  font-weight: 500;
-  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: var(--font-medium);
+}
+
+.agent-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-bold);
+  font-size: var(--text-sm);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .name-cell a {
-  color: #2c3e50;
+  color: var(--text-primary);
   text-decoration: none;
 }
 
 .name-cell a:hover {
-  color: #667eea;
-  text-decoration: underline;
+  color: var(--accent-cyan);
 }
 
+.numeric {
+  text-align: right;
+}
+
+/* Badges */
 .badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.level-icon {
+  font-size: 10px;
 }
 
 .badge.level-intern {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: linear-gradient(135deg, #cd7f32 0%, #e6a855 100%);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .badge.level-manager {
-  background: #f3e5f5;
-  color: #7b1fa2;
+  background: linear-gradient(135deg, #9ca3af 0%, #d1d5db 50%, #9ca3af 100%);
+  color: #374151;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .badge.level-partner {
-  background: #fff3e0;
-  color: #f57c00;
+  background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 50%, #f59e0b 100%);
+  color: #78350f;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .badge.incentive-standard {
-  background: #f5f5f5;
-  color: #616161;
+  background: var(--surface-secondary);
+  color: var(--text-muted);
 }
 
 .badge.incentive-active {
-  background: #e8f5e9;
-  color: #388e3c;
+  background: rgba(0, 208, 132, 0.15);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
 }
 
 .badge.incentive-aggressive {
-  background: #ffebee;
-  color: #d32f2f;
+  background: rgba(255, 71, 87, 0.15);
+  color: var(--down-primary);
+  border: 1px solid rgba(255, 71, 87, 0.3);
 }
 
-.status {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
+/* Return Badge */
+.return-badge {
+  font-family: var(--font-mono);
+  font-weight: var(--font-semibold);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
 }
 
-.status.active {
-  background: #e8f5e9;
-  color: #388e3c;
+.return-badge.up {
+  background: var(--up-bg);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
 }
 
-.status.paused {
-  background: #fff3e0;
-  color: #f57c00;
+.return-badge.down {
+  background: var(--down-bg);
+  color: var(--down-primary);
+  border: 1px solid rgba(255, 71, 87, 0.3);
 }
 
-.positive {
-  color: #4caf50;
-  font-weight: 500;
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
 }
 
-.negative {
-  color: #f44336;
-  font-weight: 500;
+.status-badge.active {
+  background: rgba(0, 208, 132, 0.15);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
 }
 
+.status-badge.paused {
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-secondary);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-badge.active .status-dot {
+  background: var(--up-primary);
+  box-shadow: 0 0 5px var(--up-primary);
+  animation: pulse 2s infinite;
+}
+
+.status-badge.paused .status-dot {
+  background: var(--neutral-muted);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Model Tag */
+.model-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--surface-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+/* Actions */
 .actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 
-.btn-primary {
-  background: #2c3e50;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
+.btn-action {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
   cursor: pointer;
-  font-size: 0.875rem;
+  transition: all var(--transition-fast);
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: #34495e;
+.btn-action:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
-.btn-secondary {
-  background: #e0e0e0;
-  color: #333;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
+.btn-action.success:hover {
+  border-color: var(--up-primary);
+  background: rgba(0, 208, 132, 0.1);
 }
 
-.btn-secondary:hover {
-  background: #d0d0d0;
+.btn-action.warning:hover {
+  border-color: #f57c00;
+  background: rgba(245, 124, 0, 0.1);
 }
 
-.btn-small {
-  padding: 0.375rem 0.75rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.75rem;
+.btn-action.danger:hover {
+  border-color: var(--down-primary);
+  background: rgba(255, 71, 87, 0.1);
 }
 
-.btn-warning {
-  background: #fff3e0;
-  color: #f57c00;
+/* Loading State */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
+  color: var(--text-muted);
+  gap: var(--space-3);
 }
 
-.btn-success {
-  background: #e8f5e9;
-  color: #388e3c;
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--surface-elevated);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.btn-danger {
-  background: #ffebee;
-  color: #d32f2f;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.loading,
-.error,
-.empty {
-  padding: 3rem;
+.error-state {
+  color: var(--down-primary);
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12);
   text-align: center;
-  color: #666;
 }
 
-.error {
-  color: #f44336;
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.8;
+}
+
+.empty-state h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2);
+}
+
+.empty-state p {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0;
 }
 
 /* Modal */
@@ -591,156 +841,281 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
+  padding: var(--space-4);
 }
 
 .modal {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
-  padding: 1.5rem;
+  box-shadow: var(--shadow-xl);
 }
 
-.modal h3 {
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border-secondary);
 }
 
-.section-title {
-  margin: 1.5rem 0 1rem;
-  font-size: 1rem;
-  color: #2c3e50;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
+.modal-header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
 }
 
+.btn-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-secondary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--text-xl);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-close:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.modal form {
+  padding: var(--space-5);
+}
+
+/* Form */
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  color: #555;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+}
+
+.form-group label .required {
+  color: var(--down-primary);
+  margin-left: 2px;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.875rem;
+  padding: var(--space-3);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #2c3e50;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
 }
 
-.checkbox-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.form-group input::placeholder {
+  color: var(--text-muted);
 }
 
-.checkbox {
+.form-hint {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.section-title {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  cursor: pointer;
+  gap: var(--space-2);
+  margin: var(--space-6) 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-secondary);
+  padding-top: var(--space-4);
 }
 
-.checkbox input {
-  width: auto;
+.section-icon {
+  font-size: var(--text-base);
 }
 
 /* Strategy Section */
 .strategy-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-4);
 }
 
 .strategy-preview {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .preview-item {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .preview-label {
-  color: #666;
+  color: var(--text-muted);
 }
 
 .preview-value {
-  font-weight: 500;
-  color: #2c3e50;
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
 }
 
 .btn-configure {
   width: 100%;
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: #2c3e50;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  padding: var(--space-3);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
   cursor: pointer;
-  font-size: 0.875rem;
+  transition: all var(--transition-fast);
 }
 
 .btn-configure:hover {
-  background: #34495e;
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 212, 255, 0.1);
 }
 
 .strategy-wizard-wrapper {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
 .btn-close-wizard {
   width: 100%;
-  padding: 0.5rem;
-  background: #f5f5f5;
+  padding: var(--space-3);
+  background: var(--surface-secondary);
   border: none;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-primary);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
   cursor: pointer;
-  font-size: 0.875rem;
-  color: #666;
+  transition: all var(--transition-fast);
 }
 
 .btn-close-wizard:hover {
-  background: #e0e0e0;
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
+/* Modal Actions */
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-secondary);
+}
+
+.btn-secondary {
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.btn-primary {
+  padding: var(--space-3) var(--space-5);
+  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-on-dark);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agents-table {
+    font-size: var(--text-xs);
+  }
+
+  .agents-table th,
+  .agents-table td {
+    padding: var(--space-2);
+  }
 }
 </style>

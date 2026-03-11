@@ -15,9 +15,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.database import get_db, AgentModel
-from services.market_data import get_router
+from services.market_data import get_router, get_cache_service
 from services.market_data.base import Quote
-from services.trading_service import TradingServiceAsync
+from services.trading_service import TradingService
 
 router = APIRouter(tags=["websocket"])
 
@@ -208,8 +208,8 @@ async def agent_websocket(websocket: WebSocket, agent_id: str, db: AsyncSession 
     - Level promotion
     """
     # Verify agent exists
-    trading_service = TradingServiceAsync(db)
-    agent = await trading_service.get_agent(agent_id)
+    trading_service = TradingService()
+    agent = await trading_service.get_agent(db, agent_id)
 
     if not agent:
         await websocket.close(code=4004, reason="Agent not found")
@@ -219,7 +219,7 @@ async def agent_websocket(websocket: WebSocket, agent_id: str, db: AsyncSession 
 
     try:
         # Send initial state
-        portfolio = await trading_service.get_portfolio_summary(agent_id)
+        portfolio = await trading_service.get_portfolio_summary(db, agent_id)
         await websocket.send_json({
             "type": "connected",
             "agent_id": agent_id,
@@ -259,6 +259,7 @@ async def broadcast_market_data_task():
             if symbols:
                 # Fetch latest quotes
                 quotes = await router.get_quotes(symbols)
+                cache_service = get_cache_service()  # 获取缓存服务
 
                 # Broadcast each quote
                 for symbol, market_data in quotes.items():
@@ -273,6 +274,15 @@ async def broadcast_market_data_task():
                             volume=market_data.volume,
                             timestamp=market_data.timestamp
                         )
+
+                        # 新增：更新缓存（失败不影响广播）
+                        if cache_service:
+                            try:
+                                await cache_service.update_quote(quote)
+                            except Exception as e:
+                                print(f"[WebSocket] Cache update failed for {symbol}: {e}")
+
+                        # 原有：广播到 WebSocket
                         await manager.broadcast_market_data(symbol, quote)
 
             # Update every 3 seconds
