@@ -32,10 +32,25 @@
         </router-view>
       </div>
     </main>
+
+    <!-- 沙盒水印 -->
+    <div class="sandbox-watermark">
+      <span class="watermark-icon">🔒</span>
+      <div class="watermark-text">
+        <div class="watermark-main">虚拟沙盒环境</div>
+        <div class="watermark-sub">数据仅供演示</div>
+      </div>
+    </div>
+
+    <!-- 欢迎弹窗 -->
+    <WelcomeModal />
   </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted, provide, readonly, ref } from 'vue'
+import WelcomeModal from './components/WelcomeModal.vue'
+
 const navItems = [
   { path: '/', label: 'Dashboard', icon: '📊' },
   { path: '/agents', label: 'AI Agents', icon: '🤖' },
@@ -43,6 +58,70 @@ const navItems = [
   { path: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
   { path: '/settings', label: 'Settings', icon: '⚙️' },
 ]
+
+// Theme management
+type Theme = 'dark' | 'light' | 'auto'
+
+const currentTheme = ref<Theme>('auto')
+const effectiveTheme = ref<'dark' | 'light'>('dark')
+
+// Check system preference
+function getSystemTheme(): 'dark' | 'light' {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    return 'light'
+  }
+  return 'dark'
+}
+
+// Apply theme to document
+function applyTheme(theme: 'dark' | 'light') {
+  effectiveTheme.value = theme
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light')
+  } else {
+    document.documentElement.removeAttribute('data-theme')
+  }
+}
+
+// Update theme based on current setting
+function updateTheme() {
+  if (currentTheme.value === 'auto') {
+    applyTheme(getSystemTheme())
+  } else {
+    applyTheme(currentTheme.value)
+  }
+}
+
+// Set theme explicitly
+function setTheme(theme: Theme) {
+  currentTheme.value = theme
+  localStorage.setItem('stock-race-theme', theme)
+  updateTheme()
+}
+
+// Initialize theme on mount
+onMounted(() => {
+  // Load saved preference
+  const saved = localStorage.getItem('stock-race-theme') as Theme | null
+  if (saved && ['dark', 'light', 'auto'].includes(saved)) {
+    currentTheme.value = saved
+  }
+
+  // Apply initial theme
+  updateTheme()
+
+  // Listen for system theme changes
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+    if (currentTheme.value === 'auto') {
+      updateTheme()
+    }
+  })
+})
+
+// Provide theme to child components
+provide('theme', readonly(currentTheme))
+provide('effectiveTheme', readonly(effectiveTheme))
+provide('setTheme', setTheme)
 </script>
 
 <style>
@@ -482,6 +561,71 @@ body {
 
   .brand-text h1 {
     font-size: var(--text-base);
+  }
+}
+
+/* ============================================
+   SANDBOX WATERMARK
+   ============================================ */
+.sandbox-watermark {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-fixed);
+  opacity: 0.8;
+  transition: opacity var(--transition-fast);
+}
+
+.sandbox-watermark:hover {
+  opacity: 1;
+}
+
+.watermark-icon {
+  font-size: 1.25rem;
+  filter: grayscale(0.3);
+}
+
+.watermark-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.watermark-main {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+}
+
+.watermark-sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .sandbox-watermark {
+    bottom: var(--space-2);
+    right: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .watermark-icon {
+    font-size: 1rem;
+  }
+
+  .watermark-main,
+  .watermark-sub {
+    font-size: 0.625rem;
   }
 }
 </style>

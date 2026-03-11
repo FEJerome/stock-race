@@ -2,7 +2,9 @@
 
 > 本文档记录 Demo（offline-demo.html）与 Local 形态对比分析后，需要同步到 Local 代码和 PRD 文档的所有内容。
 >
-> 状态：规划中 | 最后更新：2026-03-11
+> 状态：**已确认，待实施** | 最后更新：2026-03-11
+>
+> 5.1、5.2 待讨论项已确认，详见第五节
 
 ---
 
@@ -53,28 +55,7 @@ Demo 文件 `local/demo/offline-demo.html` 是为了向金融行业朋友展示�
 
 ## 二、Local 代码更新项
 
-### 2.1 排行榜功能完善（P1 优先级）
-
-**参考依据**：PRD 4.3.5 排行榜系统（Local版）
-
-**当前状态**：`local/frontend/src/views/Leaderboard.vue` 仅有基础框架
-
-**需要实现**：
-
-| 功能 | 描述 | 涉及文件 |
-|-----|------|---------|
-| 时间维度切换 | 日榜/周榜/月榜/总榜切换 | Leaderboard.vue |
-| 多维度排序 | 支持按收益率、夏普比率、最大回撤、胜率排序 | Leaderboard.vue |
-| 日期选择器 | 可查看历史日期的排行榜 | Leaderboard.vue + 后端 API |
-| 夏普比率显示 | 排行榜显示各 AI 的夏普比率 | Leaderboard.vue |
-
-**后端 API 需求**：
-- `GET /api/leaderboard?period=daily&date=2026-03-11&sort_by=sharpe`
-- 参数：period（daily/weekly/monthly/total）、date（日期）、sort_by（return/sharpe/drawdown/win_rate）
-
----
-
-### 2.2 主题切换功能（P2 优先级）
+### 2.1 主题切换功能（P2 优先级）
 
 **参考依据**：Demo 中的深色/浅色主题切换实现
 
@@ -108,7 +89,7 @@ Demo 文件 `local/demo/offline-demo.html` 是为了向金融行业朋友展示�
 
 ---
 
-### 2.3 沙盒水印（P2 优先级）
+### 2.2 沙盒水印（P2 优先级）
 
 **参考依据**：Demo 右下角的沙盒水印
 
@@ -138,7 +119,7 @@ Demo 文件 `local/demo/offline-demo.html` 是为了向金融行业朋友展示�
 
 ---
 
-### 2.4 产品说明弹窗（P3 优先级）
+### 2.3 产品说明弹窗（P3 优先级）
 
 **参考依据**：Demo 首次访问时的产品说明弹窗
 
@@ -162,13 +143,9 @@ Demo 文件 `local/demo/offline-demo.html` 是为了向金融行业朋友展示�
 
 ```
 P1（高优先级）
-├── 排行榜功能完善
-│   ├── 时间维度切换
-│   ├── 多维度排序
-│   └── 日期选择器
+├── 沙盒水印（合规必需）
 │
 P2（中优先级）
-├── 沙盒水印（合规必需）
 ├── 主题切换功能
 │   ├── 浅色主题变量
 │   ├── 切换开关
@@ -196,27 +173,26 @@ P3（低优先级）
 
 以下事项需要进一步讨论确认：
 
-### 5.1 策略收集力度在前端的体现方式
+### 5.1 策略收集力度在前端的体现方式 ✅ 已确认
 
-选项：
-- A. 不展示力度概念，完全通过 AI 对话自然引导（当前倾向）
-- B. 在策略配置页面添加力度提示/帮助文本
-- C. 在用户输入模糊时显示力度检测结果的提示
+**结论：A + C 结合方案**
 
-### 5.2 排行榜日期范围
+- **主要方式**：通过 AI 对话自然引导（方案 A）
+- **辅助方式**：UI 显示力度检测提示标志（方案 C）
 
-问题：Local 版是否需要支持查看任意历史日期的排行榜？还是仅支持近期数据？
+**具体实现**：
+- 当用户输入模糊（粗力度/中力度）时，AI 对话引导 + UI 显示 `⚠️ 需要更明确的指令` 提示
+- 当用户输入明确（细力度）时，UI 提示变为 `✅ 指令明确` 或直接消失
+- 提示位置：策略输入框附近，不干扰主流程
 
-考虑：
-- SQLite 存储容量有限
-- 历史数据可能需要定期清理
-- 建议：支持最近 30 天的日榜，周榜和月榜保留更长时间
+### 5.2 主题切换的默认设置 ✅ 已确认
 
-### 5.3 主题切换的默认设置
+**结论：跟随系统主题，检测失败默认深色**
 
-问题：默认跟随系统主题，还是固定深色主题？
-
-建议：跟随系统主题（`prefers-color-scheme`），用户可手动覆盖
+**具体实现**：
+- 使用 `prefers-color-scheme` 媒体查询自动检测系统主题
+- 检测不到（或环境不支持）时，默认使用深色主题
+- 用户可在设置页面手动覆盖系统设置
 
 ---
 
@@ -225,20 +201,18 @@ P3（低优先级）
 实施时按以下清单执行：
 
 ### PRD 文档
-- [ ] 更新 `docs/PRD.md` 4.2.2 章节，添加策略力度分级
+- [x] 更新 `docs/PRD.md` 4.2.2 章节，添加策略力度分级（内容已确认）
 - [ ] 更新 `docs/CHANGELOG.md`，记录变更
 
 ### Local 前端
-- [ ] `local/frontend/src/styles/variables.css` - 添加浅色主题变量
-- [ ] `local/frontend/src/views/Settings.vue` - 添加主题切换开关
-- [ ] `local/frontend/src/views/Leaderboard.vue` - 完善排行榜功能
-- [ ] `local/frontend/src/App.vue` - 添加沙盒水印
-- [ ] 新增 `local/frontend/src/components/WelcomeModal.vue` - 产品说明弹窗
-- [ ] 各图表组件 - 适配主题切换
+- [x] `local/frontend/src/styles/variables.css` - 添加浅色主题变量
+- [x] `local/frontend/src/views/Settings.vue` - 添加主题切换开关
+- [x] `local/frontend/src/App.vue` - 添加沙盒水印
+- [x] 新增 `local/frontend/src/components/WelcomeModal.vue` - 产品说明弹窗
+- [x] 各图表组件 - 适配主题切换（通过 CSS 变量自动适配）
 
 ### Local 后端
-- [ ] `local/backend/api/leaderboard.py`（或相应文件）- 添加排行榜查询参数支持
-- [ ] 添加按日期、周期、排序维度查询的接口
+- 无新增需求（Local 形态无需排行榜功能）
 
 ---
 
@@ -249,7 +223,6 @@ P3（低优先级）
 | `local/demo/offline-demo.html` | Demo 源文件 |
 | `docs/PRD.md` | 产品需求文档 |
 | `docs/CHANGELOG.md` | 变更记录 |
-| `local/frontend/src/views/Leaderboard.vue` | 排行榜页面（需完善） |
 | `local/frontend/src/views/Settings.vue` | 设置页面（需添加主题切换） |
 | `local/frontend/src/styles/variables.css` | CSS 变量（需补充浅色主题） |
 

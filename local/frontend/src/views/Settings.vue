@@ -120,6 +120,37 @@
         </div>
       </div>
 
+      <!-- Appearance Settings -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3>
+            <span class="icon">🎨</span>
+            外观设置
+          </h3>
+          <p class="card-desc">自定义界面主题和显示偏好</p>
+        </div>
+
+        <div class="form-section">
+          <div class="form-group">
+            <label class="form-label">主题模式</label>
+            <div class="theme-options">
+              <button
+                v-for="option in themeOptions"
+                :key="option.value"
+                class="theme-option"
+                :class="{ active: currentTheme === option.value }"
+                @click="setTheme(option.value as Theme)"
+              >
+                <span class="theme-icon">{{ option.icon }}</span>
+                <span class="theme-label">{{ option.label }}</span>
+              </button>
+            </div>            <p class="input-hint">
+              {{ themeHint }}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- System Info Section -->
       <div class="settings-card">
         <div class="card-header">
@@ -210,7 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, inject, computed, type Ref, type Readonly } from 'vue'
 import { showSuccess, showError } from '../utils/error-handler'
 
 interface Settings {
@@ -225,6 +256,11 @@ interface SystemInfo {
   database: string
   python_version: string
 }
+
+type Theme = 'dark' | 'light' | 'auto'
+
+const setTheme = inject<(theme: Theme) => void>('setTheme', () => {})
+const currentTheme = inject<Readonly<Ref<Theme>>>('theme', ref('auto'))
 
 const settings = reactive<Settings>({
   moonshot_api_key: '',
@@ -249,6 +285,26 @@ const validationErrors = reactive<Partial<Record<keyof Settings, string>>>({})
 const testResult = reactive({
   show: false,
   results: {} as Record<string, { status: 'pending' | 'success' | 'error'; message?: string }>,
+})
+
+// Theme options
+const themeOptions = [
+  { value: 'auto', label: '跟随系统', icon: '🖥️' },
+  { value: 'dark', label: '深色主题', icon: '🌙' },
+  { value: 'light', label: '浅色主题', icon: '☀️' },
+]
+
+const themeHint = computed(() => {
+  switch (currentTheme.value) {
+    case 'auto':
+      return '自动跟随系统主题设置，检测失败时默认使用深色主题'
+    case 'dark':
+      return '始终使用深色主题，适合夜间使用'
+    case 'light':
+      return '始终使用浅色主题，适合日间使用'
+    default:
+      return ''
+  }
 })
 
 // Load settings from localStorage on mount
@@ -814,5 +870,62 @@ function confirmResetDatabase() {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+/* Theme Options */
+.theme-options {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.theme-option:hover {
+  border-color: #2c3e50;
+  background: #fff;
+}
+
+.theme-option.active {
+  border-color: #2c3e50;
+  background: #2c3e50;
+  color: white;
+}
+
+.theme-icon {
+  font-size: 1.5rem;
+}
+
+.theme-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .theme-options {
+    flex-direction: column;
+  }
+
+  .theme-option {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+  }
+
+  .theme-icon {
+    font-size: 1.25rem;
+  }
 }
 </style>

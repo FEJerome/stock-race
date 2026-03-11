@@ -211,6 +211,88 @@
 }
 
 /* ============================================
+   LIGHT THEME VARIABLES
+   ============================================ */
+[data-theme="light"] {
+  /* Background Colors - Clean White/Light Gray */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-tertiary: #e2e8f0;
+
+  /* Surface Colors - Card backgrounds */
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-elevated: #f1f5f9;
+  --surface-hover: #e2e8f0;
+
+  /* Glassmorphism - adapted for light theme */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-highlight: rgba(0, 0, 0, 0.03);
+
+  /* Functional colors remain the same for trading semantics */
+  /* Growth - Professional Trading Green */
+  --up-primary: #10b981;
+  --up-secondary: #059669;
+  --up-glow: rgba(16, 185, 129, 0.3);
+  --up-bg: rgba(16, 185, 129, 0.1);
+
+  /* Decline - Professional Trading Red */
+  --down-primary: #ef4444;
+  --down-secondary: #dc2626;
+  --down-glow: rgba(239, 68, 68, 0.3);
+  --down-bg: rgba(239, 68, 68, 0.1);
+
+  /* Neutral - Darker for light background */
+  --neutral-primary: #475569;
+  --neutral-secondary: #64748b;
+  --neutral-muted: #94a3b8;
+
+  /* Accent Colors - Slightly muted for light theme */
+  --accent-cyan: #0891b2;
+  --accent-cyan-glow: rgba(8, 145, 178, 0.4);
+  --accent-cyan-bg: rgba(8, 145, 178, 0.1);
+
+  /* Gold Gradient - VIP/Achievement */
+  --accent-gold: #d97706;
+  --accent-gold-light: #fbbf24;
+  --accent-gold-dark: #92400e;
+  --accent-gold-glow: rgba(217, 119, 6, 0.4);
+
+  /* Purple Tech */
+  --accent-purple: #7c3aed;
+  --accent-purple-glow: rgba(124, 58, 237, 0.3);
+
+  /* Text Colors - Dark text on light background */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-disabled: #94a3b8;
+
+  /* Inverted text for colored backgrounds */
+  --text-on-dark: #ffffff;
+  --text-on-light: #0f172a;
+
+  /* Border & Dividers */
+  --border-primary: rgba(0, 0, 0, 0.1);
+  --border-secondary: rgba(0, 0, 0, 0.06);
+  --border-accent: rgba(8, 145, 178, 0.3);
+  --border-glow: 0 0 0 1px var(--accent-cyan-glow);
+
+  /* Shadows - softer for light theme */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-glow-cyan: 0 0 20px rgba(8, 145, 178, 0.2);
+  --shadow-glow-gold: 0 0 20px rgba(217, 119, 6, 0.2);
+
+  /* Chart Colors - adapted for light theme */
+  --chart-grid: rgba(0, 0, 0, 0.05);
+  --chart-text: #64748b;
+}
+
+/* ============================================
    ELEMENT PLUS THEME OVERRIDES
    ============================================ */
 :root {
@@ -219,6 +301,48 @@
   --el-button-primary-border-color: var(--accent-cyan);
   --el-button-primary-hover-bg-color: #33ddff;
   --el-button-primary-hover-border-color: #33ddff;
+
+  /* Input */
+  --el-input-bg-color: var(--surface-primary);
+  --el-input-border-color: var(--border-primary);
+  --el-input-hover-border-color: var(--border-accent);
+  --el-input-focus-border-color: var(--accent-cyan);
+
+  /* Card */
+  --el-card-bg-color: var(--surface-primary);
+  --el-card-border-color: var(--border-primary);
+
+  /* Table */
+  --el-table-bg-color: var(--surface-primary);
+  --el-table-header-bg-color: var(--surface-secondary);
+  --el-table-row-hover-bg-color: var(--surface-hover);
+  --el-table-border-color: var(--border-secondary);
+
+  /* Popover/Dialog */
+  --el-popover-bg-color: var(--surface-elevated);
+  --el-popover-border-color: var(--border-primary);
+
+  /* Text */
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-muted);
+
+  /* Border */
+  --el-border-color: var(--border-primary);
+  --el-border-color-light: var(--border-secondary);
+
+  /* Fill */
+  --el-fill-color: var(--surface-secondary);
+  --el-fill-color-light: var(--surface-elevated);
+}
+
+/* Element Plus Light Theme Overrides */
+[data-theme="light"] {
+  /* Button */
+  --el-button-primary-bg-color: var(--accent-cyan);
+  --el-button-primary-border-color: var(--accent-cyan);
+  --el-button-primary-hover-bg-color: #0e7490;
+  --el-button-primary-hover-border-color: #0e7490;
 
   /* Input */
   --el-input-bg-color: var(--surface-primary);
