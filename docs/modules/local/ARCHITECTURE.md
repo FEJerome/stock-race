@@ -147,16 +147,17 @@ local/
 │   ├── storage/
 │   │   ├── interface.py       # 存储接口
 │   │   └── sqlite.py          # SQLite 实现
-│   └── datasource/            # 数据源适配器（完整复刻 v0.9）
+│   └── datasource/            # 数据源适配器
 │       ├── interface.py       # DataSource 抽象接口
 │       ├── router.py          # DataSourceRouter 路由管理器
 │       ├── csv.py             # CSV 数据源（离线测试/回测）
-│       ├── sina.py            # 新浪财经数据源
-│       ├── tencent.py         # 腾讯财经数据源
-│       ├── eastmoney.py       # 东方财富数据源
-│       ├── akshare.py         # AkShare 数据源
-│       ├── baostock.py        # Baostock 数据源
-│       └── tushare.py         # Tushare 数据源
+│       ├── sina.py            # 新浪财经数据源（主实时，已实现）
+│       ├── tencent.py         # 腾讯财经数据源（备实时，已实现）
+│       ├── eastmoney.py       # 东方财富数据源（补充，已实现）
+│       # ── Future（按需启用，不在当前 Local 版本范围内）──
+│       # ├── akshare.py       # AkShare（历史K线，需实现）
+│       # ├── baostock.py      # Baostock（基本面，需实现）
+│       └── # └── tushare.py  # Tushare（财务数据，需Token，需实现）
 ├── db/                         # 数据库
 │   └── sqlite.py              # SQLAlchemy 配置
 ├── config/
@@ -215,11 +216,15 @@ DecisionComplianceValidator（决策合规校验器）
 
 #### AI 交易员管理
 
+> **资金命名约定**（2026-03-12）：AI 交易员使用的资金在 UI 层统一展示为**"投资研究点数"**，
+> 后端代码字段仍使用 `initial_capital` / `current_capital`（与数据库列名一致）。
+> 含义：1点数 = 1元虚拟资金，纯虚拟研究用途，不涉及真实资产。
+
 ```python
 # POST /api/agents
 class CreateAgentRequest(BaseModel):
     name: str
-    initial_capital: Decimal  # 用户设置，范围 1万-10亿
+    initial_capital: Decimal  # 投资研究点数（UI展示），范围 1万-10亿
     strategy: Strategy
     model_provider: str = "deepseek"  # deepseek/qwen/kimi/glm
     model_name: str = "deepseek-chat"
@@ -239,11 +244,11 @@ class CreateAgentRequest(BaseModel):
             raise ValueError(f'初始资金不能超过 {MAX_CAPITAL}，大额资金存在风险')
         return v
 
-# 职级默认初始资金（前端表单默认值）
+# 职级默认初始投资研究点数（前端表单默认值，UI 展示为"点数"）
 DEFAULT_CAPITAL_BY_LEVEL = {
-    AgentLevel.INTERN: 500000,    # 实习生：50万
-    AgentLevel.MANAGER: 1000000,  # 经理：100万
-    AgentLevel.PARTNER: 5000000,  # 合伙人：500万
+    AgentLevel.INTERN: 500000,    # 实习生：50万点数
+    AgentLevel.MANAGER: 1000000,  # 经理：100万点数
+    AgentLevel.PARTNER: 5000000,  # 合伙人：500万点数
 }
 
 # GET /api/agents
@@ -342,11 +347,10 @@ class WebSocketManager:
     HEARTBEAT_TIMEOUT = 5         # 5秒无响应判定断开
     HEARTBEAT_MISS_THRESHOLD = 2  # 连续丢失2次心跳则断开
 
-    # 快速重连策略
-    RECONNECT_INTERVAL_INITIAL = 2      # 首次重连2秒
-    RECONNECT_INTERVAL_MAX = 10         # 最大重连间隔10秒
-    RECONNECT_BACKOFF_MULTIPLIER = 2    # 指数退避基数
-    RECONNECT_MAX_ATTEMPTS = 10         # 最大重试次数（Local持续尝试）
+    # 快速重连策略（Local 简化版：固定3秒间隔，无指数退避）
+    # 理由：单用户本地环境，断线多为临时网络波动，固定间隔足够
+    RECONNECT_INTERVAL = 3              # 固定重连间隔3秒
+    RECONNECT_MAX_ATTEMPTS = 20         # 最大重试次数（约1分钟后停止）
 
     # 数据推送配置
     BROADCAST_INTERVAL = 5        # 5秒批量推送（高频）
@@ -466,17 +470,12 @@ export const useMarketStore = defineStore('market', {
     },
 
     attemptReconnect() {
-      // 指数退避重连
-      const delay = Math.min(
-        2 * Math.pow(2, this.reconnectAttempts),
-        10 // 最大10秒
-      )
+      // 固定3秒重连（Local 单机版，无需指数退避）
       this.reconnectAttempts++
-
       setTimeout(() => {
         console.log(`Reconnecting... attempt ${this.reconnectAttempts}`)
         this.connect()
-      }, delay * 1000)
+      }, 3000)
     },
 
     handleMessage(message) {
@@ -537,7 +536,10 @@ export const useMarketStore = defineStore('market', {
 
 ### 3.4 数据源架构（复刻 v0.9 完整机制）
 
-Local 形态完整复刻 v0.9 的六数据源架构，包括动态权重、质量评估、熔断恢复等完整机制。
+Local 形态采用三实时数据源架构（新浪/腾讯/东方财富），已完整实现。AkShare/Baostock/Tushare 标记为 Future，按需启用。
+
+> **架构简化说明**（2026-03-12）：Review 评估后，原规划的六数据源架构对单用户 Local 版本过度设计。
+> 当前三实时源已满足 Local 阶段全部需求，历史/财务数据源在需要时再实现。
 
 #### 整体架构
 
@@ -545,14 +547,14 @@ Local 形态完整复刻 v0.9 的六数据源架构，包括动态权重、质�
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DataSourceRouter                              │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │              动态权重管理器                                │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │   │
-│  │  │   新浪   │  │   腾讯   │  │ 东方财富 │  │ AkShare  │ │   │
-│  │  │  Sina    │  │ Tencent  │  │EastMoney │  │(历史)    │ │   │
-│  │  │ (主实时) │  │ (备实时) │  │ (备实时) │  │          │ │   │
-│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘ │   │
-│  │       └─────────────┴─────────────┴─────────────┘       │   │
-│  │                      ↓                                   │   │
+│  │              动态权重管理器（三实时源）                    │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │   │
+│  │  │     新浪     │  │     腾讯     │  │   东方财富   │   │   │
+│  │  │  Sina (主)   │  │ Tencent (备) │  │ EastMoney    │   │   │
+│  │  │  weight=0.50 │  │  weight=0.35 │  │  weight=0.15 │   │   │
+│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘   │   │
+│  │         └─────────────────┴─────────────────┘           │   │
+│  │                            ↓                             │   │
 │  │              ┌──────────────────────┐                   │   │
 │  │              │   数据质量评估引擎    │                   │   │
 │  │              │  - 多源数据比对       │                   │   │
@@ -562,11 +564,12 @@ Local 形态完整复刻 v0.9 的六数据源架构，包括动态权重、质�
 │  └──────────────────────────────────────────────────────────┘   │
 │                              ↓                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │              三层缓存架构                                  │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
-│  │  │  L1 内存缓存  │  │ L2 SQLite    │  │ L3 远程数据源 │    │   │
-│  │  │   (5秒TTL)   │  │ (本地存储)   │  │ (新浪/腾讯)  │    │   │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  │              两层缓存架构                                  │   │
+│  │  ┌──────────────────────┐  ┌──────────────────────────┐  │   │
+│  │  │     L1 内存缓存       │  │     L2 SQLite 缓存        │  │   │
+│  │  │  (10秒TTL，热数据)   │  │  (5分钟TTL，温数据)      │  │   │
+│  │  └──────────────────────┘  └──────────────────────────┘  │   │
+│  │  注：远程数据源不计为缓存层，直接由 DataSourceRouter 管理  │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -578,29 +581,27 @@ class DataSourceRouter:
     """数据源路由器 - 复刻 v0.9 完整机制"""
 
     def __init__(self):
-        # 初始化数据源
+        # 初始化数据源（三实时源 + CSV离线备用）
         self.sources: Dict[str, DataSource] = {
-            'sina': SinaDataSource(),
-            'tencent': TencentDataSource(),
-            'eastmoney': EastMoneyDataSource(),
-            'akshare': AkShareDataSource(),
-            'baostock': BaostockDataSource(),
-            'tushare': TushareDataSource(),
-            'csv': CSVDataSource(),  # 离线备用
+            'sina': SinaDataSource(),        # 新浪财经 - 主实时源（已实现）
+            'tencent': TencentDataSource(),  # 腾讯财经 - 备实时源（已实现）
+            'eastmoney': EastMoneyDataSource(),  # 东方财富 - 补充源（已实现）
+            'csv': CSVDataSource(),          # 离线备用
+            # Future（按需启用）：
+            # 'akshare': AkShareDataSource(),    # 历史K线
+            # 'baostock': BaostockDataSource(),  # 基本面数据
+            # 'tushare': TushareDataSource(),    # 财务数据（需Token）
         }
 
-        # 动态权重配置（实时调整）
+        # 动态权重配置（三实时源）
         self.weights = {
-            'sina': 0.40,      # 新浪财经 - 主实时源
-            'tencent': 0.35,   # 腾讯财经 - 备实时源
-            'eastmoney': 0.25, # 东方财富 - 补充数据
-            'akshare': 0.0,    # 历史数据（按需启用）
-            'baostock': 0.0,   # 基本面数据（日终）
-            'tushare': 0.0,    # 财务数据（需 Token）
-            'csv': 0.0,        # 离线兜底
+            'sina': 0.50,        # 新浪财经 - 主实时源（最稳定）
+            'tencent': 0.35,     # 腾讯财经 - 备实时源（稳定）
+            'eastmoney': 0.15,   # 东方财富 - 补充/校验
+            'csv': 0.0,          # 离线兜底
         }
 
-        # 健康状态管理
+        # 健康状态管理（仅活跃数据源）
         self.health_status: Dict[str, HealthStatus] = {}
         for name in self.sources:
             self.health_status[name] = HealthStatus(
@@ -724,15 +725,15 @@ class DataSourceRouter:
 
 #### 数据源分类与用途
 
-| 类别 | 数据源 | 特点 | 用途 | 默认权重 |
-|------|--------|------|------|---------|
-| **实时主源** | 新浪财经 | 速度快、稳定性高 | 主要实时行情 | 40% |
-| **实时备源** | 腾讯财经 | 速度快、数据格式一致 | 实时 failover | 35% |
-| **实时补充** | 东方财富 | 数据全面、含板块信息 | 补充/校验 | 25% |
-| **历史数据** | AkShare | Python友好、免费 | 历史K线、技术指标 | 按需启用 |
-| **基本面** | Baostock | 长期历史数据 | 基本面分析、回测 | 日终采集 |
-| **财务数据** | Tushare | 专业（需Token）| 财务报表、公告 | 按需启用 |
-| **离线兜底** | CSV | 本地文件 | 无网络/测试环境 | 0% |
+| 类别 | 数据源 | 特点 | 用途 | 默认权重 | 状态 |
+|------|--------|------|------|---------|------|
+| **实时主源** | 新浪财经 | 速度快、稳定性高 | 主要实时行情 | 50% | ✅ 已实现 |
+| **实时备源** | 腾讯财经 | 速度快、数据格式一致 | 实时 failover | 35% | ✅ 已实现 |
+| **实时补充** | 东方财富 | 数据全面、含板块信息 | 补充/校验 | 15% | ✅ 已实现 |
+| **离线兜底** | CSV | 本地文件 | 无网络/测试环境 | 0% | ✅ 已实现 |
+| *(Future)* | AkShare | Python友好、免费 | 历史K线、技术指标 | 0% | 📋 按需启用 |
+| *(Future)* | Baostock | 长期历史数据 | 基本面分析、回测 | 0% | 📋 按需启用 |
+| *(Future)* | Tushare | 专业（需Token）| 财务报表、公告 | 0% | 📋 按需启用 |
 
 #### 熔断器完整实现（复刻 v0.9）
 
@@ -883,39 +884,38 @@ class CollectionScheduler:
                 logger.warning(f"{source} 历史数据更新失败: {e}")
 ```
 
-#### 三层缓存架构
+#### 两层缓存架构
+
+> **架构简化说明**（2026-03-12）：原"三层缓存"中 L3（远程数据源）并非缓存层，
+> 由 DataSourceRouter 直接管理。Local 版本实际为两层缓存，逻辑更清晰。
 
 ```python
 class DataCacheManager:
-    """三层缓存管理器"""
+    """两层缓存管理器（内存 + SQLite）"""
 
     def __init__(self):
-        # L1: 内存缓存（热数据）
+        # L1: 内存缓存（热数据，高频访问）
         self.memory_cache: Dict[str, CachedQuote] = {}
-        self.memory_ttl = 10  # 10秒
+        self.memory_ttl = 10  # 10秒 TTL
 
-        # L2: SQLite 本地缓存（温数据）
-        self.sqlite_ttl = 300  # 5分钟
-
-        # L3: 远程数据源（冷数据）
-        # 由 DataSourceRouter 管理
+        # L2: SQLite 本地缓存（温数据，断线恢复/历史查询）
+        self.sqlite_ttl = 300  # 5分钟 TTL
 
     async def get_quote(self, symbol: str) -> Optional[Quote]:
-        """三级缓存查询"""
-        # 1. 查内存缓存
+        """两级缓存查询"""
+        # 1. 查内存缓存（L1）
         if symbol in self.memory_cache:
             cached = self.memory_cache[symbol]
             if cached.is_valid():
                 return cached.quote
 
-        # 2. 查 SQLite 缓存
+        # 2. 查 SQLite 缓存（L2），回填到内存
         quote = await self._query_sqlite_cache(symbol)
         if quote:
-            # 回填内存缓存
             self.memory_cache[symbol] = CachedQuote(quote, ttl=self.memory_ttl)
             return quote
 
-        # 3. 从数据源获取
+        # 缓存未命中，由调用方通过 DataSourceRouter 获取并回填
         return None
 
     async def set_quote(self, symbol: str, quote: Quote, level: str = "memory"):
@@ -1738,9 +1738,9 @@ export const useMarketStore = defineStore('market', {
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  多数据源    │────▶│  Collector  │────▶│  WebSocket  │
-│ (六源聚合)   │     │ (Service层) │     │  (推送前端) │
-└─────────────┘     └─────────────┘     └─────────────┘
+│  三数据源    │────▶│  Collector  │────▶│  WebSocket  │
+│ (新浪/腾讯/ │     │ (Service层) │     │  (推送前端) │
+│  东方财富)   │     └─────────────┘     └─────────────┘
                                                │
                                                ▼
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -1765,6 +1765,8 @@ export const useMarketStore = defineStore('market', {
 2. API 层校验
    - 检查 agent 存在且状态正常
    - 检查交易时间（A股 09:30-11:30, 13:00-15:00）
+     **交易日历实现**：静态节假日表（`config/trading_calendar.py`）+ 工作日判断；
+     节假日表按年维护，初始提供2026全年数据
    - 检查资金/持仓充足
 
 3. TradingEngine 执行
@@ -1788,7 +1790,10 @@ export const useMarketStore = defineStore('market', {
            "UPDATE agents SET current_capital = current_capital - ? WHERE id = ?",
            (trade_amount, agent_id)
        )
-       # 4.4 更新收益指标
+       # 4.4 更新收益指标（实时计算，每笔交易后立即更新）
+       # 收益指标 = 总资产价值 / 初始资金 - 1
+       # 总资产价值 = 当前现金 + 持仓市值（使用最新价格）
+       # 注：浮动盈亏在每次行情推送时也会更新，此处为已实现盈亏触发的强制更新
        await self.portfolio_service.update_metrics(agent_id)
    # COMMIT - 全部成功或全部回滚
    ```
@@ -1844,8 +1849,8 @@ class DecisionContext:
 
     # 3. 当前持仓（动态，~300 tokens）
     portfolio: Dict = {
-        "cash": 500000,                     # 可用现金
-        "total_value": 550000,              # 总资产
+        "cash": 500000,                     # 可用投资研究点数
+        "total_value": 550000,              # 总点数价值
         "total_return": "+10%",             # 总收益率
         "positions": [
             {
@@ -2078,10 +2083,10 @@ adapters/ ───┘
 |---------|------|------|
 | AI 交易员创建 | ✅ | Web界面，多模型选择（DeepSeek/通义/Kimi/GLM） |
 | 策略收集对话 | ✅ | 五维度策略收集（风险/板块/周期/仓位/止损） |
-| AI 职级系统 | ✅ | 实习生/经理/合伙人三级晋升（仅能力差异，无工资成本） |
+| AI 职级系统 | ✅ | 实习生/经理/合伙人三级晋升（Local 简化规则：纯收益表现驱动，无成本约束）<br>**晋升条件**：实习生→经理（累计收益率≥10%且交易日≥15天）；经理→合伙人（累计收益率≥30%且交易日≥30天）<br>**退级**：累计亏损≥20%降一级（保底实习生） |
 | 激励档位 | ✅ | 标准/积极/激进三档（仅决策频率差异，无工资成本） |
 | 虚拟交易执行 | ✅ | 基于实时数据的虚拟买卖、持仓管理、收益计算 |
-| 实时行情数据 | ✅ | 六数据源聚合（完整复刻 v0.9：新浪/腾讯/东方财富/AkShare/Baostock/Tushare） |
+| 实时行情数据 | ✅ | 三数据源聚合（新浪/腾讯/东方财富，已实现）；AkShare/Baostock/Tushare 为 Future |
 | 新闻/舆论数据 | ✅ | 财经新闻采集、社交媒体情绪数据 |
 | Token 统计 | ✅ | API 调用成本统计（仅供参考） |
 | 排行榜 | ✅ | 本地单机多 AI 对比排行 |
@@ -2135,4 +2140,4 @@ adapters/ ───┘
 
 ---
 
-*本文档最后更新：2026-03-09*
+*本文档最后更新：2026-03-12*

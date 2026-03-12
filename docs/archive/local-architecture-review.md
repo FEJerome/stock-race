@@ -1,5 +1,13 @@
 # Local 形态架构与实施计划审视报告
 
+> **归档标签**：`#archived` `#review` `#architecture` `#phase-1` `#fully-actioned`
+> **归档日期**：2026-03-12
+> **归档原因**：所有问题已完成消化——P0 条目转为 TODO 任务，P1 条目已更新进架构文档，
+> 过度设计问题已在 ARCHITECTURE.md / IMPLEMENTATION_PLAN.md 中修正。
+> 此文档保留为历史决策依据，无需主动查阅。
+
+---
+
 > **审视依据**：`docs/discussion/consultation-material.html`（合规咨询材料）+ `docs/PRD.md`（产品需求文档 v1.1）
 > **审视对象**：`docs/modules/local/ARCHITECTURE.md` + `docs/modules/local/IMPLEMENTATION_PLAN.md`
 > **审视日期**：2026-03-12

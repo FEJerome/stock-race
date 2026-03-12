@@ -93,9 +93,9 @@
 | B-1.2.5a | 新浪财经适配器 | ✅ 完成 | - | 2026-03-09 | SinaDataSource |
 | B-1.2.5b | 腾讯财经适配器 | ✅ 完成 | - | 2026-03-09 | TencentDataSource |
 | B-1.2.5c | 东方财富适配器 | ✅ 完成 | - | 2026-03-09 | EastMoneyDataSource |
-| B-1.2.5d | AkShare 适配器 | 📋 待开始 | - | - | AkShareDataSource |
-| B-1.2.5e | Baostock 适配器 | 📋 待开始 | - | - | BaostockDataSource |
-| B-1.2.5f | Tushare 适配器 | 📋 待开始 | - | - | TushareDataSource |
+| B-1.2.5d | AkShare 适配器 | 🔵 Future | - | - | AkShareDataSource，历史K线，按需启用 |
+| B-1.2.5e | Baostock 适配器 | 🔵 Future | - | - | BaostockDataSource，基本面，按需启用 |
+| B-1.2.5f | Tushare 适配器 | 🔵 Future | - | - | TushareDataSource，财务数据（需Token），按需启用 |
 | B-1.2.6a | DataSourceRouter | ✅ 完成 | - | 2026-03-09 | 数据源路由管理器 |
 | B-1.2.6b | 数据对齐服务 | ✅ 完成 | - | 2026-03-09 | 多源数据时间对齐 |
 | B-1.2.6c | 熔断降级机制 | ✅ 完成 | - | 2026-03-09 | 故障检测与 failover |
@@ -131,7 +131,7 @@
 | F-1.2.11 | 决策展示 | 📋 待开始 | - | - | 决策理由 |
 
 **Phase 1.2 验收条件**：
-- [x] 可创建/查看/删除 AI 交易员（含初始资金 1万-10亿）
+- [x] 可创建/查看/删除 AI 交易员（含投资研究点数 1万-10亿点数）
 - [x] 行情数据定时采集成功
 - [x] 可执行买入/卖出交易
 - [x] 持仓和资金变动正确
