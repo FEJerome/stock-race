@@ -132,7 +132,8 @@ local/
 │   ├── trading_engine.py      # 交易引擎 → 参考逻辑到 trading-service (Go)
 │   ├── token_tracker.py       # Token 消耗统计 → Local 特有
 │   ├── promotion_service.py   # 职级晋升服务 → Local 特有
-│   └── portfolio_service.py   # 收益指标计算 → 复用到 portfolio-service
+│   ├── portfolio_service.py   # 收益指标计算 → 复用到 portfolio-service
+│   └── strategy_compliance.py # 策略粒度检测 + AI决策合规校验 → Local 合规层
 ├── core/                       # 核心领域（与三种形态共用）
 │   ├── domain/
 │   │   ├── models.py          # Pydantic 模型
@@ -172,6 +173,44 @@ local/
 | **Core 层** | 领域模型、核心业务规则 | `AIAgent`, `Trade`, `Strategy` |
 | **Adapter 层** | 外部依赖抽象（存储、数据源、AI） | `SQLiteStorage`, `DeepSeekAdapter` |
 
+### 3.2.1 合规服务层（strategy_compliance.py）
+
+合规不是附加功能，而是贯穿 API 层、Service 层、前端组件的横切关注点。`strategy_compliance.py` 是合规逻辑的统一入口。
+
+```
+GranularityDetector（策略粒度检测）
+  职责：在 Agent 创建阶段检测用户策略描述的细化程度
+  三档：
+    - 细：五维度完整 + watchlist 非空 → 允许创建
+    - 中：部分维度缺失 → 提示补全，允许创建
+    - 粗：关键维度（仓位/止损/watchlist）缺失 → 拒绝创建，返回引导提示
+  触发点：POST /api/agents 创建 Agent 时
+
+ComplianceFilter（AI回复合规过滤）
+  职责：AI 决策输出后置校验，确保 AI 不推荐 allowed_symbols 之外的标的
+  规则：
+    - 若 action = buy/sell 且 symbol NOT IN allowed_symbols → 降级为 watch
+    - 记录违规日志（symbol、agent_id、timestamp）
+  触发点：DecisionComplianceValidator 调用
+
+DecisionComplianceValidator（决策合规校验器）
+  职责：封装 ComplianceFilter，为决策流程提供统一校验入口
+  输入：DecisionResponse + allowed_symbols: List[str]
+  输出：
+    - compliance_checked: bool = True
+    - violation_reason: Optional[str]  # 违规时说明原因
+  触发点：api/decision.py 在调用 adapter.make_decision() 之后
+```
+
+**数据流**：
+```
+策略收集（StrategyConfig.vue）
+  └→ GranularityDetector.check(strategy, watchlist) → 通过/拒绝
+       └→ 通过后 Agent 创建，watchlist 持久化到 agents 表
+            └→ 每次决策：DecisionContext.allowed_symbols = agent.watchlist
+                 └→ AI 输出后：DecisionComplianceValidator.validate(response, allowed_symbols)
+```
+
 ### 3.3 关键接口设计
 
 #### AI 交易员管理
@@ -186,6 +225,9 @@ class CreateAgentRequest(BaseModel):
     model_name: str = "deepseek-chat"
     agent_level: AgentLevel = AgentLevel.INTERN  # 职级：实习生/经理/合伙人
     incentive_level: IncentiveLevel = IncentiveLevel.STANDARD  # 档位：标准/积极/激进
+    watchlist: List[str] = []  # 自选股白名单（合规约束）：AI 只能操作此列表内的标的
+                               # 示例: ["000001.SZ", "600519.SH"]
+                               # 为空时禁止 AI 主动选股，须通过 GranularityDetector 检查
 
     @validator('initial_capital')
     def validate_capital(cls, v):
@@ -1603,17 +1645,25 @@ local/frontend/
 │   │   ├── charts/            # 图表组件
 │   │   │   ├── LineChart.vue
 │   │   │   └── BarChart.vue
-│   │   └── layout/            # 布局组件
-│   │       ├── Sidebar.vue
-│   │       └── Header.vue
+│   │   ├── layout/            # 布局组件
+│   │   │   ├── Sidebar.vue
+│   │   │   └── Header.vue
+│   │   ├── compliance/        # 合规声明组件（P0-2）
+│   │   │   ├── DisclaimerBanner.vue  # 全局免责声明横幅（涉及收益的页面必须引用）
+│   │   │   └── RiskWarning.vue       # 收益率数字旁的风险提示标注
+│   │   └── events/            # 事件舆情展示组件（Phase 1.4）
+│   │       ├── EventCard.vue       # 单事件卡片（触发词/主体/客体/强度）
+│   │       ├── EventChain.vue      # 事件链时间轴可视化
+│   │       └── SentimentGauge.vue  # 情绪强度仪表盘
 │   ├── views/                 # 页面视图
 │   │   ├── Dashboard.vue      # 仪表盘（多 AI 对比）
 │   │   ├── AgentCreate.vue    # 创建 AI 交易员
 │   │   ├── AgentDetail.vue    # AI 详情/交易记录
 │   │   ├── AgentList.vue      # AI 列表
-│   │   ├── StrategyConfig.vue # 策略配置（五维度对话）
+│   │   ├── StrategyConfig.vue # 策略配置（五维度对话 + 自选股设置）
 │   │   ├── MarketData.vue     # 实时行情
 │   │   ├── TradePanel.vue     # 交易面板
+│   │   ├── EventTimeline.vue  # 事件时间线页面（Phase 1.4）
 │   │   └── Settings.vue       # 设置（API Key 配置）
 │   ├── stores/                # Pinia 状态管理
 │   │   ├── agent.js           # AI 交易员状态
@@ -1845,6 +1895,12 @@ class DecisionContext:
         "time_to_market_close": "30分钟",
         "trading_day_count": 15   # 已运行交易日数
     }
+
+    # 7. 合规约束（来自 Agent 创建时的 watchlist，不计入 token 预算）
+    allowed_symbols: List[str] = field(default_factory=list)
+    # 来源：CreateAgentRequest.watchlist → Agent 存储 → 每次决策请求时注入
+    # DecisionComplianceValidator 用此字段对 AI 输出做后置校验
+    # 为空列表时，GranularityDetector 应已在策略收集阶段拦截
 ```
 
 #### 5.3.3 Token 管理策略

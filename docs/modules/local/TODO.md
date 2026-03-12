@@ -14,7 +14,7 @@
 |------|------|------|-----------------|
 | Phase 1.1 基础框架 | ✅ 已完成 | 100% | 所有验收条件通过 |
 | Phase 1.2 核心功能 | ✅ 已完成 | 100% | Phase 1.1 验收通过 |
-| Phase 1.3 完整体验 | ✅ 已完成 | 100% | Phase 1.2 验收通过 |
+| Phase 1.3 完整体验 | ⚠️ 合规补丁待完成 | 90% | 新增合规任务 B-1.3.13/14/F-1.3.16（架构Review P0修复）|
 | Phase 1.4 事件舆情 | 📋 规划中 | 0% | Phase 1.3 验收通过 |
 
 **Local 核心验证版**：无工资/试用期，保留职级/档位（无成本），增加 Token 统计
@@ -190,6 +190,9 @@
 | F-1.3.13 | 职级/档位展示 | ✅ 完成 | - | 2026-03-10 | AgentDetail.vue |
 | F-1.3.14 | 错误处理 | ✅ 完成 | - | 2026-03-10 | error-handler.ts |
 | F-1.3.15 | 加载状态 | ✅ 完成 | - | 2026-03-10 | Loading 组件 |
+| B-1.3.13 | 策略粒度检测服务 | 📋 待开始 | - | - | GranularityDetector，粗粒度拒绝+引导，见 [ARCH §3.2.1](./ARCHITECTURE.md#321-合规服务层strategy_compliancepy) |
+| B-1.3.14 | 决策合规校验器 | 📋 待开始 | - | - | DecisionComplianceValidator，allowed_symbols校验，依赖B-1.3.13 |
+| F-1.3.16 | 粒度反馈 UI | 📋 待开始 | - | - | StrategyConfig.vue：watchlist输入 + ⚠️/✅粒度反馈，依赖B-1.3.13 |
 
 **Phase 1.3 验收条件**：
 - [x] 策略收集对话完成
@@ -202,6 +205,37 @@
 - [x] Token 消耗统计可查看
 - [x] AI 职级晋升可体验（实习生→经理→合伙人）
 - [x] 激励档位可调整（标准/积极/激进）
+- [ ] 创建 Agent 时可设置自选股白名单（watchlist）
+- [ ] 策略粒度检测正常工作（粗粒度策略被拒绝，返回引导提示）
+- [ ] AI 决策合规校验已集成（推荐白名单外标的时降级为 watch）
+
+### ⚠️ P0 合规补丁（架构Review追加，2026-03-12）
+
+> 基于 [docs/review/local-architecture-review.md](../../review/local-architecture-review.md) 的 P0 级缺口修复。
+> **执行前必读**：[ARCHITECTURE.md §3.2.1](./ARCHITECTURE.md#321-合规服务层strategy_compliancepy)
+> 这些任务涉及**改造已完成代码**，请勿跳过改造项直接做新增项。
+
+**改造项**（在已完成任务上扩展，严格按顺序执行）：
+
+| ID | 改造内容 | 影响文件 | 工时 | 状态 |
+|----|---------|---------|------|------|
+| DB-P0.1 | agents 表新增 `watchlist` 列（TEXT，存储 JSON 数组） | `local/backend/db/` 迁移脚本 | 1h | 📋 待开始 |
+| B-P0.1 | `CreateAgentRequest` 新增 `watchlist` 字段 + Agent ORM 新增 watchlist 列 | `api/agents.py`，ORM models | 2h | 📋 待开始 |
+| B-P0.2 | `api/decision.py` 集成 `DecisionComplianceValidator`（AI 决策后置校验） | `api/decision.py` | 1h | 📋 待开始 |
+
+**执行顺序（严格依赖，不可并行）**：
+```
+1. DB-P0.1 → B-P0.1（数据库先行，模型跟上）
+2. B-1.3.13（粒度检测服务）
+3. B-1.3.14 + B-P0.2（可并行：合规校验器 + 集成到 decision.py）
+4. F-1.3.16 + F-P0.1（可并行：前端新功能）
+```
+
+**合规声明组件（P0-2）**：
+
+| ID | 任务 | 状态 | 工时 | 备注 |
+|----|------|------|------|------|
+| F-P0.1 | DisclaimerBanner.vue + RiskWarning.vue | 📋 待开始 | 2h | 涉及收益的页面引入，见 [ARCH §4.1](./ARCHITECTURE.md#41-目录结构) `components/compliance/` |
 
 ---
 
@@ -217,7 +251,7 @@
 |----|------|------|--------|---------|------|
 | B-1.4.1 | 事件数据模型 | 📋 待开始 | - | - | Event/EventRelation ORM |
 | B-1.4.2 | 数据库迁移 | 📋 待开始 | - | - | events/relations/windows表 |
-| B-1.4.3 | EventExtractor | 📋 待开始 | - | - | LLM Few-shot抽取器 |
+| B-1.4.3 | EventExtractor | 📋 待开始 | - | - | LLM Few-shot抽取器，依赖B-1.3.11的NewsArticle接口（见[IMPL §4.4数据契约](./IMPLEMENTATION_PLAN.md#44-完善功能)） |
 | B-1.4.4 | 事件类型体系 | 📋 待开始 | - | - | 业绩/股权/治理/业务/政策 |
 | B-1.4.5 | 强度计算算法 | 📋 待开始 | - | - | 强度标准化(0.0-1.0) |
 
@@ -300,6 +334,7 @@
 | 2026-03-09 | ABCD全部完成：A前端行情/B在线数据源/C交易引擎/D策略收集 | - |
 | 2026-03-10 | Phase 1.3 全部完成：F-1.3.9/F-1.3.10 实现 + E2E测试(24/24通过) | - |
 | 2026-03-11 | 新增 Phase 1.4 事件舆情系统规划（基于学术论文"多事件时序关系"分析范式）| - |
+| 2026-03-12 | P0架构Review：新增合规任务B-1.3.13/14/F-1.3.16/F-P0.1，DB-P0.1/B-P0.1/B-P0.2改造项，修复B-1.4.3依赖项 | 架构Review |
 
 ---
 
@@ -310,4 +345,4 @@
 
 ---
 
-*本文档最后更新：2026-03-10（Phase 1.3 全部完成 + E2E测试通过）*
+*本文档最后更新：2026-03-12（P0架构Review合规补丁同步）*

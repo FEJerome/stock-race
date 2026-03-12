@@ -305,12 +305,31 @@ CREATE TABLE positions (
 | B-1.3.10 | 多模型支持 | 通义/Kimi/GLM 适配器 | **20h** | B-1.2.14 | 4 个模型适配器 + 统一接口测试 |
 | B-1.3.11 | 新闻采集 | 财经新闻数据源 | **12h** | B-1.2.5 | 复用 v0.9 逻辑，简化适配 |
 | B-1.3.12 | 舆论采集 | 社交媒体情绪数据 | **12h** | B-1.3.11 | 社交媒体采集 |
+| B-1.3.13 | 策略粒度检测服务 | GranularityDetector：检测策略细化程度（细/中/粗），粗粒度拒绝创建+返回引导提示 | 4h | B-1.3.1 | PRD §4.2.2 已冻结 |
+| B-1.3.14 | 决策合规校验器 | DecisionComplianceValidator：校验 AI 输出的 symbol 是否在 allowed_symbols 白名单内，违规时降级为 watch | 4h | B-1.3.13 | PRD §4.2.2 合规约束 |
+| F-1.3.16 | 粒度反馈 UI | StrategyConfig.vue 新增自选股输入（watchlist）及粒度实时反馈（⚠️粗粒度/✅可创建）| 2h | B-1.3.13 | - |
 | F-1.3.10 | 设置页面 | Settings.vue，API Key 配置 | 3h | F-1.1.4 | - |
 | F-1.3.11 | 模型选择 | 创建 AI 时选择模型 | 2h | F-1.2.2 | - |
 | F-1.3.12 | Token 统计面板 | 展示 API 成本统计 | 4h | B-1.2.16 | - |
 | F-1.3.13 | 职级/档位展示 | AgentDetail 显示等级和档位 | 3h | B-1.2.17 | - |
 | F-1.3.14 | 错误处理 | 全局错误提示 | 2h | F-1.2.1 | - |
 | F-1.3.15 | 加载状态 | Loading 遮罩 | 2h | F-1.2.1 | - |
+
+**B-1.3.11 输出数据契约**（供 B-1.4.3 EventExtractor 使用）：
+
+```python
+@dataclass
+class NewsArticle:
+    """新闻采集模块的统一输出格式，同时是 EventExtractor 的输入接口契约。
+    B-1.4.3 EventExtractor.extract() 接收 article.content（纯文本字符串）。
+    """
+    content: str                          # 正文文本（B-1.4.3 的直接输入）
+    title: Optional[str] = None
+    source: Optional[str] = None          # 来源：东财/新浪财经/雪球等
+    publish_date: Optional[datetime] = None
+    symbol: Optional[str] = None          # 关联股票代码（用于 Phase 1.4 窗口管理）
+    url: Optional[str] = None
+```
 
 ---
 
@@ -327,7 +346,7 @@ CREATE TABLE positions (
 |---------|------|------|---------|------|---------|
 | B-1.4.1 | 事件数据模型 | Event/EventRelation/ChainFeatures ORM模型 | 4h | B-1.1.4 | 4.6.2 |
 | B-1.4.2 | 数据库迁移 | events/event_relations/event_windows 表 | 2h | B-1.4.1 | 4.6.5 |
-| B-1.4.3 | EventExtractor | 基于LLM Few-shot的事件抽取器 | **16h** | B-1.3.10 | 4.6.2 |
+| B-1.4.3 | EventExtractor | 基于LLM Few-shot的事件抽取器 | **16h** | B-1.3.11 | 4.6.2 |
 | B-1.4.4 | 事件类型体系 | 业绩/股权/治理/业务/政策分类与触发词 | 4h | B-1.4.3 | 4.6.3 |
 | B-1.4.5 | 强度计算算法 | **论文公式实现**：Fa = log(Pup/(1-Pup)) - log(Pdown/(1-Pdown)) | 4h | B-1.4.4 | 4.6.3 |
 
