@@ -26,6 +26,42 @@
 
 ## 变更记录
 
+### [v2.0-local-cr] - 2026-03-12
+
+#### Code Review 改进 - Sentiment & AI Adapter 模块
+
+**背景**: 对 Local 版本的 Sentiment 模块和 AI Adapter 模块进行 Code Review，实施改进建议。
+
+**SentimentProcessor 修复**:
+- `processor.py:25` 移除重复关键词 "涨"、"跌"、"亏"
+- `processor.py:68-69` 添加 `re.IGNORECASE` 标志，支持大小写不敏感匹配
+- 新增单元测试 `test_sentiment_processor.py`，覆盖关键词去重、大小写匹配、边界值测试
+- 新增单元测试 `test_sentiment_service.py`，覆盖缓存逻辑、批量处理、健康检查
+
+**AI Adapter 基类增强**:
+- `base.py` 新增 `_create_error_response()` - 统一的错误响应创建
+- `base.py` 新增 `_clean_json_response()` - 清理 JSON 响应中的 markdown
+- `base.py` 新增 `_parse_response_default()` - 默认响应解析实现
+- 所有适配器 (Kimi/Qwen/GLM/DeepSeek) 使用基类方法，减少代码重复 ~100行/适配器
+
+**GLM Adapter 修复**:
+- `glm_adapter.py:148` 添加 `response_format: {"type": "json_object"}` 确保 JSON 输出稳定
+
+**Token 价格修正**:
+- `base.py` 新增模型差异化定价：`get_cost_usd(model)` 方法
+- Kimi: $0.5/$2 (输入/输出 per M tokens)
+- Qwen: max $5/$10, plus $2/$6, turbo $0.5/$1
+- DeepSeek: $0.14/$0.28
+- GLM: glm-4-flash 免费，其他 $0.1/$0.1
+- 各适配器更新为使用 `token_usage.get_cost_usd(self.model)`
+
+**代码质量提升**:
+- 移除各适配器中函数内的 `import time`，统一使用文件顶部导入
+- 移除重复的 `_create_error_response` 和 `parse_response` 实现
+- 统一使用基类提供的公共方法
+
+---
+
 ### [v1.1-restruct] - 2026-03-10
 
 #### 重构（PRD文档结构优化）

@@ -97,6 +97,76 @@
         </div>
       </div>
 
+      <!-- Two Column Layout: Trade Panel & Positions -->
+      <div class="two-column-grid">
+        <!-- Trade Panel -->
+        <div class="section">
+          <div class="section-header">
+            <h3>
+              <span class="section-icon">💹</span>
+              交易下单
+            </h3>
+          </div>
+          <TradePanel
+            :agent-id="agent.id"
+            :positions="tradingStore.positions"
+            :submitting="tradingStore.submitting"
+            :error="tradingStore.error"
+            @submit="handleTradeSubmit"
+            @clear-error="tradingStore.clearError"
+          />
+        </div>
+
+        <!-- Positions List -->
+        <div class="section">
+          <div class="section-header">
+            <h3>
+              <span class="section-icon">📊</span>
+              持仓列表
+            </h3>
+            <span class="section-subtitle">{{ tradingStore.totalPositions }} 只持仓</span>
+          </div>
+          <div class="positions-container">
+            <div v-if="tradingStore.loading" class="loading-overlay">
+              <div class="spinner-small"></div>
+            </div>
+            <table v-else-if="tradingStore.positions.length" class="data-table">
+              <thead>
+                <tr>
+                  <th>代码</th>
+                  <th class="numeric">数量</th>
+                  <th class="numeric">成本</th>
+                  <th class="numeric">市值</th>
+                  <th class="numeric">盈亏</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="pos in tradingStore.positions" :key="pos.symbol">
+                  <td>
+                    <div class="symbol-cell">
+                      <span class="symbol">{{ pos.symbol }}</span>
+                      <span v-if="pos.name" class="symbol-name">{{ pos.name }}</span>
+                    </div>
+                  </td>
+                  <td class="numeric">{{ pos.quantity }}</td>
+                  <td class="numeric">¥{{ pos.avg_cost.toFixed(2) }}</td>
+                  <td class="numeric">¥{{ (pos.market_value || 0).toLocaleString('zh-CN') }}</td>
+                  <td class="numeric">
+                    <span :class="pnlClass(pos.unrealized_pnl)">
+                      {{ formatPnl(pos.unrealized_pnl, pos.unrealized_pnl_pct) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="empty-state small">
+              <div class="empty-icon">📭</div>
+              <p>暂无持仓</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Performance Charts -->
       <div class="section charts-section">
         <div class="section-header">
@@ -129,6 +199,64 @@
                 :metrics="performanceMetrics"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trade History -->
+      <div class="section">
+        <div class="section-header">
+          <h3>
+            <span class="section-icon">📜</span>
+            交易历史
+          </h3>
+          <span class="section-subtitle">{{ tradingStore.totalTrades }} 笔交易</span>
+        </div>
+        <div class="trades-container">
+          <div v-if="tradingStore.loading" class="loading-overlay">
+            <div class="spinner-small"></div>
+          </div>
+          <table v-else-if="tradingStore.trades.length" class="data-table">
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>动作</th>
+                <th>代码</th>
+                <th class="numeric">价格</th>
+                <th class="numeric">数量</th>
+                <th class="numeric">金额</th>
+                <th>决策理由</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="trade in tradingStore.recentTrades" :key="trade.id">
+                <td class="time-cell">{{ formatTime(trade.timestamp) }}</td>
+                <td>
+                  <span class="action-badge" :class="trade.action">
+                    {{ trade.action === 'buy' ? '买入' : '卖出' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="symbol-cell">
+                    <span class="symbol">{{ trade.symbol }}</span>
+                    <span v-if="trade.name" class="symbol-name">{{ trade.name }}</span>
+                  </div>
+                </td>
+                <td class="numeric">¥{{ trade.price.toFixed(2) }}</td>
+                <td class="numeric">{{ trade.quantity }}</td>
+                <td class="numeric">¥{{ trade.total_amount.toLocaleString('zh-CN') }}</td>
+                <td>
+                  <span v-if="trade.decision_reason" class="reason-text" :title="trade.decision_reason">
+                    {{ truncateReason(trade.decision_reason) }}
+                  </span>
+                  <span v-else class="reason-empty">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="empty-state small">
+            <div class="empty-icon">📭</div>
+            <p>暂无交易记录</p>
           </div>
         </div>
       </div>
@@ -251,19 +379,23 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAgentStore } from '../stores/agents'
+import { useTradingStore } from '../stores/trading'
 import { useWebSocketStore, type AgentTradeMessage, type AgentDecisionMessage } from '../stores/websocket'
 import { portfolioApi, type Portfolio, type PerformanceMetrics } from '../api/portfolio'
 import { decisionApi, type Decision } from '../api/decisions'
-import { showSuccess, showNotification } from '../utils/error-handler'
+import type { TradeCreate } from '../api/trading'
+import { showSuccess, showNotification, showError } from '../utils/error-handler'
 import TokenStatsPanel from '../components/tokens/TokenStatsPanel.vue'
 import ReturnsChart from '../components/charts/ReturnsChart.vue'
 import PortfolioPieChart from '../components/charts/PortfolioPieChart.vue'
 import PerformanceRadar from '../components/charts/PerformanceRadar.vue'
 import StrategyWizard, { type StrategyFormData } from '../components/strategy/StrategyWizard.vue'
+import TradePanel from '../components/trading/TradePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
 const agentStore = useAgentStore()
+const tradingStore = useTradingStore()
 const wsStore = useWebSocketStore()
 
 const agentId = computed(() => route.params.id as string)
@@ -350,6 +482,42 @@ async function loadDecisions() {
   } catch (err) {
     console.error('Failed to load decisions:', err)
   }
+}
+
+// Trade handlers
+async function handleTradeSubmit(action: 'buy' | 'sell', data: TradeCreate) {
+  if (!agentId.value) return
+
+  try {
+    if (action === 'buy') {
+      await tradingStore.executeBuy(agentId.value, data)
+    } else {
+      await tradingStore.executeSell(agentId.value, data)
+    }
+    showSuccess(`${action === 'buy' ? '买入' : '卖出'}成功`)
+    // Refresh portfolio after trade
+    await loadPortfolio()
+  } catch (err) {
+    showError(err, { showDetail: true })
+  }
+}
+
+// Position/Trade helpers
+function pnlClass(pnl: number | undefined) {
+  if (pnl === undefined) return ''
+  return pnl >= 0 ? 'up' : 'down'
+}
+
+function formatPnl(pnl: number | undefined, pct: number | undefined) {
+  if (pnl === undefined) return '-'
+  const sign = pnl >= 0 ? '+' : ''
+  const pctStr = pct !== undefined ? ` (${sign}${pct.toFixed(2)}%)` : ''
+  return `${sign}¥${pnl.toLocaleString('zh-CN')}${pctStr}`
+}
+
+function truncateReason(reason: string, maxLength = 20) {
+  if (reason.length <= maxLength) return reason
+  return reason.substring(0, maxLength) + '...'
 }
 
 // Promotion calculations
@@ -480,10 +648,8 @@ async function handleUpdateStrategy(data: StrategyFormData) {
   }
 }
 
-async function loadData() {
+async function loadPortfolio() {
   if (!agentId.value) return
-
-  await agentStore.fetchAgent(agentId.value)
 
   try {
     const portfolioRes = await portfolioApi.getPortfolio(agentId.value)
@@ -505,8 +671,20 @@ async function loadData() {
   } catch (err) {
     console.error('Failed to load performance:', err)
   }
+}
 
+async function loadData() {
+  if (!agentId.value) return
+
+  await agentStore.fetchAgent(agentId.value)
+  await loadPortfolio()
   await loadDecisions()
+
+  // Load trading data (positions and trades)
+  await Promise.all([
+    tradingStore.fetchPositions(agentId.value),
+    tradingStore.fetchTrades(agentId.value),
+  ])
 }
 
 onMounted(() => {
@@ -516,6 +694,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   disconnectWebSocket()
+  tradingStore.reset()
 })
 </script>
 
@@ -726,8 +905,21 @@ onUnmounted(() => {
   margin: 0;
 }
 
+.section-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
 .section-icon {
   font-size: var(--text-xl);
+}
+
+/* Two Column Grid */
+.two-column-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 /* Level Section */
@@ -883,6 +1075,157 @@ onUnmounted(() => {
   height: 100%;
 }
 
+/* Data Tables */
+.positions-container,
+.trades-container {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 自定义滚动条样式 */
+.positions-container::-webkit-scrollbar,
+.trades-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.positions-container::-webkit-scrollbar-track,
+.trades-container::-webkit-scrollbar-track {
+  background: var(--surface-secondary);
+}
+
+.positions-container::-webkit-scrollbar-thumb,
+.trades-container::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: var(--radius-sm);
+}
+
+.positions-container::-webkit-scrollbar-thumb:hover,
+.trades-container::-webkit-scrollbar-thumb:hover {
+  background: var(--border-accent);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-sm);
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.data-table th {
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table tr:hover td {
+  background: var(--surface-hover);
+}
+
+.data-table .numeric {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.symbol-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.symbol {
+  font-family: var(--font-mono);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.symbol-name {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.time-cell {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.action-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.action-badge.buy {
+  background: var(--up-bg);
+  color: var(--up-primary);
+  border: 1px solid rgba(0, 208, 132, 0.3);
+}
+
+.action-badge.sell {
+  background: var(--down-bg);
+  color: var(--down-primary);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.reason-text {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.reason-empty {
+  color: var(--text-muted);
+}
+
+.up {
+  color: var(--up-primary);
+}
+
+.down {
+  color: var(--down-primary);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--surface-elevated);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Strategy Card */
 .btn-edit {
   padding: var(--space-2) var(--space-4);
@@ -1029,6 +1372,10 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.empty-state.small {
+  padding: var(--space-8);
+}
+
 .spinner {
   width: 40px;
   height: 40px;
@@ -1037,11 +1384,6 @@ onUnmounted(() => {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: var(--space-3);
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 .error-state {
@@ -1057,6 +1399,10 @@ onUnmounted(() => {
   font-size: 3rem;
   margin-bottom: var(--space-2);
   opacity: 0.5;
+}
+
+.empty-state.small .empty-icon {
+  font-size: 2rem;
 }
 
 /* Modal */
@@ -1133,6 +1479,10 @@ onUnmounted(() => {
     gap: var(--space-4);
   }
 
+  .two-column-grid {
+    grid-template-columns: 1fr;
+  }
+
   .charts-grid {
     grid-template-columns: 1fr;
   }
@@ -1147,6 +1497,15 @@ onUnmounted(() => {
 
   .strategy-grid {
     grid-template-columns: 1fr;
+  }
+
+  .data-table {
+    font-size: var(--text-xs);
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: var(--space-2);
   }
 }
 </style>

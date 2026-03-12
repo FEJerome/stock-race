@@ -22,6 +22,15 @@ export interface ErrorDetails {
 }
 
 /**
+ * Extract error message from unknown error
+ * 从未知错误中提取错误信息
+ */
+export function getErrorMessage(err: unknown, defaultMessage = '操作失败'): string {
+  const details = parseError(err)
+  return details.message || defaultMessage
+}
+
+/**
  * 解析错误并返回标准化的错误详情
  */
 export function parseError(error: unknown): ErrorDetails {

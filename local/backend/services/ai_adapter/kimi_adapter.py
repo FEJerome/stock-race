@@ -5,18 +5,15 @@ API Docs: https://platform.moonshot.cn/docs
 Model: moonshot-v1-128k (Kimi K2.5)
 """
 import os
-import json
+import time
 import httpx
 from typing import Optional, Dict, Any
-from datetime import datetime
 
 from .base import (
     AIAdapter,
     DecisionRequest,
     DecisionResponse,
     TokenUsage,
-    MarketContext,
-    PositionContext,
     DecisionAction,
 )
 
@@ -136,8 +133,6 @@ class KimiAdapter(AIAdapter):
         Returns:
             Structured decision response
         """
-        import time
-
         start_time = time.time()
 
         # Build prompt
@@ -177,7 +172,7 @@ class KimiAdapter(AIAdapter):
 
             # Update total stats
             self._total_tokens_used += token_usage.total_tokens
-            self._total_cost_usd += token_usage.cost_usd
+            self._total_cost_usd += token_usage.get_cost_usd(self.model)
 
             # Parse response
             raw_content = data["choices"][0]["message"]["content"]
@@ -202,18 +197,6 @@ class KimiAdapter(AIAdapter):
 
         except Exception as e:
             return self._create_error_response(f"Decision error: {str(e)}", start_time)
-
-    def _create_error_response(self, error_msg: str, start_time: float) -> DecisionResponse:
-        """Create error response"""
-        import time
-        return DecisionResponse(
-            action=DecisionAction.HOLD,
-            confidence=0.0,
-            reason=f"决策失败: {error_msg}",
-            risk_warning=error_msg,
-            latency_ms=(time.time() - start_time) * 1000,
-            model_name=self.model_name,
-        )
 
     def build_prompt(self, request: DecisionRequest) -> str:
         """Build decision prompt from request"""
@@ -296,59 +279,15 @@ class KimiAdapter(AIAdapter):
         """
         Parse LLM JSON response into DecisionResponse
 
+        使用基类默认实现
+
         Args:
             raw_response: Raw JSON string from LLM
 
         Returns:
             Structured DecisionResponse
         """
-        try:
-            # Clean up response (remove markdown code blocks if present)
-            cleaned = raw_response.strip()
-            if cleaned.startswith("```json"):
-                cleaned = cleaned[7:]
-            if cleaned.startswith("```"):
-                cleaned = cleaned[3:]
-            if cleaned.endswith("```"):
-                cleaned = cleaned[:-3]
-            cleaned = cleaned.strip()
-
-            # Parse JSON
-            data = json.loads(cleaned)
-
-            # Map action string to enum
-            action_map = {
-                "buy": DecisionAction.BUY,
-                "sell": DecisionAction.SELL,
-                "hold": DecisionAction.HOLD,
-                "watch": DecisionAction.WATCH,
-            }
-            action_str = data.get("action", "hold").lower()
-            action = action_map.get(action_str, DecisionAction.HOLD)
-
-            return DecisionResponse(
-                action=action,
-                confidence=float(data.get("confidence", 0.5)),
-                reason=data.get("reason", "未提供决策理由"),
-                suggested_quantity=data.get("suggested_quantity"),
-                risk_warning=data.get("risk_warning") if data.get("risk_warning") else None,
-            )
-
-        except json.JSONDecodeError as e:
-            return DecisionResponse(
-                action=DecisionAction.HOLD,
-                confidence=0.0,
-                reason=f"无法解析AI响应: {raw_response[:200]}",
-                risk_warning=f"JSON解析错误: {str(e)}",
-            )
-
-        except Exception as e:
-            return DecisionResponse(
-                action=DecisionAction.HOLD,
-                confidence=0.0,
-                reason=f"响应处理错误: {str(e)}",
-                risk_warning=str(e),
-            )
+        return self._parse_response_default(raw_response)
 
     async def close(self):
         """Close HTTP client"""
