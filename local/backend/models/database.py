@@ -142,74 +142,7 @@ class MarketQuoteModel(Base):
 
 
 # ============================================
-# 事件舆情系统 - 基于学术论文的时序分析
+# 事件舆情系统模型
 # ============================================
-
-class EventModel(Base):
-    """事件数据模型 - 从新闻抽取的独立事件"""
-    __tablename__ = "events"
-
-    id = Column(String, primary_key=True)
-    symbol = Column(String, index=True, nullable=False)
-    news_id = Column(String, nullable=True)  # 来源新闻ID
-    event_type = Column(String, nullable=False)  # 业绩/股权/治理/业务/政策
-    trigger_word = Column(String, nullable=False)  # 触发词
-    subject = Column(String, nullable=True)  # 主体
-    object = Column(String, nullable=True)  # 客体
-    event_date = Column(DateTime, nullable=True)  # 事件日期
-    sentiment = Column(String, default="neutral")  # positive/negative/neutral
-    intensity = Column(Float, default=0.0)  # 事件强度 S = P_up - P_down
-    p_up = Column(Float, default=0.5)  # 上涨概率
-    p_down = Column(Float, default=0.5)  # 下跌概率
-    is_merged = Column(String, default="false")  # 是否合并事件
-    merged_count = Column(Integer, default=1)  # 合并事件数量
-    source_text = Column(String, nullable=True)  # 原文片段
-    publish_time = Column(DateTime, default=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    expires_at = Column(DateTime)  # 30天后过期
-
-    __table_args__ = (
-        Index('idx_events_symbol_created', 'symbol', 'created_at'),
-        Index('idx_events_expires', 'expires_at'),
-    )
-
-
-class EventRelationModel(Base):
-    """事件时序关系模型 - Before/After/Equal/Vague"""
-    __tablename__ = "event_relations"
-
-    id = Column(String, primary_key=True)
-    event_a_id = Column(String, nullable=False, index=True)
-    event_b_id = Column(String, nullable=False, index=True)
-    relation = Column(String, nullable=False)  # Before/After/Equal/Vague
-    confidence = Column(Float, default=0.8)
-    source = Column(String, default="llm_boolean")  # date/position/llm_boolean
-    q1_answer = Column(String, nullable=True)  # YES/NO
-    q2_answer = Column(String, nullable=True)  # YES/NO
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    __table_args__ = (
-        Index('idx_relations_events', 'event_a_id', 'event_b_id'),
-        Index('idx_relations_created', 'created_at'),  # 用于定期清理
-    )
-
-
-class EventWindowModel(Base):
-    """事件窗口模型 - 30天滚动窗口聚合结果"""
-    __tablename__ = "event_windows"
-
-    id = Column(String, primary_key=True)
-    symbol = Column(String, nullable=False, index=True)
-    window_date = Column(DateTime, nullable=False)  # 窗口日期
-    narrative_summary = Column(String, nullable=True)  # 叙事摘要
-    net_expectation = Column(Float, default=0.0)  # Fa值（净预期强度）
-    dominant_sentiment = Column(String, default="neutral")
-    logical_consistency = Column(Float, default=0.0)  # 0-1
-    sentiment_volatility = Column(Float, default=0.0)
-    temporal_pattern = Column(String, default="Complex")  # Reversal/Cumulative/Conflict
-    event_count = Column(Integer, default=0)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    __table_args__ = (
-        Index('idx_windows_symbol_date', 'symbol', 'window_date'),
-    )
+# 事件相关模型定义在 models/event.py
+# Event/EventRelation/EventWindow

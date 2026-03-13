@@ -1,1 +1,3 @@
-# Tests package
+"""
+Tests for Stock-Race Local Backend
+"""

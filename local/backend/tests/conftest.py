@@ -1,34 +1,34 @@
 """
-Pytest configuration and fixtures
-"""
-"""
-Pytest configuration and fixtures
+Pytest fixtures and configuration
 """
 import pytest
 import pytest_asyncio
 import asyncio
-import uuid
+from datetime import datetime, timedelta
 from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from datetime import datetime
+from uuid import uuid4
 
-from models.database import Base, AgentModel, TradeModel, PositionModel
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-# Use file-based SQLite for testing (shared across session)
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+from models.event import Event, EventWindow, EventRelation, EventSentiment, EventType, Base
+from services.event_window_manager import EventWindowManager
+
+
+# Test database URL (in-memory SQLite)
+TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Create an instance of the default event loop for the test session"""
+    """Create an instance of the default event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest_asyncio.fixture(scope="session")
-async def test_engine():
-    """Create test database engine"""
+@pytest_asyncio.fixture(scope="function")
+async def async_engine():
+    """Create a test database engine."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
         echo=False,
@@ -41,84 +41,133 @@ async def test_engine():
 
     yield engine
 
-    # Cleanup - drop tables
+    # Cleanup
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 
-@pytest_asyncio.fixture
-async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create a fresh database session for each test with cleanup"""
+@pytest_asyncio.fixture(scope="function")
+async def db_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Create a test database session."""
     async_session = async_sessionmaker(
-        test_engine,
+        async_engine,
         class_=AsyncSession,
-        expire_on_commit=False
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False
     )
 
-    async with async_session() as session:
+    session = async_session()
+    async with session.begin():
         yield session
-        # Clean up all tables after each test
-        from sqlalchemy import delete
-        await session.execute(delete(TradeModel))
-        await session.execute(delete(PositionModel))
-        await session.execute(delete(AgentModel))
-        await session.commit()
 
 
-@pytest_asyncio.fixture
-async def sample_agent(db_session: AsyncSession) -> AgentModel:
-    """Create a sample agent for testing with unique ID"""
-    agent = AgentModel(
-        id=f"test-agent-{uuid.uuid4().hex[:8]}",
-        name="Test Trader",
-        initial_capital=100000.0,
-        current_capital=100000.0,
-        strategy={
-            "risk_tolerance": "稳健",
-            "sectors": ["金融", "科技"],
-            "holding_period": "中线",
-            "position_limit": "单股不超过30%",
-            "stop_loss": "8%止损"
-        },
-        model_provider="kimi",
-        model_name="kimi-k2-5",
-        agent_level="intern",
-        incentive_level="standard",
-        status="active",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+@pytest_asyncio.fixture(scope="function")
+async def event_window_manager(db_session: AsyncSession) -> EventWindowManager:
+    """Create an EventWindowManager instance with test session."""
+    return EventWindowManager(
+        db_session=db_session,
+        window_days=30,
+        max_events=100,
+        ema_alpha=0.9
     )
-    db_session.add(agent)
-    await db_session.commit()
-    return agent
+
+
+# Test data fixtures
+
+@pytest.fixture
+def sample_stock_code() -> str:
+    """Sample stock code."""
+    return "000001.SZ"
 
 
 @pytest.fixture
-def market_context_data():
-    """Sample market context data"""
-    return {
-        "symbol": "000001",
-        "name": "平安银行",
-        "current_price": 10.5,
-        "change_percent": 2.3,
-        "volume": 1000000,
-        "ma5": 10.2,
-        "ma10": 10.0,
-        "ma20": 9.8,
-        "high_52w": 15.0,
-        "low_52w": 8.0
-    }
+def create_test_event():
+    """Factory fixture for creating test events."""
+    def _create_event(
+        stock_code: str = "000001.SZ",
+        trigger: str = "发布",
+        subject: str = "公司",
+        obj: str = "新产品",
+        event_type: str = EventType.BUSINESS,
+        intensity: float = 0.8,
+        sentiment: str = EventSentiment.POSITIVE,
+        timestamp: datetime = None,
+        days_ago: int = 0
+    ) -> Event:
+        if timestamp is None:
+            timestamp = datetime.utcnow() - timedelta(days=days_ago)
+
+        return Event(
+            id=str(uuid4()),
+            news_id=str(uuid4()),
+            stock_code=stock_code,
+            trigger=trigger,
+            subject=subject,
+            object=obj,
+            event_type=event_type,
+            intensity=intensity,
+            sentiment=sentiment,
+            timestamp=timestamp
+        )
+
+    return _create_event
 
 
 @pytest.fixture
-def strategy_config():
-    """Sample strategy configuration"""
-    return {
-        "risk_tolerance": "稳健",
-        "sectors": ["金融", "科技"],
-        "holding_period": "中线",
-        "position_limit": "单股不超过30%",
-        "stop_loss": "8%止损",
-        "market_scope": "主板+创业板"
-    }
+def sample_events(create_test_event, sample_stock_code) -> list:
+    """Create a list of sample events for testing."""
+    events = [
+        create_test_event(
+            stock_code=sample_stock_code,
+            trigger="发布",
+            subject="公司A",
+            obj="财报",
+            event_type=EventType.PERFORMANCE,
+            intensity=0.9,
+            sentiment=EventSentiment.POSITIVE,
+            days_ago=1
+        ),
+        create_test_event(
+            stock_code=sample_stock_code,
+            trigger="回购",
+            subject="公司A",
+            obj="股份",
+            event_type=EventType.EQUITY,
+            intensity=0.7,
+            sentiment=EventSentiment.POSITIVE,
+            days_ago=5
+        ),
+        create_test_event(
+            stock_code=sample_stock_code,
+            trigger="涉嫌",
+            subject="公司A",
+            obj="违规",
+            event_type=EventType.GOVERNANCE,
+            intensity=0.6,
+            sentiment=EventSentiment.NEGATIVE,
+            days_ago=10
+        ),
+        create_test_event(
+            stock_code=sample_stock_code,
+            trigger="推出",
+            subject="公司A",
+            obj="新产品",
+            event_type=EventType.BUSINESS,
+            intensity=0.5,
+            sentiment=EventSentiment.POSITIVE,
+            days_ago=15
+        ),
+        create_test_event(
+            stock_code=sample_stock_code,
+            trigger="受政策影响",
+            subject="行业",
+            obj=None,
+            event_type=EventType.POLICY,
+            intensity=0.4,
+            sentiment=EventSentiment.NEUTRAL,
+            days_ago=20
+        ),
+    ]
+    return events
