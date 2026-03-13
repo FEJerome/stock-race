@@ -9,6 +9,7 @@ Reference: local/backend/services/market_data/eastmoney_source.py
 import asyncio
 import aiohttp
 import hashlib
+import json
 import re
 from datetime import datetime
 from typing import Optional, List
@@ -68,7 +69,12 @@ class EastmoneyNewsSource(NewsSource):
                 if resp.status != 200:
                     return []
 
-                data = await resp.json()
+                text = await resp.text()
+                try:
+                    data = json.loads(text)
+                except json.JSONDecodeError:
+                    print(f"[EastmoneyNewsSource] JSON decode error for {symbol}")
+                    return []
                 return self._parse_response(data, symbol, limit)
 
         except asyncio.TimeoutError:
@@ -153,7 +159,12 @@ class EastmoneyNewsSource(NewsSource):
                 latency_ms = (time.time() - start_time) * 1000
 
                 if resp.status == 200:
-                    data = await resp.json()
+                    text = await resp.text()
+                    try:
+                        data = json.loads(text)
+                    except json.JSONDecodeError:
+                        self._update_health(NewsSourceStatus.DEGRADED, latency_ms, False)
+                        return self._health
                     result = data.get('result', {})
                     if result and 'data' in result:
                         self._update_health(NewsSourceStatus.HEALTHY, latency_ms, True)
