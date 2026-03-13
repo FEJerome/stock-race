@@ -57,21 +57,30 @@ gh issue create --web
 | `priority:p1` | 当前阶段必须完成 | 本周 |
 | `priority:p2` | 有精力时完成 | 灵活安排 |
 
-### 模块标签（4个）- 必选其一
+### 模块标签（5个）- 必选其一
 
 | 标签 | 说明 |
 |------|------|
-| `area:backend` | 后端逻辑（FastAPI） |
+| `area:backend` | 后端逻辑（FastAPI）、API、业务服务、数据库模型 |
 | `area:frontend` | 前端界面（Vue 3） |
-| `area:data` | 数据采集/存储 |
+| `area:data` | 数据采集、清洗、解析、外部数据源对接（数据管道） |
 | `area:infra` | 基础设施/部署 |
+| `area:design` | 设计/产品 |
 
-### 类型标签（2个）- 可选
+**边界说明**：
+- `area:backend` 关注**业务逻辑**（如何处理数据）
+- `area:data` 关注**数据获取**（如何采集、清洗外部数据）
+- 例：新闻爬虫 → `area:data`；新闻展示API → `area:backend`
+
+### 类型标签（3个）- 可选
 
 | 标签 | 说明 |
 |------|------|
 | `type:feature` | 新功能实现 |
+| `type:bug` | Bug/缺陷 |
 | `type:idea` | 想法/待验证（大脑卸载专用） |
+
+**注意**：本项目使用自定义标签体系，不使用 GitHub 默认标签（如 `enhancement`、`bug` 等）。
 
 ---
 
