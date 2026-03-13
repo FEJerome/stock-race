@@ -24,6 +24,8 @@ from api.decision import router as decision_router
 from api.websocket import router as websocket_router, broadcast_market_data_task
 from api.settings import router as settings_router
 from api.news import router as news_router
+from api.financial_report import router as financial_report_router
+from api.sentiment import router as sentiment_router
 from models.database import init_db, AsyncSessionLocal
 from services.scheduler import DataCleanupScheduler
 
@@ -85,6 +87,8 @@ def create_app() -> FastAPI:
     app.include_router(websocket_router)
     app.include_router(settings_router)
     app.include_router(news_router)
+    app.include_router(financial_report_router)
+    app.include_router(sentiment_router)
 
     return app
 
