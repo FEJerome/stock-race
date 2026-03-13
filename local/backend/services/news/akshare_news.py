@@ -8,7 +8,7 @@ import asyncio
 import hashlib
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from .base import NewsSource, NewsItem, NewsSourceHealth, NewsSourceStatus
@@ -113,7 +113,7 @@ class AKShareNewsSource(NewsSource):
                         # 格式: 2026-03-10 15:22:39
                         publish_time = datetime.strptime(pub_time, "%Y-%m-%d %H:%M:%S")
                     except ValueError:
-                        publish_time = datetime.utcnow()
+                        publish_time = datetime.now(timezone.utc)
 
                     # 获取来源
                     source_name = str(row.get("文章来源", "东方财富"))
@@ -126,7 +126,7 @@ class AKShareNewsSource(NewsSource):
                         source="akshare_news",
                         url=url,
                         publish_time=publish_time,
-                        collected_at=datetime.utcnow()
+                        collected_at=datetime.now(timezone.utc)
                     )
                     items.append(item)
 
@@ -191,9 +191,9 @@ class AKShareAnnouncementSource(NewsSource):
             return symbol.split(".")[0]
         return symbol
 
-    def _generate_id(self, content: str) -> str:
-        """生成唯一ID"""
-        return hashlib.md5(content.encode("utf-8")).hexdigest()
+    def _generate_id(self, url: str) -> str:
+        """使用URL MD5生成唯一ID"""
+        return hashlib.md5(url.encode("utf-8")).hexdigest()
 
     async def fetch_news(self, symbol: str, limit: int = 10) -> List[NewsItem]:
         """采集公告"""
@@ -243,17 +243,17 @@ class AKShareAnnouncementSource(NewsSource):
                     try:
                         publish_time = datetime.strptime(pub_time, "%Y-%m-%d %H:%M:%S")
                     except ValueError:
-                        publish_time = datetime.utcnow()
+                        publish_time = datetime.now(timezone.utc)
 
                     item = NewsItem(
-                        id=self._generate_id(f"{code}_{title}_{pub_time}"),
+                        id=self._generate_id(url),
                         symbol=symbol,
                         title=title[:100],
                         summary=content[:300] if content else title[:300],
                         source="akshare_announcement",
                         url=url,
                         publish_time=publish_time,
-                        collected_at=datetime.utcnow()
+                        collected_at=datetime.now(timezone.utc)
                     )
                     items.append(item)
 

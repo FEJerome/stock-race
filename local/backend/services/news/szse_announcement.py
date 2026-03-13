@@ -15,7 +15,7 @@ import aiohttp
 import hashlib
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
 from .base import NewsSource, NewsItem, NewsSourceHealth, NewsSourceStatus
@@ -223,9 +223,9 @@ class SZSEAnnouncementSource(NewsSource):
                                 try:
                                     publish_time = datetime.strptime(pub_date[:10], "%Y-%m-%d")
                                 except ValueError:
-                                    publish_time = datetime.utcnow()
+                                    publish_time = datetime.now(timezone.utc)
                     else:
-                        publish_time = datetime.utcnow()
+                        publish_time = datetime.now(timezone.utc)
 
                     # 获取公告类型
                     ann_type = ann.get("announcementTypeName", "公告")
@@ -238,7 +238,7 @@ class SZSEAnnouncementSource(NewsSource):
                         source="szse_announcement",
                         url=url,
                         publish_time=publish_time,
-                        collected_at=datetime.utcnow()
+                        collected_at=datetime.now(timezone.utc)
                     )
                     items.append(item)
 

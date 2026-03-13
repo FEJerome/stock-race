@@ -1,20 +1,23 @@
 """
 上交所公告采集器 - SSE Announcement Collector
 
+⚠️ 警告：当前上交所 API 不可用（返回 SOA service is null）
+该数据源已被禁用，请勿在生产环境使用。
+
 采集上海证券交易所的官方公告，包括：
 - 定期报告
 - 临时公告
 - 业绩快报
 
 API endpoints:
-- http://query.sse.com.cn/commonSoaQuery.do - 上交所公告查询API
+- http://query.sse.com.cn/commonSoaQuery.do - 上交所公告查询API（已失效）
 """
 import asyncio
 import aiohttp
 import hashlib
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from urllib.parse import quote
 
@@ -32,8 +35,11 @@ class SSEAnnouncementSource(NewsSource):
         announcements = await source.fetch_news("600000.SH", limit=10)
     """
 
-    # 上交所公告查询API
+    # 上交所公告查询API（当前不可用）
     QUERY_URL = "http://query.sse.com.cn/commonSoaQuery.do"
+
+    # ⚠️ API 已失效，返回 SOA service is null
+    _API_DISABLED = True
 
     def __init__(self, priority: int = 55):
         """
@@ -44,6 +50,8 @@ class SSEAnnouncementSource(NewsSource):
         """
         super().__init__(name="sse_announcement", priority=priority)
         self._session: Optional[aiohttp.ClientSession] = None
+        if self._API_DISABLED:
+            print("[SSEAnnouncementSource] Warning: SSE API is currently unavailable, source disabled")
 
     def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建HTTP会话"""
@@ -94,8 +102,12 @@ class SSEAnnouncementSource(NewsSource):
             limit: 最大采集数量
 
         Returns:
-            NewsItem列表
+            NewsItem列表（API 禁用时返回空列表）
         """
+        # API 已禁用，直接返回空
+        if self._API_DISABLED:
+            return []
+
         code = self._normalize_symbol(symbol)
 
         # 只处理上交所股票（6开头）
@@ -114,7 +126,7 @@ class SSEAnnouncementSource(NewsSource):
                 "pageHelp.beginPage": "1",
                 "pageHelp.endPage": "1",
                 "pageHelp.cacheSize": "1",
-                "_": str(int(datetime.utcnow().timestamp() * 1000)),
+                "_": str(int(datetime.now(timezone.utc).timestamp() * 1000)),
             }
 
             async with session.get(
@@ -177,9 +189,9 @@ class SSEAnnouncementSource(NewsSource):
                             try:
                                 publish_time = datetime.strptime(pub_date[:10], "%Y-%m-%d")
                             except ValueError:
-                                publish_time = datetime.utcnow()
+                                publish_time = datetime.now(timezone.utc)
                     else:
-                        publish_time = datetime.utcnow()
+                        publish_time = datetime.now(timezone.utc)
 
                     # 获取公告类型
                     ann_type = ann.get("bulletin_Type", "公告")
@@ -192,7 +204,7 @@ class SSEAnnouncementSource(NewsSource):
                         source="sse_announcement",
                         url=url,
                         publish_time=publish_time,
-                        collected_at=datetime.utcnow()
+                        collected_at=datetime.now(timezone.utc)
                     )
                     items.append(item)
 
@@ -225,6 +237,11 @@ class SSEAnnouncementSource(NewsSource):
         """检查数据源健康状态"""
         import time
 
+        # API 已禁用，直接返回不可用状态
+        if self._API_DISABLED:
+            self._update_health(NewsSourceStatus.UNAVAILABLE, 0, False)
+            return self._health
+
         start_time = time.time()
 
         # 使用浦发银行(600000)测试
@@ -238,7 +255,7 @@ class SSEAnnouncementSource(NewsSource):
                 "productId": test_symbol,
                 "pageHelp.pageSize": "1",
                 "pageHelp.pageNo": "1",
-                "_": str(int(datetime.utcnow().timestamp() * 1000)),
+                "_": str(int(datetime.now(timezone.utc).timestamp() * 1000)),
             }
 
             async with session.get(

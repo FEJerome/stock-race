@@ -11,7 +11,7 @@ import aiohttp
 import hashlib
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from .base import NewsSource, NewsItem, NewsSourceHealth, NewsSourceStatus
@@ -105,7 +105,7 @@ class EastmoneyNewsSource(NewsSource):
                     try:
                         publish_time = datetime.strptime(notice_date[:19], "%Y-%m-%d %H:%M:%S")
                     except (ValueError, IndexError):
-                        publish_time = datetime.utcnow()
+                        publish_time = datetime.now(timezone.utc)
 
                     title = notice_title.strip()
                     title = re.sub(r'<[^>]+>', '', title)
@@ -118,7 +118,7 @@ class EastmoneyNewsSource(NewsSource):
                         source="eastmoney",
                         url=url,
                         publish_time=publish_time,
-                        collected_at=datetime.utcnow()
+                        collected_at=datetime.now(timezone.utc)
                     )
                     items.append(item)
 

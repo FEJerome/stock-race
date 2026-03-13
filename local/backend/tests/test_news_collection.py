@@ -5,6 +5,9 @@
 - 多源新闻采集
 - 数据去重机制
 - 与 EventExtractor 集成格式验证
+- since 参数增量采集
+- 多源并发采集
+- 外部 API mock 测试
 
 Usage:
     cd local/backend
@@ -12,15 +15,18 @@ Usage:
 """
 import asyncio
 import sys
-from datetime import datetime
+import time
+from datetime import datetime, timezone, timedelta
+from unittest.mock import Mock, AsyncMock, patch
 
 sys.path.insert(0, '.')
 
-from services.collectors.news_collector import MultiSourceNewsCollector
-from services.news.akshare_news import AKShareNewsSource
+from services.collectors.news_collector import MultiSourceNewsCollector, NewsCollector
+from services.news.akshare_news import AKShareNewsSource, AKShareAnnouncementSource
 from services.news.eastmoney_news import EastmoneyNewsSource
 from services.news.sse_announcement import SSEAnnouncementSource
 from services.news.szse_announcement import SZSEAnnouncementSource
+from services.news.base import NewsItem, NewsSourceHealth, NewsSourceStatus
 
 
 async def test_news_collection():
@@ -158,19 +164,174 @@ async def test_data_quality():
     await source.close()
 
 
+async def test_incremental_collection():
+    """测试增量采集（since 参数）"""
+    print("\n" + "=" * 60)
+    print("Test: Incremental Collection (since parameter)")
+    print("=" * 60)
+
+    collector = NewsCollector(AKShareNewsSource(priority=45))
+    symbol = "000001.SZ"
+
+    # 第一次完整采集
+    print(f"\n1. Full collection for {symbol}")
+    result1 = await collector.collect(symbol, limit=10)
+    print(f"   Collected {result1.count} items")
+    print(f"   Latest publish_time: {result1.next_since}")
+
+    # 使用 next_since 作为 since 进行增量采集
+    if result1.next_since:
+        since_time = result1.next_since - timedelta(minutes=5)  # 稍微提前一点，确保有数据
+        print(f"\n2. Incremental collection since {since_time}")
+        result2 = await collector.collect(symbol, since=since_time, limit=10)
+        print(f"   Collected {result2.count} items")
+        print(f"   Status: {'PASSED' if result2.count <= result1.count else 'UNEXPECTED'}")
+
+    await collector.close()
+
+
+async def test_multi_source_concurrent():
+    """测试多源并发采集性能"""
+    print("\n" + "=" * 60)
+    print("Test: Multi-source Concurrent Collection")
+    print("=" * 60)
+
+    # 准备多个数据源
+    sources = [
+        AKShareNewsSource(priority=45),
+        EastmoneyNewsSource(priority=60),
+        SZSEAnnouncementSource(priority=56),
+    ]
+
+    symbol = "000001.SZ"
+
+    # 串行采集（逐个源）
+    print(f"\n1. Sequential collection")
+    start_time = time.time()
+    sequential_items = []
+    for source in sources:
+        items = await source.fetch_news(symbol, limit=5)
+        sequential_items.extend(items)
+        await source.close()
+    sequential_time = time.time() - start_time
+    print(f"   Total items: {len(sequential_items)}")
+    print(f"   Time: {sequential_time:.2f}s")
+
+    # 并发采集（使用 MultiSourceNewsCollector）
+    print(f"\n2. Concurrent collection")
+    start_time = time.time()
+    collector = MultiSourceNewsCollector(sources)
+    result = await collector.collect(symbol, limit=15)
+    concurrent_time = time.time() - start_time
+    print(f"   Total items: {result.count}")
+    print(f"   Time: {concurrent_time:.2f}s")
+
+    # 性能比较
+    speedup = sequential_time / concurrent_time if concurrent_time > 0 else 1
+    print(f"\n3. Performance comparison:")
+    print(f"   Speedup: {speedup:.2f}x")
+    print(f"   Status: {'PASSED' if speedup >= 0.8 else 'DEGRADED'} (expected: ~1x or better)")
+
+    await collector.close()
+
+
+async def test_sse_disabled():
+    """测试上交所数据源被禁用状态"""
+    print("\n" + "=" * 60)
+    print("Test: SSE Announcement Source Disabled")
+    print("=" * 60)
+
+    sse_source = SSEAnnouncementSource()
+
+    # 验证 API 禁用标记
+    print(f"\n1. Check API disabled flag")
+    print(f"   _API_DISABLED: {sse_source._API_DISABLED}")
+
+    # 测试采集（应该返回空）
+    print(f"\n2. Test fetch_news (should return empty)")
+    items = await sse_source.fetch_news("600000.SH", limit=5)
+    print(f"   Returned {len(items)} items")
+    print(f"   Status: {'PASSED' if len(items) == 0 else 'FAILED'}")
+
+    # 测试健康检查
+    print(f"\n3. Test health_check")
+    health = await sse_source.health_check()
+    print(f"   Status: {health.status.value}")
+    print(f"   Status: {'PASSED' if health.status.value == 'unavailable' else 'FAILED'}")
+
+    await sse_source.close()
+
+
+async def test_mock_external_api():
+    """测试 mock 外部 API 调用"""
+    print("\n" + "=" * 60)
+    print("Test: Mock External API")
+    print("=" * 60)
+
+    # 模拟 AKShareNewsSource 的行为
+    mock_item = NewsItem(
+        id="mock_id_12345" * 3,  # 32 chars
+        symbol="000001.SZ",
+        title="Mock News Title",
+        summary="This is a mock news summary for testing.",
+        source="mock_source",
+        url="https://example.com/news/123",
+        publish_time=datetime.now(timezone.utc),
+        collected_at=datetime.now(timezone.utc)
+    )
+
+    # 创建 mock source
+    mock_source = Mock(spec=AKShareNewsSource)
+    mock_source.name = "mock_source"
+    mock_source.priority = 45
+    mock_source.fetch_news = AsyncMock(return_value=[mock_item])
+    mock_source.health_check = AsyncMock(return_value=NewsSourceHealth(
+        source_name="mock_source",
+        status=NewsSourceStatus.HEALTHY,
+        latency_ms=100.0,
+        last_success=datetime.now(timezone.utc),
+        error_rate=0.0,
+        weight=1.0
+    ))
+    mock_source.close = AsyncMock()
+
+    # 使用 mock source 进行采集
+    collector = NewsCollector(mock_source)
+    result = await collector.collect("000001.SZ", limit=1)
+
+    print(f"\n1. Mock collection result:")
+    print(f"   Items: {result.count}")
+    print(f"   Success: {result.success}")
+    print(f"   Source: {result.source_name}")
+
+    # 验证 mock 被正确调用
+    mock_source.fetch_news.assert_called_once()
+    print(f"\n2. Mock verification:")
+    print(f"   fetch_news called: {mock_source.fetch_news.called}")
+    print(f"   Status: {'PASSED' if result.count == 1 else 'FAILED'}")
+
+    await collector.close()
+
+
 async def main():
     """主测试函数"""
     print("\n" + "=" * 60)
     print("Issue #14 [B-1.4-D2] News/Announcement Collector Tests")
     print("=" * 60)
-    print(f"Test time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Test time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}")
 
     try:
-        # 运行所有测试
+        # 运行原有测试
         await test_news_collection()
         await test_announcement_collection()
         await test_event_extractor_format()
         await test_data_quality()
+
+        # 运行新增测试（P3 要求）
+        await test_incremental_collection()
+        await test_multi_source_concurrent()
+        await test_sse_disabled()
+        await test_mock_external_api()
 
         print("\n" + "=" * 60)
         print("All tests completed!")
