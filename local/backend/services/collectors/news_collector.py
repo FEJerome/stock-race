@@ -4,7 +4,7 @@ News Collector - Adapter for NewsSource to BaseCollector
 Wraps existing NewsSource implementations (SinaNewsSource, EastmoneyNewsSource)
 to provide the BaseCollector interface with incremental collection support.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from .base import BaseCollector, CollectionResult
@@ -65,7 +65,7 @@ class NewsCollector(BaseCollector):
         Returns:
             CollectionResult with news items and metadata
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         self._set_running()
 
         try:
@@ -91,7 +91,7 @@ class NewsCollector(BaseCollector):
                 if publish_times:
                     next_since = max(publish_times)
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
 
             # Update health
             duration_ms = (end_time - start_time).total_seconds() * 1000
@@ -109,7 +109,7 @@ class NewsCollector(BaseCollector):
             )
 
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             error_msg = str(e)
 
             self._update_health_error(error_msg)
@@ -129,7 +129,7 @@ class NewsCollector(BaseCollector):
         """Check source health"""
         try:
             source_health = await self._source.health_check()
-            self._health.status = CollectorStatus.HEALTHY if source_health.status.value == "healthy" else CollectorStatus.ERROR
+            self._health.status = CollectorStatus.IDLE if source_health.status.value == "healthy" else CollectorStatus.ERROR
             return self._health
         except Exception as e:
             self._health.status = CollectorStatus.ERROR
@@ -196,7 +196,7 @@ class MultiSourceNewsCollector(BaseCollector):
         Returns:
             CollectionResult with merged news items
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         self._set_running()
 
         all_items = []
@@ -220,7 +220,7 @@ class MultiSourceNewsCollector(BaseCollector):
             except Exception as e:
                 errors.append(f"{collector.name}: {str(e)}")
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
 
         # Deduplicate by ID
         seen_ids = set()

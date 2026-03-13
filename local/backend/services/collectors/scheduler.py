@@ -8,7 +8,7 @@ Manages scheduled execution of multiple collectors with:
 - Circuit breaker integration
 """
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass, field
 
@@ -227,7 +227,7 @@ class CollectorScheduler:
         # Get incremental collection timestamp
         since = collector.get_last_since(symbol)
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Execute collection with retry
@@ -254,7 +254,7 @@ class CollectorScheduler:
             return result
 
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration_ms = (end_time - start_time).total_seconds() * 1000
 
             # Create error result

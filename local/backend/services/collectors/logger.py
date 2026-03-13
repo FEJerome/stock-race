@@ -8,7 +8,7 @@ Outputs to:
 2. Optional: Database for persistent audit logs
 3. Optional: File for long-term storage
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -146,7 +146,7 @@ class CollectionLogger:
     ):
         """Log successful collection"""
         self.log(CollectionLog(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             collector_name=collector_name,
             symbol=symbol,
             status="success",
@@ -165,7 +165,7 @@ class CollectionLogger:
     ):
         """Log failed collection"""
         self.log(CollectionLog(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             collector_name=collector_name,
             symbol=symbol,
             status="error",
@@ -183,7 +183,7 @@ class CollectionLogger:
     ):
         """Log timeout"""
         self.log(CollectionLog(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             collector_name=collector_name,
             symbol=symbol,
             status="timeout",
@@ -204,7 +204,7 @@ class CollectionLogger:
             meta["skip_reason"] = reason
 
         self.log(CollectionLog(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             collector_name=collector_name,
             symbol=symbol,
             status="skipped",

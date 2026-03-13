@@ -7,7 +7,7 @@ All concrete implementations must inherit from BaseCollector.
 Reference: local/backend/services/news/base.py
 """
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
@@ -167,7 +167,7 @@ class BaseCollector(ABC):
     def _update_health_success(self, latency_ms: float):
         """Update health status after successful collection (internal use)"""
         self._health.status = CollectorStatus.IDLE
-        self._health.last_success = datetime.utcnow()
+        self._health.last_success = datetime.now(timezone.utc)
         self._health.total_requests += 1
         self._health.success_count += 1
         # Update average latency using moving average

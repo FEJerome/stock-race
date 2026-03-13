@@ -4,7 +4,7 @@ Sentiment Collector - Adapter for SentimentSource to BaseCollector
 Wraps existing SentimentSource implementations (XueqiuSource, EastmoneyGubaSource)
 to provide the BaseCollector interface with incremental collection support.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from .base import BaseCollector, CollectionResult, CollectorStatus
@@ -65,7 +65,7 @@ class SentimentCollector(BaseCollector):
         Returns:
             CollectionResult with sentiment posts and metadata
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         self._set_running()
 
         try:
@@ -91,7 +91,7 @@ class SentimentCollector(BaseCollector):
                 if publish_times:
                     next_since = max(publish_times)
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
 
             # Update health
             duration_ms = (end_time - start_time).total_seconds() * 1000
@@ -109,7 +109,7 @@ class SentimentCollector(BaseCollector):
             )
 
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             error_msg = str(e)
 
             self._update_health_error(error_msg)
@@ -129,7 +129,7 @@ class SentimentCollector(BaseCollector):
         """Check source health"""
         try:
             is_healthy = await self._source.health_check()
-            self._health.status = CollectorStatus.HEALTHY if is_healthy else CollectorStatus.ERROR
+            self._health.status = CollectorStatus.IDLE if is_healthy else CollectorStatus.ERROR
             return self._health
         except Exception as e:
             self._health.status = CollectorStatus.ERROR
@@ -195,7 +195,7 @@ class MultiSourceSentimentCollector(BaseCollector):
         Returns:
             CollectionResult with merged sentiment posts
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         self._set_running()
 
         all_posts = []
@@ -219,7 +219,7 @@ class MultiSourceSentimentCollector(BaseCollector):
             except Exception as e:
                 errors.append(f"{collector.name}: {str(e)}")
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
 
         # Deduplicate by ID
         seen_ids = set()
