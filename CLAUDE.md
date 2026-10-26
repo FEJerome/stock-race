@@ -1,164 +1,67 @@
-# stock-race项目 - 文档导航中心
+# Stock-Race 协作底座
 
-## 📋 项目概览
+本文件只承载所有项目会话必须稳定知道的事实与边界。实时任务、在飞状态和资源占用由维护者指定的规划信源承载，不写入本文件。
 
-**项目简介**：AI股票竞赛平台，支持用户分配虚拟人民币账号给AI大模型进行虚拟股票交易，集成多种数据源和AI模型。
+## 项目事实
 
-**核心功能**：
-- 用户管理与AI账户管理
-- 多模型AI集成与交易决策
-- 实时股票数据采集与推送
-- 虚拟交易与持仓管理
-- 实时监控与收益分析
-- 多智能体协作架构
+- 本仓库是 Stock-Race 的历史代码基线，主要代码形成于 2026 年 2 月；文档中的完成度、可用性和部署描述不代表现状已验证。
+- 代码分为四个模块：`frontend/`（React + TypeScript）、`backend/`（Node.js + Express）、`ai-service/`（Python + FastAPI）、`data-service/`（Python + FastAPI）。
+- 项目只用于模拟交易、策略研究及相关工具实验，**不得接入实盘交易**。
+- 当前没有需要维护的生产实例。历史部署文档不是当前运行手册。
 
-## 🚀 快速导航
+## 默认安全边界
 
-### 核心文档
-- [**代码结构地图**](docs/architecture/CODE_MAP.md) - 项目结构与文件功能
-- [**技术架构**](docs/architecture/TECH_STACK.md) - 技术栈与架构设计
-- [**项目结构**](docs/architecture/PROJECT_STRUCTURE.md) - 目录结构与组织
+- 未经任务明确授权，不安装依赖、不启动服务、不修改数据库、不部署，也不调用付费模型或外部数据写入接口。
+- `.env`、`.env.local`、`.env.production`、`.env.test` 等实际环境文件一律按敏感资料处理；除 `.env.example` 外，不因调研而读取、打印或复制其中的值。
+- 凭据不得进入对话、日志、测试快照、提交或公开文档。发现疑似有效凭据时，只报告文件与变量名，先由维护者决定处置。
+- 不执行历史文档中的清库、重置、系统级安装或生产部署命令。历史脚本也须先审查，再按当次任务授权运行。
+- 业务代码、环境治理由独立任务处理；协作底座任务不得顺手修改业务实现。
 
-### 需求与分析
-- [**需求规格说明书**](docs/analysis/REQUIREMENTS.md) - 详细功能需求
-- [**技术选型分析**](docs/analysis/TECHNOLOGY_EVALUATION.md) - 技术方案对比
+## 新会话启动
 
-### 开发指南
-- [**开发规范**](docs/development/CODING_STANDARDS.md) - 编码标准与最佳实践
-- [**新手指南**](docs/usage/QUICK_START.md) - 环境搭建与快速上手
+1. 先读本文件和当次任务卡，确认任务编号、目标、范围、交付物与验收条件。
+2. 按任务需要阅读 [协作规则](docs/development/COLLABORATION.md)、[开发约定](docs/development/CODING_STANDARDS.md) 和相关 feature 文档。
+3. 直接核对相关代码、测试和依赖清单；不要为“了解全貌”加载全部历史文档。
+4. 环境任务先读 [环境指南](docs/usage/QUICK_START.md)，架构调研先读 [历史资料说明](docs/architecture/README.md)。
+5. 需要写时间戳时，先从系统取得真实日期时间；不要估算。
 
-### 智能体协作
-- [**通用协作方案**](docs/agents/GENERIC_COLLABORATION_PLAN.md) - 多智能体工作流程
-- [**角色定义**](docs/agents/GENERIC_ROLES.md) - 智能体角色与职责
-- [**任务分发**](docs/agents/TASK_DISPATCH_GUIDE.md) - 任务分配与协调
+## 主子智能体分工
 
-### 部署与运维
-- [**部署指南**](docs/deployment/DEPLOYMENT_GUIDE.md) - 生产环境部署
-- [**生产部署指南**](docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md) - 快速部署流程
+这里的子智能体是主会话内通过 Agent 工具发起的短任务，不是新的规划岗位，不获得额外授权，也不改变当次任务的责任归属。
 
-### 数据管理
-- [**多源数据策略**](docs/data_sources/MULTI_SOURCE_STRATEGY.md) - 数据采集方案
-- [**数据流架构**](docs/architecture/DATA_FLOW_ARCHITECTURE.md) - 数据流程设计
+- 主智能体保留任务拆解、关键证据亲核、风险判断、结论整合与交付，不无差别复读全部资料。
+- 对相互独立的代码盘点、只读检索、配置与链接扫描、资料汇编，优先拆成边界清楚的小任务交给子智能体；主智能体根据返回的证据路径做必要抽核，避免整仓由主上下文通读。
+- 子智能体默认只读，不得读取实际环境文件、运行历史脚本、修改业务代码或调用外部服务；其输出必须区分事实、推断与未核验项。
+- 交易语义、跨模块接口、安全风险和产品结论由主智能体亲核，子智能体结果不能直接替代裁决。
+- 不为调用而调用；无法有效拆分的小任务由主智能体直接完成。大型资料先建索引或检索，再定点阅读，主上下文与额度是成本资产。
 
-### 测试与验证
-- [**功能验证记录**](docs/testing/VALIDATION_HISTORY.md) - 功能测试结果
+## 文档信任顺序
 
-## 📁 文档分层结构
+1. 当前任务契约与验收条件；
+2. 实际代码、测试、依赖清单和运行证据；
+3. `docs/features/`、`docs/research/`、`docs/decisions/` 中经核验的记录；
+4. 其他 2026 年 2 月形成的设计、完成报告和部署文档，仅作历史参考。
 
-### 一级文档（概览与导航）
-- **CLAUDE.md** - 项目文档导航中心（本文件）
-- **README.md** - 项目基本信息
+文档之间冲突时，先报告并核实，不选择最方便的一份照做。
 
-### 二级文档（核心信息）
-- **CODE_MAP.md** - 代码结构与文件功能
-- **TECH_STACK.md** - 技术架构与选型
-- **QUICK_START.md** - 快速上手指南
+## 协作与 Git 边界
 
-### 三级文档（详细说明）
-- **REQUIREMENTS.md** - 详细需求规格
-- **DEPLOYMENT_GUIDE.md** - 部署详细步骤
-- **CODING_STANDARDS.md** - 编码规范细节
+- 角色是岗位，不绑定固定会话名或人格。规划、执行、检验、机械修改与复审的职责见协作规则。
+- 执行会话默认只处理当次任务，不自行扩大范围、派单、合并或分配共享资源；维护者对具体动作的直接授权优先。
+- `main` 是共享基线。实施任务使用独立工作区和分支，不在主工作区直接提交。
+- 提交前审查变更面，只添加明确文件，禁止全量 `git add`；提交、合并和推送按当次授权执行。
+- 执行者必须自验；代码、多文件配置和环境改动须由未参与实施的独立会话复审。用户可见的呈现变化还须维护者终审。
+- 跨会话消息只用于提问、交货和求裁，重要结论必须回到任务文档。
 
-## 🎯 核心模块导航
+## 文档入口
 
-### 前端模块
-- **主要文件**：`frontend/src/`
-- **关键文件**：
-  - `frontend/src/main.tsx` - 应用入口
-  - `frontend/src/App.tsx` - 路由配置
-  - `frontend/src/services/` - API服务
-
-### 后端模块
-- **主要文件**：`backend/src/`
-- **关键文件**：
-  - `backend/src/app.js` - Express应用
-  - `backend/src/routes/` - API路由
-  - `backend/src/controllers/` - 业务逻辑
-
-### AI服务模块
-- **主要文件**：`ai-service/src/ai_service/`
-- **关键文件**：
-  - `ai-service/src/ai_service/main.py` - FastAPI应用
-  - `ai-service/src/ai_service/adapters/` - AI模型适配器
-  - `ai-service/src/ai_service/services/decision_service.py` - 决策服务
-
-### 数据服务模块
-- **主要文件**：`data-service/src/data_service/`
-- **关键文件**：
-  - `data-service/src/data_service/main.py` - FastAPI应用
-  - `data-service/src/data_service/collectors/` - 数据采集器
-  - `data-service/src/data_service/services/data_service.py` - 主数据服务
-
-## 🔧 快速操作指南
-
-### 开发环境启动
-```bash
-# 一键启动所有服务
-docker-compose up -d
-
-# 查看服务状态
-docker-compose ps
-
-# 查看服务日志
-docker-compose logs -f [service_name]
-```
-
-### 服务访问地址
-- **前端**：http://localhost:3000
-- **后端API**：http://localhost:3001
-- **AI服务**：http://localhost:8000
-- **数据服务**：http://localhost:8001
-
-### 健康检查
-```bash
-# 后端健康检查
-curl http://localhost:3001/api/health
-
-# AI服务健康检查
-curl http://localhost:8000/api/v1/health/
-
-# 数据服务健康检查
-curl http://localhost:8001/health
-```
-
-## 📝 文档使用建议
-
-1. **新会话快速入门**：
-   - 首先阅读 [新手指南](docs/usage/QUICK_START.md)
-   - 参考 [代码结构地图](docs/architecture/CODE_MAP.md) 了解项目结构
-
-2. **开发流程**：
-   - 遵循 [开发规范](docs/development/CODING_STANDARDS.md)
-
-3. **部署流程**：
-   - 参考 [部署指南](docs/deployment/DEPLOYMENT_GUIDE.md)
-   - 执行 [生产部署](docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md)
-
-4. **智能体协作**：
-   - 查看 [协作方案](docs/agents/GENERIC_COLLABORATION_PLAN.md)
-   - 了解 [角色定义](docs/agents/GENERIC_ROLES.md)
-
-## 🎨 文档设计原则
-
-- **分层组织**：从概览到详细，逐步深入
-- **信息压缩**：核心信息前置，详细信息后置
-- **链接导航**：通过链接减少重复内容
-- **结构清晰**：统一文档格式与命名规范
-- **易于维护**：模块化设计，便于更新
-
-## 🔍 搜索与定位
-
-**快速定位文件**：
-- 使用文档导航链接直接访问
-- 按功能模块分类查找
-- 核心文件通过 CODE_MAP.md 统一索引
-
-**常用搜索路径**：
-- 架构相关：`docs/architecture/`
-- 开发相关：`docs/development/`
-- 部署相关：`docs/deployment/`
-- 智能体相关：`docs/agents/`
-
----
-*本文档最后更新于：2026-02-05*
-*文档维护者：项目团队*
+| 用途 | 入口 |
+|---|---|
+| 人类项目入口 | [README.md](README.md) |
+| 协作角色与质量闸 | [docs/development/COLLABORATION.md](docs/development/COLLABORATION.md) |
+| 开发约定 | [docs/development/CODING_STANDARDS.md](docs/development/CODING_STANDARDS.md) |
+| 任务执行正典 | [docs/features/](docs/features/README.md) |
+| 调研证据 | [docs/research/](docs/research/README.md) |
+| 技术决策 | [docs/decisions/](docs/decisions/README.md) |
+| 环境指南 | [docs/usage/QUICK_START.md](docs/usage/QUICK_START.md) |
+| 历史架构资料说明 | [docs/architecture/README.md](docs/architecture/README.md) |
