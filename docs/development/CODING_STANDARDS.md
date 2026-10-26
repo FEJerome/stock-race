@@ -1,55 +1,38 @@
-# 开发规范模板
+# Stock-Race 开发约定
 
-## 代码风格
-- **前端**: [填写前端框架及编码规范，如Vue 3 Composition API，单文件组件(SFC)格式]
-- **后端**: [填写后端框架及编码规范，如CommonJS模块，Express中间件模式]
-- **命名约定**:
-  - 变量/函数: camelCase (如 `fetchData`, `calculateTotal`)
-  - 类/构造函数: PascalCase (如 `BaseService`, `DataProcessor`)
-  - 常量: UPPER_SNAKE_CASE (如 `MAX_RETRY_COUNT`, `API_TIMEOUT`)
-  - 文件: kebab-case (如 `main-component.vue`, `data-service.js`)
-  - CSS类: kebab-case (如 `.component-wrapper`, `.data-table`)
+本文件只记录与当前仓库结构一致的稳定约定。具体技术债和迁移方案由任务文档决定，不在代码修改前预设全仓统一重写。
 
-## 编码规范
-1. **JavaScript**: 使用ES6+语法，避免var，优先使用const/let
-2. **Vue组件**: 使用`<script setup>`语法，组合式API优先
-3. **错误处理**: 统一使用try-catch处理异步错误，提供有意义的错误信息
-4. **注释要求**: 复杂逻辑必须添加注释，公开API需要文档注释
-5. **导入顺序**: 第三方库 → 项目模块 → 相对路径导入
+## 技术栈基线
 
-## 测试文件组织规范
+- `frontend/`：React 18、TypeScript、Vite，现有状态管理与依赖以 `frontend/package.json` 为准。
+- `backend/`：Node.js 20+、Express，仓库同时存在 JavaScript 实现与 TypeScript 构建配置；修改时先核对入口和构建链，不把“配置存在”当作“迁移完成”。
+- `ai-service/`、`data-service/`：Python 3.11+、FastAPI，依赖以各模块 `pyproject.toml` 与经验证的锁文件为准。
+- 数据与基础设施以实际 Compose、迁移和配置代码为准；历史架构文档只作参考。
 
-### 文件夹结构
-[请根据stock-race项目实际情况填写测试文件夹结构，例如：]
-- `tests/` - 所有测试文件根目录
-  - `tests/unit/` - 单元测试文件
-  - `tests/integration/` - 集成测试文件
-  - `tests/e2e/` - 端到端测试文件
-- `scripts/diagnose/` - 诊断和分析脚本
+## 修改原则
 
-### 文件命名约定
-- **测试文件**: 以 `test_` 开头，描述测试内容（如 `test_data_processing.js`, `test_api_integration.js`）
-- **诊断文件**: 以 `diagnose_` 开头，描述诊断目标（如 `diagnose_performance.js`, `diagnose_data_flow.js`）
-- 使用蛇形命名法（snake_case）提高可读性
+1. 先读邻近代码并沿用现有命名、模块边界、错误处理和测试风格，不为表面统一制造大范围改写。
+2. 跨模块接口、数据结构和交易语义变化必须先进入任务规格，说明兼容与验证方式。
+3. 注释只解释代码无法表达的约束，不写变更流水，也不复述下一行代码。
+4. 不在功能修改中顺手升级依赖、替换框架或迁移语言；这些工作需要独立任务。
+5. 模拟交易与真实交易必须保持隔离，不新增实盘下单入口。
 
-### 分类标准
-- **单元测试**: 测试单个模块或工具类功能
-- **集成测试**: 测试模块间协作或外部依赖（网络、API、数据库等）
-- **端到端测试**: 测试完整业务流程和系统集成
-- **诊断脚本**: 用于问题排查和系统分析的临时脚本
+## 测试与证据
 
-### Git忽略规则
-[根据项目实际情况配置.gitignore，例如：]
-```
-# Test and diagnostic files/directories
-tests/
-scripts/diagnose/
-test_*
-diagnose_*
-```
+- 测试文件保留在 git 中，禁止把 `tests/`、测试脚本或测试夹具加入忽略规则。
+- 修改代码时优先补充能复现问题的测试；修复缺陷先验证失败，再验证修复后通过。
+- 单元测试、集成测试和需要真实外部服务的测试分开描述，不用 mock 结果冒充真实链路。
+- 交付时列出实际执行过的命令和结果；未执行的项目明确写“未验证”，不得以文档完成代替运行验证。
+- 历史完成报告不能作为本轮测试证据。
 
-## Git工作流
-- **分支策略**: main分支为稳定版本，feature分支开发新功能
-- **提交信息**: 遵循Conventional Commits格式（如：`feat: 添加编码转换功能`）
-- **代码审查**: 重要更改需要代码审查
-- **版本标签**: 重要里程碑打tag标记
+## 依赖与配置
+
+- JavaScript 与 Python 的锁文件应纳入版本控制；生成或更新锁文件属于独立的环境变更，不在无关任务中顺带提交。
+- 只有 `.env.example` 可以提交实际配置模板。真实环境文件、密码、令牌和密钥不得入库。
+- 示例值必须是明显不可用的占位符，并说明必填项；不复制本机真实配置。
+
+## Git
+
+- `main` 是共享基线，实施在独立分支与工作区进行。
+- 提交信息说明真实变更，只添加任务内明确文件。
+- 文档、代码、测试和配置必须保持同一变更范围内的口径一致；未验证事项不得写成已完成。
