@@ -120,6 +120,20 @@ V3 Demo 要证明一条完整链路：用户的一句投资意图可以变成**�
 - 同资产、同快照、同区间、同初始资金、同执行假设，且 `engineVersion/registryVersion/canonicalizationVersion` 一致的版本 compare；
 - 无交易、数据不足、指标不适用时返回 `null + reason`，不得填 0 或编造曲线。
 
+### 1.5 S4 产品流程与视觉设计前置闸（御主批准）
+
+为避免“内核正确但展示失败”，S4 不能只凭三场景名称和技术契约直接开工。以下三件套是前端实施的必要前置产物，不是可选文档装饰：
+
+1. **一页 Feature Map＋用户流程**：覆盖输入意图、生成、校验、权威回读、确认、运行、回放、调整 v2 与版本比较；逐项写清用户动作、系统反馈和验收结果。可用轻量用例图表达参与者和系统边界，但不为繁重 UML 增加维护负担。
+2. **三场景线框与状态矩阵**：标明每个场景的区域、按钮、图表、信息层级和跳转；覆盖 empty/drafting/invalid/valid/confirming/confirmed/running/completed/model-error/data-error，以及无交易、数据不足、全部拒单等状态，不能只设计成功路径。
+3. **实际视觉稿或浏览器原型**：让维护者在 S4 施工前看到目标展示尺寸下的配色、字体、信息密度、图表、动效与三幕衔接。原型可以使用契约 golden，但不得以静态假收益冒充真实运行。
+
+硬性顺序为：
+
+> S2 形成真实 golden 事件流 → 完成三件套 → 御主设计终审 → S4 实施 → 自动化交互验收 → 零上下文候选评审 → 御主最终视觉走查。
+
+三件套形成后必须进入 feature 正典并保留可复核版本，不得只存在会话或聊天记录中。未完成三件套和御主设计终审，不得开放 S4 业务实施；S0/S1/S2 不因本闸返工，S3 可在其自身授权边界内并行。
+
 ---
 
 ## 2. 技术底座、目录与依赖
@@ -658,6 +672,7 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 3. 修改参数生成新 revision，v1/v2 在同一数据与执行假设下比较，订单和版本均可追溯。
 4. 模型不可用、模型输出无效、数据缺失、warmup 不足、未确认、资产不支持、基金可见性未决均有独立错误/空态，不显示假成功。
 5. 无交易、指标不足、空历史、零持仓、全部拒单等状态有解释，不用 0 或固定曲线掩盖。
+6. S4 送审前，Feature Map、用户流程、线框、状态矩阵和实际视觉稿/原型版本齐全，御主设计终审记录可追溯；缺失败路径或未过设计终审不得进入实施。
 
 ### 7.5 性能与可复现候选预算
 
@@ -677,7 +692,7 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 | S1 DSL/注册表/回读 | 输入 AST；输出有效策略、指标序列、错误、权威回读 | `core/strategy`、`application/validate-strategy`、fake fixtures | 依赖 S0；生成舱可与 golden 并行，但真实主流程放行另受 S3 约束；7.2.1 的 S1 冻结项先于实现/golden | 冻结项复审＋手算 MACD/KDJ/cross/within/warmup；独立复审 |
 | S2 快照＋股票内核＋CLI | 输入 confirmed AST/RunSpec/Snapshot；输出完整 RunEvent/Report | `core/market`、`core/engine`、`core/report`、`application/run-backtest`、`adapters/market/{fixture,snapshot-file}`、`hosts/cli` | 依赖 S0/S1；剧场可用 golden 并行；真实导入可独立验证；7.2.1 的 S2 冻结项先于实现/golden | 冻结项复审＋费用/结算/配对/买入持有/回撤手算、守恒、T/T+1、公司行动、CLI golden；独立复审 |
 | S3 Local 装配＋真实模型/确认 | 输入自然语言/旧 AST；输出真实 Kimi draft/valid/confirmed revision；测试另有 fake 输出 | `application/{draft,confirm}`、`adapters/model`、`hosts/local` | 依赖 S1；真实 Kimi 探针与 S2/Web 并行，但最终真实主流程放行依赖 S3，fake/golden 不解除该门禁 | 真实 Kimi 成功生成 v1 与调整 v2，各自校验/回读/确认通过，失败不切 fake、密钥边界；独立安全复审 |
-| S4 Web 三场景＋compare | 输入 golden 或真实用例输出；输出三场景、回放和版本比较 | `application/{compare-runs,project-replay}`、`hosts/web`、必要 Local DTO；不改内核语义 | 依赖 S0 的事件契约即可开视觉；真实联动按 S1/S2/S3 接入，最终主流程必须使用真实 Kimi | 三场景/空态/性能/可复现；fake/golden 仅作开发测试，不替代真实主流程验收；独立复审＋御主视觉终审 |
+| S4 Web 三场景＋compare | 输入 golden 或真实用例输出；输出三场景、回放和版本比较 | `application/{compare-runs,project-replay}`、`hosts/web`、必要 Local DTO；不改内核语义 | 依赖 S2 形成真实 golden 后先完成 1.5 三件套与御主设计终审，才开放 S4 实施；真实联动按 S1/S2/S3 接入，最终主流程必须使用真实 Kimi | 三场景/空态/性能/可复现；fake/golden 仅作开发测试，不替代真实主流程验收；独立复审＋御主视觉终审 |
 | S5 ETF/指数 profile | 输入资产 profile 与探针；输出分析契约、单位/精度规则、显式执行拒绝 | `core/market`、相关 adapters/fixtures/tests | 依赖 S2；可与 S4 并行 | 两源 OHLC、指数舍入、ETF 缺口拒绝执行；独立复审 |
 | S6 基金可见性与执行 | 输入已终审的 `NEXT_DAY_END_CONSERVATIVE` profile、官方补证；输出基金 P0 执行或继续阻断 | `core/market`、`core/engine` 基金时间线、fund fixtures/tests | 依赖 S2 与专项开放；外部证据不足不得宣称真实能力 | publishedAt/特别披露/未知 NAV/确认到账；独立复审＋御主确认 |
 | S7 真实集成与硬化 | 输入各切片；输出真实 Kimi 主流程、默认外样本/区间、外部探针、性能和重复性最终证据 | `tests/integration`、扩展样本与全历史性能夹具、文档验证记录；不改业务语义 | 对应切片后；真实 Kimi/数据均单独授权；不得以 fake 或默认样本结果替代 | 四层真实验证、跨宿主、全历史扩展与性能；独立复审 |
