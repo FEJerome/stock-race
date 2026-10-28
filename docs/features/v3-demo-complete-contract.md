@@ -248,7 +248,7 @@ BoolExpr   = compare | crossAbove | crossBelow | all | any | not | within
 - `const` 连续量只接受十进制字符串，不接受 JSON number；JSON number 仅用于 schema 声明的安全整数参数，如指标周期、`lag` 和 `within.window`。
 - `within.window` 以有效观测计数，不是自然日；NAV、股票和指数的 observation kind 不得混淆。
 - `exits` 为有序规则，冲突按显式优先级处理；P0 为 long-only、单资产、禁止加仓/反转，仓位用 `cashFraction/positionFraction` 十进制字符串。
-- 内建只读 context refs 由能力清单声明，P0 候选为 `position.state/quantity/entryPrice/barsHeld` 与 `account.availableCash`；`position.barsHeld` 在成交后的当根有效观测计为 0，之后每增加一根有效观测加 1，未声明字段直接拒绝。
+- 内建只读 context refs 由能力清单声明，P0 为 `position.state/quantity/entryPrice/barsHeld` 与 `account.availableCash`；`position.state` 是数值序列，`0=flat`、`1=long`，必须与当根 quantity 一致。当根求值使用当根实际成交/结算后的 quantity 与 availableCash，不得滞后一日；`position.barsHeld` 在成交后的当根有效观测计为 0，之后每增加一根有效观测加 1，未声明字段直接拒绝。
 - 指标和函数只能来自注册表，引擎不得出现 `if strategyIsMacdKdj` 一类策略分支。
 
 注册表每项至少包含：
@@ -376,7 +376,7 @@ previousEventHash、eventHash
 - `PositionChanged`、`CashChanged`、`MarkToMarket`；
 - `MetricComputed`、`RunCompleted`、`RunFailed`。
 
-事件按 seq 全序排列；拒单、跳过、stale 估值和守恒检查也必须入账。事件哈希链只证明内容未被改动，不代替 golden 对正确性的验证。
+事件按 seq 全序排列；拒单、跳过、stale 估值和守恒检查也必须入账。`OrderIntentCreated` 必须保留原始意图数量、价格/资金依据与有效 inputRefs；`OrderFilled` 必须引用原 intent 并保留实际成交数量。允许成交时按可用资金/持仓重算数量，但必须记录原数量、实际数量和 `ORDER_SIZE_ADJUSTED` 等原因及引用，不得静默把 intent=100 写成 fill=300。不得用默认空 inputRefs 掩盖缺失证据；确无外部输入的系统事件也必须显式说明。事件哈希链只证明内容未被改动，不代替 golden 对正确性的验证。
 
 ### 3.7 Report / CompareResult
 
@@ -647,13 +647,13 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 - 本 Demo 保守假设卖出款在成交时进入 unsettled，下一交易 session 开盘转为 available；不模拟提现。买入份额在成交时进入不可卖持仓，下一交易 session 才转为 sellable。卖出意图先冻结对应数量，成交/拒单/取消分别结算或解冻。
 - 每个事件后检查现金、份额与权益守恒；不允许负现金、负份额、重复结算或无来源余额调整。P0 仍不融资、不做空、不加仓、不反转。
 - 现金分红以登记日收盘持仓计算，除息日形成 receivable，派息日转为 available；不自动再投资，**红利税暂不模拟并作为 Demo 假设展示**。派息所需日期或金额缺失时，不得宣称完整执行。
-- 送转/拆股按登记日持仓增加份额，实际上市日转为 sellable；缺少上市日时执行阻断，不猜测立即可卖。信号继续使用点时复权序列，成交和账本使用原始价与真实权益事件。
+- 送转/拆股按登记日持仓增加份额，实际上市日转为 sellable；缺少上市日时执行阻断，不猜测立即可卖。**原买入批次总现金成本不因送转改变，剩余成本随送转后数量调整/稀释；若此前已有部分卖出，只调整剩余批次成本，不得制造零成本收益或丢失现金对账。**信号继续使用点时复权序列，成交和账本使用原始价与真实权益事件。
 
 #### 成本配对、买入持有与回撤 `cn-stock-report@1`
 
 - P0 不加仓，每个实际买入 fill 形成一个成本批次；部分卖出按 FIFO 配对。批次全部卖出后才计入已平仓批次，批次已实现盈亏=对应卖出净收入−买入总成本，包含全部买卖费用。部分片段按数量比例分摊，最后一片段承担舍入尾差，保证与现金账本一致。
 - 胜率=已实现盈亏大于 0 的已平仓批次/全部已平仓批次；盈亏为 0 不计胜，分母为 0 时返回 `null+reason`。未平仓部分只计未实现盈亏。首屏交易次数=实际成交订单数，买卖订单分别计数后求和，不以信号或拒单充数。
-- 买入持有在与策略相同的可成交起点，以相同初始资金、滑点和费用买入最大可负担 100 股整数倍，余款保留；现金分红不再投、送转进入持仓，期末按同一原始收盘价估值。无法形成起始买入时返回 `null+reason`。
+- 买入持有在**该策略于当前 RunSpec/warmup 下首个允许成交的 session**开始，而不是区间首 session，也不等待策略首个实际信号；即使策略最终无信号，基准仍须存在。买入持有以相同初始资金、滑点和费用买入最大可负担 100 股整数倍，余款保留；现金分红不再投、送转进入持仓，期末按同一原始收盘价估值。无法形成起始买入时返回 `null+reason`。
 - 最大回撤以**运行前初始现金**为首个权益锚点，之后使用每日收盘总权益；从任一历史正峰值到其后谷值计算最大相对跌幅，因此首日跳空和首日亏损不得被隐藏。报告 Rate 输出按 scale=12 HALF_UP。
 - 所有费用、公司行动、现金、份额、配对、买入持有和回撤 golden 必须逐事件先手算，再与实现比较；不得以同一实现输出反推答案。
 
