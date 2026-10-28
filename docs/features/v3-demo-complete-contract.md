@@ -578,7 +578,7 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 | 空对象 | `{}` | `44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a` |
 | 键排序、数组保序 | `{"a":1,"b":[2,1]}` | `e9d26fb0100c3f9ef569c38ced9811ec35059c3c999b8683fde59ed24e6e66e8` |
 | NFC 的 `é中`；NFD 等价输入归一到此值 | `{"s":"é中"}` | `ac54597a2eff1d6219ad3c1e69fa5dec41232219a99badb93cf4a098f31d5ae0` |
-| 输入与 canonical 均为 `{"s":"\n中"}`，其中 `\n` 是两个 ASCII 字节；canonical hex=`7b 22 73 22 3a 22 5c 6e e4 b8 ad 22 7d` | `{"s":"\n中"}` | `7db16a5860923cd8050cbca1670d36b60aa97cc97077c285a101e1be696e494e` |
+| 输入与 canonical 均为 `{"s":"\n中"}`，其中 `\n` 是两个 ASCII 字节；canonical hex=`7b 22 73 22 3a 22 5c 6e e4 b8 ad 22 7d` | `{"s":"\n中"}` | `26b5d4c3cec8a6c2f500cbbf0905fe6d8343628630d9d7921862512dfba45364` |
 | U+000B 无短转义，固定为小写 `b`；canonical hex=`7b 22 73 22 3a 22 5c 75 30 30 30 62 22 7d` | `{"s":"\u000b"}` | `d02e72cd71ab7c3e52ae1c7f8721e6fbecd25b9a1487b947931c62c3d2db3606` |
 | Rate `-0.0`/`0`/零的各合法尾随零形式归一 | `{"rate":"0.000000000000"}` | `f0a328f7e442468f3f099dc04e04ad0eec184a5c1ca417d4cfa8ad04a65feb5b` |
 | Rate `0.5` 补到 scale=12 | `{"rate":"0.500000000000"}` | `6748639edbf4efca01ee8c87b25223a7336541457efd57460f566c3925e899f9` |

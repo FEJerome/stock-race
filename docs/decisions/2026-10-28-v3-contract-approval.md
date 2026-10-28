@@ -16,3 +16,9 @@
 - S0 完成后须经实施者自验、检验与未参与实施的独立复审；通过后才开放 S1。S2 及后续切片不因本次终审自动开工。
 - 不授权真实 Kimi、真实行情接入、公开数据分发、部署、推送远端或 SR-004。
 - 契约变更须回到同一 feature 正典并复审，不另建平行规格。
+
+## 同版修订 · newline canonical golden 哈希勘误
+
+S0 实施前检验发现 newline 向量的 canonical JSON 与显式 hex 正确，但登记的 SHA-256 错误。仅将该项哈希由 `7db16a5860923cd8050cbca1670d36b60aa97cc97077c285a101e1be696e494e` 修正为 `26b5d4c3cec8a6c2f500cbbf0905fe6d8343628630d9d7921862512dfba45364`；canonical JSON 与 hex=`7b 22 73 22 3a 22 5c 6e e4 b8 ad 22 7d` 不变。全部 8 个 canonical 向量已按显式字节重新独立复核。
+
+修订后完整契约 SHA-256=`3b8b444b8a268758bf99c804c6d77c6737e3ddfd9e903e8f5a5bfe8190d85e9d`。本勘误不改变五项终审结论、S0 范围或后续授权边界。
