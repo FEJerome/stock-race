@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "extra field",
+  "indicators": {
+    "m": {"use": "macd@1", "unexpected": true}
+  },
+  "entry": {"gt": [{"ref": "m.dif"}, {"const": "0"}]},
+  "exits": [{"lt": [{"ref": "m.dif"}, {"const": "0"}]}],
+  "position": {
+    "side": "long",
+    "allowAdd": false,
+    "entrySize": {"cashFraction": "0.50"},
+    "exitSize": {"positionFraction": "1.00"}
+  }
+}

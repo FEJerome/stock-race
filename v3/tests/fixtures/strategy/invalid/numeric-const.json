@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "numeric const",
+  "indicators": {},
+  "entry": {"gt": [{"const": 1}, {"const": "0"}]},
+  "exits": [{"lt": [{"const": "1"}, {"const": "0"}]}],
+  "position": {
+    "side": "long",
+    "allowAdd": false,
+    "entrySize": {"cashFraction": "0.50"},
+    "exitSize": {"positionFraction": "1.00"}
+  }
+}

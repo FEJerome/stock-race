@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stock-race.local/schema/strategy-draft.schema.json",
+  "title": "StrategyDraft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "name", "indicators", "entry", "exits", "position"],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 256},
+    "indicators": {
+      "type": "object",
+      "propertyNames": {"$ref": "common.schema.json#/$defs/asciiIdentifier"},
+      "additionalProperties": {"$ref": "#/$defs/indicator"}
+    },
+    "entry": {"$ref": "#/$defs/boolExpression"},
+    "exits": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/boolExpression"}
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["side", "allowAdd", "entrySize", "exitSize"],
+      "properties": {
+        "side": {"const": "long"},
+        "allowAdd": {"const": false},
+        "entrySize": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["cashFraction"],
+          "properties": {
+            "cashFraction": {"$ref": "common.schema.json#/$defs/decimalString"}
+          }
+        },
+        "exitSize": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["positionFraction"],
+          "properties": {
+            "positionFraction": {"$ref": "common.schema.json#/$defs/decimalString"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "indicator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["use"],
+      "properties": {
+        "use": {"type": "string", "pattern": "^[a-z][a-z0-9-]*@[1-9][0-9]*$"},
+        "params": {"$ref": "#/$defs/params"}
+      }
+    },
+    "params": {
+      "type": "object",
+      "propertyNames": {"$ref": "common.schema.json#/$defs/asciiIdentifier"},
+      "additionalProperties": {
+        "oneOf": [
+          {"$ref": "common.schema.json#/$defs/safeInteger"},
+          {"type": "string"},
+          {"type": "boolean"}
+        ]
+      }
+    },
+    "seriesExpression": {
+      "oneOf": [
+        {"$ref": "#/$defs/constant"},
+        {"$ref": "#/$defs/reference"},
+        {"$ref": "#/$defs/lag"},
+        {"$ref": "#/$defs/arithmetic"},
+        {"$ref": "#/$defs/registeredSeriesFunction"}
+      ]
+    },
+    "constant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["const"],
+      "properties": {
+        "const": {"$ref": "common.schema.json#/$defs/decimalString"}
+      }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1, "maxLength": 256}
+      }
+    },
+    "lag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lag"],
+      "properties": {
+        "lag": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["input", "periods"],
+          "properties": {
+            "input": {"$ref": "#/$defs/seriesExpression"},
+            "periods": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"}
+          }
+        }
+      }
+    },
+    "binarySeries": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"$ref": "#/$defs/seriesExpression"}
+    },
+    "arithmetic": {
+      "oneOf": [
+        {"$ref": "#/$defs/add"},
+        {"$ref": "#/$defs/subtract"},
+        {"$ref": "#/$defs/multiply"},
+        {"$ref": "#/$defs/divide"}
+      ]
+    },
+    "add": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["add"],
+      "properties": {"add": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "subtract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sub"],
+      "properties": {"sub": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "multiply": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mul"],
+      "properties": {"mul": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "divide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["div"],
+      "properties": {"div": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "registeredSeriesFunction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registeredSeriesFn"],
+      "properties": {
+        "registeredSeriesFn": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["use", "args"],
+          "properties": {
+            "use": {"type": "string", "pattern": "^[a-z][a-z0-9-]*@[1-9][0-9]*$"},
+            "args": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/seriesExpression"}
+            },
+            "params": {"$ref": "#/$defs/params"}
+          }
+        }
+      }
+    },
+    "boolExpression": {
+      "oneOf": [
+        {"$ref": "#/$defs/comparison"},
+        {"$ref": "#/$defs/crossAbove"},
+        {"$ref": "#/$defs/crossBelow"},
+        {"$ref": "#/$defs/all"},
+        {"$ref": "#/$defs/any"},
+        {"$ref": "#/$defs/not"},
+        {"$ref": "#/$defs/within"}
+      ]
+    },
+    "comparison": {
+      "oneOf": [
+        {"$ref": "#/$defs/gt"},
+        {"$ref": "#/$defs/gte"},
+        {"$ref": "#/$defs/lt"},
+        {"$ref": "#/$defs/lte"},
+        {"$ref": "#/$defs/eq"},
+        {"$ref": "#/$defs/neq"}
+      ]
+    },
+    "gt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gt"],
+      "properties": {"gt": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "gte": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gte"],
+      "properties": {"gte": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "lt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lt"],
+      "properties": {"lt": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "lte": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lte"],
+      "properties": {"lte": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "eq": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eq"],
+      "properties": {"eq": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "neq": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["neq"],
+      "properties": {"neq": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "crossAbove": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crossAbove"],
+      "properties": {"crossAbove": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "crossBelow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crossBelow"],
+      "properties": {"crossBelow": {"$ref": "#/$defs/binarySeries"}}
+    },
+    "all": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["all"],
+      "properties": {
+        "all": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/boolExpression"}
+        }
+      }
+    },
+    "any": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["any"],
+      "properties": {
+        "any": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/boolExpression"}
+        }
+      }
+    },
+    "not": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["not"],
+      "properties": {"not": {"$ref": "#/$defs/boolExpression"}}
+    },
+    "within": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["within"],
+      "properties": {
+        "within": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["window", "condition"],
+          "properties": {
+            "window": {"$ref": "common.schema.json#/$defs/positiveSafeInteger"},
+            "condition": {"$ref": "#/$defs/boolExpression"}
+          }
+        }
+      }
+    }
+  }
+}

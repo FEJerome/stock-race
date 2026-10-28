@@ -1,0 +1,55 @@
+[
+  {
+    "caseId": "empty-object",
+    "input": {},
+    "canonical": "{}",
+    "digest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  {
+    "caseId": "key-order-array-order",
+    "input": {"b": [2, 1], "a": 1},
+    "canonical": "{\"a\":1,\"b\":[2,1]}",
+    "digest": "sha256:e9d26fb0100c3f9ef569c38ced9811ec35059c3c999b8683fde59ed24e6e66e8"
+  },
+  {
+    "caseId": "unicode-nfc",
+    "input": {"s": "é中"},
+    "canonical": "{\"s\":\"é中\"}",
+    "digest": "sha256:ac54597a2eff1d6219ad3c1e69fa5dec41232219a99badb93cf4a098f31d5ae0"
+  },
+  {
+    "caseId": "newline-escape",
+    "input": {"s": "\n中"},
+    "canonical": "{\"s\":\"\\n中\"}",
+    "canonicalHex": "7b2273223a225c6ee4b8ad227d",
+    "digest": "sha256:26b5d4c3cec8a6c2f500cbbf0905fe6d8343628630d9d7921862512dfba45364"
+  },
+  {
+    "caseId": "vertical-tab-escape",
+    "input": {"s": "\u000b"},
+    "canonical": "{\"s\":\"\\u000b\"}",
+    "canonicalHex": "7b2273223a225c7530303062227d",
+    "digest": "sha256:d02e72cd71ab7c3e52ae1c7f8721e6fbecd25b9a1487b947931c62c3d2db3606"
+  },
+  {
+    "caseId": "rate-negative-zero",
+    "input": {"rate": "-0.0"},
+    "decimalType": "Rate",
+    "canonical": "{\"rate\":\"0.000000000000\"}",
+    "digest": "sha256:f0a328f7e442468f3f099dc04e04ad0eec184a5c1ca417d4cfa8ad04a65feb5b"
+  },
+  {
+    "caseId": "rate-half",
+    "input": {"rate": "0.5"},
+    "decimalType": "Rate",
+    "canonical": "{\"rate\":\"0.500000000000\"}",
+    "digest": "sha256:6748639edbf4efca01ee8c87b25223a7336541457efd57460f566c3925e899f9"
+  },
+  {
+    "caseId": "rate-pad-twelve",
+    "input": {"rate": "0.123456789"},
+    "decimalType": "Rate",
+    "canonical": "{\"rate\":\"0.123456789000\"}",
+    "digest": "sha256:d3ae8b1d8b6551c3d9a40173673877850b57a04c182742b58e205b2bf06d98aa"
+  }
+]
