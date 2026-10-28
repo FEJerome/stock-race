@@ -23,10 +23,20 @@ export interface Indicator {
   paramSchema: {
     [k: string]: Parameter;
   };
-  /**
-   * @minItems 1
-   */
-  requiredInputs: [string, ...string[]];
+  requiredInputs: {
+    /**
+     * @minItems 1
+     */
+    ohlcv?: [string, ...string[]];
+    /**
+     * @minItems 1
+     */
+    nav?: [string, ...string[]];
+    /**
+     * @minItems 1
+     */
+    index?: [string, ...string[]];
+  };
   /**
    * @minItems 1
    */

@@ -62,7 +62,16 @@
           "propertyNames": {"$ref": "common.schema.json#/$defs/asciiIdentifier"},
           "additionalProperties": {"$ref": "#/$defs/parameter"}
         },
-        "requiredInputs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "requiredInputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "ohlcv": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+            "nav": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+            "index": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+          }
+        },
         "outputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/output"}},
         "observationKinds": {"type": "array", "minItems": 1, "items": {"enum": ["ohlcv", "nav", "index"]}},
         "causal": {"const": true},

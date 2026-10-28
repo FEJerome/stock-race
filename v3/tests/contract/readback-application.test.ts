@@ -80,6 +80,36 @@ describe("application validate-strategy pipeline", () => {
     expect(result.readback).toBeNull();
   });
 
+  it("maps continuous const canonical errors to unified failure with exact path", () => {
+    const invalid = {
+      ...strategy,
+      entry: { lt: [{ ref: "k.j" }, { const: "90.0000000000001" }] },
+    } as StrategyDraft;
+    const result = validateStrategyUseCase(invalid);
+    expect(result).toEqual({
+      ok: false,
+      issues: [expect.objectContaining({ code: "DECIMAL_SCALE_EXCEEDED", path: "/entry/lt/1/const" })],
+      canonicalAst: null,
+      strategyDigest: null,
+      readback: null,
+    });
+  });
+
+  it("maps cashFraction canonical errors to unified failure with exact path", () => {
+    const invalid = {
+      ...strategy,
+      position: { ...strategy.position, entrySize: { cashFraction: "0.5000000000001" } },
+    } as StrategyDraft;
+    const result = validateStrategyUseCase(invalid);
+    expect(result).toEqual({
+      ok: false,
+      issues: [expect.objectContaining({ code: "DECIMAL_SCALE_EXCEEDED", path: "/position/entrySize/cashFraction" })],
+      canonicalAst: null,
+      strategyDigest: null,
+      readback: null,
+    });
+  });
+
   it("returns semantic failures with accurate paths", () => {
     const invalid = {
       ...strategy,

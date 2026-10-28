@@ -25,6 +25,14 @@ describe("registry v1 and CapabilityManifest", () => {
     expect(createCapabilityManifest(registry)).toEqual(manifest);
   });
 
+  it("declares required inputs per observation kind exactly as implemented", () => {
+    const manifest = createCapabilityManifest(registry);
+    const macd = manifest.indicators.find((item) => item.use === "macd@1")!;
+    const kdj = manifest.indicators.find((item) => item.use === "kdj@1")!;
+    expect(macd.requiredInputs).toEqual({ ohlcv: ["close"], nav: ["unitNav"], index: ["close"] });
+    expect(kdj.requiredInputs).toEqual({ ohlcv: ["high", "low", "close"] });
+  });
+
   it("rejects a malformed manifest", () => {
     const manifest = createCapabilityManifest(registry) as unknown as Record<string, unknown>;
     expect(validateCapabilityManifest({ ...manifest, extra: true }).length).toBeGreaterThan(0);

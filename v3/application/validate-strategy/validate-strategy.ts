@@ -45,13 +45,20 @@ export function validateStrategyUseCase(input: unknown, options: ValidateStrateg
   const registry = createRegistryV1();
   const semanticIssues = validateStrategySemantics(strategy, registry, options.observationKind ?? "ohlcv");
   if (semanticIssues.length > 0) return failure(semanticIssues);
-  const canonicalAst = canonicalizeStrategyDraft(strategy);
-  const readback = createAuthoritativeReadback(canonicalAst, registry, options.observationKind ?? "ohlcv");
-  return {
-    ok: true,
-    issues: [],
-    canonicalAst,
-    strategyDigest: digestCanonical(canonicalAst),
-    readback,
-  };
+  try {
+    const canonicalAst = canonicalizeStrategyDraft(strategy);
+    const readback = createAuthoritativeReadback(canonicalAst, registry, options.observationKind ?? "ohlcv");
+    return {
+      ok: true,
+      issues: [],
+      canonicalAst,
+      strategyDigest: digestCanonical(canonicalAst),
+      readback,
+    };
+  } catch (error) {
+    if (error instanceof ContractError) {
+      return failure([{ code: error.code, severity: "error", path: error.path, message: error.message }]);
+    }
+    throw error;
+  }
 }

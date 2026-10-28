@@ -19,7 +19,7 @@ const macd = defineIndicator({
     slow: { type: "integer", minimum: 1, maximum: 9007199254740991 },
     signal: { type: "integer", minimum: 1, maximum: 9007199254740991 },
   },
-  requiredInputs: ["close"],
+  requiredInputs: { ohlcv: ["close"], nav: ["unitNav"], index: ["close"] },
   outputs: [
     { name: "dif", type: "scalar", warmup: "slow-1" },
     { name: "dea", type: "scalar", warmup: "slow+signal-2" },
@@ -40,7 +40,7 @@ const kdj = defineIndicator({
     kSmooth: { type: "integer", minimum: 1, maximum: 9007199254740991 },
     dSmooth: { type: "integer", minimum: 1, maximum: 9007199254740991 },
   },
-  requiredInputs: ["high", "low", "close"],
+  requiredInputs: { ohlcv: ["high", "low", "close"] },
   outputs: [
     { name: "rsv", type: "scalar", warmup: "period-1" },
     { name: "k", type: "scalar", warmup: "period-1" },

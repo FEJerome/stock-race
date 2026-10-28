@@ -21,7 +21,7 @@ export function evaluateStrategy(
   input: StrategyEvaluationInput,
 ): StrategyEvaluation {
   const length = input.observations.length;
-  const refs: Record<string, Series> = { ...input.contextRefs };
+  const refs: Record<string, Series> = {};
   for (const definition of registry.contextRefs) {
     if (!definition.observationKinds.includes(input.observationKind)) {
       continue;
@@ -46,11 +46,25 @@ export function evaluateStrategy(
     const params = Object.fromEntries(Object.entries(indicator.params ?? {}).map(([key, value]) => [key, Number(value)]));
     const computed = definition.compute(input, params).series;
     for (const output of definition.outputs) {
-      indicators[`${id}.${output.name}`] = computed[output.name]!;
+      const ref = `${id}.${output.name}`;
+      indicators[ref] = computed[output.name]!;
+      refs[ref] = computed[output.name]!;
     }
-    Object.assign(refs, indicators);
   }
-  Object.assign(refs, input.contextRefs ?? {});
+
+  for (const [ref, series] of Object.entries(input.contextRefs ?? {})) {
+    if (series.length !== length) {
+      throw new ContractError(
+        "CONTEXT_REF_LENGTH_MISMATCH",
+        `Context ref ${ref} has ${series.length} observations; expected ${length}`,
+      );
+    }
+    if (refs[ref] !== undefined) {
+      throw new ContractError("CONTEXT_REF_CONFLICT", `Context ref cannot override authoritative series: ${ref}`);
+    }
+    refs[ref] = series;
+  }
+
   return {
     indicators,
     entry: evaluateBool(strategy.entry, { refs }, length),
