@@ -120,6 +120,20 @@ V3 Demo 要证明一条完整链路：用户的一句投资意图可以变成**�
 - 同资产、同快照、同区间、同初始资金、同执行假设，且 `engineVersion/registryVersion/canonicalizationVersion` 一致的版本 compare；
 - 无交易、数据不足、指标不适用时返回 `null + reason`，不得填 0 或编造曲线。
 
+### 1.5 S4 产品流程与视觉设计前置闸（御主批准）
+
+为避免“内核正确但展示失败”，S4 不能只凭三场景名称和技术契约直接开工。以下三件套是前端实施的必要前置产物，不是可选文档装饰：
+
+1. **一页 Feature Map＋用户流程**：覆盖输入意图、生成、校验、权威回读、确认、运行、回放、调整 v2 与版本比较；逐项写清用户动作、系统反馈和验收结果。可用轻量用例图表达参与者和系统边界，但不为繁重 UML 增加维护负担。
+2. **三场景线框与状态矩阵**：标明每个场景的区域、按钮、图表、信息层级和跳转；覆盖 empty/drafting/invalid/valid/confirming/confirmed/running/completed/model-error/data-error，以及无交易、数据不足、全部拒单等状态，不能只设计成功路径。
+3. **实际视觉稿或浏览器原型**：让维护者在 S4 施工前看到目标展示尺寸下的配色、字体、信息密度、图表、动效与三幕衔接。原型可以使用契约 golden，但不得以静态假收益冒充真实运行。
+
+硬性顺序为：
+
+> S2 形成真实 golden 事件流 → 完成三件套 → 御主设计终审 → S4 实施 → 自动化交互验收 → 零上下文候选评审 → 御主最终视觉走查。
+
+三件套形成后必须进入 feature 正典并保留可复核版本，不得只存在会话或聊天记录中。未完成三件套和御主设计终审，不得开放 S4 业务实施；S0/S1/S2 不因本闸返工，S3 可在其自身授权边界内并行。
+
 ---
 
 ## 2. 技术底座、目录与依赖
@@ -234,7 +248,7 @@ BoolExpr   = compare | crossAbove | crossBelow | all | any | not | within
 - `const` 连续量只接受十进制字符串，不接受 JSON number；JSON number 仅用于 schema 声明的安全整数参数，如指标周期、`lag` 和 `within.window`。
 - `within.window` 以有效观测计数，不是自然日；NAV、股票和指数的 observation kind 不得混淆。
 - `exits` 为有序规则，冲突按显式优先级处理；P0 为 long-only、单资产、禁止加仓/反转，仓位用 `cashFraction/positionFraction` 十进制字符串。
-- 内建只读 context refs 由能力清单声明，P0 候选为 `position.state/quantity/entryPrice/barsHeld` 与 `account.availableCash`；`position.barsHeld` 在成交后的当根有效观测计为 0，之后每增加一根有效观测加 1，未声明字段直接拒绝。
+- 内建只读 context refs 由能力清单声明，P0 为 `position.state/quantity/entryPrice/barsHeld` 与 `account.availableCash`；`position.state` 是数值序列，`0=flat`、`1=long`，必须与当根 quantity 一致。当根求值使用当根实际成交/结算后的 quantity 与 availableCash，不得滞后一日；`position.barsHeld` 在成交后的当根有效观测计为 0，之后每增加一根有效观测加 1，未声明字段直接拒绝。
 - 指标和函数只能来自注册表，引擎不得出现 `if strategyIsMacdKdj` 一类策略分支。
 
 注册表每项至少包含：
@@ -362,7 +376,7 @@ previousEventHash、eventHash
 - `PositionChanged`、`CashChanged`、`MarkToMarket`；
 - `MetricComputed`、`RunCompleted`、`RunFailed`。
 
-事件按 seq 全序排列；拒单、跳过、stale 估值和守恒检查也必须入账。事件哈希链只证明内容未被改动，不代替 golden 对正确性的验证。
+事件按 seq 全序排列；拒单、跳过、stale 估值和守恒检查也必须入账。`OrderIntentCreated` 必须保留原始意图数量、价格/资金依据与有效 inputRefs；`OrderFilled` 必须引用原 intent 并保留实际成交数量。允许成交时按可用资金/持仓重算数量，但必须记录原数量、实际数量和 `ORDER_SIZE_ADJUSTED` 等原因及引用，不得静默把 intent=100 写成 fill=300。不得用默认空 inputRefs 掩盖缺失证据；确无外部输入的系统事件也必须显式说明。事件哈希链只证明内容未被改动，不代替 golden 对正确性的验证。
 
 ### 3.7 Report / CompareResult
 
@@ -633,13 +647,13 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 - 本 Demo 保守假设卖出款在成交时进入 unsettled，下一交易 session 开盘转为 available；不模拟提现。买入份额在成交时进入不可卖持仓，下一交易 session 才转为 sellable。卖出意图先冻结对应数量，成交/拒单/取消分别结算或解冻。
 - 每个事件后检查现金、份额与权益守恒；不允许负现金、负份额、重复结算或无来源余额调整。P0 仍不融资、不做空、不加仓、不反转。
 - 现金分红以登记日收盘持仓计算，除息日形成 receivable，派息日转为 available；不自动再投资，**红利税暂不模拟并作为 Demo 假设展示**。派息所需日期或金额缺失时，不得宣称完整执行。
-- 送转/拆股按登记日持仓增加份额，实际上市日转为 sellable；缺少上市日时执行阻断，不猜测立即可卖。信号继续使用点时复权序列，成交和账本使用原始价与真实权益事件。
+- 送转/拆股按登记日持仓增加份额，实际上市日转为 sellable；缺少上市日时执行阻断，不猜测立即可卖。**原买入批次总现金成本不因送转改变，剩余成本随送转后数量调整/稀释；若此前已有部分卖出，只调整剩余批次成本，不得制造零成本收益或丢失现金对账。**信号继续使用点时复权序列，成交和账本使用原始价与真实权益事件。
 
 #### 成本配对、买入持有与回撤 `cn-stock-report@1`
 
 - P0 不加仓，每个实际买入 fill 形成一个成本批次；部分卖出按 FIFO 配对。批次全部卖出后才计入已平仓批次，批次已实现盈亏=对应卖出净收入−买入总成本，包含全部买卖费用。部分片段按数量比例分摊，最后一片段承担舍入尾差，保证与现金账本一致。
 - 胜率=已实现盈亏大于 0 的已平仓批次/全部已平仓批次；盈亏为 0 不计胜，分母为 0 时返回 `null+reason`。未平仓部分只计未实现盈亏。首屏交易次数=实际成交订单数，买卖订单分别计数后求和，不以信号或拒单充数。
-- 买入持有在与策略相同的可成交起点，以相同初始资金、滑点和费用买入最大可负担 100 股整数倍，余款保留；现金分红不再投、送转进入持仓，期末按同一原始收盘价估值。无法形成起始买入时返回 `null+reason`。
+- 买入持有在**该策略于当前 RunSpec/warmup 下首个允许成交的 session**开始，而不是区间首 session，也不等待策略首个实际信号；即使策略最终无信号，基准仍须存在。买入持有以相同初始资金、滑点和费用买入最大可负担 100 股整数倍，余款保留；现金分红不再投、送转进入持仓，期末按同一原始收盘价估值。无法形成起始买入时返回 `null+reason`。
 - 最大回撤以**运行前初始现金**为首个权益锚点，之后使用每日收盘总权益；从任一历史正峰值到其后谷值计算最大相对跌幅，因此首日跳空和首日亏损不得被隐藏。报告 Rate 输出按 scale=12 HALF_UP。
 - 所有费用、公司行动、现金、份额、配对、买入持有和回撤 golden 必须逐事件先手算，再与实现比较；不得以同一实现输出反推答案。
 
@@ -658,6 +672,7 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 3. 修改参数生成新 revision，v1/v2 在同一数据与执行假设下比较，订单和版本均可追溯。
 4. 模型不可用、模型输出无效、数据缺失、warmup 不足、未确认、资产不支持、基金可见性未决均有独立错误/空态，不显示假成功。
 5. 无交易、指标不足、空历史、零持仓、全部拒单等状态有解释，不用 0 或固定曲线掩盖。
+6. S4 送审前，Feature Map、用户流程、线框、状态矩阵和实际视觉稿/原型版本齐全，御主设计终审记录可追溯；缺失败路径或未过设计终审不得进入实施。
 
 ### 7.5 性能与可复现候选预算
 
@@ -677,7 +692,7 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 | S1 DSL/注册表/回读 | 输入 AST；输出有效策略、指标序列、错误、权威回读 | `core/strategy`、`application/validate-strategy`、fake fixtures | 依赖 S0；生成舱可与 golden 并行，但真实主流程放行另受 S3 约束；7.2.1 的 S1 冻结项先于实现/golden | 冻结项复审＋手算 MACD/KDJ/cross/within/warmup；独立复审 |
 | S2 快照＋股票内核＋CLI | 输入 confirmed AST/RunSpec/Snapshot；输出完整 RunEvent/Report | `core/market`、`core/engine`、`core/report`、`application/run-backtest`、`adapters/market/{fixture,snapshot-file}`、`hosts/cli` | 依赖 S0/S1；剧场可用 golden 并行；真实导入可独立验证；7.2.1 的 S2 冻结项先于实现/golden | 冻结项复审＋费用/结算/配对/买入持有/回撤手算、守恒、T/T+1、公司行动、CLI golden；独立复审 |
 | S3 Local 装配＋真实模型/确认 | 输入自然语言/旧 AST；输出真实 Kimi draft/valid/confirmed revision；测试另有 fake 输出 | `application/{draft,confirm}`、`adapters/model`、`hosts/local` | 依赖 S1；真实 Kimi 探针与 S2/Web 并行，但最终真实主流程放行依赖 S3，fake/golden 不解除该门禁 | 真实 Kimi 成功生成 v1 与调整 v2，各自校验/回读/确认通过，失败不切 fake、密钥边界；独立安全复审 |
-| S4 Web 三场景＋compare | 输入 golden 或真实用例输出；输出三场景、回放和版本比较 | `application/{compare-runs,project-replay}`、`hosts/web`、必要 Local DTO；不改内核语义 | 依赖 S0 的事件契约即可开视觉；真实联动按 S1/S2/S3 接入，最终主流程必须使用真实 Kimi | 三场景/空态/性能/可复现；fake/golden 仅作开发测试，不替代真实主流程验收；独立复审＋御主视觉终审 |
+| S4 Web 三场景＋compare | 输入 golden 或真实用例输出；输出三场景、回放和版本比较 | `application/{compare-runs,project-replay}`、`hosts/web`、必要 Local DTO；不改内核语义 | 依赖 S2 形成真实 golden 后先完成 1.5 三件套与御主设计终审，才开放 S4 实施；真实联动按 S1/S2/S3 接入，最终主流程必须使用真实 Kimi | 三场景/空态/性能/可复现；fake/golden 仅作开发测试，不替代真实主流程验收；独立复审＋御主视觉终审 |
 | S5 ETF/指数 profile | 输入资产 profile 与探针；输出分析契约、单位/精度规则、显式执行拒绝 | `core/market`、相关 adapters/fixtures/tests | 依赖 S2；可与 S4 并行 | 两源 OHLC、指数舍入、ETF 缺口拒绝执行；独立复审 |
 | S6 基金可见性与执行 | 输入已终审的 `NEXT_DAY_END_CONSERVATIVE` profile、官方补证；输出基金 P0 执行或继续阻断 | `core/market`、`core/engine` 基金时间线、fund fixtures/tests | 依赖 S2 与专项开放；外部证据不足不得宣称真实能力 | publishedAt/特别披露/未知 NAV/确认到账；独立复审＋御主确认 |
 | S7 真实集成与硬化 | 输入各切片；输出真实 Kimi 主流程、默认外样本/区间、外部探针、性能和重复性最终证据 | `tests/integration`、扩展样本与全历史性能夹具、文档验证记录；不改业务语义 | 对应切片后；真实 Kimi/数据均单独授权；不得以 fake 或默认样本结果替代 | 四层真实验证、跨宿主、全历史扩展与性能；独立复审 |
