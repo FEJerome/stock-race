@@ -1,0 +1,11 @@
+{
+  "caseId": "readback-v1-macd-kdj",
+  "summary": "策略「MACD 三日内金叉，KDJ 过滤」；注册表 1.0.0。",
+  "clauses": [
+    {"astPath":"/indicators/k","text":"指标 k：KDJ(period=9, kSmooth=3, dSmooth=3)。"},
+    {"astPath":"/indicators/m","text":"指标 m：MACD(fast=12, slow=26, signal=9)。"},
+    {"astPath":"/entry","text":"入场条件：（最近 3 个有效观测内（m.dif 上穿 m.dea） 且 （k.k > k.d） 且 （k.j < 90））。"},
+    {"astPath":"/exits/0","text":"出场规则 1：（m.dif 下穿 m.dea 或 position.barsHeld >= 20）。"},
+    {"astPath":"/position","text":"仓位：仅做多，禁止加仓；入场使用可用现金的 50%，出场使用持仓的 100%。"}
+  ]
+}

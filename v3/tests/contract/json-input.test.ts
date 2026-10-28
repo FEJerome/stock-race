@@ -25,8 +25,11 @@ describe("json-input lossless number tokens", () => {
     });
   });
 
-  it("rejects raw duplicate keys", () => {
+  it("rejects raw duplicate keys including nested objects", () => {
     expect(() => parseJsonInput('{"a":1,"a":2}')).toThrowError(
+      expect.objectContaining({ code: "DUPLICATE_JSON_KEY" }),
+    );
+    expect(() => parseJsonInput('{"outer":{"a":1,"a":2}}')).toThrowError(
       expect.objectContaining({ code: "DUPLICATE_JSON_KEY" }),
     );
   });

@@ -1,0 +1,14 @@
+{
+  "caseId": "expression-v1",
+  "nearThreshold": {
+    "previous": {"a":"1.000000001","b":"1.000000002"},
+    "current": {"a":"1.000000003","b":"1.000000002"},
+    "display": {"previousA":"1.00000000","previousB":"1.00000000","currentA":"1.00000000","currentB":"1.00000000"},
+    "crossAbove": true
+  },
+  "halfUp": [
+    {"input":"0.000000015","expected":"0.00000002"},
+    {"input":"0.000000025","expected":"0.00000003"}
+  ],
+  "defaultMacdWithinWarmup": 36
+}

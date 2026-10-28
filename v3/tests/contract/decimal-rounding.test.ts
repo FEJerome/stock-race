@@ -55,6 +55,13 @@ describe("rounding@1 internal and output boundaries", () => {
     expect(internalMultiply("1", tiny).toString()).toBe(`1e-65`);
   });
 
+  it("uses exact HALF_EVEN midpoint rules at precision 64", () => {
+    const evenMidpoint = `1.${"0".repeat(63)}5`;
+    const oddMidpoint = `1.${"0".repeat(62)}15`;
+    expect(internalAdd(evenMidpoint, "0").toString()).toBe("1");
+    expect(internalAdd(oddMidpoint, "0").toString()).toBe(`1.${"0".repeat(62)}2`);
+  });
+
   it("rejects division by zero", () => {
     expect(() => internalDivide("1", "0")).toThrowError(
       expect.objectContaining({ code: "DIVISION_BY_ZERO" }),

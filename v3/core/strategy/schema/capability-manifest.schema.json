@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stock-race.local/schema/capability-manifest.schema.json",
+  "title": "CapabilityManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifestVersion", "registryVersion", "observationKinds", "indicators", "seriesFunctions", "contextRefs"],
+  "properties": {
+    "manifestVersion": {"const": "1.0.0"},
+    "registryVersion": {"const": "1.0.0"},
+    "observationKinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["ohlcv", "nav", "index"]}
+    },
+    "indicators": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/indicator"}
+    },
+    "seriesFunctions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/seriesFunction"}
+    },
+    "contextRefs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/contextRef"}
+    }
+  },
+  "$defs": {
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "minimum", "maximum"],
+      "properties": {
+        "type": {"const": "integer"},
+        "minimum": {"$ref": "common.schema.json#/$defs/safeInteger"},
+        "maximum": {"$ref": "common.schema.json#/$defs/safeInteger"},
+        "description": {"type": "string"}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "warmup"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9]*$"},
+        "type": {"enum": ["scalar", "price", "quantity", "rate"]},
+        "warmup": {"type": "string", "minLength": 1}
+      }
+    },
+    "indicator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "version", "use", "paramSchema", "requiredInputs", "outputs", "observationKinds", "causal", "implementationDigest", "formula", "rounding"],
+      "properties": {
+        "key": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+        "version": {"$ref": "common.schema.json#/$defs/positiveSafeInteger"},
+        "use": {"type": "string", "pattern": "^[a-z][a-z0-9-]*@[1-9][0-9]*$"},
+        "paramSchema": {
+          "type": "object",
+          "propertyNames": {"$ref": "common.schema.json#/$defs/asciiIdentifier"},
+          "additionalProperties": {"$ref": "#/$defs/parameter"}
+        },
+        "requiredInputs": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "outputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/output"}},
+        "observationKinds": {"type": "array", "minItems": 1, "items": {"enum": ["ohlcv", "nav", "index"]}},
+        "causal": {"const": true},
+        "implementationDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "formula": {"type": "string", "minLength": 1},
+        "rounding": {"const": "indicator-arithmetic@1"}
+      }
+    },
+    "seriesFunction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["use", "observationKinds", "causal"],
+      "properties": {
+        "use": {"type": "string"},
+        "observationKinds": {"type": "array", "items": {"enum": ["ohlcv", "nav", "index"]}},
+        "causal": {"const": true}
+      }
+    },
+    "contextRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "type", "observationKinds"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "type": {"enum": ["scalar", "price", "quantity", "rate", "state"]},
+        "observationKinds": {"type": "array", "minItems": 1, "items": {"enum": ["ohlcv", "nav", "index"]}}
+      }
+    }
+  }
+}

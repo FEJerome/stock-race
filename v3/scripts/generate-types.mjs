@@ -11,6 +11,8 @@ const artifacts = [
   ["common.schema.json", "common.types.ts", "Common"],
   ["strategy-draft.schema.json", "strategy-draft.types.ts", "StrategyDraft"],
   ["validation-issue.schema.json", "validation-issue.types.ts", "ValidationIssue"],
+  ["capability-manifest.schema.json", "capability-manifest.types.ts", "CapabilityManifest"],
+  ["readback.schema.json", "readback.types.ts", "Readback"],
 ];
 
 const options = {
