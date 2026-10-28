@@ -18,7 +18,7 @@ export function buildStockReport(
     ...day,
     drawdown: calculateCurrentDrawdown(main.equitySeries.slice(0, index + 2)),
   }));
-  const outcomes = calculateFifoBatchOutcomes(main.fills);
+  const outcomes = calculateFifoBatchOutcomes(main.fills, input.snapshot.corporateActions);
   const wins = outcomes.filter((outcome) => outcome.winning).length;
   const winRate = outcomes.length > 0 ? formatFinancialRate(internalDivide(String(wins), String(outcomes.length))) : null;
   const buyHoldStarted = buyHold.fills.some((fill) => fill.side === "buy");

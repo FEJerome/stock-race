@@ -28,7 +28,7 @@ class EventLedger {
   readonly events: RunEvent[] = [];
   constructor(private readonly runDigest: string) {}
 
-  add(date: string, phase: RunEvent["phase"], type: RunEvent["type"], reasonCodes: string[], payload: unknown, inputRefs: RunEvent["inputRefs"] = {}): void {
+  add(date: string, phase: RunEvent["phase"], type: RunEvent["type"], reasonCodes: string[], payload: unknown, inputRefs: RunEvent["inputRefs"] = { system: "no-external-input" }): void {
     const previousEventHash = this.events.at(-1)?.eventHash ?? GENESIS_HASH;
     const base = {
       eventVersion: "1.0.0" as const,
@@ -54,6 +54,7 @@ interface PositionLot {
 }
 
 interface PendingIntent {
+  intentId: string;
   side: "buy" | "sell";
   quantity: number;
   cashFraction: string;
@@ -83,7 +84,9 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
   let unsettled = new InternalDecimal(0);
   let receivable = new InternalDecimal(0);
   let reservedPosition = 0;
-  let pending: PendingIntent | null = buyHold ? { side: "buy", quantity: 0, cashFraction: "1.00" } : null;
+  const buyHoldStartIndex = buyHold && rangeIndices.length > 1 ? rangeIndices[1]! : -1;
+  let pending: PendingIntent | null = null;
+  let nextIntentId = 1;
   const buyIndices: number[] = [];
   const entryPriceByDate = new Map<string, string>();
   let lastEntryPrice = "0.00";
@@ -118,17 +121,17 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
     fees.stampDuty = money(internalAdd(fees.stampDuty, breakdown.stampDuty));
     fees.total = money(internalAdd(fees.total, breakdown.total));
   };
-  const reject = (date: string, side: "buy" | "sell", quantity: number, reason: string) => {
+  const reject = (date: string, side: "buy" | "sell", quantity: number, reason: string, intentId?: string) => {
     const record = { date, side, quantity: String(quantity), status: "rejected" as const, reason };
     orders.push(record);
     rejections.push(record);
-    ledger.add(date, "open-execution", "OrderRejected", [reason], record);
+    ledger.add(date, "open-execution", "OrderRejected", [reason], record, intentId ? { intent: intentId } : { system: "no-external-input" });
   };
 
   for (const index of rangeIndices) {
     const session = sessions[index]!;
     const date = session.date;
-    ledger.add(date, "session-open", "SessionOpened", [session.status.toUpperCase()], { index });
+    ledger.add(date, "session-open", "SessionOpened", [session.status.toUpperCase()], { index }, { bar: date, snapshot: snapshot.digest });
     if (session.status === "missing") {
       throw new ContractError("MISSING_MARKET_DATA", `Unknown missing market data at ${date}`, `/sessions/${index}`);
     }
@@ -168,6 +171,9 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
       ledger.add(date, "session-open", "CashChanged", ["DIVIDEND_PAID"], { amount: claim.amount });
     }
 
+    if (buyHold && index === buyHoldStartIndex) {
+      pending = { intentId: "intent-buyhold", side: "buy", quantity: 0, cashFraction: "1.00" };
+    }
     if (pending && session.status !== "trading") {
       if (pending.side === "buy") {
         available = internalAdd(available, reserved);
@@ -175,11 +181,12 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
       } else {
         reservedPosition = 0;
       }
-      reject(date, pending.side, pending.quantity, "SUSPENDED");
+      reject(date, pending.side, pending.quantity, "SUSPENDED", pending.intentId);
       pending = null;
     }
 
     if (pending && session.status === "trading" && session.bar) {
+      const activeIntent = pending;
       const bar = session.bar;
       if (pending.side === "buy") {
         const released = money(reserved);
@@ -189,10 +196,10 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
           ledger.add(date, "session-open", "CashChanged", ["RESERVE_RELEASED"], { amount: released });
         }
         const price = money(internalAdd(bar.open, CN_STOCK_FEE_PROFILE.tick));
-        const budget = money(internalMultiply(available, pending.cashFraction));
+        const budget = money(internalMultiply(available, activeIntent.cashFraction));
         const quantity = maxAffordableBuyQuantity(budget, price, date);
         if (quantity === 0) {
-          reject(date, "buy", 0, "INSUFFICIENT_CASH");
+          reject(date, "buy", 0, "INSUFFICIENT_CASH", activeIntent.intentId);
         } else {
           const breakdown = calculateFees(price, quantity, "buy", date);
           const cost = money(internalAdd(breakdown.amount, breakdown.total));
@@ -209,16 +216,22 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
           fills.push(fill);
           orders.push({ date, side: "buy", quantity: String(quantity), status: "filled", reason: null });
           addFees(breakdown);
-          ledger.add(date, "open-execution", "OrderFilled", ["BUY"], fill);
-          ledger.add(date, "open-execution", "CashChanged", ["BUY_COST"], { amount: money(new InternalDecimal(cost).neg()) });
-          ledger.add(date, "open-execution", "PositionChanged", ["BUY_UNSETTLED"], { quantity: String(quantity) });
+          const fillRef = { intent: activeIntent.intentId, fill: `fill-${fills.length}`, bar: date };
+          const sizeAdjusted = quantity !== activeIntent.quantity;
+          ledger.add(date, "open-execution", "OrderFilled", sizeAdjusted ? ["BUY", "ORDER_SIZE_ADJUSTED"] : ["BUY"], {
+            ...fill,
+            intentQuantity: String(activeIntent.quantity),
+            quantityReason: sizeAdjusted ? "OPEN_PRICE_OR_AVAILABLE_CASH_CHANGED" : null,
+          }, fillRef);
+          ledger.add(date, "open-execution", "CashChanged", ["BUY_COST"], { amount: money(new InternalDecimal(cost).neg()) }, fillRef);
+          ledger.add(date, "open-execution", "PositionChanged", ["BUY_UNSETTLED"], { quantity: String(quantity) }, fillRef);
         }
       } else {
-        const quantity = pending.quantity;
+        const quantity = activeIntent.quantity;
         const price = money(internalSubtract(bar.open, CN_STOCK_FEE_PROFILE.tick));
         if (new InternalDecimal(price).lte(0) || !validateSellQuantity(quantity, sellableAt(index) + reservedPosition)) {
           reservedPosition = 0;
-          reject(date, "sell", quantity, new InternalDecimal(price).lte(0) ? "NON_POSITIVE_PRICE" : "ODD_LOT_NOT_FULL_REMAINDER");
+          reject(date, "sell", quantity, new InternalDecimal(price).lte(0) ? "NON_POSITIVE_PRICE" : "ODD_LOT_NOT_FULL_REMAINDER", activeIntent.intentId);
         } else {
           const breakdown = calculateFees(price, quantity, "sell", date);
           const proceeds = money(internalSubtract(breakdown.amount, breakdown.total));
@@ -241,9 +254,10 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
           fills.push(fill);
           orders.push({ date, side: "sell", quantity: String(quantity), status: "filled", reason: null });
           addFees(breakdown);
-          ledger.add(date, "open-execution", "OrderFilled", ["SELL"], fill);
-          ledger.add(date, "open-execution", "CashChanged", ["SELL_UNSETTLED"], { amount: proceeds });
-          ledger.add(date, "open-execution", "PositionChanged", ["SELL_FILLED"], { quantity: String(quantity) });
+          const fillRef = { intent: activeIntent.intentId, fill: `fill-${fills.length}`, bar: date };
+          ledger.add(date, "open-execution", "OrderFilled", ["SELL"], fill, fillRef);
+          ledger.add(date, "open-execution", "CashChanged", ["SELL_UNSETTLED"], { amount: proceeds }, fillRef);
+          ledger.add(date, "open-execution", "PositionChanged", ["SELL_FILLED"], { quantity: String(quantity) }, fillRef);
         }
       }
       pending = null;
@@ -289,9 +303,19 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
       });
       const contextRefs: Record<string, Series> = {
         "position.barsHeld": barsHeld,
-        "position.quantity": history.map((observation) => new InternalDecimal(dailyAt(observation.date!)?.position.total ?? "0")),
+        "position.state": history.map((observation) => {
+          const quantity = observation.date === date
+            ? totalPosition()
+            : Number(dailyAt(observation.date!)?.position.total ?? "0");
+          return new InternalDecimal(quantity > 0 ? 1 : 0);
+        }),
+        "position.quantity": history.map((observation) => new InternalDecimal(
+          observation.date === date ? String(totalPosition()) : dailyAt(observation.date!)?.position.total ?? "0",
+        )),
         "position.entryPrice": history.map((observation) => new InternalDecimal(entryPriceByDate.get(observation.date!) ?? "0.00")),
-        "account.availableCash": history.map((observation) => new InternalDecimal(dailyAt(observation.date!)?.cash.available ?? runSpec.account.initialCash)),
+        "account.availableCash": history.map((observation) => new InternalDecimal(
+          observation.date === date ? money(available) : dailyAt(observation.date!)?.cash.available ?? runSpec.account.initialCash,
+        )),
       };
       const evaluation = evaluateStrategy(strategy, registry, {
         observationKind: "ohlcv",
@@ -301,7 +325,7 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
       const current = history.length - 1;
       const entry = evaluation.entry[current]!;
       const exit = evaluation.exits.some((series) => series[current] === true);
-      ledger.add(date, "close", "SignalEvaluated", [entry === true ? "ENTRY_TRUE" : exit ? "EXIT_TRUE" : "NO_SIGNAL"], { entry, exit });
+      ledger.add(date, "close", "SignalEvaluated", [entry === true ? "ENTRY_TRUE" : exit ? "EXIT_TRUE" : "NO_SIGNAL"], { entry, exit }, { bar: date, snapshot: snapshot.digest, strategyPath: "/entry" });
 
       if (index !== rangeIndices.at(-1)) {
         if (totalPosition() === 0 && entry === true) {
@@ -316,24 +340,29 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
             const cost = money(internalAdd(estimateFees.amount, estimateFees.total));
             available = internalSubtract(available, cost);
             reserved = internalAdd(reserved, cost);
-            pending = { side: "buy", quantity, cashFraction: fraction };
-            const order = { date, side: "buy" as const, quantity: String(quantity), status: "created" as const, reason: null };
+            pending = { intentId: `intent-${nextIntentId++}`, side: "buy", quantity, cashFraction: fraction };
+            const intentId = pending.intentId;
+            const order = { intentId, date, side: "buy" as const, quantity: String(quantity), status: "created" as const, reason: null };
             orders.push(order);
-            ledger.add(date, "close", "OrderIntentCreated", ["BUY_NEXT_SESSION"], order);
-            ledger.add(date, "close", "CashChanged", ["BUY_RESERVED"], { amount: cost });
+            ledger.add(date, "close", "OrderIntentCreated", ["BUY_NEXT_SESSION"], { ...order, estimatedPrice: estimate, estimatedBudget: budget }, { intent: intentId, bar: date, strategyPath: "/entry" });
+            ledger.add(date, "close", "CashChanged", ["BUY_RESERVED"], { amount: cost }, { intent: intentId, bar: date });
           }
         } else if (totalPosition() > 0 && exit) {
-          const sellable = Math.max(0, sellableAt(index));
+          const settledSellable = Math.max(0, sellableAt(index));
+          const nextSessionPurchases = lots.filter((lot) => lot.availableIndex === index + 1 && lot.entryPrice !== "0.00")
+            .reduce((sum, lot) => sum + lot.remaining, 0);
+          const sellable = settledSellable + nextSessionPurchases;
           const quantity = new InternalDecimal(sellable).mul(strategy.position.exitSize.positionFraction).floor().toNumber();
           if (!validateSellQuantity(quantity, sellable)) {
             reject(date, "sell", quantity, "ODD_LOT_NOT_FULL_REMAINDER");
           } else {
             reservedPosition = quantity;
-            pending = { side: "sell", quantity, cashFraction: "1.00" };
-            const order = { date, side: "sell" as const, quantity: String(quantity), status: "created" as const, reason: null };
+            pending = { intentId: `intent-${nextIntentId++}`, side: "sell", quantity, cashFraction: "1.00" };
+            const intentId = pending.intentId;
+            const order = { intentId, date, side: "sell" as const, quantity: String(quantity), status: "created" as const, reason: null };
             orders.push(order);
-            ledger.add(date, "close", "OrderIntentCreated", ["SELL_NEXT_SESSION"], order);
-            ledger.add(date, "close", "PositionChanged", ["SELL_RESERVED"], { quantity: String(quantity) });
+            ledger.add(date, "close", "OrderIntentCreated", ["SELL_NEXT_SESSION"], { ...order, referencePrice: bar.close, sellableQuantity: String(sellable) }, { intent: intentId, bar: date, strategyPath: "/exits/0" });
+            ledger.add(date, "close", "PositionChanged", ["SELL_RESERVED"], { quantity: String(quantity) }, { intent: intentId, bar: date });
           }
         }
       }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { runBacktest } from "../../application/run-backtest/index.js";
 import { prepareFixtureRun } from "../../adapters/market/fixture/index.js";
+import type { DataSnapshot } from "../../core/market/types.js";
 import type { FillRecord } from "../../core/engine/types.js";
 import { calculateFifoBatchOutcomes } from "../../core/report/fifo.js";
 import { calculateCumulativeReturn, calculateMaxDrawdown } from "../../core/report/metrics.js";
@@ -22,6 +23,7 @@ describe("corporate actions and report arithmetic", () => {
       expect(result.report.fills[2]).toEqual(expect.objectContaining({ side: "sell", quantity: "10", cashDelta: "94.85" }));
       expect(result.report.position.total).toBe("0");
       expect(result.report.cash.total).toBe("2205.73");
+      expect(result.report.metrics.winRate).toBe("1.000000000000");
     }
   });
 
@@ -46,6 +48,28 @@ describe("corporate actions and report arithmetic", () => {
       { quantity: "100", realizedPnl: "-5.00", winning: false },
       { quantity: "100", realizedPnl: "-5.00", winning: false },
     ]);
+  });
+
+  it("rounds non-final FIFO fragments HALF_UP and assigns the tail to the last", () => {
+    const fills: FillRecord[] = [
+      { date: "2024-01-01", side: "buy", price: "10.00", quantity: "50", amount: "500.00", commission: "0.00", transferFee: "0.00", stampDuty: "0.00", fees: "0.00", cashDelta: "0.00" },
+      { date: "2024-01-02", side: "buy", price: "10.00", quantity: "50", amount: "500.00", commission: "0.00", transferFee: "0.00", stampDuty: "0.00", fees: "0.00", cashDelta: "0.00" },
+      { date: "2024-01-03", side: "sell", price: "10.00", quantity: "100", amount: "1000.00", commission: "0.00", transferFee: "0.00", stampDuty: "0.00", fees: "0.00", cashDelta: "0.05" },
+    ];
+    expect(calculateFifoBatchOutcomes(fills)).toEqual([
+      { quantity: "50", realizedPnl: "0.03", winning: true },
+      { quantity: "50", realizedPnl: "0.02", winning: true },
+    ]);
+  });
+
+  it("dilutes only remaining FIFO cost after a bonus following a partial sale", () => {
+    const fills: FillRecord[] = [
+      { date: "2024-01-01", side: "buy", price: "10.00", quantity: "100", amount: "1000.00", commission: "5.00", transferFee: "0.00", stampDuty: "0.00", fees: "5.00", cashDelta: "-1005.00" },
+      { date: "2024-01-02", side: "sell", price: "10.00", quantity: "50", amount: "500.00", commission: "0.00", transferFee: "0.00", stampDuty: "0.00", fees: "0.00", cashDelta: "500.00" },
+      { date: "2024-01-03", side: "sell", price: "10.00", quantity: "55", amount: "550.00", commission: "0.00", transferFee: "0.00", stampDuty: "0.00", fees: "0.00", cashDelta: "550.00" },
+    ];
+    const actions: DataSnapshot["corporateActions"] = [{ type: "bonusIssue", recordDate: "2024-01-02", exDate: "2024-01-02", listingDate: "2024-01-03", ratioNumerator: 1, ratioDenominator: 10 }];
+    expect(calculateFifoBatchOutcomes(fills, actions)).toEqual([{ quantity: "105", realizedPnl: "45.00", winning: true }]);
   });
 
   it("anchors drawdown before the first session and formats financial rates", () => {

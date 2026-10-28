@@ -31,6 +31,7 @@ export interface FillRecord {
 }
 
 export interface OrderRecord {
+  readonly intentId?: string;
   readonly date: string;
   readonly side: "buy" | "sell";
   readonly quantity: string;
