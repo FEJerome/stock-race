@@ -325,7 +325,7 @@ MACD 的 DIF/DEA/柱值口径、KDJ 的 RSV 和平滑种子必须固定；新增
 }
 ```
 
-RunSpec 不可由模型修改。`warmup` 与 `warmup.extraObservations` 在 schema 中均为 required；缺失必须产生 schema error，canonicalizer 不得补默认值。`warmup.extraObservations` 为非负安全整数，只有 application 的 RunSpec 模板可以显式写入默认 `0`，完整 warmup 对象进入 runDigest；它只能在 AST 推导的最小 warmup 上增加验证余量，不能减少最小值或改变指标种子锚点。运行确认页必须同时展示策略 digest 与数据、区间、warmup、初始资金、费用/滑点、可见性和执行假设。示例中的 600519/2024 仅为默认展示配置，不构成资产或区间限制。
+RunSpec 不可由模型修改。`account.initialCash` 允许用户在 **1,000.00～100,000,000.00 CNY** 内自填，默认 `100000.00`，使用 Money scale=2 的十进制字符串；超出范围或格式非法必须报错，不得静默夹取。范围内资金不足以买入最小交易单位时允许形成有效 Run，但必须如实记录拒单/无交易原因，不得自动补足或改写资金。版本 compare 仍要求初始资金完全一致。`warmup` 与 `warmup.extraObservations` 在 schema 中均为 required；缺失必须产生 schema error，canonicalizer 不得补默认值。`warmup.extraObservations` 为非负安全整数，只有 application 的 RunSpec 模板可以显式写入默认 `0`，完整 warmup 对象进入 runDigest；它只能在 AST 推导的最小 warmup 上增加验证余量，不能减少最小值或改变指标种子锚点。运行确认页必须同时展示策略 digest 与数据、区间、warmup、初始资金、费用/滑点、可见性和执行假设。示例中的 600519/2024 仅为默认展示配置，不构成资产或区间限制。
 
 ### 3.5 DataSnapshot
 
