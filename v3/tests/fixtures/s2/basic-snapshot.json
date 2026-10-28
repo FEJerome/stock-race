@@ -1,0 +1,18 @@
+{
+  "snapshotVersion":"1.0.0",
+  "digest":"sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "assetIdentity":{"assetId":"stock:synthetic.basic","type":"stock","sourceTypeRaw":"synthetic","status":"active"},
+  "observationKind":"ohlcv",
+  "sessions":[
+    {"date":"2024-01-01","status":"trading","bar":{"date":"2024-01-01","open":"10.00","high":"10.00","low":"10.00","close":"10.00","volume":"1000"}},
+    {"date":"2024-01-02","status":"trading","bar":{"date":"2024-01-02","open":"10.00","high":"11.00","low":"10.00","close":"11.00","volume":"1000"}},
+    {"date":"2024-01-03","status":"trading","bar":{"date":"2024-01-03","open":"11.00","high":"12.00","low":"11.00","close":"12.00","volume":"1000"}},
+    {"date":"2024-01-04","status":"trading","bar":{"date":"2024-01-04","open":"12.00","high":"12.00","low":"9.00","close":"9.00","volume":"1000"}},
+    {"date":"2024-01-05","status":"trading","bar":{"date":"2024-01-05","open":"10.00","high":"10.00","low":"10.00","close":"10.00","volume":"1000"}},
+    {"date":"2024-01-06","status":"trading","bar":{"date":"2024-01-06","open":"10.00","high":"10.00","low":"10.00","close":"10.00","volume":"1000"}}
+  ],
+  "corporateActions":[],
+  "source":[{"name":"hand-authored-synthetic","interface":"fixture","libraryVersion":"1"}],
+  "fixedRange":{"start":"2024-01-01","end":"2024-01-06"},
+  "adjustment":"raw","pricePrecision":2,"volumeUnit":"share","qualityIssues":[],"usageRestriction":"local synthetic contract test only"
+}

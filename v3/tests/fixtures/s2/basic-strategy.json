@@ -1,0 +1,8 @@
+{
+  "schemaVersion":"1.0.0",
+  "name":"S2 basic buy then sell",
+  "indicators":{},
+  "entry":{"gt":[{"const":"1"},{"const":"0"}]},
+  "exits":[{"gte":[{"ref":"position.barsHeld"},{"const":"2"}]}],
+  "position":{"side":"long","allowAdd":false,"entrySize":{"cashFraction":"1.00"},"exitSize":{"positionFraction":"1.00"}}
+}

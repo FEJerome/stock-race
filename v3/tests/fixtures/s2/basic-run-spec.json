@@ -1,0 +1,10 @@
+{
+  "runSpecVersion":"1.0.0",
+  "strategy":{"id":"synthetic-basic","revision":1,"digest":"sha256:0000000000000000000000000000000000000000000000000000000000000000"},
+  "asset":{"assetId":"stock:synthetic.basic","assetType":"stock","executionProfile":"cn-stock@1"},
+  "data":{"snapshotDigest":"sha256:0000000000000000000000000000000000000000000000000000000000000000","start":"2024-01-01","end":"2024-01-06"},
+  "warmup":{"extraObservations":0},
+  "account":{"initialCash":"2000.00","currency":"CNY"},
+  "execution":{"feeProfileVersion":"cn-stock-demo-fee@1","slippageProfileVersion":"cn-stock-one-tick@1","visibilityRuleVersion":"asset-default@1","settlementProfileVersion":"cn-stock-settlement@1","reportProfileVersion":"cn-stock-report@1"},
+  "engine":{"engineVersion":"1.0.0","registryVersion":"1.0.0","canonicalizationVersion":"canonicalization@1","decimalProfileVersion":"decimal@1","roundingProfileVersion":"rounding@1","indicatorArithmeticProfileVersion":"indicator-arithmetic@1"}
+}

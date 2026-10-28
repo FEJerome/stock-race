@@ -1,0 +1,19 @@
+{
+  "caseId":"s2-basic-six-sessions",
+  "fills":[
+    {"date":"2024-01-02","side":"buy","price":"10.01","quantity":"100","amount":"1001.00","commission":"5.00","transferFee":"0.01","stampDuty":"0.00","fees":"5.01","cashDelta":"-1006.01"},
+    {"date":"2024-01-05","side":"sell","price":"9.99","quantity":"100","amount":"999.00","commission":"5.00","transferFee":"0.01","stampDuty":"0.50","fees":"5.51","cashDelta":"993.49"}
+  ],
+  "daily":[
+    {"date":"2024-01-01","equity":"2000.00","drawdown":"0.000000000000","cash":{"available":"993.99","reserved":"1006.01","unsettled":"0.00","receivable":"0.00","total":"2000.00"},"position":{"total":"0","sellable":"0","reserved":"0","unsettled":"0"}},
+    {"date":"2024-01-02","equity":"2093.99","drawdown":"0.000000000000","cash":{"available":"993.99","reserved":"0.00","unsettled":"0.00","receivable":"0.00","total":"993.99"},"position":{"total":"100","sellable":"0","reserved":"0","unsettled":"100"}},
+    {"date":"2024-01-03","equity":"2193.99","drawdown":"0.000000000000","cash":{"available":"993.99","reserved":"0.00","unsettled":"0.00","receivable":"0.00","total":"993.99"},"position":{"total":"100","sellable":"100","reserved":"0","unsettled":"0"}},
+    {"date":"2024-01-04","equity":"1893.99","drawdown":"0.136737177471","cash":{"available":"993.99","reserved":"0.00","unsettled":"0.00","receivable":"0.00","total":"993.99"},"position":{"total":"100","sellable":"0","reserved":"100","unsettled":"0"}},
+    {"date":"2024-01-05","equity":"1987.48","drawdown":"0.094125315065","cash":{"available":"993.99","reserved":"0.00","unsettled":"993.49","receivable":"0.00","total":"1987.48"},"position":{"total":"0","sellable":"0","reserved":"0","unsettled":"0"}},
+    {"date":"2024-01-06","equity":"1987.48","drawdown":"0.094125315065","cash":{"available":"1987.48","reserved":"0.00","unsettled":"0.00","receivable":"0.00","total":"1987.48"},"position":{"total":"0","sellable":"0","reserved":"0","unsettled":"0"}}
+  ],
+  "metrics":{"cumulativeReturn":"-0.006260000000","maxDrawdown":"0.136737177471","tradeCount":2,"winRate":"0.000000000000","winRateReason":null,"excessReturn":"-0.003255000000","excessReturnReason":null},
+  "final":{"cash":"1987.48","equity":"1987.48","position":"0","realizedPnl":"-12.52"},
+  "buyAndHold":{"finalEquity":"1993.99","cumulativeReturn":"-0.003005000000","reason":null},
+  "fees":{"commission":"10.00","transferFee":"0.02","stampDuty":"0.50","total":"10.52"}
+}

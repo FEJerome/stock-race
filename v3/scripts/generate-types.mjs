@@ -13,6 +13,10 @@ const artifacts = [
   ["validation-issue.schema.json", "validation-issue.types.ts", "ValidationIssue"],
   ["capability-manifest.schema.json", "capability-manifest.types.ts", "CapabilityManifest"],
   ["readback.schema.json", "readback.types.ts", "Readback"],
+  ["run-spec.schema.json", "run-spec.types.ts", "RunSpec"],
+  ["data-snapshot.schema.json", "data-snapshot.types.ts", "DataSnapshot"],
+  ["run-event.schema.json", "run-event.types.ts", "RunEvent"],
+  ["report.schema.json", "report.types.ts", "Report"],
 ];
 
 const options = {
