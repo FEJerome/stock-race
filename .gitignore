@@ -52,6 +52,7 @@ log/
 *.seed
 
 # Database and market-data caches
+/v3-data/
 *.db
 *.sqlite
 *.sqlite3
