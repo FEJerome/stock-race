@@ -34,7 +34,7 @@
         </div>
       </div>
       <div class="context-row">
-        <div class="onboarding-context"><strong>新策略 · 尚未生成</strong><span>从一句自然语言开始</span><span class="status-pill pending">SYNTHETIC DEMO</span></div>
+        <div class="onboarding-context"><strong>衡一 · 待面试</strong><span>招聘 → 穿越 → 围观 → 复盘</span><span class="status-pill pending">SYNTHETIC DEMO</span></div>
         <div class="context-item">
           <span class="context-label">工作策略</span>
           <strong id="working-revision">synthetic-basic · v1</strong>
@@ -55,82 +55,90 @@
     <main id="scene-root" tabindex="-1">
       <section class="scene active" id="scene-a" data-scene-panel="a" aria-label="策略生成舱">
         <div class="onboarding-view" id="onboarding-view">
-          <div class="onboarding-hero">
-            <p class="eyebrow">YOUR IDEA. THE HISTORICAL VERDICT.</p>
-            <h1 id="scene-a-title">你的炒股想法，<br>历史上到底灵不灵？</h1>
-            <p class="onboarding-lead">随口说出你的想法。AI 像策略私教一样陪你把规则说清楚，再用历史检验，不替你选股，也不直接下单。</p>
-            <p class="prototype-reality"><span class="badge-dot"></span>当前为 synthetic contract test 原型，未接入真实 Kimi 或真实行情。</p>
-          </div>
-          <ol class="journey-steps" aria-label="使用步骤">
-            <li class="active"><span>1</span><div><strong>说出策略</strong><small>用你习惯的语言</small></div></li>
-            <li><span>2</span><div><strong>选择检验对象</strong><small>股票、市场与历史区间</small></div></li>
-            <li><span>3</span><div><strong>查看检验结果</strong><small>信号、订单、收益与回撤</small></div></li>
+          <section class="manager-hero" aria-labelledby="scene-a-title">
+            <div class="manager-hero-copy">
+              <p class="eyebrow">HIRE YOUR AI MANAGER. REWIND THE MARKET.</p>
+              <h1 id="scene-a-title">雇一位 AI 股票经理人，<br>送他回到过去的市场。</h1>
+              <p class="onboarding-lead">你出想法，他陪你把规则说清楚。再让他回到某段历史，只用当时能看见的数据工作。</p>
+              <p class="prototype-reality"><span class="badge-dot"></span>synthetic contract test · 预写经理人演示，非真实 Kimi 实时工作。</p>
+              <div class="manager-hero-actions">
+                <button class="button primary" id="open-workbench" type="button">开始面试衡一 <span aria-hidden="true">→</span></button>
+                <button class="button ghost" id="onboarding-to-b" type="button">直接围观他的工作</button>
+              </div>
+              <p class="hero-boundary">他整理规则，不荐股、不直接下单；确认策略后才出发。</p>
+            </div>
+            <article class="manager-card" aria-label="AI 股票经理人衡一">
+              <div class="manager-card-top"><span>YOUR AI MANAGER</span><span class="manager-status"><i></i>待面试</span></div>
+              <div class="manager-identity">
+                <svg class="manager-avatar" viewBox="0 0 120 120" aria-hidden="true">
+                  <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="1" opacity=".25"/>
+                  <circle cx="60" cy="60" r="42" fill="none" stroke="currentColor" stroke-width="1" opacity=".16"/>
+                  <path d="M35 68 49 54 61 62 84 38" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M75 38h9v9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="35" cy="68" r="4" fill="currentColor"/><circle cx="49" cy="54" r="4" fill="currentColor"/><circle cx="61" cy="62" r="4" fill="currentColor"/><circle cx="84" cy="38" r="4" fill="currentColor"/>
+                </svg>
+                <div><span class="manager-name">衡一</span><span class="manager-name-en">HENG YI</span><p>AI 股票经理人 · 规则执行与历史复盘</p></div>
+              </div>
+              <blockquote>“我不会偷看未来。每个交易日，我只用当时已经能看见的信息。”</blockquote>
+              <div class="manager-styles">
+                <span>选择面试风格 · 同一位经理人</span>
+                <div>
+                  <button type="button" data-dialogue-path="novice"><strong>谨慎梳理</strong><small>从“低买高卖”开始，把白话聊成规则</small></button>
+                  <button type="button" data-dialogue-path="expert"><strong>指标直达</strong><small>从 MACD+KDJ 开始，直接核对参数</small></button>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <ol class="workflow-chain" aria-label="招聘到复盘四环节">
+            <li><span>01</span><div><strong>招聘</strong><small>选风格，开始面试</small></div></li>
+            <li><span>02</span><div><strong>穿越</strong><small>选择市场与历史区间</small></div></li>
+            <li><span>03</span><div><strong>围观</strong><small>看他当时怎么操作</small></div></li>
+            <li><span>04</span><div><strong>复盘</strong><small>问原因，看穿越成绩单</small></div></li>
           </ol>
 
-          <div class="onboarding-grid">
-            <section class="conversation-panel chat-onboarding" aria-labelledby="conversation-title">
-              <div class="conversation-heading"><span class="conversation-icon" aria-hidden="true">AI</span><div><h2 id="conversation-title">你的策略私教</h2><p>先听懂你的想法，再帮你把规则说具体。</p></div><span class="script-badge">预写演示 · 非 Kimi</span></div>
-              <div class="onboarding-chat" aria-live="polite">
-                <div class="chat-message ai"><span class="chat-avatar">AI</span><div><p>你想验证什么投资想法？</p><p>随便说，不用术语。</p></div></div>
-                <div class="chat-quick-replies" role="group" aria-label="对话快捷选项">
-                  <button type="button" data-dialogue-path="novice">“低买高卖，能验证吗？”<small>我是新手，从白话开始</small></button>
-                  <button type="button" data-dialogue-path="expert">“MACD 三日金叉＋KDJ 过滤”<small>我懂指标，直接聊参数</small></button>
-                  <button type="button" id="chat-golden-result">“先看一个完整检验结果”<small>打开固定 synthetic golden</small></button>
+          <section class="destination-panel" aria-labelledby="selection-title">
+            <div class="destination-summary"><span class="destination-number">02</span><div><h2 id="selection-title">本次穿越目的地</h2><p><strong>中国 A 股</strong><span>2024-01-01 → 2024-01-06</span><code>stock:synthetic.basic</code></p></div><span class="status-pill pending">SYNTHETIC</span></div>
+            <details class="destination-details">
+              <summary>调整目的地与执行边界</summary>
+              <div class="destination-config">
+                <fieldset class="market-fieldset">
+                  <legend>市场</legend>
+                  <div class="market-options">
+                    <button class="market-option selected" type="button" data-market="china" aria-pressed="true"><span class="market-code">CN</span><span><strong>中国 A 股</strong><small>P0 执行范围 · 原型用合成数据</small></span><span class="selection-check">✓</span></button>
+                    <button class="market-option" type="button" data-market="us" aria-pressed="false"><span class="market-code">US</span><span><strong>美国股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
+                    <button class="market-option" type="button" data-market="japan" aria-pressed="false"><span class="market-code">JP</span><span><strong>日本股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
+                  </div>
+                </fieldset>
+                <div class="selection-fields">
+                  <label for="asset-select">股票 / 资产</label>
+                  <select id="asset-select">
+                    <option value="synthetic">S2 合成股票 · stock:synthetic.basic</option>
+                    <option value="cn-real" disabled>沪深股票代码 · 真实行情未接入</option>
+                    <option value="etf" disabled>ETF · P0 仅分析，不可执行</option>
+                    <option value="index" disabled>指数 · 仅分析，不生成资金曲线</option>
+                  </select>
+                </div>
+                <div class="selection-fields">
+                  <label>历史区间</label>
+                  <div class="date-range-fields"><input id="onboarding-start" type="date" value="2024-01-01" aria-label="历史区间开始日期"><span>至</span><input id="onboarding-end" type="date" value="2024-01-06" aria-label="历史区间结束日期"></div>
+                  <p class="selection-help" id="range-help">当前 golden 仅覆盖这 6 个 session；其他区间不会用固定曲线替代。</p>
                 </div>
               </div>
-              <form class="chat-composer" id="onboarding-chat-form">
-                <label class="sr-only" for="onboarding-intent">用自然语言描述投资策略</label>
-                <input id="onboarding-intent" type="text" placeholder="比如：跌了买，涨了卖……" autocomplete="off">
-                <button class="button primary" id="send-onboarding-chat" type="submit" aria-label="开始预写对话演示">开始聊 <span aria-hidden="true">→</span></button>
-              </form>
-              <p class="composer-note">输入只用于选择新手／老手预写脚本，不调用真实 AI。三模板已变成对话中的快捷选项。</p>
-            </section>
+            </details>
+            <div class="support-message" id="support-message" role="status" hidden></div>
+          </section>
 
-            <section class="selection-panel" aria-labelledby="selection-title">
-              <div class="selection-heading"><span>02</span><div><h2 id="selection-title">选择检验对象</h2><p>先明确市场、股票和历史区间。</p></div></div>
-              <fieldset class="market-fieldset">
-                <legend>市场</legend>
-                <div class="market-options">
-                  <button class="market-option selected" type="button" data-market="china" aria-pressed="true"><span class="market-code">CN</span><span><strong>中国 A 股</strong><small>P0 执行范围 · 原型用合成数据</small></span><span class="selection-check">✓</span></button>
-                  <button class="market-option" type="button" data-market="us" aria-pressed="false"><span class="market-code">US</span><span><strong>美国股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
-                  <button class="market-option" type="button" data-market="japan" aria-pressed="false"><span class="market-code">JP</span><span><strong>日本股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
-                </div>
-              </fieldset>
-              <div class="selection-fields">
-                <label for="asset-select">股票 / 资产</label>
-                <select id="asset-select">
-                  <option value="synthetic">S2 合成股票 · stock:synthetic.basic</option>
-                  <option value="cn-real" disabled>沪深股票代码 · 真实行情未接入</option>
-                  <option value="etf" disabled>ETF · P0 仅分析，不可执行</option>
-                  <option value="index" disabled>指数 · 仅分析，不生成资金曲线</option>
-                </select>
-                <p class="selection-help">当前 P0 仅沪深股票可执行；本原型只提供合成股票示例。</p>
-              </div>
-              <div class="selection-fields">
-                <label>历史区间</label>
-                <div class="date-range-fields">
-                  <input id="onboarding-start" type="date" value="2024-01-01" aria-label="历史区间开始日期">
-                  <span>至</span>
-                  <input id="onboarding-end" type="date" value="2024-01-06" aria-label="历史区间结束日期">
-                </div>
-                <p class="selection-help" id="range-help">当前 golden 仅覆盖这 6 个 session；修改区间会阻断示例入口。</p>
-              </div>
-              <div class="support-message" id="support-message" role="status" hidden></div>
-              <div class="onboarding-actions">
-                <button class="button primary" id="open-workbench" type="button">开始新手对话演示 <span aria-hidden="true">→</span></button>
-                <button class="text-button" id="onboarding-to-b" type="button">直接看历史推演示例</button>
-                <p>对话为预写脚本。进入后只形成 AST 与回读预览，不生成新 Run，也不调用 AI 或真实行情。</p>
-              </div>
-            </section>
+          <div class="future-shelf" aria-label="暂未开放的概念装饰">
+            <span>职级体系 <strong>暂未开放</strong></span><span>荣誉馆 <strong>暂未开放</strong></span><span>更多经理人 <strong>暂未开放</strong></span><p>Demo 只雇佣衡一，不提供多模型或多经理人选择。</p>
           </div>
-          <div class="onboarding-assurance"><span>模型只整理规则，不直接下单</span><span>确认后才运行</span><span>结果可回放、可核对</span></div>
         </div>
 
         <div id="workbench-view" hidden>
         <div class="scene-heading">
           <div>
-            <p class="eyebrow">A / CONVERSATIONAL STRATEGY COACH</p>
-            <h1 id="workbench-title">聊着聊着，规则就清楚了</h1>
+            <p class="eyebrow">01 / HIRE · MANAGER INTERVIEW</p>
+            <h1 id="workbench-title">面试衡一，写下他的工作手册</h1>
           </div>
           <div class="scene-heading-meta">
             <button class="button ghost compact" id="back-onboarding" type="button">← 返回首屏引导</button>
@@ -148,7 +156,7 @@
         <div class="authoring-grid">
           <section class="panel authoring-intent" aria-labelledby="a1-title">
             <div class="panel-header">
-              <div><span class="region-id">A1</span><h2 id="a1-title">策略私教对话</h2></div>
+              <div><span class="region-id">A1</span><h2 id="a1-title">衡一的面试对话</h2></div>
               <span class="script-badge">SCRIPT · 非 Kimi</span>
             </div>
             <div class="dialogue-path-tabs" role="tablist" aria-label="预写对话路径">
@@ -194,7 +202,7 @@
 
         <section class="run-spec-panel" aria-labelledby="a4-title">
           <div class="run-spec-heading">
-            <div><span class="region-id">A4</span><h2 id="a4-title">运行确认区</h2><span class="priority">P1 · 模型不可写</span></div>
+            <div><span class="region-id">A4</span><h2 id="a4-title">穿越目的地与执行假设</h2><span class="priority">P1 · 模型不可写</span></div>
             <span class="data-quality"><span class="check-mark">✓</span> 0 quality issues · raw OHLCV · local synthetic only</span>
           </div>
           <div class="run-spec-grid">
@@ -209,7 +217,7 @@
             <p><strong>展示假设：</strong>raw 原始价 · share / CNY · 许可限本地合成契约测试 · 公司行动空数组</p>
             <div class="run-action">
               <span id="run-block-reason">原型动作：打开同源已完成 Run，不重新执行内核</span>
-              <button class="button primary run-button" id="run-button" type="button">运行回测 <span aria-hidden="true">→</span></button>
+              <button class="button primary run-button" id="run-button" type="button">确认后出发穿越 <span aria-hidden="true">→</span></button>
             </div>
           </div>
         </div>
@@ -220,7 +228,7 @@
         <div class="run-summary-bar">
           <div class="run-summary-title">
             <span class="status-pill completed">COMPLETED</span>
-            <div><p class="eyebrow">B / READ-ONLY REPLAY</p><h1 id="scene-b-title">历史推演剧场</h1></div>
+            <div><p class="eyebrow">03 / WATCH HIM WORK</p><h1 id="scene-b-title">围观衡一在 2024 年 1 月的工作</h1></div>
           </div>
           <div class="run-summary-facts">
             <span>stock:synthetic.basic</span><span>2024-01-01 → 01-06</span><span>v1 · <code>2c64d48a…be17</code></span><span>Run <code>8ec5cb9d…cd70</code></span>
@@ -229,16 +237,18 @@
             <button class="button ghost compact" id="toggle-evidence" type="button" aria-expanded="false">事件证据</button>
             <button class="button ghost compact" type="button" data-go="a">返回生成舱</button>
             <button class="button secondary compact" type="button" data-adjust="b">基于此版本调整</button>
-            <button class="button primary compact" type="button" data-go="c">查看报告</button>
+            <button class="button primary compact" type="button" data-go="c">查看穿越成绩单</button>
           </div>
         </div>
 
+        <div class="point-in-time-banner"><span class="point-in-time-icon" aria-hidden="true">◷</span><div><strong>他只知道那天及之前的事</strong><p>点时数据决定可见范围；warmup 不足就留空或阻断。移动 cursor 只是围观，不让他偷看未来，也不改变最终账本。</p></div><code>POINT-IN-TIME</code></div>
+
         <section class="story-strip" aria-labelledby="story-title">
-          <div class="story-heading"><p class="eyebrow">THE STRATEGY'S STORY</p><h2 id="story-title">这六天，你的策略经历了什么</h2><span>synthetic golden · 点击章节定位真实事件</span></div>
+          <div class="story-heading"><p class="eyebrow">HENG YI AT WORK</p><h2 id="story-title">这六天，衡一怎么做</h2><span>synthetic golden · 点击章节定位真实事件</span></div>
           <div class="story-chapters">
-            <button type="button" data-story-cursor="1" data-story-seq="7"><span>01 · 上车</span><strong>1 月 2 日，买入 100 股</strong><small>成交价 10.01，费用 5.01；收盘权益 2,093.99。</small></button>
-            <button type="button" data-story-cursor="3" data-story-seq="20"><span>02 · 遇到回撤</span><strong>1 月 4 日，一天少了 300.00</strong><small>权益 2,193.99 → 1,893.99；最大回撤 13.6737%。</small></button>
-            <button type="button" data-story-cursor="4" data-story-seq="22"><span>03 · 下车结账</span><strong>1 月 5 日，卖出 100 股</strong><small>成交价 9.99；期末权益 1,987.48，另有 1 次拒单。</small></button>
+            <button type="button" data-story-cursor="1" data-story-seq="7"><span>01 · 上车</span><strong>1 月 2 日，他买入 100 股</strong><small>前一日的入场条件已成立；成交价 10.01，费用 5.01。</small></button>
+            <button type="button" data-story-cursor="3" data-story-seq="20"><span>02 · 遇到回撤</span><strong>1 月 4 日，账户一天少了 300.00</strong><small>当天收盘权益 1,893.99；他按当天信号形成次日卖出意图。</small></button>
+            <button type="button" data-story-cursor="4" data-story-seq="22"><span>03 · 下车结账</span><strong>1 月 5 日，他卖出 100 股</strong><small>执行前一日意图；成交价 9.99，期末权益 1,987.48。</small></button>
           </div>
         </section>
 
@@ -289,7 +299,7 @@
 
           <aside class="panel evidence-panel" id="evidence-drawer" aria-labelledby="b4-title" hidden>
             <div class="panel-header">
-              <div><span class="region-id">B4</span><h2 id="b4-title">当日规则解释／事件证据</h2></div>
+              <div><span class="region-id">B4</span><h2 id="b4-title">衡一当时的依据</h2></div>
               <span class="priority">P2</span>
             </div>
             <div class="event-evidence" id="event-evidence"></div>
@@ -321,8 +331,8 @@
       <section class="scene" id="scene-c" data-scene-panel="c" aria-labelledby="scene-c-title" hidden>
         <div class="report-identity-bar">
           <div class="report-title">
-            <p class="eyebrow">C / RUN REPORT & VERSION COMPARE</p>
-            <div><h1 id="scene-c-title">结果与版本对比报告</h1><span class="status-pill completed">COMPLETED</span></div>
+            <p class="eyebrow">04 / REVIEW THE TIME TRAVEL</p>
+            <div><h1 id="scene-c-title">衡一的穿越成绩单</h1><span class="status-pill completed">COMPLETED</span></div>
           </div>
           <div class="report-digests"><span>v1 · strategy <code>2c64d48a…be17</code></span><span>snapshot <code>7460eeb6…85dc</code></span><span>Run <code>8ec5cb9d…cd70</code></span></div>
           <div class="toolbar-actions">
@@ -334,14 +344,17 @@
         <div class="source-ribbon"><span class="badge-dot"></span><strong>synthetic contract test</strong><span>手算合成数据 · 非真实行情 · 非收益承诺 · S2 CLI 与 golden 同源输出</span></div>
 
         <section class="human-report" aria-labelledby="human-report-title">
-          <div class="human-report-heading"><p class="eyebrow">PLAIN-LANGUAGE READBACK</p><h2 id="human-report-title">这次检验告诉你什么</h2><span>只从这份 synthetic golden 推导，不构成投资建议</span></div>
+          <div class="human-report-heading"><p class="eyebrow">MANAGER'S REVIEW</p><h2 id="human-report-title">这趟穿越告诉你什么</h2><span>只从这份 synthetic golden 推导，不构成投资建议</span></div>
           <div class="human-insights">
             <article><span>01</span><div><strong>一次完整的买进卖出，最后亏了 12.52 元</strong><p>1 月 2 日以 10.01 买入 100 股，1 月 5 日以 9.99 卖出；期末权益 1,987.48，已实现盈亏 -12.52 CNY。</p></div></article>
             <article><span>02</span><div><strong>真正难受的是 1 月 4 日那一天</strong><p>权益从前一天 2,193.99 降到 1,893.99，单日减少 300.00；这就是本样本 13.6737% 的最大回撤。</p></div></article>
             <article><span>03</span><div><strong>这次没跑过同期买入持有，但样本只有六天</strong><p>买入持有期末 1,993.99，策略为 1,987.48，少 6.51；超额 -0.3255%。六个合成 session 不能证明策略今后有效或无效。</p></div></article>
           </div>
+          <div class="review-dialogue">
+            <div class="review-question-list"><span>问衡一 · 预写规则复盘</span><button type="button" data-review-question="buy">为什么 1 月 2 日买入？</button><button type="button" data-review-question="drawdown">1 月 4 日发生了什么？</button><button type="button" data-review-question="sell">为什么 1 月 5 日卖出？</button></div>
+            <div class="review-answer" id="review-answer" aria-live="polite"><span class="chat-avatar">衡</span><p>选择一个问题时，我会按当时的事件和规则回答，不用未来信息，也不调用实时模型。</p></div>
+          </div>
         </section>
-
         <section class="metrics-row" aria-label="首屏四指标">
           <article class="metric-tile"><div class="metric-label">累计收益 <span>01</span></div><strong>-0.6260%</strong><p>初始资金 2,000.00 CNY</p><code>-0.006260000000</code></article>
           <article class="metric-tile"><div class="metric-label">最大回撤 <span>02</span></div><strong>13.6737%</strong><p>发生于 2024-01-04</p><code>0.136737177471</code></article>

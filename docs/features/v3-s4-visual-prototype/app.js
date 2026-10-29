@@ -417,7 +417,7 @@
       wrapper.className = `dialogue-message ${step.speaker}`;
       const speaker = document.createElement("span");
       speaker.className = "dialogue-speaker";
-      speaker.textContent = step.speaker === "ai" ? "策略私教 · 演示" : "你 · 演示";
+      speaker.textContent = step.speaker === "ai" ? "衡一 · 演示" : "你 · 演示";
       const bubble = document.createElement("div");
       bubble.className = "dialogue-bubble";
       bubble.textContent = step.text;
@@ -467,7 +467,7 @@
     $("#evidence-drawer").hidden = !state.evidenceOpen;
     $(".theatre-grid").classList.toggle("evidence-collapsed", !state.evidenceOpen);
     $("#toggle-evidence").setAttribute("aria-expanded", String(state.evidenceOpen));
-    $("#toggle-evidence").textContent = state.evidenceOpen ? "收起事件证据" : "事件证据";
+    $("#toggle-evidence").textContent = state.evidenceOpen ? "收起当时依据" : "问他当时依据";
   }
 
   function setEvidenceOpen(open) {
@@ -499,7 +499,6 @@
     message.hidden = !reason;
     message.textContent = reason;
     $("#open-workbench").disabled = Boolean(reason);
-    $("#send-onboarding-chat").disabled = Boolean(reason);
     $$('[data-dialogue-path]').forEach((button) => { button.disabled = Boolean(reason); });
     $("#open-workbench").title = reason || "打开预写新手对话；只形成 AST 与回读预览";
   }
@@ -684,6 +683,12 @@
     }
   }
 
+  const reviewAnswers = {
+    buy: "1 月 1 日收盘，入场条件成立，形成 intent-1；1 月 2 日开盘执行，以 10.01 买入 100 股，费用 5.01。这是前一日信号、次日执行，不是预知后来会涨。",
+    drawdown: "1 月 4 日收盘价是 9.00，仍持有 100 股，权益从前一日 2,193.99 降到 1,893.99，少了 300.00。当天 exit=true，随后形成次日卖出意图；判断只用了当时及之前的信息。",
+    sell: "1 月 4 日，barsHeld ≥ 2 的出场条件成立，形成 intent-2；1 月 5 日按这个意图以 9.99 卖出 100 股，费用 5.51。执行依据可以在事件抽屉里追溯。"
+  };
+
   function bindEvents() {
     $$(".scene-tab").forEach((button) => button.addEventListener("click", () => showScene(button.dataset.scene)));
     $$('[data-scene-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); showScene(link.dataset.sceneLink); }));
@@ -699,16 +704,6 @@
       if (state.dialogueStep < script.steps.length - 1) { state.dialogueStep += 1; renderDialogue(); }
     });
     $("#restart-dialogue").addEventListener("click", () => loadDialogue(state.dialoguePath, 0));
-    $("#onboarding-chat-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      if ($("#open-workbench").disabled) return;
-      const path = /macd|kdj|指标|金叉/i.test($("#onboarding-intent").value) ? "expert" : "novice";
-      startDialogue(path, 0);
-    });
-    $("#chat-golden-result").addEventListener("click", () => {
-      showScene("b");
-      toast("这是固定 S2 golden 的完整结果，不是首屏对话生成的新 Run。");
-    });
     $$('[data-market]').forEach((button) => button.addEventListener("click", () => {
       state.market = button.dataset.market;
       $$('[data-market]').forEach((item) => {
@@ -762,6 +757,17 @@
       renderDetail();
     }));
     $$('[data-table]').forEach((button) => button.addEventListener("click", () => openDataDialog(button.dataset.table)));
+    $$('[data-review-question]').forEach((button) => button.addEventListener("click", () => {
+      $$('[data-review-question]').forEach((item) => item.classList.toggle("active", item === button));
+      const answer = $("#review-answer");
+      answer.replaceChildren();
+      const avatar = document.createElement("span");
+      avatar.className = "chat-avatar";
+      avatar.textContent = "衡";
+      const text = document.createElement("p");
+      text.textContent = reviewAnswers[button.dataset.reviewQuestion];
+      answer.append(avatar, text);
+    }));
     $("#open-state-lab").addEventListener("click", openStateLab);
     $("#footer-state-lab").addEventListener("click", openStateLab);
     $("#close-state-lab").addEventListener("click", () => $("#state-lab").close());
