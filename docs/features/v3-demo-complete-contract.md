@@ -723,6 +723,14 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 - Chromium 完整指标证据为一次性探针；实测 Windows 11 / Node 24.18.0 / npm 11.16.0，Node 20、其他 OS、真实 Kimi、行情与外部数据仍未验证或调用。
 - 检验与独立复审证据保存于 `.local/sr007-s1-qa/`；worktree、分支与资源已清理。S2 的费用、结算、公司行动、成本配对和报告假设已在第 7.2.3 节冻结，不得由实现者自行改选。
 
+### 8.4 S2 交付与质量证据（2026-10-29）
+
+- SR-008 送审与合并 HEAD=`0dde9669d5c6ccd4a4e5f5ace5ee97a48ca47e05`，由 S2 实现 `3826ea7` 与六项独立复审修复组成；相对 `a785023` 共 36 个文件、+1751 行，仅含 S2 快照/股票内核/报告/CLI、生成类型与测试夹具，无依赖、旧模块、S3 或外部适配器改动，已 FF 合并本地 main，未推送。
+- 检验初检打回当根 context 滞后、`position.state` 缺失、财务 HALF_UP 误用、intent-fill 证据链四项，三项技术语义由规划直裁（A 首个允许成交 session／B 送转稀释剩余批次成本／C state=0 flat、1 long）并入 `a785023`；返修后检验 PASS。零上下文独立复审再 FAIL 六项（warmup 诊断/status、零持仓送转与双终态、停牌登记基数、买入持有停牌顺延、负 Price 入估值、公司行动伪空 refs），经限定返修后由检验与独立复审双复验 PASS。
+- 最终独立复跑 `npm ci && npm run check:generated && npm run typecheck && npm test` 退出码 0，17 个测试文件 116 个测试全绿，CLI/application 完整 RunEvent/Report hash 一致。原复审探针六场景复验全部符合预期：warmup details=36/0/36/0 且入 RunFailed payload、零基数送转唯一 RunCompleted、停牌登记基数 100 送转 10、买入持有顺延 finalEquity=1893.99 且 reason=null、负 close 估值前 DECIMAL_NEGATIVE_VALUE 精确 path 失败、公司行动/派息真实 refs；独立断言覆盖终态互斥、事件 seq/hash chain、event/report digest、每日四桶现金与持仓合计、最终现金/权益一致性，全部 PASS。
+- 实测环境为 Windows 11 / Node 24.18.0 / npm 11.16.0；Node 20、其他 OS、真实 Kimi、真实行情与外部数据仍未验证或调用，S3/S4 未开放。
+- 检验、独立复审与独立复验证据保存于 `.local/sr008-s2-qa/`（inspection／independent-review／independent-recheck）；worktree、分支与资源已清理。
+
 ---
 
 ## 9. 旧资产移植、归档与清理
