@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Stock-Race 策略指挥舱</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./data.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#scene-root">跳到场景内容</a>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-row">
+        <a class="brand" href="#a" data-scene-link="a" aria-label="Stock-Race 策略生成舱">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M6 8v16M16 4v24M26 10v12" />
+            <rect x="3" y="12" width="6" height="8" rx="1" />
+            <rect x="13" y="8" width="6" height="12" rx="1" />
+            <rect x="23" y="14" width="6" height="7" rx="1" />
+          </svg>
+          <span class="brand-copy"><strong>STOCK-RACE</strong><span>V3 · 模拟策略研究</span></span>
+        </a>
+        <nav class="scene-nav" aria-label="三场景">
+          <button class="scene-tab active" type="button" data-scene="a" aria-current="page"><span>A</span>策略生成舱</button>
+          <button class="scene-tab" type="button" data-scene="b"><span>B</span>历史推演剧场</button>
+          <button class="scene-tab" type="button" data-scene="c"><span>C</span>结果与版本对比</button>
+        </nav>
+        <div class="header-actions">
+          <span class="test-badge"><span class="badge-dot"></span>synthetic contract test</span>
+          <button class="button ghost compact" id="open-state-lab" type="button">状态走查</button>
+        </div>
+      </div>
+      <div class="context-row">
+        <div class="context-item">
+          <span class="context-label">工作策略</span>
+          <strong id="working-revision">synthetic-basic · v1</strong>
+          <code id="working-digest">2c64d48a…c9be17</code>
+          <span class="status-pill confirmed" id="working-status">CONFIRMED</span>
+        </div>
+        <div class="context-separator" aria-hidden="true"></div>
+        <div class="context-item run-context">
+          <span class="context-label">选中 Run</span>
+          <strong>s2-basic-six-sessions</strong>
+          <code>8ec5cb9d…acd70</code>
+          <span class="status-pill completed">COMPLETED</span>
+        </div>
+        <div class="context-source">hand-authored-synthetic · local only</div>
+      </div>
+    </header>
+
+    <main id="scene-root" tabindex="-1">
+      <section class="scene active" id="scene-a" data-scene-panel="a" aria-labelledby="scene-a-title">
+        <div class="scene-heading">
+          <div>
+            <p class="eyebrow">A / STRATEGY AUTHORING</p>
+            <h1 id="scene-a-title">把意图锁定为可审计规则</h1>
+          </div>
+          <div class="scene-heading-meta">
+            <span class="status-pill confirmed" id="a-status">CONFIRMED</span>
+            <span>registry <code>1.0.0</code></span>
+            <span>模型来源 <strong>S2 fixture · 非 Kimi</strong></span>
+          </div>
+        </div>
+
+        <div class="baseline-banner" id="baseline-banner" hidden>
+          <div><strong>基于 v1 调整</strong><span>旧 Run 保持只读；新语义必须重新校验、回读与确认。</span></div>
+          <code>base 2c64d48a…c9be17</code>
+        </div>
+
+        <div class="authoring-grid">
+          <section class="panel authoring-intent" aria-labelledby="a1-title">
+            <div class="panel-header">
+              <div><span class="region-id">A1</span><h2 id="a1-title">意图与修改历史</h2></div>
+              <span class="priority">P0</span>
+            </div>
+            <div class="panel-body intent-body">
+              <label class="field-label" for="strategy-intent">自然语言意图</label>
+              <textarea id="strategy-intent" rows="5" readonly>当常量条件 1 &gt; 0 成立时入场；持仓满 2 个 bar 后全部退出。只做多，不加仓。</textarea>
+              <p class="field-note">此说明由 S2 fixture AST 回读整理，不是自然语言生成记录。</p>
+              <details class="disclosure">
+                <summary>能力清单与示例 <span>registry 1.0.0</span></summary>
+                <dl class="compact-list">
+                  <div><dt>当前 observation</dt><dd>ohlcv</dd></div>
+                  <div><dt>本样本指标</dt><dd>无 · indicators: {}</dd></div>
+                  <div><dt>已用上下文</dt><dd>position.barsHeld</dd></div>
+                  <div><dt>资产执行</dt><dd>stock / cn-stock@1</dd></div>
+                </dl>
+              </details>
+              <div class="history-block">
+                <div class="section-label">修改与来源</div>
+                <ol class="history-list">
+                  <li><span class="history-node"></span><div><strong>S2 fixture 已载入</strong><span>basic-strategy.json · schema 1.0.0</span></div></li>
+                  <li><span class="history-node"></span><div><strong>真实模型请求</strong><span>未调用 · 不显示伪造 provenance</span></div></li>
+                </ol>
+              </div>
+            </div>
+            <div class="panel-footer split-footer">
+              <span class="microcopy">真实主流程不自动切 fake</span>
+              <button class="button secondary" type="button" disabled title="视觉原型未接入真实 Kimi">生成／重新生成</button>
+            </div>
+          </section>
+
+          <section class="panel authoring-rules" aria-labelledby="a2-title">
+            <div class="panel-header">
+              <div><span class="region-id">A2</span><h2 id="a2-title">结构化规则</h2></div>
+              <span class="priority">P0</span>
+            </div>
+            <div class="panel-body rules-body">
+              <div class="rule-title-row">
+                <div><span class="field-label">策略名</span><strong>S2 basic buy then sell</strong></div>
+                <code>schema 1.0.0</code>
+              </div>
+              <div class="rule-section">
+                <div class="section-label">入场 · <code>/entry</code></div>
+                <div class="logic-tree">
+                  <div class="logic-node root-node"><code>gt</code><span>常量比较</span></div>
+                  <div class="logic-branches">
+                    <div class="logic-node"><code>const</code><strong>1</strong></div>
+                    <div class="logic-node"><code>const</code><strong>0</strong></div>
+                  </div>
+                </div>
+              </div>
+              <div class="rule-section">
+                <div class="section-label">出场 · 有序优先级 01 <code>/exits/0</code></div>
+                <div class="condition-row"><code>gte</code><span>position.barsHeld</span><strong>2</strong></div>
+              </div>
+              <div class="rule-section position-rules">
+                <div><span>方向</span><strong>long only</strong></div>
+                <div><span>允许加仓</span><strong>false</strong></div>
+                <div><span>入场资金</span><strong>100%</strong></div>
+                <div><span>退出持仓</span><strong>100%</strong></div>
+              </div>
+              <details class="disclosure ast-disclosure">
+                <summary>canonical AST 只读视图 <span>真实 fixture</span></summary>
+                <pre id="ast-json"></pre>
+              </details>
+            </div>
+            <div class="panel-footer split-footer">
+              <span class="microcopy">辅助解释不覆盖权威回读</span>
+              <button class="button secondary" id="validate-button" type="button">重新校验</button>
+            </div>
+          </section>
+
+          <section class="panel authoring-readback" aria-labelledby="a3-title">
+            <div class="panel-header">
+              <div><span class="region-id">A3</span><h2 id="a3-title">校验与权威回读</h2></div>
+              <span class="priority">P0</span>
+            </div>
+            <div class="panel-body readback-body">
+              <div class="validation-ok"><span class="check-mark">✓</span><div><strong>校验通过</strong><span>0 errors · 0 warnings · 已形成可执行 canonical AST</span></div></div>
+              <div class="digest-block">
+                <span class="field-label">strategyDigest</span>
+                <button class="digest-value copyable" type="button" data-copy="sha256:2c64d48afe8815c82bd013701f9333abb8488db70be12b210533f4df50c9be17" title="复制完整 strategyDigest">2c64d48afe8815c82bd013701f9333abb8488db70be12b210533f4df50c9be17</button>
+              </div>
+              <div class="readback-summary">
+                <span class="source-tag">CANONICAL READBACK</span>
+                <h3>无条件入场，持有两个 bar 后退出</h3>
+                <p>每次入场使用全部可用资金；退出时卖出全部持仓。只做多，已有持仓时不追加。</p>
+              </div>
+              <div class="clause-list">
+                <div><span>入场</span><p>常量 <code>1</code> 大于常量 <code>0</code></p><code>/entry</code></div>
+                <div><span>出场</span><p><code>barsHeld ≥ 2</code></p><code>/exits/0</code></div>
+                <div><span>仓位</span><p>long · allowAdd=false</p><code>/position</code></div>
+              </div>
+              <div class="model-explanation"><span>模型辅助解释</span><strong>未提供</strong><p>本原型没有 Kimi 输出；此区不会替代权威回读。</p></div>
+            </div>
+            <div class="panel-footer confirm-footer">
+              <div><span class="field-label">ConfirmedRevision</span><strong id="confirm-label">v1 · digest 已锁定</strong></div>
+              <button class="button primary" id="confirm-button" type="button" disabled>策略已确认</button>
+            </div>
+          </section>
+        </div>
+
+        <section class="run-spec-panel" aria-labelledby="a4-title">
+          <div class="run-spec-heading">
+            <div><span class="region-id">A4</span><h2 id="a4-title">运行确认区</h2><span class="priority">P1 · 模型不可写</span></div>
+            <span class="data-quality"><span class="check-mark">✓</span> 0 quality issues · raw OHLCV · local synthetic only</span>
+          </div>
+          <div class="run-spec-grid">
+            <div><span>资产 / profile</span><strong>stock:synthetic.basic</strong><code>cn-stock@1</code></div>
+            <div><span>DataSnapshot</span><code>7460eeb6…385dc</code><strong>2024-01-01 → 01-06</strong></div>
+            <div><span>初始资金</span><strong>2,000.00 CNY</strong><code>warmup.extra = 0</code></div>
+            <div><span>费用 / 滑点</span><code>cn-stock-demo-fee@1</code><code>cn-stock-one-tick@1</code></div>
+            <div><span>结算 / 可见性</span><code>cn-stock-settlement@1</code><code>asset-default@1</code></div>
+            <div><span>引擎 / 注册表</span><code>engine 1.0.0</code><code>canonicalization@1</code></div>
+          </div>
+          <div class="run-spec-footer">
+            <p><strong>展示假设：</strong>raw 原始价 · share / CNY · 许可限本地合成契约测试 · 公司行动空数组</p>
+            <div class="run-action">
+              <span id="run-block-reason">原型动作：打开同源已完成 Run，不重新执行内核</span>
+              <button class="button primary run-button" id="run-button" type="button">运行回测 <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="scene" id="scene-b" data-scene-panel="b" aria-labelledby="scene-b-title" hidden>
+        <div class="run-summary-bar">
+          <div class="run-summary-title">
+            <span class="status-pill completed">COMPLETED</span>
+            <div><p class="eyebrow">B / READ-ONLY REPLAY</p><h1 id="scene-b-title">历史推演剧场</h1></div>
+          </div>
+          <div class="run-summary-facts">
+            <span>stock:synthetic.basic</span><span>2024-01-01 → 01-06</span><span>v1 · <code>2c64d48a…be17</code></span><span>Run <code>8ec5cb9d…cd70</code></span>
+          </div>
+          <div class="toolbar-actions">
+            <button class="button ghost compact" type="button" data-go="a">返回生成舱</button>
+            <button class="button secondary compact" type="button" data-adjust="b">基于此版本调整</button>
+            <button class="button primary compact" type="button" data-go="c">查看报告</button>
+          </div>
+        </div>
+
+        <div class="theatre-grid">
+          <div class="theatre-main">
+            <section class="panel price-panel" aria-labelledby="b1-title">
+              <div class="panel-header chart-header">
+                <div><span class="region-id">B1</span><h2 id="b1-title">原始价格</h2><span class="chart-subtitle">raw OHLCV · share / CNY</span></div>
+                <div class="chart-controls"><span class="unavailable-label">indicators: {} · 无指标序列</span><button class="text-button" type="button" data-table="price">数据表</button></div>
+              </div>
+              <div class="chart-legend" id="price-legend" aria-label="价格图例"></div>
+              <div class="chart-wrap" id="price-chart-wrap"><div id="price-chart" class="chart"></div><div class="chart-tooltip" id="price-tooltip" hidden></div></div>
+            </section>
+
+            <section class="panel events-panel" aria-labelledby="b2-title">
+              <div class="panel-header chart-header">
+                <div><span class="region-id">B2</span><h2 id="b2-title">信号与订单泳道</h2><span class="chart-subtitle" id="event-subset-label">关键事件投影</span></div>
+                <div class="event-filters" role="group" aria-label="事件过滤">
+                  <button class="filter-chip active" type="button" data-event-filter="all">全部</button>
+                  <button class="filter-chip" type="button" data-event-filter="signal">信号</button>
+                  <button class="filter-chip" type="button" data-event-filter="intent">意图</button>
+                  <button class="filter-chip" type="button" data-event-filter="fill">成交</button>
+                  <button class="filter-chip" type="button" data-event-filter="reject">拒单</button>
+                  <button class="filter-chip" type="button" data-event-filter="ledger">账本</button>
+                </div>
+              </div>
+              <div class="event-lanes" id="event-lanes"></div>
+            </section>
+
+            <section class="panel equity-panel" aria-labelledby="b3-title">
+              <div class="panel-header chart-header">
+                <div><span class="region-id">B3</span><h2 id="b3-title">净值与回撤</h2><span class="chart-subtitle">同一日期 cursor · 资金曲线与回撤分图</span></div>
+                <button class="text-button" type="button" data-table="daily">数据表</button>
+              </div>
+              <div class="equity-layout">
+                <div>
+                  <div class="chart-legend" id="equity-legend"></div>
+                  <div class="chart-wrap" id="equity-chart-wrap"><div id="equity-chart" class="chart"></div><div class="chart-tooltip" id="equity-tooltip" hidden></div></div>
+                </div>
+                <div>
+                  <div class="small-chart-title">回撤 <span>0 为无回撤</span></div>
+                  <div class="chart-wrap" id="drawdown-chart-wrap"><div id="drawdown-chart" class="chart"></div><div class="chart-tooltip" id="drawdown-tooltip" hidden></div></div>
+                </div>
+              </div>
+              <div class="cursor-account" id="cursor-account"></div>
+            </section>
+          </div>
+
+          <aside class="panel evidence-panel" aria-labelledby="b4-title">
+            <div class="panel-header">
+              <div><span class="region-id">B4</span><h2 id="b4-title">当日规则解释／事件证据</h2></div>
+              <span class="priority">P2</span>
+            </div>
+            <div class="event-evidence" id="event-evidence"></div>
+            <div class="evidence-navigation">
+              <button class="button ghost compact" id="previous-event" type="button">← 上一关键事件</button>
+              <button class="button ghost compact" id="next-event" type="button">下一关键事件 →</button>
+            </div>
+          </aside>
+        </div>
+
+        <section class="timeline-panel" aria-label="共享时间轴">
+          <div class="playback-controls">
+            <button class="play-button" id="play-button" type="button" aria-label="播放"><span aria-hidden="true">▶</span></button>
+            <button class="button ghost compact" id="pause-button" type="button" disabled>暂停</button>
+            <div class="speed-control" role="group" aria-label="播放速度">
+              <button class="active" type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button><button type="button" data-speed="4">4×</button>
+            </div>
+          </div>
+          <div class="timeline-track">
+            <div class="timeline-labels" id="timeline-labels"></div>
+            <input id="timeline-range" type="range" min="0" max="5" value="0" step="1" aria-label="回放日期 cursor">
+          </div>
+          <div class="timeline-status"><strong id="cursor-date">2024-01-01</strong><span id="cursor-seq">seq 4 / 33</span></div>
+          <button class="button secondary compact" id="jump-result" type="button">跳结果</button>
+          <p class="readonly-note"><span class="lock-icon" aria-hidden="true">◇</span>完整结果已算定 · 回放只读 · 不调用模型 · 不改变 hash</p>
+        </section>
+      </section>
+
+      <section class="scene" id="scene-c" data-scene-panel="c" aria-labelledby="scene-c-title" hidden>
+        <div class="report-identity-bar">
+          <div class="report-title">
+            <p class="eyebrow">C / RUN REPORT & VERSION COMPARE</p>
+            <div><h1 id="scene-c-title">结果与版本对比报告</h1><span class="status-pill completed">COMPLETED</span></div>
+          </div>
+          <div class="report-digests"><span>v1 · strategy <code>2c64d48a…be17</code></span><span>snapshot <code>7460eeb6…85dc</code></span><span>Run <code>8ec5cb9d…cd70</code></span></div>
+          <div class="toolbar-actions">
+            <button class="button ghost compact" type="button" data-go="b">返回剧场</button>
+            <button class="button secondary compact" type="button" data-adjust="c">基于此版本调整</button>
+          </div>
+        </div>
+
+        <div class="source-ribbon"><span class="badge-dot"></span><strong>synthetic contract test</strong><span>手算合成数据 · 非真实行情 · 非收益承诺 · S2 CLI 与 golden 同源输出</span></div>
+
+        <section class="metrics-row" aria-label="首屏四指标">
+          <article class="metric-tile"><div class="metric-label">累计收益 <span>01</span></div><strong>-0.6260%</strong><p>初始资金 2,000.00 CNY</p><code>-0.006260000000</code></article>
+          <article class="metric-tile"><div class="metric-label">最大回撤 <span>02</span></div><strong>13.6737%</strong><p>发生于 2024-01-04</p><code>0.136737177471</code></article>
+          <article class="metric-tile"><div class="metric-label">交易次数 <span>实际成交订单</span></div><strong>2</strong><p>2 fills · 另有 1 次拒单</p><code>tradeCount = 2</code></article>
+          <article class="metric-tile"><div class="metric-label">相对买入持有超额 <span>04</span></div><strong>-0.3255%</strong><p>基准累计收益 -0.3005%</p><code>-0.003255000000</code></article>
+        </section>
+
+        <div class="report-main-grid">
+          <section class="panel report-chart-panel" aria-labelledby="c2-chart-title">
+            <div class="panel-header chart-header">
+              <div><span class="region-id">C2</span><h2 id="c2-chart-title">收益与回撤</h2><span class="chart-subtitle">策略六日权益 · 买入持有仅提供期末点</span></div>
+              <button class="text-button" type="button" data-table="daily">数据表</button>
+            </div>
+            <div class="chart-legend" id="report-equity-legend"></div>
+            <div class="chart-wrap report-chart-wrap" id="report-equity-chart-wrap"><div id="report-equity-chart" class="chart"></div><div class="chart-tooltip" id="report-equity-tooltip" hidden></div></div>
+            <div class="report-drawdown" id="report-drawdown"></div>
+          </section>
+
+          <section class="panel compare-panel" aria-labelledby="compare-title">
+            <div class="panel-header">
+              <div><span class="region-id">C2</span><h2 id="compare-title">版本比较</h2></div>
+              <span class="status-pill pending">1 RUN</span>
+            </div>
+            <div class="compare-body">
+              <div class="version-selector baseline"><span>基线</span><div><strong>synthetic-basic · v1</strong><code>8ec5cb9d…cd70</code></div><span class="check-mark">✓</span></div>
+              <div class="compare-connector" aria-hidden="true"></div>
+              <button class="version-selector empty" id="select-compare" type="button"><span>比较版本</span><strong>选择已完成 v2</strong><code>当前无可比较 Run</code></button>
+              <div class="single-run-empty">
+                <h3>只有一个完成 Run</h3>
+                <p>保留 v1 的完整报告。v2 须重新确认并在同一数据与执行假设下运行，才能计算版本差值。</p>
+                <button class="button secondary" type="button" data-adjust="c">基于此版本调整并运行 v2</button>
+              </div>
+              <div class="alignment-preview">
+                <div class="section-label">对齐条件 · 等待 v2</div>
+                <div><span>资产 / 快照 / 区间</span><strong>待检查</strong></div>
+                <div><span>初始资金 / 执行假设</span><strong>待检查</strong></div>
+                <div><span>engine / registry / canonicalization</span><strong>待检查</strong></div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel report-details" aria-labelledby="c3-title">
+          <div class="panel-header detail-tabs-header">
+            <div><span class="region-id">C3</span><h2 id="c3-title">详细层</h2></div>
+            <div class="detail-tabs" role="tablist" aria-label="报告详细层">
+              <button class="active" type="button" role="tab" aria-selected="true" data-detail-tab="orders">订单 <span>5</span></button>
+              <button type="button" role="tab" aria-selected="false" data-detail-tab="fills">成交 <span>2</span></button>
+              <button type="button" role="tab" aria-selected="false" data-detail-tab="rejections">拒单 <span>1</span></button>
+              <button type="button" role="tab" aria-selected="false" data-detail-tab="fees">费用</button>
+              <button type="button" role="tab" aria-selected="false" data-detail-tab="cash">现金／持仓</button>
+              <button type="button" role="tab" aria-selected="false" data-detail-tab="pairing">胜率与成本配对</button>
+              <button type="button" role="tab" aria-selected="false" data-detail-tab="assumptions">假设／警告</button>
+            </div>
+          </div>
+          <div class="detail-content" id="detail-content" role="tabpanel"></div>
+        </section>
+
+        <section class="evidence-chain" aria-labelledby="c4-title">
+          <div class="evidence-chain-heading"><div><span class="region-id">C4</span><h2 id="c4-title">可复现证据链</h2></div><p>同一份 RunEvent[] 与 Report · CLI / application hash 一致</p></div>
+          <div class="evidence-chain-grid">
+            <div><span>runDigest</span><code>8ec5cb9d8718d9df21c9696ab299ca0841c7c2f8d77c3ccdf8f5a0fb7b1acd70</code><button class="text-button copy-button" type="button" data-copy="sha256:8ec5cb9d8718d9df21c9696ab299ca0841c7c2f8d77c3ccdf8f5a0fb7b1acd70">复制</button></div>
+            <div><span>eventDigest</span><code>d18be8504251057ad0b736d88f1bb73b30528d79dba9046df3af6c37552c7a26</code><button class="text-button copy-button" type="button" data-copy="sha256:d18be8504251057ad0b736d88f1bb73b30528d79dba9046df3af6c37552c7a26">复制</button></div>
+            <div><span>reportDigest</span><code>6132533bc35c4e16ddccdd5e4dd56b41d72c37215cfe92567171d5d455c717c5</code><button class="text-button copy-button" type="button" data-copy="sha256:6132533bc35c4e16ddccdd5e4dd56b41d72c37215cfe92567171d5d455c717c5">复制</button></div>
+          </div>
+          <div class="version-evidence"><span>engine <code>1.0.0</code></span><span>registry <code>1.0.0</code></span><span>canonicalization <code>canonicalization@1</code></span><span>decimal <code>decimal@1</code></span><span>rounding <code>rounding@1</code></span><span>indicator arithmetic <code>indicator-arithmetic@1</code></span></div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span><strong>模拟研究</strong> · 非实盘 / 非荐股 / 非收益承诺</span>
+      <span>S2 golden projection · 未接入真实 Kimi / 真实行情</span>
+      <button class="text-button" id="footer-state-lab" type="button">错误与空态走查</button>
+      <span>engine 1.0.0 · registry 1.0.0</span>
+    </footer>
+  </div>
+
+  <dialog class="state-lab" id="state-lab" aria-labelledby="state-lab-title">
+    <div class="state-lab-header">
+      <div><p class="eyebrow">DESIGN STATE LAB</p><h2 id="state-lab-title">关键错误与空态走查</h2><p>仅预览界面状态样式，不是新增 Run，也不修改 golden 数据。</p></div>
+      <button class="icon-button" id="close-state-lab" type="button" aria-label="关闭状态走查">×</button>
+    </div>
+    <div class="state-lab-body">
+      <div class="state-options" role="tablist" aria-label="状态样式">
+        <button class="active" type="button" data-preview-state="unconfirmed">未确认阻断</button>
+        <button type="button" data-preview-state="model-error">model-error</button>
+        <button type="button" data-preview-state="data-error">data-error / failed</button>
+        <button type="button" data-preview-state="no-trades">无交易</button>
+        <button type="button" data-preview-state="all-rejected">全部拒单</button>
+        <button type="button" data-preview-state="null-reason">null + reason</button>
+        <button type="button" data-preview-state="misaligned">compare 不对齐</button>
+      </div>
+      <div class="state-preview" id="state-preview" role="tabpanel"></div>
+    </div>
+    <div class="state-lab-footer"><span class="status-pill pending">视觉样式示例</span><span>真实失败不切 fake · 不可用指标不填 0 · 旧 Run 不被覆盖</span></div>
+  </dialog>
+
+  <dialog class="data-dialog" id="data-dialog" aria-labelledby="data-dialog-title">
+    <div class="data-dialog-header"><div><p class="eyebrow">ACCESSIBLE DATA VIEW</p><h2 id="data-dialog-title">图表数据表</h2></div><button class="icon-button" id="close-data-dialog" type="button" aria-label="关闭数据表">×</button></div>
+    <div class="data-table-wrap" id="data-dialog-content"></div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
