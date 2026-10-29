@@ -31,7 +31,7 @@ export function calculateFifoBatchOutcomes(
   for (const item of timeline) {
     if (item.kind === "bonus") {
       const batch = queue.find((candidate) => candidate.remaining > 0);
-      if (!batch) throw new ContractError("FIFO_BONUS_WITHOUT_OPEN_BATCH", "Bonus has no open cost batch");
+      if (!batch) continue;
       const action = item.action;
       const rawQuantity = internalDivide(
         internalMultiply(String(batch.remaining), String(action.ratioNumerator)),

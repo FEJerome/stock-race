@@ -7,6 +7,15 @@ import { calculateCumulativeReturn, calculateCurrentDrawdown, calculateMaxDrawdo
 import { validateReport } from "../market/contract-validators.js";
 import { ContractError } from "../strategy/canonical/errors.js";
 
+export function finalizeStockReport(report: Report, events: readonly RunEvent[]): Report {
+  const { reportDigest: _previousDigest, ...content } = report;
+  const base = { ...content, eventDigest: digestJson(events) };
+  const finalized = { ...base, reportDigest: digestJson(base) };
+  const issues = validateReport(finalized);
+  if (issues.length > 0) throw new ContractError(issues[0]!.code, issues[0]!.message, issues[0]!.path);
+  return finalized;
+}
+
 export function buildStockReport(
   input: StockRunInput,
   main: Simulation,
@@ -51,7 +60,7 @@ export function buildStockReport(
     buyAndHold: {
       finalEquity: buyHoldStarted ? buyHold.finalEquity : null,
       cumulativeReturn: buyHoldReturn,
-      reason: buyHoldStarted ? null : "NO_AFFORDABLE_STARTING_LOT",
+      reason: buyHoldStarted ? null : buyHold.buyHoldReason,
     },
     assumptions: [
       "cn-stock-demo-fee@1",

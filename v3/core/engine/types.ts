@@ -1,3 +1,4 @@
+import type { WarmupStatus } from "../strategy/evaluation/warmup.js";
 import type { DataSnapshot, Report, RunEvent, RunSpec } from "../market/types.js";
 import type { StrategyDraft } from "../strategy/generated/strategy-draft.types.js";
 
@@ -11,6 +12,7 @@ export interface RunFailure {
   readonly code: string;
   readonly message: string;
   readonly path: string;
+  readonly details?: WarmupStatus;
 }
 
 export type StockRunResult =
@@ -49,4 +51,5 @@ export interface Simulation {
   readonly position: Report["position"];
   readonly finalEquity: string;
   readonly equitySeries: string[];
+  readonly buyHoldReason: "NO_ELIGIBLE_FILL_SESSION" | "NO_AFFORDABLE_STARTING_LOT" | null;
 }

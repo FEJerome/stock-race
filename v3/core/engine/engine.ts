@@ -1,6 +1,6 @@
 import type Decimal from "decimal.js";
 import type { Report, RunEvent } from "../market/types.js";
-import { digestSnapshot } from "../market/snapshot.js";
+import { digestSnapshot, validateSnapshotValues } from "../market/snapshot.js";
 import { normalizeRunSpec } from "../market/run-spec.js";
 import { validateDataSnapshot, validateRunSpec } from "../market/contract-validators.js";
 import { ContractError } from "../strategy/canonical/errors.js";
@@ -14,11 +14,11 @@ import {
   internalMultiply,
   internalSubtract,
 } from "../strategy/canonical/rounding-profile.js";
-import { checkWarmup } from "../strategy/evaluation/warmup.js";
+import { checkWarmup, InsufficientWarmupError } from "../strategy/evaluation/warmup.js";
 import { evaluateStrategy } from "../strategy/evaluation/evaluate.js";
 import { createRegistryV1 } from "../strategy/registry/v1.js";
 import type { Observation, Series } from "../strategy/registry/types.js";
-import { buildStockReport } from "../report/report.js";
+import { buildStockReport, finalizeStockReport } from "../report/report.js";
 import { calculateFees, maxAffordableBuyQuantity, validateSellQuantity, CN_STOCK_FEE_PROFILE } from "./profiles.js";
 import type { FillRecord, OrderRecord, Simulation, StockRunInput, StockRunResult } from "./types.js";
 
@@ -84,7 +84,9 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
   let unsettled = new InternalDecimal(0);
   let receivable = new InternalDecimal(0);
   let reservedPosition = 0;
-  const buyHoldStartIndex = buyHold && rangeIndices.length > 1 ? rangeIndices[1]! : -1;
+  const buyHoldStartIndex = buyHold && rangeIndices.length > 1
+    ? rangeIndices.slice(1).find((index) => sessions[index]!.status === "trading") ?? -1
+    : -1;
   let pending: PendingIntent | null = null;
   let nextIntentId = 1;
   const buyIndices: number[] = [];
@@ -149,11 +151,21 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
     for (const action of snapshot.corporateActions.filter((item) => item.exDate === date)) {
       const base = recordedPositions.get(action.recordDate);
       if (base === undefined) throw new ContractError("MISSING_CORPORATE_ACTION_BASE", `No record-date position for ${action.type}`);
+      const inputRefs = {
+        snapshot: snapshot.digest,
+        corporateAction: action.type,
+        recordDate: action.recordDate,
+        exDate: action.exDate,
+      };
+      if (base === 0) {
+        ledger.add(date, "session-open", "CorporateActionApplied", ["ZERO_BASE"], { quantity: "0" }, inputRefs);
+        continue;
+      }
       if (action.type === "cashDividend") {
         const amount = money(internalMultiply(String(base), action.cashPerShare));
         receivable = internalAdd(receivable, amount);
         claims.push({ amount, payDate: action.payDate });
-        ledger.add(date, "session-open", "CorporateActionApplied", ["DIVIDEND_RECEIVABLE"], { quantity: String(base), amount });
+        ledger.add(date, "session-open", "CorporateActionApplied", ["DIVIDEND_RECEIVABLE"], { quantity: String(base), amount }, inputRefs);
       } else {
         const rawQuantity = internalDivide(internalMultiply(String(base), String(action.ratioNumerator)), String(action.ratioDenominator));
         if (!rawQuantity.isInteger()) throw new ContractError("FRACTIONAL_BONUS_QUANTITY", "Bonus quantity is not an integer");
@@ -161,14 +173,18 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
         const listingIndex = sessions.findIndex((item) => item.date === action.listingDate);
         if (listingIndex < 0) throw new ContractError("MISSING_BONUS_LISTING_DATE", "Bonus listing session is missing");
         lots.push({ originalQuantity: quantity, remaining: quantity, availableIndex: listingIndex, entryPrice: "0.00" });
-        ledger.add(date, "session-open", "CorporateActionApplied", ["BONUS_POSITION"], { quantity: String(quantity), listingDate: action.listingDate });
+        ledger.add(date, "session-open", "CorporateActionApplied", ["BONUS_POSITION"], { quantity: String(quantity), listingDate: action.listingDate }, inputRefs);
       }
     }
     for (const claim of [...claims].filter((item) => item.payDate === date)) {
       available = internalAdd(available, claim.amount);
       receivable = internalSubtract(receivable, claim.amount);
       claims.splice(claims.indexOf(claim), 1);
-      ledger.add(date, "session-open", "CashChanged", ["DIVIDEND_PAID"], { amount: claim.amount });
+      ledger.add(date, "session-open", "CashChanged", ["DIVIDEND_PAID"], { amount: claim.amount }, {
+        snapshot: snapshot.digest,
+        corporateAction: "cashDividend",
+        receivable: claim.amount,
+      });
     }
 
     if (buyHold && index === buyHoldStartIndex) {
@@ -264,6 +280,7 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
     }
 
     if (session.status === "suspended") {
+      recordedPositions.set(date, totalPosition());
       ledger.add(date, "close", "MarkToMarket", ["STALE"], { close: lastClose, equity: equityAt(lastClose) });
       daily.push({ date, equity: equityAt(lastClose), drawdown: "0.000000000000", cash: cashSnapshot(), position: positionSnapshot(index) });
       equitySeries.push(equityAt(lastClose));
@@ -382,13 +399,24 @@ function simulate(input: StockRunInput, runDigest: string, ledger: EventLedger, 
     position: daily.at(-1)?.position ?? positionSnapshot(rangeIndices.at(-1)!),
     finalEquity: daily.at(-1)?.equity ?? money(availableStart),
     equitySeries,
+    buyHoldReason: buyHold
+      ? buyHoldStartIndex === -1
+        ? "NO_ELIGIBLE_FILL_SESSION"
+        : fills.some((fill) => fill.side === "buy") ? null : "NO_AFFORDABLE_STARTING_LOT"
+      : null,
   };
 }
 
 function failure(runDigest: string, ledger: EventLedger, error: ContractError): StockRunResult {
   const date = ledger.events.at(-1)?.tradingDate ?? "1970-01-01";
-  ledger.add(date, "run-end", "RunFailed", [error.code], { code: error.code, path: error.path, message: error.message });
-  return { ok: false, runDigest, events: ledger.events, error: { code: error.code, message: error.message, path: error.path } };
+  const details = error instanceof InsufficientWarmupError ? error.status : undefined;
+  ledger.add(date, "run-end", "RunFailed", [error.code], { code: error.code, path: error.path, message: error.message, ...details });
+  return {
+    ok: false,
+    runDigest,
+    events: ledger.events,
+    error: { code: error.code, message: error.message, path: error.path, ...(details ? { details } : {}) },
+  };
 }
 
 export function executeStockRun(originalInput: StockRunInput): StockRunResult {
@@ -402,6 +430,7 @@ export function executeStockRun(originalInput: StockRunInput): StockRunResult {
     if (specIssues.length > 0) throw new ContractError(specIssues[0]!.code, specIssues[0]!.message, specIssues[0]!.path);
     const snapshotIssues = validateDataSnapshot(input.snapshot);
     if (snapshotIssues.length > 0) throw new ContractError(snapshotIssues[0]!.code, snapshotIssues[0]!.message, snapshotIssues[0]!.path);
+    validateSnapshotValues(input.snapshot);
     const initialCash = input.runSpec.account.initialCash;
     if (new InternalDecimal(initialCash).lt(1000) || new InternalDecimal(initialCash).gt(100000000)) {
       throw new ContractError("INVALID_INITIAL_CASH", "Initial cash must be between 1000 and 100000000 CNY", "/account/initialCash");
@@ -418,9 +447,10 @@ export function executeStockRun(originalInput: StockRunInput): StockRunResult {
 
     const main = simulate(input, runDigest, ledger, false);
     const buyHold = simulate(input, runDigest, new EventLedger(runDigest), true);
+    const preliminaryReport = buildStockReport(input, main, buyHold, ledger.events, runDigest);
     ledger.add(input.runSpec.data.end, "run-end", "MetricComputed", [], { finalEquity: main.finalEquity });
     ledger.add(input.runSpec.data.end, "run-end", "RunCompleted", [], { eventCount: ledger.events.length + 1 });
-    const report = buildStockReport(input, main, buyHold, ledger.events, runDigest);
+    const report = finalizeStockReport(preliminaryReport, ledger.events);
     return { ok: true, runDigest, events: ledger.events, report };
   } catch (error) {
     if (error instanceof ContractError) return failure(runDigest, ledger, error);
