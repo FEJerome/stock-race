@@ -5,7 +5,7 @@
   const NS = "http://www.w3.org/2000/svg";
   const COLORS = { accent: "#3987e5", compare: "#d95926", neutral: "#898781", grid: "#2c2c2a", surface: "#1a1a19" };
   const dates = D.snapshot.sessions.map((session) => session.date);
-  const state = { scene: "a", aView: "onboarding", market: "china", cursor: 0, selectedSeq: 4, filter: "all", speed: 1, playing: false, timer: null, detail: "orders", working: "confirmed" };
+  const state = { scene: "a", aView: "onboarding", market: "china", dialoguePath: "novice", dialogueStep: 0, baseline: false, evidenceOpen: false, cursor: 0, selectedSeq: 4, filter: "all", speed: 1, playing: false, timer: null, detail: "orders", working: "drafting" };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const esc = (value) => String(value ?? "—").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -263,7 +263,11 @@
           button.textContent = `#${event.seq}`;
           button.title = `${event.type} · ${event.reasonCodes.join(", ") || "no reason code"}`;
           button.setAttribute("aria-label", `${date} seq ${event.seq} ${event.type}`);
-          button.addEventListener("click", () => setCursor(dateIndex, event.seq));
+          button.addEventListener("click", () => {
+            state.evidenceOpen = true;
+            syncEvidenceDrawer();
+            setCursor(dateIndex, event.seq);
+          });
           cell.append(button);
         });
         container.append(cell);
@@ -295,6 +299,8 @@
   }
 
   function renderTheatre() {
+    syncEvidenceDrawer();
+    $$('[data-story-cursor]').forEach((button) => button.classList.toggle("active", Number(button.dataset.storyCursor) === state.cursor));
     $("#timeline-range").value = state.cursor;
     $("#cursor-date").textContent = dates[state.cursor];
     $("#cursor-seq").textContent = `seq ${state.selectedSeq} / 33 · 34 events`;
@@ -337,6 +343,139 @@
     }, 900 / state.speed);
   }
 
+  const dialogueScripts = {
+    novice: {
+      label: "新手对话",
+      steps: [
+        { speaker: "ai", text: "你想验证什么投资想法？随便说，不用术语。", stage: 0 },
+        { speaker: "user", text: "低买高卖，能验证吗？", stage: 0 },
+        { speaker: "ai", text: "可以。先把“低”说清楚：价格到多少，你才愿意买？我只帮你把规则说明白，不推荐买点。", stage: 0, level: "水平判断：白话目标 → 先问可计算的触发条件" },
+        { speaker: "user", text: "收盘价跌到 9 元或更低就买。", stage: 1 },
+        { speaker: "ai", text: "入场能计算了：close ≤ 9。那什么时候卖？", stage: 1 },
+        { speaker: "user", text: "涨到 12 元就卖；等不到的话，20 天后也卖。", stage: 2 },
+        { speaker: "ai", text: "出场也有了。每次用多少资金？已经持有时还要加仓吗？", stage: 2 },
+        { speaker: "user", text: "每次用一半资金，不加仓。", stage: 3 },
+        { speaker: "ai", text: "规则齐了。右边是从这份 AST 映射的回读预览；真实流程仍须校验、权威回读，再由你按 expectedDigest 确认。", stage: 4, level: "语言适配：保留“买入／卖出”，术语只作辅助解释" }
+      ],
+      strategy: {
+        schemaVersion: "1.0.0", name: "低买高卖 · 对话演示", indicators: {},
+        entry: { lte: [{ ref: "close" }, { const: "9" }] },
+        exits: [{ any: [{ gte: [{ ref: "close" }, { const: "12" }] }, { gte: [{ ref: "position.barsHeld" }, { const: "20" }] }] }],
+        position: { side: "long", allowAdd: false, entrySize: { cashFraction: "0.50" }, exitSize: { positionFraction: "1.00" } }
+      },
+      summary: "收盘价不高于 9 元时买入；收盘价不低于 12 元，或持有满 20 个 bar 时全部卖出。",
+      clauses: [["入场", "close ≤ 9", "/entry"], ["出场", "close ≥ 12 或 barsHeld ≥ 20", "/exits/0"], ["仓位", "50% 资金 · 不加仓 · 全部退出", "/position"]]
+    },
+    expert: {
+      label: "老手对话",
+      steps: [
+        { speaker: "ai", text: "你想验证什么投资想法？指标和参数都可以直接说。", stage: 0 },
+        { speaker: "user", text: "MACD 三日内金叉，KDJ 过滤。", stage: 1 },
+        { speaker: "ai", text: "你给了明确指标和时间窗。KDJ 过滤是 K>D 且 J<90 吗？MACD 用 12/26/9、KDJ 用 9/3/3？出场和仓位怎么定？", stage: 1, level: "水平判断：指标＋窗口明确 → 直接核对参数与缺口" },
+        { speaker: "user", text: "对。死叉或持有 20 个 bar 退出；每次 50% 资金，不加仓。", stage: 3 },
+        { speaker: "ai", text: "参数与入出场都齐了。右边是 AST 回读预览；真实流程仍须校验、权威回读和 expectedDigest 确认。", stage: 4, level: "语言适配：保留专业缩写，不重复解释已知概念" }
+      ],
+      strategy: {
+        schemaVersion: "1.0.0", name: "MACD 三日内金叉，KDJ 过滤",
+        indicators: { m: { use: "macd@1", params: { fast: 12, slow: 26, signal: 9 } }, k: { use: "kdj@1", params: { period: 9, kSmooth: 3, dSmooth: 3 } } },
+        entry: { all: [{ within: { window: 3, condition: { crossAbove: [{ ref: "m.dif" }, { ref: "m.dea" }] } } }, { gt: [{ ref: "k.k" }, { ref: "k.d" }] }, { lt: [{ ref: "k.j" }, { const: "90" }] }] },
+        exits: [{ any: [{ crossBelow: [{ ref: "m.dif" }, { ref: "m.dea" }] }, { gte: [{ ref: "position.barsHeld" }, { const: "20" }] }] }],
+        position: { side: "long", allowAdd: false, entrySize: { cashFraction: "0.50" }, exitSize: { positionFraction: "1.00" } }
+      },
+      summary: "三日内 MACD 金叉，且 K>D、J<90 时入场；死叉或持有满 20 个 bar 时退出。",
+      clauses: [["指标", "MACD 12/26/9 · KDJ 9/3/3", "/indicators"], ["入场", "within 3 · crossAbove · K>D · J<90", "/entry"], ["出场", "crossBelow 或 barsHeld ≥ 20", "/exits/0"], ["仓位", "50% 资金 · 不加仓 · 全部退出", "/position"]]
+    }
+  };
+
+  function loadDialogue(path, step = 0) {
+    state.dialoguePath = dialogueScripts[path] ? path : "novice";
+    state.dialogueStep = Math.max(0, Math.min(step, dialogueScripts[state.dialoguePath].steps.length - 1));
+    state.working = "drafting";
+    state.baseline = false;
+    updateWorkingState();
+    renderDialogue();
+  }
+
+  function startDialogue(path, step = 0) {
+    loadDialogue(path, step);
+    showAView("workbench");
+    toast("这是预写对话脚本，不是 Kimi 实时回复；只形成 AST 与回读预览，不生成新 Run。");
+  }
+
+  function renderDialogue() {
+    const script = dialogueScripts[state.dialoguePath];
+    const stage = script.steps[state.dialogueStep].stage;
+    $$('[data-script-path]').forEach((button) => {
+      const active = button.dataset.scriptPath === state.dialoguePath;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    const stream = $("#dialogue-stream");
+    stream.replaceChildren();
+    script.steps.slice(0, state.dialogueStep + 1).forEach((step) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = `dialogue-message ${step.speaker}`;
+      const speaker = document.createElement("span");
+      speaker.className = "dialogue-speaker";
+      speaker.textContent = step.speaker === "ai" ? "策略私教 · 演示" : "你 · 演示";
+      const bubble = document.createElement("div");
+      bubble.className = "dialogue-bubble";
+      bubble.textContent = step.text;
+      wrapper.append(speaker, bubble);
+      if (step.level) {
+        const level = document.createElement("span");
+        level.className = "level-judgment";
+        level.textContent = step.level;
+        wrapper.append(level);
+      }
+      stream.append(wrapper);
+    });
+    stream.scrollTop = stream.scrollHeight;
+    $("#dialogue-progress").textContent = `${state.dialogueStep + 1} / ${script.steps.length}`;
+    $("#next-dialogue").disabled = state.dialogueStep === script.steps.length - 1;
+    $("#next-dialogue").textContent = state.dialogueStep === script.steps.length - 1 ? "对话已收敛" : "下一句 →";
+    renderRulesPreview(script, stage);
+    renderReadbackPreview(script, stage);
+    updateWorkingState();
+  }
+
+  function renderRulesPreview(script, stage) {
+    const expert = state.dialoguePath === "expert";
+    const entry = stage >= 1 ? (expert ? "三日内 MACD 金叉 + K>D + J<90" : "close ≤ 9") : "等你说清楚买入条件";
+    const exit = stage >= 2 ? (expert ? "MACD 死叉或 barsHeld ≥ 20" : "close ≥ 12 或 barsHeld ≥ 20") : "继续追问：什么时候卖？";
+    const position = stage >= 3;
+    $("#rules-body").innerHTML = `
+      <div class="rule-title-row"><div><span class="field-label">策略草稿 · 演示</span><strong>${stage >= 4 ? esc(script.strategy.name) : "规则还在对话中"}</strong></div><code>schema 1.0.0</code></div>
+      ${expert && stage >= 1 ? `<div class="rule-section rule-formed"><div class="section-label">指标与参数</div><div class="indicator-parameters"><div><code>MACD</code><span>12 / 26 / 9</span></div><div><code>KDJ</code><span>9 / 3 / 3</span></div></div></div>` : ""}
+      <div class="rule-section ${stage >= 1 ? "rule-formed" : ""}"><div class="section-label">入场 · <code>/entry</code></div>${stage >= 1 ? `<div class="condition-row"><code>${expert ? "all" : "lte"}</code><span>${esc(entry)}</span></div>` : `<div class="rule-placeholder">${esc(entry)}</div>`}</div>
+      <div class="rule-section ${stage >= 2 ? "rule-formed" : ""}"><div class="section-label">出场 · <code>/exits/0</code></div>${stage >= 2 ? `<div class="condition-row"><code>any</code><span>${esc(exit)}</span></div>` : `<div class="rule-placeholder">${esc(exit)}</div>`}</div>
+      <div class="rule-section ${position ? "rule-formed" : ""}"><div class="section-label">仓位 · <code>/position</code></div>${position ? `<div class="position-rules"><div><span>方向</span><strong>long only</strong></div><div><span>允许加仓</span><strong>false</strong></div><div><span>入场资金</span><strong>50%</strong></div><div><span>退出持仓</span><strong>100%</strong></div></div>` : `<div class="rule-placeholder">最后确认资金使用方式</div>`}</div>
+      ${stage >= 4 ? `<details class="disclosure ast-disclosure"><summary>AST 示例 · 未执行实时校验</summary><pre>${esc(JSON.stringify(script.strategy, null, 2))}</pre></details>` : ""}`;
+  }
+
+  function renderReadbackPreview(script, stage) {
+    const ready = stage >= 4;
+    $("#readback-body").innerHTML = `
+      <div class="readback-pipeline"><span class="${ready ? "ready" : ""}">AST</span>→<span>校验</span>→<span>权威回读</span>→<span>expectedDigest</span></div>
+      <div class="validation-pending"><strong>${ready ? "对话已收敛到 AST" : "规则尚未完整"}</strong><span>${ready ? "演示未执行校验；不得跳过权威回读与确认" : "对话继续时，确认与运行保持阻断"}</span></div>
+      <div class="digest-block"><span class="field-label">strategyDigest</span><code>待真实 canonicalization 与校验生成</code></div>
+      ${ready ? `<div class="readback-summary"><span class="source-tag">READBACK PREVIEW · FROM SCRIPT AST</span><h3>${esc(script.summary)}</h3><p>这不是模型散文；真实权威回读只能由 canonical AST 与注册表模板生成。</p></div><div class="clause-list">${script.clauses.map(([label, text, path]) => `<div><span>${esc(label)}</span><p>${esc(text)}</p><code>${esc(path)}</code></div>`).join("")}</div>` : `<div class="rule-placeholder">入场、出场和仓位齐全后，这里显示回读预览。</div>`}
+      <div class="model-explanation"><span>模型辅助解释</span><strong>预写脚本</strong><p>辅助解释永不替代权威回读。</p></div>`;
+  }
+
+  function syncEvidenceDrawer() {
+    $("#evidence-drawer").hidden = !state.evidenceOpen;
+    $(".theatre-grid").classList.toggle("evidence-collapsed", !state.evidenceOpen);
+    $("#toggle-evidence").setAttribute("aria-expanded", String(state.evidenceOpen));
+    $("#toggle-evidence").textContent = state.evidenceOpen ? "收起事件证据" : "事件证据";
+  }
+
+  function setEvidenceOpen(open) {
+    state.evidenceOpen = Boolean(open);
+    syncEvidenceDrawer();
+    renderTheatre();
+  }
+
   function syncAView() {
     const onboarding = state.aView === "onboarding";
     $("#onboarding-view").hidden = !onboarding;
@@ -360,7 +499,9 @@
     message.hidden = !reason;
     message.textContent = reason;
     $("#open-workbench").disabled = Boolean(reason);
-    $("#open-workbench").title = reason || "打开固定 S2 golden 的策略生成舱，不根据首屏输入生成策略";
+    $("#send-onboarding-chat").disabled = Boolean(reason);
+    $$('[data-dialogue-path]').forEach((button) => { button.disabled = Boolean(reason); });
+    $("#open-workbench").title = reason || "打开预写新手对话；只形成 AST 与回读预览";
   }
 
   function showScene(scene, updateHash = true) {
@@ -385,23 +526,26 @@
   }
 
   function updateWorkingState() {
-    const drafting = state.working === "drafting";
-    $("#working-revision").textContent = drafting ? "新草稿 · 基于 synthetic-basic v1" : "synthetic-basic · v1";
-    $("#working-digest").textContent = drafting ? "digest 待生成" : "2c64d48a…c9be17";
-    $("#working-status").textContent = drafting ? "DRAFTING" : "CONFIRMED";
-    $("#working-status").className = `status-pill ${drafting ? "drafting" : "confirmed"}`;
-    $("#a-status").textContent = drafting ? "DRAFTING" : "CONFIRMED";
-    $("#a-status").className = `status-pill ${drafting ? "drafting" : "confirmed"}`;
-    $("#baseline-banner").hidden = !drafting;
-    $("#run-button").disabled = drafting;
-    $("#run-block-reason").textContent = drafting ? "新 revision 尚未确认；旧 Run 仍可从 B / C 只读查看" : "原型动作：打开同源已完成 Run，不重新执行内核";
-    $("#confirm-label").textContent = drafting ? "新 revision 待校验与确认" : "v1 · digest 已锁定";
-    $("#confirm-button").textContent = drafting ? "新草稿未确认" : "策略已确认";
+    const script = dialogueScripts[state.dialoguePath];
+    const complete = script.steps[state.dialogueStep].stage >= 4;
+    $("#working-revision").textContent = state.baseline ? "新草稿 · 基于 synthetic-basic v1" : `${script.label} · AST 演示`;
+    $("#working-digest").textContent = "digest 待真实校验";
+    $("#working-status").textContent = "SCRIPT DEMO";
+    $("#working-status").className = "status-pill drafting";
+    $("#a-status").textContent = complete ? "AST READY" : "DIALOGUING";
+    $("#a-status").className = "status-pill drafting";
+    $("#baseline-banner").hidden = !state.baseline;
+    $("#run-button").disabled = true;
+    $("#run-block-reason").textContent = "预写脚本未经过真实校验与 expectedDigest 确认；旧 golden Run 仍可从 B / C 只读查看";
+    $("#confirm-label").textContent = complete ? "AST 示例 · 待真实校验与确认" : "对话尚未收敛";
+    $("#confirm-button").textContent = "确认需真实流程";
+    $("#confirm-button").disabled = true;
   }
 
   function adjustFromRun() {
     state.working = "drafting";
     state.aView = "workbench";
+    state.baseline = true;
     updateWorkingState();
     showScene("a");
     toast("已带回 v1 基线；新草稿未确认，旧 Run 与报告保持只读。未生成新 digest。");
@@ -548,15 +692,23 @@
       showScene(button.dataset.go);
     }));
     $$('[data-adjust]').forEach((button) => button.addEventListener("click", adjustFromRun));
-    $$('[data-template]').forEach((button) => button.addEventListener("click", () => {
-      $("#onboarding-intent").value = button.dataset.prompt;
-      $$('[data-template]').forEach((item) => {
-        const selected = item === button;
-        item.classList.toggle("selected", selected);
-        item.setAttribute("aria-pressed", String(selected));
-      });
-      $("#onboarding-intent").focus();
-    }));
+    $$('[data-dialogue-path]').forEach((button) => button.addEventListener("click", () => startDialogue(button.dataset.dialoguePath, 1)));
+    $$('[data-script-path]').forEach((button) => button.addEventListener("click", () => loadDialogue(button.dataset.scriptPath, 0)));
+    $("#next-dialogue").addEventListener("click", () => {
+      const script = dialogueScripts[state.dialoguePath];
+      if (state.dialogueStep < script.steps.length - 1) { state.dialogueStep += 1; renderDialogue(); }
+    });
+    $("#restart-dialogue").addEventListener("click", () => loadDialogue(state.dialoguePath, 0));
+    $("#onboarding-chat-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      if ($("#open-workbench").disabled) return;
+      const path = /macd|kdj|指标|金叉/i.test($("#onboarding-intent").value) ? "expert" : "novice";
+      startDialogue(path, 0);
+    });
+    $("#chat-golden-result").addEventListener("click", () => {
+      showScene("b");
+      toast("这是固定 S2 golden 的完整结果，不是首屏对话生成的新 Run。");
+    });
     $$('[data-market]').forEach((button) => button.addEventListener("click", () => {
       state.market = button.dataset.market;
       $$('[data-market]').forEach((item) => {
@@ -568,17 +720,20 @@
     }));
     $("#onboarding-start").addEventListener("change", updateOnboardingGate);
     $("#onboarding-end").addEventListener("change", updateOnboardingGate);
-    $("#open-workbench").addEventListener("click", () => {
-      showAView("workbench");
-      toast("已打开固定 S2 golden 示例；首屏输入未用于生成策略，也未调用 AI 或真实行情。");
-    });
+    $("#open-workbench").addEventListener("click", () => startDialogue("novice", 0));
     $("#back-onboarding").addEventListener("click", () => showAView("onboarding"));
     $("#onboarding-to-b").addEventListener("click", () => {
       showScene("b");
       toast("当前为固定 S2 golden 的只读历史推演，不代表首屏所选资产或区间的新运行。");
     });
     $("#run-button").addEventListener("click", () => { showScene("b"); toast("已打开 S2 同源完整 Run 的只读投影；未重新运行、未调用模型或网络。"); });
-    $("#validate-button").addEventListener("click", () => toast("视觉原型仅展示已通过校验的 fixture AST；未执行新校验。"));
+    $("#validate-button").addEventListener("click", () => toast("演示脚本未执行实时校验；真实流程必须完成 AST 校验、权威回读与 expectedDigest 确认。"));
+    $("#toggle-evidence").addEventListener("click", () => setEvidenceOpen(!state.evidenceOpen));
+    $$('[data-story-cursor]').forEach((button) => button.addEventListener("click", () => {
+      state.evidenceOpen = false;
+      syncEvidenceDrawer();
+      setCursor(Number(button.dataset.storyCursor), Number(button.dataset.storySeq));
+    }));
     $("#play-button").addEventListener("click", startPlayback);
     $("#pause-button").addEventListener("click", stopPlayback);
     $("#timeline-range").addEventListener("input", (event) => setCursor(Number(event.target.value)));
@@ -631,16 +786,15 @@
   }
 
   function init() {
-    $("#ast-json").textContent = JSON.stringify(D.strategy, null, 2);
     renderLegend($("#price-legend"), [
       { label: "上涨", color: COLORS.accent, mark: "swatch" }, { label: "下跌", color: COLORS.compare, mark: "swatch" },
       { label: "平盘", color: COLORS.neutral, mark: "swatch" }, { label: "B 买入 / S 卖出（实际 fills）", color: COLORS.accent, mark: "dot" }
     ]);
     $("#timeline-labels").innerHTML = dates.map((date) => `<span>${shortDate(date)}</span>`).join("");
     renderDetail();
+    loadDialogue("novice", 0);
     bindEvents();
     updateOnboardingGate();
-    updateWorkingState();
     showScene(location.hash.slice(1) || "a", false);
   }
 
