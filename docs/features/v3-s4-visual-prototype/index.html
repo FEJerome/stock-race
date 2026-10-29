@@ -15,12 +15,7 @@
     <header class="app-header">
       <div class="brand-row">
         <a class="brand" href="#a" data-scene-link="a" aria-label="Stock-Race 策略生成舱">
-          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M6 8v16M16 4v24M26 10v12" />
-            <rect x="3" y="12" width="6" height="8" rx="1" />
-            <rect x="13" y="8" width="6" height="12" rx="1" />
-            <rect x="23" y="14" width="6" height="7" rx="1" />
-          </svg>
+          <img class="brand-logo" src="./hengyi-logo.svg" alt="衡一标识">
           <span class="brand-copy"><strong>STOCK-RACE</strong><span>V3 · 模拟策略研究</span></span>
         </a>
         <nav class="scene-nav" aria-label="三场景">
@@ -30,6 +25,8 @@
         </nav>
         <div class="header-actions">
           <span class="test-badge"><span class="badge-dot"></span>synthetic contract test</span>
+          <button class="button ghost compact" id="home-button" type="button">主页</button>
+          <button class="button ghost compact theme-toggle" id="theme-toggle" type="button" aria-label="切换到浅色主题"><span id="theme-icon" aria-hidden="true">☀</span><span id="theme-label">Light</span></button>
           <button class="button ghost compact" id="open-state-lab" type="button">状态走查</button>
         </div>
       </div>
@@ -59,32 +56,31 @@
             <div class="manager-hero-copy">
               <p class="eyebrow">HIRE YOUR AI MANAGER. REWIND THE MARKET.</p>
               <h1 id="scene-a-title">雇一位 AI 股票经理人，<br>送他回到过去的市场。</h1>
-              <p class="onboarding-lead">你出想法，他陪你把规则说清楚。再让他回到某段历史，只用当时能看见的数据工作。</p>
-              <p class="prototype-reality"><span class="badge-dot"></span>synthetic contract test · 预写经理人演示，非真实 Kimi 实时工作。</p>
+              <p class="onboarding-lead">你出规则，他回历史工作。</p>
+              <p class="prototype-reality"><span class="badge-dot"></span>SYNTHETIC DEMO · 非实时 Kimi</p>
               <div class="manager-hero-actions">
                 <button class="button primary" id="open-workbench" type="button">开始面试衡一 <span aria-hidden="true">→</span></button>
                 <button class="button ghost" id="onboarding-to-b" type="button">直接围观他的工作</button>
               </div>
-              <p class="hero-boundary">他整理规则，不荐股、不直接下单；确认策略后才出发。</p>
+              <p class="hero-boundary">不荐股 · 不直接下单</p>
             </div>
             <article class="manager-card" aria-label="AI 股票经理人衡一">
               <div class="manager-card-top"><span>YOUR AI MANAGER</span><span class="manager-status"><i></i>待面试</span></div>
               <div class="manager-identity">
-                <svg class="manager-avatar" viewBox="0 0 120 120" aria-hidden="true">
-                  <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="1" opacity=".25"/>
-                  <circle cx="60" cy="60" r="42" fill="none" stroke="currentColor" stroke-width="1" opacity=".16"/>
-                  <path d="M35 68 49 54 61 62 84 38" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M75 38h9v9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                  <circle cx="35" cy="68" r="4" fill="currentColor"/><circle cx="49" cy="54" r="4" fill="currentColor"/><circle cx="61" cy="62" r="4" fill="currentColor"/><circle cx="84" cy="38" r="4" fill="currentColor"/>
-                </svg>
-                <div><span class="manager-name">衡一</span><span class="manager-name-en">HENG YI</span><p>AI 股票经理人 · 规则执行与历史复盘</p></div>
+                <img class="manager-avatar" src="./hengyi-logo.svg" alt="衡一的青金时间轨迹标识">
+                <div><div class="manager-name-row"><span class="manager-name">衡一</span><span class="badge badge-bronze">铜牌 · 暂未开放</span></div><span class="manager-name-en">HENG YI</span><p>AI 股票经理人</p></div>
               </div>
-              <blockquote>“我不会偷看未来。每个交易日，我只用当时已经能看见的信息。”</blockquote>
+              <blockquote>“不偷看未来。”</blockquote>
+              <div class="manager-performance">
+                <div><span>固定 golden · 期末权益 / 初始资金</span><strong class="text-down">-0.6260%</strong></div>
+                <div class="progress-bar" aria-label="期末权益 1987.48，初始资金 2000"><span class="progress-bar-fill" style="width:99.374%"></span></div>
+                <small>1987.48 / 2000.00 · 非实时收益</small>
+              </div>
               <div class="manager-styles">
                 <span>选择面试风格 · 同一位经理人</span>
                 <div>
-                  <button type="button" data-dialogue-path="novice"><strong>谨慎梳理</strong><small>从“低买高卖”开始，把白话聊成规则</small></button>
-                  <button type="button" data-dialogue-path="expert"><strong>指标直达</strong><small>从 MACD+KDJ 开始，直接核对参数</small></button>
+                  <button type="button" data-dialogue-path="novice"><strong>谨慎梳理</strong><small>白话聊成规则</small></button>
+                  <button type="button" data-dialogue-path="expert"><strong>指标直达</strong><small>直接核对参数</small></button>
                 </div>
               </div>
             </article>
@@ -130,7 +126,7 @@
           </section>
 
           <div class="future-shelf" aria-label="暂未开放的概念装饰">
-            <span>职级体系 <strong>暂未开放</strong></span><span>荣誉馆 <strong>暂未开放</strong></span><span>更多经理人 <strong>暂未开放</strong></span><p>Demo 只雇佣衡一，不提供多模型或多经理人选择。</p>
+            <span class="badge badge-gold">荣誉馆 · 暂未开放</span><span class="badge badge-silver">职级体系 · 暂未开放</span><span class="badge badge-bronze">更多经理人 · 暂未开放</span><p>Demo 只有衡一</p>
           </div>
         </div>
 
@@ -141,7 +137,7 @@
             <h1 id="workbench-title">面试衡一，写下他的工作手册</h1>
           </div>
           <div class="scene-heading-meta">
-            <button class="button ghost compact" id="back-onboarding" type="button">← 返回首屏引导</button>
+            <button class="button ghost compact" id="back-onboarding" type="button">← 返回主页</button>
             <span class="status-pill drafting" id="a-status">SCRIPT DEMO</span>
             <span>registry <code>1.0.0</code></span>
             <span>模型来源 <strong>预写脚本 · 非 Kimi</strong></span>
@@ -200,11 +196,11 @@
           </section>
         </div>
 
-        <section class="run-spec-panel" aria-labelledby="a4-title">
-          <div class="run-spec-heading">
+        <details class="run-spec-panel run-spec-details">
+          <summary class="run-spec-heading">
             <div><span class="region-id">A4</span><h2 id="a4-title">穿越目的地与执行假设</h2><span class="priority">P1 · 模型不可写</span></div>
-            <span class="data-quality"><span class="check-mark">✓</span> 0 quality issues · raw OHLCV · local synthetic only</span>
-          </div>
+            <span class="data-quality"><span class="check-mark">✓</span> synthetic · 点击展开</span>
+          </summary>
           <div class="run-spec-grid">
             <div><span>资产 / profile</span><strong>stock:synthetic.basic</strong><code>cn-stock@1</code></div>
             <div><span>DataSnapshot</span><code>7460eeb6…385dc</code><strong>2024-01-01 → 01-06</strong></div>
@@ -221,6 +217,7 @@
             </div>
           </div>
         </div>
+        </details>
         </div>
       </section>
 
@@ -413,15 +410,15 @@
           <div class="detail-content" id="detail-content" role="tabpanel"></div>
         </section>
 
-        <section class="evidence-chain" aria-labelledby="c4-title">
-          <div class="evidence-chain-heading"><div><span class="region-id">C4</span><h2 id="c4-title">可复现证据链</h2></div><p>同一份 RunEvent[] 与 Report · CLI / application hash 一致</p></div>
+        <details class="evidence-chain">
+          <summary class="evidence-chain-heading"><div><span class="region-id">C4</span><h2 id="c4-title">可复现证据链</h2></div><p>点击展开 digest / 版本 / CLI 证据</p></summary>
           <div class="evidence-chain-grid">
             <div><span>runDigest</span><code>8ec5cb9d8718d9df21c9696ab299ca0841c7c2f8d77c3ccdf8f5a0fb7b1acd70</code><button class="text-button copy-button" type="button" data-copy="sha256:8ec5cb9d8718d9df21c9696ab299ca0841c7c2f8d77c3ccdf8f5a0fb7b1acd70">复制</button></div>
             <div><span>eventDigest</span><code>d18be8504251057ad0b736d88f1bb73b30528d79dba9046df3af6c37552c7a26</code><button class="text-button copy-button" type="button" data-copy="sha256:d18be8504251057ad0b736d88f1bb73b30528d79dba9046df3af6c37552c7a26">复制</button></div>
             <div><span>reportDigest</span><code>6132533bc35c4e16ddccdd5e4dd56b41d72c37215cfe92567171d5d455c717c5</code><button class="text-button copy-button" type="button" data-copy="sha256:6132533bc35c4e16ddccdd5e4dd56b41d72c37215cfe92567171d5d455c717c5">复制</button></div>
           </div>
           <div class="version-evidence"><span>engine <code>1.0.0</code></span><span>registry <code>1.0.0</code></span><span>canonicalization <code>canonicalization@1</code></span><span>decimal <code>decimal@1</code></span><span>rounding <code>rounding@1</code></span><span>indicator arithmetic <code>indicator-arithmetic@1</code></span></div>
-        </section>
+        </details>
       </section>
     </main>
 

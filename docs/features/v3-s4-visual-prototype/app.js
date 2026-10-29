@@ -3,7 +3,19 @@
 
   const D = window.SR_DATA;
   const NS = "http://www.w3.org/2000/svg";
-  const COLORS = { accent: "#3987e5", compare: "#d95926", neutral: "#898781", grid: "#2c2c2a", surface: "#1a1a19" };
+  let COLORS = { accent: "#0096b4", compare: "#d97706", neutral: "#8b9dc3", grid: "#252f4a", surface: "#141b2d", up: "#00d084", down: "#ff4757" };
+  function refreshChartColors() {
+    const tokens = getComputedStyle(document.documentElement);
+    COLORS = {
+      accent: tokens.getPropertyValue("--chart-accent").trim(),
+      compare: tokens.getPropertyValue("--chart-compare").trim(),
+      neutral: tokens.getPropertyValue("--muted").trim(),
+      grid: tokens.getPropertyValue("--chart-grid").trim(),
+      surface: tokens.getPropertyValue("--panel").trim(),
+      up: tokens.getPropertyValue("--good").trim(),
+      down: tokens.getPropertyValue("--critical").trim()
+    };
+  }
   const dates = D.snapshot.sessions.map((session) => session.date);
   const state = { scene: "a", aView: "onboarding", market: "china", dialoguePath: "novice", dialogueStep: 0, baseline: false, evidenceOpen: false, cursor: 0, selectedSeq: 4, filter: "all", speed: 1, playing: false, timer: null, detail: "orders", working: "drafting" };
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -128,7 +140,7 @@
     svg.append(svgElement("line", { x1: x(state.cursor), x2: x(state.cursor), y1: plot.top, y2: plot.bottom, class: "cursor-line" }));
     sessions.forEach((session, index) => {
       const bar = session.bar;
-      const color = Number(bar.close) > Number(bar.open) ? COLORS.accent : Number(bar.close) < Number(bar.open) ? COLORS.compare : COLORS.neutral;
+      const color = Number(bar.close) > Number(bar.open) ? COLORS.up : Number(bar.close) < Number(bar.open) ? COLORS.down : COLORS.neutral;
       const center = x(index);
       svg.append(svgElement("line", { x1: center, x2: center, y1: y(bar.high), y2: y(bar.low), stroke: color, "stroke-width": 2 }));
       const top = Math.min(y(bar.open), y(bar.close));
@@ -139,7 +151,7 @@
       const index = dates.indexOf(fill.date);
       const isBuy = fill.side === "buy";
       const markerY = isBuy ? y(D.snapshot.sessions[index].bar.low) + 17 : y(D.snapshot.sessions[index].bar.high) - 17;
-      const color = isBuy ? COLORS.accent : COLORS.compare;
+      const color = isBuy ? COLORS.up : COLORS.down;
       svg.append(svgElement("circle", { cx: x(index), cy: markerY, r: 8, fill: color, class: "marker-ring" }));
       addText(svg, x(index), markerY + 3, isBuy ? "B" : "S", "end-label", "middle").setAttribute("fill", "#ffffff");
     });
@@ -212,15 +224,15 @@
     const points = daily.map((day, index) => [x(index), y(day.drawdown)]);
     const linePath = points.map((point, index) => `${index ? "L" : "M"}${point[0]},${point[1]}`).join(" ");
     const areaPath = `${linePath} L${points[points.length - 1][0]},${plot.top} L${points[0][0]},${plot.top} Z`;
-    svg.append(svgElement("path", { d: areaPath, fill: COLORS.compare, opacity: .08 }));
-    svg.append(svgElement("path", { d: linePath, class: "series-line", stroke: COLORS.compare }));
+    svg.append(svgElement("path", { d: areaPath, fill: COLORS.down, opacity: .08 }));
+    svg.append(svgElement("path", { d: linePath, class: "series-line", stroke: COLORS.down }));
     const maxIndex = daily.findIndex((day) => day.drawdown === D.report.metrics.maxDrawdown);
-    svg.append(svgElement("circle", { cx: x(maxIndex), cy: y(daily[maxIndex].drawdown), r: 4, fill: COLORS.compare, class: "marker-ring" }));
+    svg.append(svgElement("circle", { cx: x(maxIndex), cy: y(daily[maxIndex].drawdown), r: 4, fill: COLORS.down, class: "marker-ring" }));
     addText(svg, x(maxIndex) + 7, y(daily[maxIndex].drawdown) + 12, pct(D.report.metrics.maxDrawdown), "end-label");
     svg.append(svgElement("line", { x1: x(state.cursor), x2: x(state.cursor), y1: plot.top, y2: plot.bottom, class: "cursor-line" }));
     attachHover({
       svg, wrap: $(wrapSelector), tooltip: $(tooltipSelector), plot, count: daily.length,
-      rowsForIndex: (index) => ({ date: daily[index].date, rows: [{ label: "回撤", value: pct(daily[index].drawdown), color: COLORS.compare }] }),
+      rowsForIndex: (index) => ({ date: daily[index].date, rows: [{ label: "回撤", value: pct(daily[index].drawdown), color: COLORS.down }] }),
       onSelect: setCursor
     });
   }
@@ -299,6 +311,7 @@
   }
 
   function renderTheatre() {
+    refreshChartColors();
     syncEvidenceDrawer();
     $$('[data-story-cursor]').forEach((button) => button.classList.toggle("active", Number(button.dataset.storyCursor) === state.cursor));
     $("#timeline-range").value = state.cursor;
@@ -583,6 +596,7 @@
   }
 
   function renderReportCharts() {
+    refreshChartColors();
     renderEquityChart("#report-equity-chart", "#report-equity-chart-wrap", "#report-equity-tooltip", "#report-equity-legend", 184);
     const container = $("#report-drawdown");
     if (!$("#report-drawdown-chart")) {
@@ -689,9 +703,30 @@
     sell: "1 月 4 日，barsHeld ≥ 2 的出场条件成立，形成 intent-2；1 月 5 日按这个意图以 9.99 卖出 100 股，费用 5.51。执行依据可以在事件抽屉里追溯。"
   };
 
+  function applyTheme(theme, persist = false) {
+    const light = theme === "light";
+    document.documentElement.classList.toggle("light-theme", light);
+    $("#theme-icon").textContent = light ? "☾" : "☀";
+    $("#theme-label").textContent = light ? "Dark" : "Light";
+    $("#theme-toggle").setAttribute("aria-label", light ? "切换到深色主题" : "切换到浅色主题");
+    if (persist) {
+      try { localStorage.setItem("stock-race-theme", light ? "light" : "dark"); } catch { /* file:// privacy modes may deny storage */ }
+    }
+    refreshChartColors();
+    if (state.scene === "b") renderTheatre();
+    if (state.scene === "c") renderReportCharts();
+  }
+
+  function goHome() {
+    state.aView = "onboarding";
+    showScene("a");
+  }
+
   function bindEvents() {
     $$(".scene-tab").forEach((button) => button.addEventListener("click", () => showScene(button.dataset.scene)));
-    $$('[data-scene-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); showScene(link.dataset.sceneLink); }));
+    $$('[data-scene-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); goHome(); }));
+    $("#home-button").addEventListener("click", goHome);
+    $("#theme-toggle").addEventListener("click", () => applyTheme(document.documentElement.classList.contains("light-theme") ? "dark" : "light", true));
     $$('[data-go]').forEach((button) => button.addEventListener("click", () => {
       if (button.dataset.go === "a") state.aView = "workbench";
       showScene(button.dataset.go);
@@ -792,9 +827,12 @@
   }
 
   function init() {
+    let savedTheme = "dark";
+    try { savedTheme = localStorage.getItem("stock-race-theme") || "dark"; } catch { /* use dark default */ }
+    applyTheme(savedTheme);
     renderLegend($("#price-legend"), [
-      { label: "上涨", color: COLORS.accent, mark: "swatch" }, { label: "下跌", color: COLORS.compare, mark: "swatch" },
-      { label: "平盘", color: COLORS.neutral, mark: "swatch" }, { label: "B 买入 / S 卖出（实际 fills）", color: COLORS.accent, mark: "dot" }
+      { label: "上涨", color: COLORS.up, mark: "swatch" }, { label: "下跌", color: COLORS.down, mark: "swatch" },
+      { label: "平盘", color: COLORS.neutral, mark: "swatch" }, { label: "B 买入 / S 卖出（实际 fills）", color: COLORS.up, mark: "dot" }
     ]);
     $("#timeline-labels").innerHTML = dates.map((date) => `<span>${shortDate(date)}</span>`).join("");
     renderDetail();
