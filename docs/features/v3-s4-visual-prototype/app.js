@@ -5,7 +5,7 @@
   const NS = "http://www.w3.org/2000/svg";
   const COLORS = { accent: "#3987e5", compare: "#d95926", neutral: "#898781", grid: "#2c2c2a", surface: "#1a1a19" };
   const dates = D.snapshot.sessions.map((session) => session.date);
-  const state = { scene: "a", cursor: 0, selectedSeq: 4, filter: "all", speed: 1, playing: false, timer: null, detail: "orders", working: "confirmed" };
+  const state = { scene: "a", aView: "onboarding", market: "china", cursor: 0, selectedSeq: 4, filter: "all", speed: 1, playing: false, timer: null, detail: "orders", working: "confirmed" };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const esc = (value) => String(value ?? "—").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -337,9 +337,36 @@
     }, 900 / state.speed);
   }
 
+  function syncAView() {
+    const onboarding = state.aView === "onboarding";
+    $("#onboarding-view").hidden = !onboarding;
+    $("#workbench-view").hidden = onboarding;
+    document.body.classList.toggle("onboarding-active", state.scene === "a" && onboarding);
+  }
+
+  function showAView(view) {
+    state.aView = view === "workbench" ? "workbench" : "onboarding";
+    syncAView();
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  function updateOnboardingGate() {
+    const marketSupported = state.market === "china";
+    const goldenRange = $("#onboarding-start").value === "2024-01-01" && $("#onboarding-end").value === "2024-01-06";
+    const message = $("#support-message");
+    let reason = "";
+    if (!marketSupported) reason = "该市场仅作产品愿景展示，当前尚未开放，不能生成或运行。请切回中国 A 股查看合成示例。";
+    else if (!goldenRange) reason = "当前原型只有 2024-01-01 至 2024-01-06 的 golden 数据。其他历史区间不会用合成曲线代替。";
+    message.hidden = !reason;
+    message.textContent = reason;
+    $("#open-workbench").disabled = Boolean(reason);
+    $("#open-workbench").title = reason || "打开固定 S2 golden 的策略生成舱，不根据首屏输入生成策略";
+  }
+
   function showScene(scene, updateHash = true) {
     if (!["a", "b", "c"].includes(scene)) scene = "a";
     state.scene = scene;
+    syncAView();
     $$('[data-scene-panel]').forEach((panel) => {
       const active = panel.dataset.scenePanel === scene;
       panel.hidden = !active;
@@ -374,6 +401,7 @@
 
   function adjustFromRun() {
     state.working = "drafting";
+    state.aView = "workbench";
     updateWorkingState();
     showScene("a");
     toast("已带回 v1 基线；新草稿未确认，旧 Run 与报告保持只读。未生成新 digest。");
@@ -515,8 +543,40 @@
   function bindEvents() {
     $$(".scene-tab").forEach((button) => button.addEventListener("click", () => showScene(button.dataset.scene)));
     $$('[data-scene-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); showScene(link.dataset.sceneLink); }));
-    $$('[data-go]').forEach((button) => button.addEventListener("click", () => showScene(button.dataset.go)));
+    $$('[data-go]').forEach((button) => button.addEventListener("click", () => {
+      if (button.dataset.go === "a") state.aView = "workbench";
+      showScene(button.dataset.go);
+    }));
     $$('[data-adjust]').forEach((button) => button.addEventListener("click", adjustFromRun));
+    $$('[data-template]').forEach((button) => button.addEventListener("click", () => {
+      $("#onboarding-intent").value = button.dataset.prompt;
+      $$('[data-template]').forEach((item) => {
+        const selected = item === button;
+        item.classList.toggle("selected", selected);
+        item.setAttribute("aria-pressed", String(selected));
+      });
+      $("#onboarding-intent").focus();
+    }));
+    $$('[data-market]').forEach((button) => button.addEventListener("click", () => {
+      state.market = button.dataset.market;
+      $$('[data-market]').forEach((item) => {
+        const selected = item === button;
+        item.classList.toggle("selected", selected);
+        item.setAttribute("aria-pressed", String(selected));
+      });
+      updateOnboardingGate();
+    }));
+    $("#onboarding-start").addEventListener("change", updateOnboardingGate);
+    $("#onboarding-end").addEventListener("change", updateOnboardingGate);
+    $("#open-workbench").addEventListener("click", () => {
+      showAView("workbench");
+      toast("已打开固定 S2 golden 示例；首屏输入未用于生成策略，也未调用 AI 或真实行情。");
+    });
+    $("#back-onboarding").addEventListener("click", () => showAView("onboarding"));
+    $("#onboarding-to-b").addEventListener("click", () => {
+      showScene("b");
+      toast("当前为固定 S2 golden 的只读历史推演，不代表首屏所选资产或区间的新运行。");
+    });
     $("#run-button").addEventListener("click", () => { showScene("b"); toast("已打开 S2 同源完整 Run 的只读投影；未重新运行、未调用模型或网络。"); });
     $("#validate-button").addEventListener("click", () => toast("视觉原型仅展示已通过校验的 fixture AST；未执行新校验。"));
     $("#play-button").addEventListener("click", startPlayback);
@@ -579,6 +639,7 @@
     $("#timeline-labels").innerHTML = dates.map((date) => `<span>${shortDate(date)}</span>`).join("");
     renderDetail();
     bindEvents();
+    updateOnboardingGate();
     updateWorkingState();
     showScene(location.hash.slice(1) || "a", false);
   }

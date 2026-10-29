@@ -34,6 +34,7 @@
         </div>
       </div>
       <div class="context-row">
+        <div class="onboarding-context"><strong>新策略 · 尚未生成</strong><span>从一句自然语言开始</span><span class="status-pill pending">SYNTHETIC DEMO</span></div>
         <div class="context-item">
           <span class="context-label">工作策略</span>
           <strong id="working-revision">synthetic-basic · v1</strong>
@@ -52,13 +53,87 @@
     </header>
 
     <main id="scene-root" tabindex="-1">
-      <section class="scene active" id="scene-a" data-scene-panel="a" aria-labelledby="scene-a-title">
+      <section class="scene active" id="scene-a" data-scene-panel="a" aria-label="策略生成舱">
+        <div class="onboarding-view" id="onboarding-view">
+          <div class="onboarding-hero">
+            <p class="eyebrow">FROM AN IDEA TO EVIDENCE</p>
+            <h1 id="scene-a-title">这是一个用真实历史数据，<br>检验你的投资策略的工具。</h1>
+            <p class="onboarding-lead">说出你的规则，选择股票和历史区间，再看看策略在过去表现如何。AI 帮助整理规则，不直接下单。</p>
+            <p class="prototype-reality"><span class="badge-dot"></span>当前为 synthetic contract test 原型，未接入真实 Kimi 或真实行情。</p>
+          </div>
+          <ol class="journey-steps" aria-label="使用步骤">
+            <li class="active"><span>1</span><div><strong>说出策略</strong><small>用你习惯的语言</small></div></li>
+            <li><span>2</span><div><strong>选择检验对象</strong><small>股票、市场与历史区间</small></div></li>
+            <li><span>3</span><div><strong>查看检验结果</strong><small>信号、订单、收益与回撤</small></div></li>
+          </ol>
+
+          <div class="onboarding-grid">
+            <section class="conversation-panel" aria-labelledby="conversation-title">
+              <div class="conversation-heading"><span class="conversation-icon" aria-hidden="true">AI</span><div><h2 id="conversation-title">告诉我，你想怎样投资</h2><p>可以描述技术指标、入场条件、退出条件和仓位。</p></div></div>
+              <label class="sr-only" for="onboarding-intent">用自然语言描述投资策略</label>
+              <textarea id="onboarding-intent" rows="5" placeholder="例如：MACD 三日内出现金叉，KDJ 过滤后买入；死叉或持有 20 天时退出。"></textarea>
+              <div class="template-heading"><span>或者，从一个策略模板开始</span><small>选择后会填入上方，不自动运行</small></div>
+              <div class="strategy-templates" role="group" aria-label="策略模板">
+                <button class="template-option" type="button" data-template="macd-kdj" data-prompt="MACD 三日内出现金叉，KDJ 的 K 大于 D 且 J 小于 90 时入场；MACD 死叉或持有 20 个 bar 时退出。使用 50% 资金，只做多，不加仓。">
+                  <span class="template-tag">MACD + KDJ</span><strong>金叉入场，指标过滤</strong><small>三日内金叉，KDJ 确认；死叉或持有 20 个 bar 退出。</small><span class="template-select">选择模板 <span aria-hidden="true">→</span></span>
+                </button>
+                <button class="template-option" type="button" data-template="macd-trend" data-prompt="MACD 的 DIF 上穿 DEA 时入场，下穿 DEA 时退出。只做多，不加仓。">
+                  <span class="template-tag">MACD</span><strong>跟随趋势变化</strong><small>DIF 上穿 DEA 入场，下穿时退出。</small><span class="template-select">选择模板 <span aria-hidden="true">→</span></span>
+                </button>
+                <button class="template-option" type="button" data-template="holding" data-prompt="满足入场条件后买入，持有满 2 个 bar 后全部退出。只做多，不加仓。">
+                  <span class="template-tag">GOLDEN 示例</span><strong>按持有期退出</strong><small>满足入场条件后，持有两个 bar 全部退出。</small><span class="template-select">选择模板 <span aria-hidden="true">→</span></span>
+                </button>
+              </div>
+            </section>
+
+            <section class="selection-panel" aria-labelledby="selection-title">
+              <div class="selection-heading"><span>02</span><div><h2 id="selection-title">选择检验对象</h2><p>先明确市场、股票和历史区间。</p></div></div>
+              <fieldset class="market-fieldset">
+                <legend>市场</legend>
+                <div class="market-options">
+                  <button class="market-option selected" type="button" data-market="china" aria-pressed="true"><span class="market-code">CN</span><span><strong>中国 A 股</strong><small>P0 执行范围 · 原型用合成数据</small></span><span class="selection-check">✓</span></button>
+                  <button class="market-option" type="button" data-market="us" aria-pressed="false"><span class="market-code">US</span><span><strong>美国股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
+                  <button class="market-option" type="button" data-market="japan" aria-pressed="false"><span class="market-code">JP</span><span><strong>日本股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
+                </div>
+              </fieldset>
+              <div class="selection-fields">
+                <label for="asset-select">股票 / 资产</label>
+                <select id="asset-select">
+                  <option value="synthetic">S2 合成股票 · stock:synthetic.basic</option>
+                  <option value="cn-real" disabled>沪深股票代码 · 真实行情未接入</option>
+                  <option value="etf" disabled>ETF · P0 仅分析，不可执行</option>
+                  <option value="index" disabled>指数 · 仅分析，不生成资金曲线</option>
+                </select>
+                <p class="selection-help">当前 P0 仅沪深股票可执行；本原型只提供合成股票示例。</p>
+              </div>
+              <div class="selection-fields">
+                <label>历史区间</label>
+                <div class="date-range-fields">
+                  <input id="onboarding-start" type="date" value="2024-01-01" aria-label="历史区间开始日期">
+                  <span>至</span>
+                  <input id="onboarding-end" type="date" value="2024-01-06" aria-label="历史区间结束日期">
+                </div>
+                <p class="selection-help" id="range-help">当前 golden 仅覆盖这 6 个 session；修改区间会阻断示例入口。</p>
+              </div>
+              <div class="support-message" id="support-message" role="status" hidden></div>
+              <div class="onboarding-actions">
+                <button class="button primary" id="open-workbench" type="button">查看策略生成示例 <span aria-hidden="true">→</span></button>
+                <button class="text-button" id="onboarding-to-b" type="button">直接看历史推演示例</button>
+                <p>入口输入仅用于体验。按钮打开固定 S2 golden 示例，不根据输入生成新策略，也不调用 AI 或真实行情。</p>
+              </div>
+            </section>
+          </div>
+          <div class="onboarding-assurance"><span>模型只整理规则，不直接下单</span><span>确认后才运行</span><span>结果可回放、可核对</span></div>
+        </div>
+
+        <div id="workbench-view" hidden>
         <div class="scene-heading">
           <div>
             <p class="eyebrow">A / STRATEGY AUTHORING</p>
-            <h1 id="scene-a-title">把意图锁定为可审计规则</h1>
+            <h1 id="workbench-title">把意图锁定为可审计规则</h1>
           </div>
           <div class="scene-heading-meta">
+            <button class="button ghost compact" id="back-onboarding" type="button">← 返回首屏引导</button>
             <span class="status-pill confirmed" id="a-status">CONFIRMED</span>
             <span>registry <code>1.0.0</code></span>
             <span>模型来源 <strong>S2 fixture · 非 Kimi</strong></span>
@@ -194,7 +269,8 @@
               <button class="button primary run-button" id="run-button" type="button">运行回测 <span aria-hidden="true">→</span></button>
             </div>
           </div>
-        </section>
+        </div>
+        </div>
       </section>
 
       <section class="scene" id="scene-b" data-scene-panel="b" aria-labelledby="scene-b-title" hidden>
