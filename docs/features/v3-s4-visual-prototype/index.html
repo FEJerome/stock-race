@@ -14,14 +14,16 @@
   <div class="app-shell">
     <header class="app-header">
       <div class="brand-row">
-        <a class="brand" href="#a" data-scene-link="a" aria-label="Stock-Race 策略生成舱">
+        <a class="brand" href="#a" data-scene-link="a" aria-label="返回基金公司游戏主页">
           <img class="brand-logo" src="./hengyi-logo.svg" alt="衡一标识">
           <span class="brand-copy"><strong>STOCK-RACE</strong><span>V3 · 模拟策略研究</span></span>
         </a>
-        <nav class="scene-nav" aria-label="三场景">
-          <button class="scene-tab active" type="button" data-scene="a" aria-current="page"><span>A</span>策略生成舱</button>
-          <button class="scene-tab" type="button" data-scene="b"><span>B</span>历史推演剧场</button>
-          <button class="scene-tab" type="button" data-scene="c"><span>C</span>结果与版本对比</button>
+        <nav class="scene-nav stage-nav" aria-label="游戏阶段">
+          <button class="scene-tab stage-tab" type="button" data-stage="interview"><span>1</span>面试</button>
+          <button class="scene-tab stage-tab" type="button" data-stage="confirm" disabled><span>2</span>确认</button>
+          <button class="scene-tab stage-tab" type="button" data-stage="dispatch" disabled><span>3</span>派遣</button>
+          <button class="scene-tab stage-tab" type="button" data-stage="watch"><span>4</span>围观</button>
+          <button class="scene-tab stage-tab" type="button" data-stage="review"><span>5</span>复盘</button>
         </nav>
         <div class="header-actions">
           <span class="test-badge"><span class="badge-dot"></span>synthetic contract test</span>
@@ -54,18 +56,18 @@
         <div class="onboarding-view" id="onboarding-view">
           <section class="manager-hero" aria-labelledby="scene-a-title">
             <div class="manager-hero-copy">
-              <p class="eyebrow">HIRE YOUR AI MANAGER. REWIND THE MARKET.</p>
-              <h1 id="scene-a-title">雇一位 AI 股票经理人，<br>送他回到过去的市场。</h1>
-              <p class="onboarding-lead">你出规则，他回历史工作。</p>
+              <p class="eyebrow">YOUR FUND. YOUR FIRST HIRE.</p>
+              <h1 id="scene-a-title">老板，你的基金公司<br>今天开张。</h1>
+              <p class="onboarding-lead">第一个任务：招聘 AI 基金经理。</p>
               <p class="prototype-reality"><span class="badge-dot"></span>SYNTHETIC DEMO · 非实时 Kimi</p>
               <div class="manager-hero-actions">
-                <button class="button primary" id="open-workbench" type="button">开始面试衡一 <span aria-hidden="true">→</span></button>
+                <button class="button primary" id="open-workbench" type="button">开始招聘面试 <span aria-hidden="true">→</span></button>
                 <button class="button ghost" id="onboarding-to-b" type="button">直接围观他的工作</button>
               </div>
               <p class="hero-boundary">不荐股 · 不直接下单</p>
             </div>
             <article class="manager-card" aria-label="AI 股票经理人衡一">
-              <div class="manager-card-top"><span>YOUR AI MANAGER</span><span class="manager-status"><i></i>待面试</span></div>
+              <div class="manager-card-top"><span>CANDIDATE · 候选人</span><span class="manager-status"><i></i>待面试</span></div>
               <div class="manager-identity">
                 <img class="manager-avatar" src="./hengyi-logo.svg" alt="衡一的青金时间轨迹标识">
                 <div><div class="manager-name-row"><span class="manager-name">衡一</span><span class="badge badge-bronze">铜牌 · 暂未开放</span></div><span class="manager-name-en">HENG YI</span><p>AI 股票经理人</p></div>
@@ -86,44 +88,6 @@
             </article>
           </section>
 
-          <ol class="workflow-chain" aria-label="招聘到复盘四环节">
-            <li><span>01</span><div><strong>招聘</strong><small>选风格，开始面试</small></div></li>
-            <li><span>02</span><div><strong>穿越</strong><small>选择市场与历史区间</small></div></li>
-            <li><span>03</span><div><strong>围观</strong><small>看他当时怎么操作</small></div></li>
-            <li><span>04</span><div><strong>复盘</strong><small>问原因，看穿越成绩单</small></div></li>
-          </ol>
-
-          <section class="destination-panel" aria-labelledby="selection-title">
-            <div class="destination-summary"><span class="destination-number">02</span><div><h2 id="selection-title">本次穿越目的地</h2><p><strong>中国 A 股</strong><span>2024-01-01 → 2024-01-06</span><code>stock:synthetic.basic</code></p></div><span class="status-pill pending">SYNTHETIC</span></div>
-            <details class="destination-details">
-              <summary>调整目的地与执行边界</summary>
-              <div class="destination-config">
-                <fieldset class="market-fieldset">
-                  <legend>市场</legend>
-                  <div class="market-options">
-                    <button class="market-option selected" type="button" data-market="china" aria-pressed="true"><span class="market-code">CN</span><span><strong>中国 A 股</strong><small>P0 执行范围 · 原型用合成数据</small></span><span class="selection-check">✓</span></button>
-                    <button class="market-option" type="button" data-market="us" aria-pressed="false"><span class="market-code">US</span><span><strong>美国股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
-                    <button class="market-option" type="button" data-market="japan" aria-pressed="false"><span class="market-code">JP</span><span><strong>日本股市</strong><small>产品愿景 · 尚未开放</small></span><span class="market-lock">未开放</span></button>
-                  </div>
-                </fieldset>
-                <div class="selection-fields">
-                  <label for="asset-select">股票 / 资产</label>
-                  <select id="asset-select">
-                    <option value="synthetic">S2 合成股票 · stock:synthetic.basic</option>
-                    <option value="cn-real" disabled>沪深股票代码 · 真实行情未接入</option>
-                    <option value="etf" disabled>ETF · P0 仅分析，不可执行</option>
-                    <option value="index" disabled>指数 · 仅分析，不生成资金曲线</option>
-                  </select>
-                </div>
-                <div class="selection-fields">
-                  <label>历史区间</label>
-                  <div class="date-range-fields"><input id="onboarding-start" type="date" value="2024-01-01" aria-label="历史区间开始日期"><span>至</span><input id="onboarding-end" type="date" value="2024-01-06" aria-label="历史区间结束日期"></div>
-                  <p class="selection-help" id="range-help">当前 golden 仅覆盖这 6 个 session；其他区间不会用固定曲线替代。</p>
-                </div>
-              </div>
-            </details>
-            <div class="support-message" id="support-message" role="status" hidden></div>
-          </section>
 
           <div class="future-shelf" aria-label="暂未开放的概念装饰">
             <span class="badge badge-gold">荣誉馆 · 暂未开放</span><span class="badge badge-silver">职级体系 · 暂未开放</span><span class="badge badge-bronze">更多经理人 · 暂未开放</span><p>Demo 只有衡一</p>
@@ -131,93 +95,54 @@
         </div>
 
         <div id="workbench-view" hidden>
-        <div class="scene-heading">
-          <div>
-            <p class="eyebrow">01 / HIRE · MANAGER INTERVIEW</p>
-            <h1 id="workbench-title">面试衡一，写下他的工作手册</h1>
-          </div>
-          <div class="scene-heading-meta">
-            <button class="button ghost compact" id="back-onboarding" type="button">← 返回主页</button>
-            <span class="status-pill drafting" id="a-status">SCRIPT DEMO</span>
-            <span>registry <code>1.0.0</code></span>
-            <span>模型来源 <strong>预写脚本 · 非 Kimi</strong></span>
-          </div>
-        </div>
+          <div class="flow-topbar"><button class="button ghost compact" id="back-onboarding" type="button">← 返回主页</button><span class="status-pill drafting" id="a-status">INTERVIEW</span><span class="script-badge">预写演示 · 非 Kimi</span></div>
+          <div class="baseline-banner" id="baseline-banner" hidden><div><strong>基于 v1 调整</strong><span>旧 Run 保持只读；新语义必须重新确认。</span></div><code>base 2c64d48a…c9be17</code></div>
 
-        <div class="baseline-banner" id="baseline-banner" hidden>
-          <div><strong>基于 v1 调整</strong><span>旧 Run 保持只读；新语义必须重新校验、回读与确认。</span></div>
-          <code>base 2c64d48a…c9be17</code>
-        </div>
-
-        <div class="authoring-grid">
-          <section class="panel authoring-intent" aria-labelledby="a1-title">
-            <div class="panel-header">
-              <div><span class="region-id">A1</span><h2 id="a1-title">衡一的面试对话</h2></div>
-              <span class="script-badge">SCRIPT · 非 Kimi</span>
-            </div>
-            <div class="dialogue-path-tabs" role="tablist" aria-label="预写对话路径">
-              <button class="active" type="button" data-script-path="novice" role="tab" aria-selected="true">新手 · 低买高卖</button>
-              <button type="button" data-script-path="expert" role="tab" aria-selected="false">老手 · MACD+KDJ</button>
-            </div>
-            <div class="dialogue-stream" id="dialogue-stream" aria-live="polite"></div>
-            <div class="dialogue-controls">
-              <span id="dialogue-progress">1 / 9</span>
-              <button class="text-button" id="restart-dialogue" type="button">重播</button>
-              <button class="button secondary compact" id="next-dialogue" type="button">下一句 <span aria-hidden="true">→</span></button>
-            </div>
-            <div class="panel-footer split-footer">
-              <span class="microcopy">只引导表达，不推荐股票或买卖时机</span>
-              <details class="disclosure capability-details"><summary>能力清单</summary><div><code>MACD/KDJ · OHLCV · close · barsHeld</code></div></details>
+          <section class="flow-stage interview-stage" data-flow-stage="interview" aria-labelledby="interview-title">
+            <header class="stage-intro"><p class="eyebrow">01 / INTERVIEW</p><h1 id="interview-title">老板，回答衡一就好。</h1><p>他把你的话整理成工作手册。</p></header>
+            <div class="interview-focus">
+              <section class="panel interview-chat-panel" aria-label="衡一面试对话">
+                <div class="dialogue-path-tabs" role="tablist" aria-label="预写对话路径"><button class="active" type="button" data-script-path="novice" role="tab" aria-selected="true">谨慎梳理</button><button type="button" data-script-path="expert" role="tab" aria-selected="false">指标直达</button></div>
+                <div class="dialogue-stream" id="dialogue-stream" aria-live="polite"></div>
+                <form class="dialogue-composer" id="dialogue-form">
+                  <label class="sr-only" for="dialogue-input">回答衡一</label>
+                  <input id="dialogue-input" type="text" autocomplete="off" placeholder="听衡一说……">
+                  <button class="button primary" id="dialogue-send" type="submit">继续</button>
+                </form>
+                <div class="dialogue-controls"><span id="dialogue-progress">1 / 9</span><button class="text-button" id="restart-dialogue" type="button">重新面试</button></div>
+              </section>
+              <details class="panel interview-rule-preview"><summary>工作手册预览 <span>可选</span></summary><div class="panel-body rules-body" id="rules-body"></div></details>
             </div>
           </section>
 
-          <section class="panel authoring-rules" aria-labelledby="a2-title">
-            <div class="panel-header">
-              <div><span class="region-id">A2</span><h2 id="a2-title">规则随对话逐块成形</h2></div>
-              <span class="priority">P0</span>
-            </div>
-            <div class="panel-body rules-body" id="rules-body"></div>
-            <div class="panel-footer split-footer">
-              <span class="microcopy">辅助解释不覆盖权威回读</span>
-              <button class="button secondary" id="validate-button" type="button">重新校验</button>
+          <section class="flow-stage confirm-stage" data-flow-stage="confirm" aria-labelledby="confirm-title" hidden>
+            <div class="single-focus-card">
+              <header class="stage-intro"><p class="eyebrow">02 / CONFIRM</p><h1 id="confirm-title">我听懂的是……</h1><p>老板，确认这份工作手册。</p></header>
+              <div class="panel-body readback-body" id="readback-body"></div>
+              <details class="technical-details"><summary>技术细节 · AST / expectedDigest</summary><pre id="confirm-ast"></pre><p>expectedDigest 待真实 canonicalization 生成；本原型只演示确认动作，不生成 revision。</p></details>
+              <div class="focus-action"><span id="confirm-label">回读预览 · 非实时校验</span><button class="button primary" id="confirm-button" type="button">确认工作手册（演示）</button></div>
             </div>
           </section>
 
-          <section class="panel authoring-readback" aria-labelledby="a3-title">
-            <div class="panel-header">
-              <div><span class="region-id">A3</span><h2 id="a3-title">校验与权威回读</h2></div>
-              <span class="priority">P0</span>
-            </div>
-            <div class="panel-body readback-body" id="readback-body"></div>
-            <div class="panel-footer confirm-footer">
-              <div><span class="field-label">ConfirmedRevision</span><strong id="confirm-label">v1 · digest 已锁定</strong></div>
-              <button class="button primary" id="confirm-button" type="button" disabled>策略已确认</button>
+          <section class="flow-stage dispatch-stage" data-flow-stage="dispatch" aria-labelledby="dispatch-title" hidden>
+            <div class="single-focus-card">
+              <header class="stage-intro"><p class="eyebrow">03 / DISPATCH</p><h1 id="dispatch-title">老板，下达派遣指令。</h1><p>市场、区间、资金，由你决定。</p></header>
+              <blockquote class="dispatch-order" id="dispatch-order">“衡一，你去 2024 年的 A 股，按我们聊好的策略操作。”</blockquote>
+              <div class="dispatch-fields">
+                <fieldset class="market-fieldset"><legend>目的地市场</legend><div class="market-options">
+                  <button class="market-option selected" type="button" data-dispatch-market="china" aria-pressed="true"><span class="market-code">CN</span><span><strong>中国 A 股</strong><small>P0 · synthetic</small></span><span class="selection-check">✓</span></button>
+                  <button class="market-option" type="button" data-dispatch-market="us" aria-pressed="false"><span class="market-code">US</span><span><strong>美国股市</strong><small>愿景 · 未开放</small></span><span class="market-lock">未开放</span></button>
+                  <button class="market-option" type="button" data-dispatch-market="japan" aria-pressed="false"><span class="market-code">JP</span><span><strong>日本股市</strong><small>愿景 · 未开放</small></span><span class="market-lock">未开放</span></button>
+                </div></fieldset>
+                <div class="dispatch-row"><label for="dispatch-asset">资产</label><select id="dispatch-asset"><option value="synthetic">stock:synthetic.basic</option><option disabled>真实沪深股票 · 未接入</option><option disabled>ETF / 指数 · 不可执行</option></select></div>
+                <div class="dispatch-row"><label>历史区间</label><div class="date-range-fields"><input id="dispatch-start" type="date" value="2024-01-01" aria-label="派遣开始日期"><span>至</span><input id="dispatch-end" type="date" value="2024-01-06" aria-label="派遣结束日期"></div></div>
+                <div class="dispatch-row"><label for="dispatch-cash">初始资金 CNY</label><input id="dispatch-cash" type="text" inputmode="decimal" value="2000.00"></div>
+              </div>
+              <div class="support-message" id="dispatch-message" role="status" hidden></div>
+              <details class="technical-details"><summary>执行假设 · 模型不可写</summary><p><code>cn-stock-demo-fee@1 · cn-stock-one-tick@1 · cn-stock-settlement@1 · asset-default@1</code></p></details>
+              <div class="focus-action"><span>固定 golden 围观，不产生当前脚本的新 Run</span><button class="button primary" id="dispatch-button" type="button">送衡一出发 <span aria-hidden="true">→</span></button></div>
             </div>
           </section>
-        </div>
-
-        <details class="run-spec-panel run-spec-details">
-          <summary class="run-spec-heading">
-            <div><span class="region-id">A4</span><h2 id="a4-title">穿越目的地与执行假设</h2><span class="priority">P1 · 模型不可写</span></div>
-            <span class="data-quality"><span class="check-mark">✓</span> synthetic · 点击展开</span>
-          </summary>
-          <div class="run-spec-grid">
-            <div><span>资产 / profile</span><strong>stock:synthetic.basic</strong><code>cn-stock@1</code></div>
-            <div><span>DataSnapshot</span><code>7460eeb6…385dc</code><strong>2024-01-01 → 01-06</strong></div>
-            <div><span>初始资金</span><strong>2,000.00 CNY</strong><code>warmup.extra = 0</code></div>
-            <div><span>费用 / 滑点</span><code>cn-stock-demo-fee@1</code><code>cn-stock-one-tick@1</code></div>
-            <div><span>结算 / 可见性</span><code>cn-stock-settlement@1</code><code>asset-default@1</code></div>
-            <div><span>引擎 / 注册表</span><code>engine 1.0.0</code><code>canonicalization@1</code></div>
-          </div>
-          <div class="run-spec-footer">
-            <p><strong>展示假设：</strong>raw 原始价 · share / CNY · 许可限本地合成契约测试 · 公司行动空数组</p>
-            <div class="run-action">
-              <span id="run-block-reason">原型动作：打开同源已完成 Run，不重新执行内核</span>
-              <button class="button primary run-button" id="run-button" type="button">确认后出发穿越 <span aria-hidden="true">→</span></button>
-            </div>
-          </div>
-        </div>
-        </details>
         </div>
       </section>
 
@@ -233,7 +158,7 @@
           <div class="toolbar-actions">
             <button class="button ghost compact" id="toggle-evidence" type="button" aria-expanded="false">事件证据</button>
             <button class="button ghost compact" type="button" data-go="a">返回生成舱</button>
-            <button class="button secondary compact" type="button" data-adjust="b">基于此版本调整</button>
+            <button class="button secondary compact" type="button" data-adjust="b">调整策略再来一次</button>
             <button class="button primary compact" type="button" data-go="c">查看穿越成绩单</button>
           </div>
         </div>
@@ -334,7 +259,7 @@
           <div class="report-digests"><span>v1 · strategy <code>2c64d48a…be17</code></span><span>snapshot <code>7460eeb6…85dc</code></span><span>Run <code>8ec5cb9d…cd70</code></span></div>
           <div class="toolbar-actions">
             <button class="button ghost compact" type="button" data-go="b">返回剧场</button>
-            <button class="button secondary compact" type="button" data-adjust="c">基于此版本调整</button>
+            <button class="button secondary compact" type="button" data-adjust="c">调整策略再来一次</button>
           </div>
         </div>
 
@@ -382,7 +307,7 @@
               <div class="single-run-empty">
                 <h3>只有一个完成 Run</h3>
                 <p>保留 v1 的完整报告。v2 须重新确认并在同一数据与执行假设下运行，才能计算版本差值。</p>
-                <button class="button secondary" type="button" data-adjust="c">基于此版本调整并运行 v2</button>
+                <button class="button secondary" type="button" data-adjust="c">调整策略再来一次并运行 v2</button>
               </div>
               <div class="alignment-preview">
                 <div class="section-label">对齐条件 · 等待 v2</div>

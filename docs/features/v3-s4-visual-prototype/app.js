@@ -17,7 +17,7 @@
     };
   }
   const dates = D.snapshot.sessions.map((session) => session.date);
-  const state = { scene: "a", aView: "onboarding", market: "china", dialoguePath: "novice", dialogueStep: 0, baseline: false, evidenceOpen: false, cursor: 0, selectedSeq: 4, filter: "all", speed: 1, playing: false, timer: null, detail: "orders", working: "drafting" };
+  const state = { scene: "a", aView: "onboarding", stage: "interview", market: "china", dialoguePath: "novice", dialogueStep: 0, confirmedDemo: false, baseline: false, evidenceOpen: false, cursor: 0, selectedSeq: 4, filter: "all", speed: 1, playing: false, timer: null, detail: "orders", working: "drafting" };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const esc = (value) => String(value ?? "—").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -405,6 +405,8 @@
     state.dialogueStep = Math.max(0, Math.min(step, dialogueScripts[state.dialoguePath].steps.length - 1));
     state.working = "drafting";
     state.baseline = false;
+    state.confirmedDemo = false;
+    state.stage = "interview";
     updateWorkingState();
     renderDialogue();
   }
@@ -428,25 +430,40 @@
     script.steps.slice(0, state.dialogueStep + 1).forEach((step) => {
       const wrapper = document.createElement("div");
       wrapper.className = `dialogue-message ${step.speaker}`;
+      if (step.speaker === "ai") {
+        const avatar = document.createElement("img");
+        avatar.className = "dialogue-avatar";
+        avatar.src = "./hengyi-logo.svg";
+        avatar.alt = "衡一";
+        wrapper.append(avatar);
+      }
+      const content = document.createElement("div");
+      content.className = "dialogue-content";
       const speaker = document.createElement("span");
       speaker.className = "dialogue-speaker";
-      speaker.textContent = step.speaker === "ai" ? "衡一 · 演示" : "你 · 演示";
+      speaker.textContent = step.speaker === "ai" ? "衡一 · 演示" : "老板 · 演示";
       const bubble = document.createElement("div");
       bubble.className = "dialogue-bubble";
       bubble.textContent = step.text;
-      wrapper.append(speaker, bubble);
+      content.append(speaker, bubble);
       if (step.level) {
         const level = document.createElement("span");
         level.className = "level-judgment";
         level.textContent = step.level;
-        wrapper.append(level);
+        content.append(level);
       }
+      wrapper.append(content);
       stream.append(wrapper);
     });
     stream.scrollTop = stream.scrollHeight;
     $("#dialogue-progress").textContent = `${state.dialogueStep + 1} / ${script.steps.length}`;
-    $("#next-dialogue").disabled = state.dialogueStep === script.steps.length - 1;
-    $("#next-dialogue").textContent = state.dialogueStep === script.steps.length - 1 ? "对话已收敛" : "下一句 →";
+    const next = script.steps[state.dialogueStep + 1];
+    const input = $("#dialogue-input");
+    input.disabled = !next || next.speaker !== "user";
+    input.value = next?.speaker === "user" ? next.text : "";
+    input.placeholder = next ? "听衡一说……" : "面试完成";
+    $("#dialogue-send").disabled = !next;
+    $("#dialogue-send").textContent = next?.speaker === "user" ? "回答" : next ? "继续" : "即将确认";
     renderRulesPreview(script, stage);
     renderReadbackPreview(script, stage);
     updateWorkingState();
@@ -474,6 +491,7 @@
       <div class="digest-block"><span class="field-label">strategyDigest</span><code>待真实 canonicalization 与校验生成</code></div>
       ${ready ? `<div class="readback-summary"><span class="source-tag">READBACK PREVIEW · FROM SCRIPT AST</span><h3>${esc(script.summary)}</h3><p>这不是模型散文；真实权威回读只能由 canonical AST 与注册表模板生成。</p></div><div class="clause-list">${script.clauses.map(([label, text, path]) => `<div><span>${esc(label)}</span><p>${esc(text)}</p><code>${esc(path)}</code></div>`).join("")}</div>` : `<div class="rule-placeholder">入场、出场和仓位齐全后，这里显示回读预览。</div>`}
       <div class="model-explanation"><span>模型辅助解释</span><strong>预写脚本</strong><p>辅助解释永不替代权威回读。</p></div>`;
+    $("#confirm-ast").textContent = ready ? JSON.stringify(script.strategy, null, 2) : "对话完成后显示 AST 示例。";
   }
 
   function syncEvidenceDrawer() {
@@ -489,6 +507,58 @@
     renderTheatre();
   }
 
+  function dialogueComplete() {
+    const script = dialogueScripts[state.dialoguePath];
+    return script.steps[state.dialogueStep].stage >= 4;
+  }
+
+  function syncFlowStage() {
+    $$('[data-flow-stage]').forEach((panel) => { panel.hidden = panel.dataset.flowStage !== state.stage; });
+    const stageForScene = state.scene === "b" ? "watch" : state.scene === "c" ? "review" : state.stage;
+    $$('.stage-tab').forEach((tab) => {
+      const active = (state.scene !== "a" || state.aView === "workbench") && tab.dataset.stage === stageForScene;
+      tab.classList.toggle("active", active);
+      if (active) tab.setAttribute("aria-current", "step");
+      else tab.removeAttribute("aria-current");
+      if (tab.dataset.stage === "confirm") tab.disabled = !dialogueComplete();
+      if (tab.dataset.stage === "dispatch") tab.disabled = !state.confirmedDemo;
+    });
+    $("#a-status").textContent = state.stage.toUpperCase();
+  }
+
+  function setStage(stage) {
+    if (stage === "confirm" && !dialogueComplete()) { toast("先完成面试，再确认工作手册。"); return; }
+    if (stage === "dispatch" && !state.confirmedDemo) { toast("先完成演示确认，再派遣衡一。"); return; }
+    state.stage = stage;
+    if (stage === "watch") showScene("b");
+    else if (stage === "review") showScene("c");
+    else {
+      state.aView = "workbench";
+      showScene("a");
+      syncFlowStage();
+      if (stage === "dispatch") updateDispatchGate();
+    }
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  function advanceDialogue() {
+    const script = dialogueScripts[state.dialoguePath];
+    if (state.dialogueStep >= script.steps.length - 1) return;
+    state.dialogueStep += 1;
+    renderDialogue();
+    if (dialogueComplete()) setStage("confirm");
+  }
+
+  function updateDispatchGate() {
+    let reason = "";
+    if (state.market !== "china") reason = "该市场尚未开放，不能派遣。请切回中国 A 股。";
+    else if ($("#dispatch-start").value !== "2024-01-01" || $("#dispatch-end").value !== "2024-01-06") reason = "当前只有六日 golden；其他区间不会用固定曲线替代。";
+    else if ($("#dispatch-cash").value.trim() !== "2000.00") reason = "固定 golden 的初始资金为 2000.00 CNY，其他金额不会冒称同一 Run。";
+    $("#dispatch-message").hidden = !reason;
+    $("#dispatch-message").textContent = reason;
+    $("#dispatch-button").disabled = Boolean(reason) || !state.confirmedDemo;
+  }
+
   function syncAView() {
     const onboarding = state.aView === "onboarding";
     $("#onboarding-view").hidden = !onboarding;
@@ -499,6 +569,7 @@
   function showAView(view) {
     state.aView = view === "workbench" ? "workbench" : "onboarding";
     syncAView();
+    syncFlowStage();
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
@@ -525,15 +596,10 @@
       panel.hidden = !active;
       panel.classList.toggle("active", active);
     });
-    $$(".scene-tab").forEach((tab) => {
-      const active = tab.dataset.scene === scene;
-      tab.classList.toggle("active", active);
-      if (active) tab.setAttribute("aria-current", "page");
-      else tab.removeAttribute("aria-current");
-    });
     if (updateHash) history.replaceState(null, "", `#${scene}`);
-    if (scene === "b") renderTheatre();
-    if (scene === "c") renderReportCharts();
+    if (scene === "b") { state.stage = "watch"; renderTheatre(); }
+    if (scene === "c") { state.stage = "review"; renderReportCharts(); }
+    syncFlowStage();
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
@@ -544,23 +610,19 @@
     $("#working-digest").textContent = "digest 待真实校验";
     $("#working-status").textContent = "SCRIPT DEMO";
     $("#working-status").className = "status-pill drafting";
-    $("#a-status").textContent = complete ? "AST READY" : "DIALOGUING";
-    $("#a-status").className = "status-pill drafting";
     $("#baseline-banner").hidden = !state.baseline;
-    $("#run-button").disabled = true;
-    $("#run-block-reason").textContent = "预写脚本未经过真实校验与 expectedDigest 确认；旧 golden Run 仍可从 B / C 只读查看";
-    $("#confirm-label").textContent = complete ? "AST 示例 · 待真实校验与确认" : "对话尚未收敛";
-    $("#confirm-button").textContent = "确认需真实流程";
-    $("#confirm-button").disabled = true;
+    $("#confirm-label").textContent = complete ? "回读预览 · 演示确认不产生 revision" : "对话尚未收敛";
+    $("#confirm-button").textContent = "确认工作手册（演示）";
+    $("#confirm-button").disabled = !complete;
+    syncFlowStage();
   }
 
   function adjustFromRun() {
-    state.working = "drafting";
-    state.aView = "workbench";
+    loadDialogue(state.dialoguePath, 0);
     state.baseline = true;
     updateWorkingState();
-    showScene("a");
-    toast("已带回 v1 基线；新草稿未确认，旧 Run 与报告保持只读。未生成新 digest。");
+    setStage("interview");
+    toast("老板，旧 Run 保持不变。调整面试脚本后仍需重新确认；本演示不会生成新 digest。");
   }
 
   function toast(message) {
@@ -719,45 +781,53 @@
 
   function goHome() {
     state.aView = "onboarding";
+    state.stage = "interview";
     showScene("a");
   }
 
   function bindEvents() {
-    $$(".scene-tab").forEach((button) => button.addEventListener("click", () => showScene(button.dataset.scene)));
+    $$(".stage-tab").forEach((button) => button.addEventListener("click", () => setStage(button.dataset.stage)));
     $$('[data-scene-link]').forEach((link) => link.addEventListener("click", (event) => { event.preventDefault(); goHome(); }));
     $("#home-button").addEventListener("click", goHome);
     $("#theme-toggle").addEventListener("click", () => applyTheme(document.documentElement.classList.contains("light-theme") ? "dark" : "light", true));
     $$('[data-go]').forEach((button) => button.addEventListener("click", () => {
-      if (button.dataset.go === "a") state.aView = "workbench";
-      showScene(button.dataset.go);
+      if (button.dataset.go === "a") setStage("interview");
+      else showScene(button.dataset.go);
     }));
     $$('[data-adjust]').forEach((button) => button.addEventListener("click", adjustFromRun));
     $$('[data-dialogue-path]').forEach((button) => button.addEventListener("click", () => startDialogue(button.dataset.dialoguePath, 1)));
     $$('[data-script-path]').forEach((button) => button.addEventListener("click", () => loadDialogue(button.dataset.scriptPath, 0)));
-    $("#next-dialogue").addEventListener("click", () => {
-      const script = dialogueScripts[state.dialoguePath];
-      if (state.dialogueStep < script.steps.length - 1) { state.dialogueStep += 1; renderDialogue(); }
-    });
+    $("#dialogue-form").addEventListener("submit", (event) => { event.preventDefault(); advanceDialogue(); });
     $("#restart-dialogue").addEventListener("click", () => loadDialogue(state.dialoguePath, 0));
-    $$('[data-market]').forEach((button) => button.addEventListener("click", () => {
-      state.market = button.dataset.market;
-      $$('[data-market]').forEach((item) => {
+    $$('[data-dispatch-market]').forEach((button) => button.addEventListener("click", () => {
+      state.market = button.dataset.dispatchMarket;
+      $$('[data-dispatch-market]').forEach((item) => {
         const selected = item === button;
         item.classList.toggle("selected", selected);
         item.setAttribute("aria-pressed", String(selected));
       });
-      updateOnboardingGate();
+      updateDispatchGate();
     }));
-    $("#onboarding-start").addEventListener("change", updateOnboardingGate);
-    $("#onboarding-end").addEventListener("change", updateOnboardingGate);
+    $("#dispatch-start").addEventListener("change", updateDispatchGate);
+    $("#dispatch-end").addEventListener("change", updateDispatchGate);
+    $("#dispatch-cash").addEventListener("input", updateDispatchGate);
     $("#open-workbench").addEventListener("click", () => startDialogue("novice", 0));
-    $("#back-onboarding").addEventListener("click", () => showAView("onboarding"));
+    $("#back-onboarding").addEventListener("click", goHome);
     $("#onboarding-to-b").addEventListener("click", () => {
-      showScene("b");
-      toast("当前为固定 S2 golden 的只读历史推演，不代表首屏所选资产或区间的新运行。");
+      setStage("watch");
+      toast("当前为固定 S2 golden 的只读围观，不是当前面试产生的新 Run。");
     });
-    $("#run-button").addEventListener("click", () => { showScene("b"); toast("已打开 S2 同源完整 Run 的只读投影；未重新运行、未调用模型或网络。"); });
-    $("#validate-button").addEventListener("click", () => toast("演示脚本未执行实时校验；真实流程必须完成 AST 校验、权威回读与 expectedDigest 确认。"));
+    $("#confirm-button").addEventListener("click", () => {
+      if (!dialogueComplete()) return;
+      state.confirmedDemo = true;
+      setStage("dispatch");
+      toast("已完成演示确认；expectedDigest 与 revision 仍需真实流程生成。");
+    });
+    $("#dispatch-button").addEventListener("click", () => {
+      if ($("#dispatch-button").disabled) return;
+      setStage("watch");
+      toast("已打开固定 S2 golden 围观；没有执行当前脚本的新 Run。");
+    });
     $("#toggle-evidence").addEventListener("click", () => setEvidenceOpen(!state.evidenceOpen));
     $$('[data-story-cursor]').forEach((button) => button.addEventListener("click", () => {
       state.evidenceOpen = false;
@@ -838,7 +908,7 @@
     renderDetail();
     loadDialogue("novice", 0);
     bindEvents();
-    updateOnboardingGate();
+    updateDispatchGate();
     showScene(location.hash.slice(1) || "a", false);
   }
 

@@ -661,6 +661,42 @@ body.onboarding-active .context-source { display: none; }
 .evidence-chain[open] > summary { margin-bottom: 9px; }
 .theme-toggle { min-width: 72px; }
 
+.stage-nav .scene-tab { padding-inline: 13px; }
+.flow-topbar { max-width: 1080px; margin: 0 auto 14px; display: flex; align-items: center; gap: 10px; }
+.flow-topbar .script-badge { margin-left: auto; }
+.flow-stage { max-width: 1080px; margin: 0 auto; animation: scene-in 300ms var(--scene-ease); }
+.stage-intro { margin-bottom: 18px; text-align: center; }
+.stage-intro h1 { font-size: 28px; }
+.stage-intro > p:last-child { margin-top: 6px; color: var(--muted); font-size: 12px; }
+.interview-focus { display: grid; grid-template-columns: minmax(0, 1fr) 220px; align-items: start; gap: 12px; }
+.interview-chat-panel { min-width: 0; overflow: hidden; }
+.interview-chat-panel .dialogue-stream { height: 430px; }
+.dialogue-avatar { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 7px; }
+.dialogue-message .dialogue-content { max-width: 88%; display: flex; flex-direction: column; gap: 4px; }
+.dialogue-message.ai { flex-direction: row; }
+.dialogue-message.ai .dialogue-bubble { max-width: 100%; }
+.dialogue-composer { display: grid; grid-template-columns: 1fr auto; gap: 8px; border-top: 1px solid var(--line); padding: 12px; }
+.dialogue-composer input { min-width: 0; min-height: 40px; border: 1px solid var(--line-strong); border-radius: 6px; padding: 9px 11px; background: var(--input-bg); color: var(--ink); }
+.dialogue-composer input:disabled { color: var(--muted); }
+.interview-rule-preview { min-width: 0; }
+.interview-rule-preview > summary { padding: 14px 12px; color: var(--ink-secondary); font-size: 11px; }
+.interview-rule-preview > summary span { display: block; color: var(--muted); font-size: 8px; }
+.interview-rule-preview[open] { max-height: 620px; overflow-y: auto; }
+.single-focus-card { max-width: 790px; margin: 24px auto 0; border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--panel); box-shadow: var(--shadow-lg); }
+.single-focus-card .readback-body { padding: 0; }
+.technical-details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+.technical-details summary { color: var(--muted); font-size: 10px; }
+.technical-details pre { max-height: 240px; overflow: auto; border-radius: 5px; padding: 10px; background: var(--input-bg); color: var(--ink-secondary); font-size: 9px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.technical-details p { margin-top: 8px; color: var(--muted); font-size: 10px; }
+.focus-action { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+.focus-action > span { color: var(--muted); font-size: 10px; }
+.focus-action .button { min-height: 42px; }
+.dispatch-order { margin: 0 0 20px; border-left: 3px solid var(--accent); padding: 13px 15px; background: var(--accent-bg); color: var(--ink); font-size: 17px; line-height: 1.7; }
+.dispatch-fields { display: grid; gap: 14px; }
+.dispatch-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; }
+.dispatch-row > label { color: var(--muted); font-size: 10px; }
+.dispatch-row select, .dispatch-row input { width: 100%; min-width: 0; min-height: 38px; border: 1px solid var(--line-strong); border-radius: 5px; padding: 8px 10px; background: var(--input-bg); color: var(--ink-secondary); }
+
 @media (min-width: 1500px) {
   main { padding-top: 22px; }
   .authoring-grid { grid-template-columns: .86fr 1.12fr 1.06fr; }
@@ -708,6 +744,8 @@ body.onboarding-active .context-source { display: none; }
   .manager-hero { grid-template-columns: 1fr; gap: 24px; }
   .manager-card { max-width: 620px; }
   .destination-config { grid-template-columns: 1fr; }
+  .interview-focus { grid-template-columns: 1fr; }
+  .interview-rule-preview { max-width: none; }
   .app-footer { flex-wrap: wrap; gap: 8px 18px; padding-block: 10px; }
   .app-footer > span:nth-child(2) { margin-left: 0; }
 }
@@ -754,6 +792,10 @@ body.onboarding-active .context-source { display: none; }
   .future-shelf { align-items: flex-start; flex-direction: column; gap: 6px; }
   .future-shelf span { border-right: 0; }
   .future-shelf p { margin-left: 0; }
+  .single-focus-card { padding: 16px; }
+  .dispatch-row { grid-template-columns: 1fr; gap: 5px; }
+  .focus-action { align-items: stretch; flex-direction: column; }
+  .dialogue-composer { grid-template-columns: 1fr; }
   body.onboarding-active .onboarding-context > span:not(.status-pill) { display: none; }
   .scene-heading-meta { flex-wrap: wrap; gap: 8px 12px; }
   .baseline-banner, .baseline-banner > div { align-items: flex-start; flex-direction: column; gap: 5px; }
