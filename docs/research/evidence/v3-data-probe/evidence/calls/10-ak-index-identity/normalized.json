@@ -1,0 +1,16 @@
+{
+  "rows": [
+    {
+      "index_code": "000300",
+      "display_name": "沪深300",
+      "publish_date": "2005-04-08"
+    }
+  ],
+  "rowCount": 732,
+  "matchedCount": 1,
+  "symbolOk": true,
+  "schemaOk": true,
+  "schemaErrors": [],
+  "sourceEventTimes": {},
+  "identityName": "沪深300"
+}

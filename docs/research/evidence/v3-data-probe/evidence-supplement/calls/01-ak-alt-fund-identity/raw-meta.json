@@ -1,0 +1,17 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "item",
+    "value"
+  ],
+  "dtypes": {
+    "item": "object",
+    "value": "object"
+  },
+  "shape": [
+    14,
+    2
+  ],
+  "responseMeta": null,
+  "rawHash": "0cba53f00abdfe05d0bb39208b2459c595864ba1cdf21fd8caf82b59e8e62fc2"
+}

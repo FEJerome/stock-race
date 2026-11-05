@@ -1,0 +1,19 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "index_code",
+    "display_name",
+    "publish_date"
+  ],
+  "dtypes": {
+    "index_code": "object",
+    "display_name": "object",
+    "publish_date": "object"
+  },
+  "shape": [
+    732,
+    3
+  ],
+  "responseMeta": null,
+  "rawHash": "157cb9bdc8ff3aa6481c8b3a5ada08c07657ac42fe37b95167084a97bd69d116"
+}

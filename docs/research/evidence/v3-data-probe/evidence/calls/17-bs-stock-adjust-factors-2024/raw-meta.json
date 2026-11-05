@@ -1,0 +1,33 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "code",
+    "dividOperateDate",
+    "foreAdjustFactor",
+    "backAdjustFactor",
+    "adjustFactor"
+  ],
+  "dtypes": {
+    "code": "object",
+    "dividOperateDate": "object",
+    "foreAdjustFactor": "object",
+    "backAdjustFactor": "object",
+    "adjustFactor": "object"
+  },
+  "shape": [
+    2,
+    5
+  ],
+  "responseMeta": {
+    "error_code": "0",
+    "error_msg": "success",
+    "fields": [
+      "code",
+      "dividOperateDate",
+      "foreAdjustFactor",
+      "backAdjustFactor",
+      "adjustFactor"
+    ]
+  },
+  "rawHash": "6d720692762fcfbba1265e02503521e086791f8beda4863aa6985dd4402adfef"
+}

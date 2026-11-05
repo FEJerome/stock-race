@@ -1,0 +1,28 @@
+{
+  "checks": [
+    {
+      "date": "2024-06-19",
+      "previousRawClose": "1521.5000",
+      "cashDividendPerShareBeforeTax": "30.876",
+      "expectedPreclose": "1490.6240",
+      "actualPreclose": "1490.6200",
+      "actualMinusExpected": "-0.0040",
+      "stockDividendPerShare": "0.000000",
+      "status": "pass",
+      "tolerance": "0.005 CNY for cent rounding"
+    },
+    {
+      "date": "2024-12-20",
+      "previousRawClose": "1551.0100",
+      "cashDividendPerShareBeforeTax": "23.882",
+      "expectedPreclose": "1527.1280",
+      "actualPreclose": "1527.1300",
+      "actualMinusExpected": "0.0020",
+      "stockDividendPerShare": "0.000000",
+      "status": "pass",
+      "tolerance": "0.005 CNY for cent rounding"
+    }
+  ],
+  "allPass": true,
+  "scope": "internal raw-price/dividend arithmetic, not an independent official announcement check"
+}

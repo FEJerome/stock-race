@@ -1,0 +1,7 @@
+{
+  "error": "KeyError: 'data'",
+  "request": {
+    "symbol": "510300",
+    "timeout": 20
+  }
+}

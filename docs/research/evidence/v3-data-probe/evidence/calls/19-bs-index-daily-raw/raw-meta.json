@@ -1,0 +1,48 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "date",
+    "code",
+    "open",
+    "high",
+    "low",
+    "close",
+    "preclose",
+    "volume",
+    "amount",
+    "adjustflag"
+  ],
+  "dtypes": {
+    "date": "object",
+    "code": "object",
+    "open": "object",
+    "high": "object",
+    "low": "object",
+    "close": "object",
+    "preclose": "object",
+    "volume": "object",
+    "amount": "object",
+    "adjustflag": "object"
+  },
+  "shape": [
+    242,
+    10
+  ],
+  "responseMeta": {
+    "error_code": "0",
+    "error_msg": "success",
+    "fields": [
+      "date",
+      "code",
+      "open",
+      "high",
+      "low",
+      "close",
+      "preclose",
+      "volume",
+      "amount",
+      "adjustflag"
+    ]
+  },
+  "rawHash": "bb6363bcf5dbaab071d1163b1fea30e12cbf25f6c8a8955e3133ed31bae7deae"
+}

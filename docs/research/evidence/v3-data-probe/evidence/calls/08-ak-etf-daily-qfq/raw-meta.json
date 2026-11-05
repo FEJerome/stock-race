@@ -1,0 +1,35 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "日期",
+    "开盘",
+    "收盘",
+    "最高",
+    "最低",
+    "成交量",
+    "成交额",
+    "振幅",
+    "涨跌幅",
+    "涨跌额",
+    "换手率"
+  ],
+  "dtypes": {
+    "日期": "object",
+    "开盘": "float64",
+    "收盘": "float64",
+    "最高": "float64",
+    "最低": "float64",
+    "成交量": "int64",
+    "成交额": "float64",
+    "振幅": "float64",
+    "涨跌幅": "float64",
+    "涨跌额": "float64",
+    "换手率": "float64"
+  },
+  "shape": [
+    242,
+    11
+  ],
+  "responseMeta": null,
+  "rawHash": "da1d64e28031b9507a7cf22d7c558ce642f1db321710e6059027b5277a16584c"
+}

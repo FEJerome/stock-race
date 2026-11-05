@@ -1,0 +1,17 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "净值日期",
+    "累计净值"
+  ],
+  "dtypes": {
+    "净值日期": "object",
+    "累计净值": "float64"
+  },
+  "shape": [
+    6030,
+    2
+  ],
+  "responseMeta": null,
+  "rawHash": "188185f09ab2deec1108c6c7e3ff7b9b8e3b14fa1f1600a9b20abc6dca7dbd19"
+}

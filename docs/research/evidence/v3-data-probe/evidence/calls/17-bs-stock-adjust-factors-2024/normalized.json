@@ -1,0 +1,29 @@
+{
+  "rows": [
+    {
+      "code": "sh.600519",
+      "dividOperateDate": "2024-06-19",
+      "foreAdjustFactor": "0.927559",
+      "backAdjustFactor": "7.113689",
+      "adjustFactor": "7.113689"
+    },
+    {
+      "code": "sh.600519",
+      "dividOperateDate": "2024-12-20",
+      "foreAdjustFactor": "0.942063",
+      "backAdjustFactor": "7.224927",
+      "adjustFactor": "7.224927"
+    }
+  ],
+  "rowCount": 2,
+  "fixedIntervalRowCount": 2,
+  "symbolOk": true,
+  "schemaOk": true,
+  "schemaErrors": [],
+  "publishedAtPresent": false,
+  "sourceEventTimes": {
+    "field": "dividOperateDate",
+    "min": "2024-06-19",
+    "max": "2024-12-20"
+  }
+}

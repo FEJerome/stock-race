@@ -1,0 +1,740 @@
+{
+  "generatedAt": "2026-10-27T16:43:10.203+08:00",
+  "scope": "Integrity index only; does not change any probe layer result.",
+  "results": {
+    "path": "RESULTS.md",
+    "sha256": "48186e6dcf8cd5f122f34da3cd84c893371f229e137dc80f53ea500da844bc50",
+    "bytes": 8941
+  },
+  "manifests": [
+    {
+      "path": "evidence\\manifest.json",
+      "sha256": "137aad468901ae07448df4a1b866ba3e925754b0b71671f2b6ef88fc8cb5583b",
+      "recordedSha256": "137aad468901ae07448df4a1b866ba3e925754b0b71671f2b6ef88fc8cb5583b",
+      "valid": true,
+      "probeCount": 19
+    },
+    {
+      "path": "evidence-supplement\\manifest.json",
+      "sha256": "e6ea793b9ee5f724a0199faa45693393122c763965a4773ca4b19f2cbf8f0dde",
+      "recordedSha256": "e6ea793b9ee5f724a0199faa45693393122c763965a4773ca4b19f2cbf8f0dde",
+      "valid": true,
+      "probeCount": 8
+    }
+  ],
+  "probeEvidence": [
+    {
+      "id": "ak-fund-identity",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\01-ak-fund-identity\\raw.csv",
+        "sha256": "ca3d3e90de24e8a2cf1be883fb4a81b5f63263db989aaac4c7fff46b24e126ba",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\01-ak-fund-identity\\raw-meta.json",
+        "sha256": "2cf0868fcc2cf2ad497592e9d11d8bf936bcdac8081f5b9f3cbf5740bd147bf5",
+        "bytes": 310
+      },
+      "normalized": {
+        "path": "evidence\\calls\\01-ak-fund-identity\\normalized.json",
+        "sha256": "54def4e30fa2ad0a24dadadbb9d715ea35de5f81c8a3a4b0cc26dc4444899fa4",
+        "bytes": 3781
+      }
+    },
+    {
+      "id": "ak-fund-unit-nav",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\02-ak-fund-unit-nav\\raw.csv",
+        "sha256": "dcd8ed649bf5ed356b03848e365aa6a26ccbac1c9d5a12b135278572a59f2819",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\02-ak-fund-unit-nav\\raw-meta.json",
+        "sha256": "aedd88dde5d7942c151df9d6b0695067dde7f9c4275e87a0985181fcc9d0fd20",
+        "bytes": 396
+      },
+      "normalized": {
+        "path": "evidence\\calls\\02-ak-fund-unit-nav\\normalized.json",
+        "sha256": "73405d43f7c48affcd98f54dc839dc50667ec451fadf73fa1081065d25543b68",
+        "bytes": 16592
+      }
+    },
+    {
+      "id": "ak-fund-cumulative-nav",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\03-ak-fund-cumulative-nav\\raw.csv",
+        "sha256": "edc0249eede1d6a83f98ec1063e352c8fc3688472da4b489429d719ab2c395f2",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\03-ak-fund-cumulative-nav\\raw-meta.json",
+        "sha256": "ccb3ca43bebc637ab3f174cbb70d4558728acb3d4ab8af3dabf96d38062c00c8",
+        "bytes": 343
+      },
+      "normalized": {
+        "path": "evidence\\calls\\03-ak-fund-cumulative-nav\\normalized.json",
+        "sha256": "fc152e7998d60fdc60805e30b3308575a5d1ce9eaac110160112ebb6f1c97ee2",
+        "bytes": 16592
+      }
+    },
+    {
+      "id": "ak-fund-dividends",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "fail",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\04-ak-fund-dividends\\raw.csv",
+        "sha256": "b37ceb9d413bcd135475fdb064adb05380154785809011c04cba29317698cd7b",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\04-ak-fund-dividends\\raw-meta.json",
+        "sha256": "04c8ee52389fc80bdfab950583564f17cf343b57bb6bedd2391ff1c208809ac2",
+        "bytes": 493
+      },
+      "normalized": {
+        "path": "evidence\\calls\\04-ak-fund-dividends\\normalized.json",
+        "sha256": "c5e5052133c2d3131d2bb302827e048251ccee911b47ca25d691a7233c58e2cc",
+        "bytes": 276
+      }
+    },
+    {
+      "id": "ak-etf-identity",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "fail",
+        "nonemptySymbols": "fail",
+        "schema": "fail",
+        "value": "unverified"
+      },
+      "error": {
+        "path": "evidence\\calls\\05-ak-etf-identity\\error.json",
+        "sha256": "2cbdc305ca70b3422ffc8e87c3df83c3032682475d5b09068dea7d1cd82c5f2f",
+        "bytes": 103
+      }
+    },
+    {
+      "id": "ak-etf-identity-alt",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "fail",
+        "nonemptySymbols": "fail",
+        "schema": "fail",
+        "value": "unverified"
+      },
+      "error": {
+        "path": "evidence\\calls\\06-ak-etf-identity-alt\\error.json",
+        "sha256": "d1a1c2e6d03244f2d6cf9bfe318ed51c0c8f35cc91032c1108d33136644e17cb",
+        "bytes": 248
+      }
+    },
+    {
+      "id": "ak-etf-daily-raw",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "pass"
+      },
+      "raw": {
+        "path": "evidence\\calls\\07-ak-etf-daily-raw\\raw.csv",
+        "sha256": "099c7b01e80f789dc091c46cbe2ec194642d30fe3d3774d2202783ce433b3e81",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\07-ak-etf-daily-raw\\raw-meta.json",
+        "sha256": "5220da2f54fdb6670b02fc0e2c2024cea4f665f126d740ab236684af947ba397",
+        "bytes": 716
+      },
+      "normalized": {
+        "path": "evidence\\calls\\07-ak-etf-daily-raw\\normalized.json",
+        "sha256": "d315df0316edae378e64f12c54fe89d77a12c7271b2536cf19ae9cc9c6cc8262",
+        "bytes": 45781
+      }
+    },
+    {
+      "id": "ak-etf-daily-qfq",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\08-ak-etf-daily-qfq\\raw.csv",
+        "sha256": "da1d64e28031b9507a7cf22d7c558ce642f1db321710e6059027b5277a16584c",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\08-ak-etf-daily-qfq\\raw-meta.json",
+        "sha256": "9852d659ce34b1fceededf23eb7d282d3d4dd1accb91dab2a02a049ccefe0ff1",
+        "bytes": 716
+      },
+      "normalized": {
+        "path": "evidence\\calls\\08-ak-etf-daily-qfq\\normalized.json",
+        "sha256": "5a68d0bac9a691a64fdabeb0f5050df3958abb826907795c26592a0733566579",
+        "bytes": 45793
+      }
+    },
+    {
+      "id": "ak-etf-dividends",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\09-ak-etf-dividends\\raw.csv",
+        "sha256": "c56cd33f17ae887f592810a776e147833d169d4eea9d55ce23b5d59cd671ede6",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\09-ak-etf-dividends\\raw-meta.json",
+        "sha256": "0b1e6f4f9f4daff5fc5a0aa1101688471b1017fbf4397413e6d2de3da199e766",
+        "bytes": 329
+      },
+      "normalized": {
+        "path": "evidence\\calls\\09-ak-etf-dividends\\normalized.json",
+        "sha256": "a922dc5801f1a692318f4a1194788cd31ba2dc2f9377aaabb5371eaedc3430de",
+        "bytes": 351
+      }
+    },
+    {
+      "id": "ak-index-identity",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\10-ak-index-identity\\raw.csv",
+        "sha256": "157cb9bdc8ff3aa6481c8b3a5ada08c07657ac42fe37b95167084a97bd69d116",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\10-ak-index-identity\\raw-meta.json",
+        "sha256": "733e8dd9f11de685616c10e1d7354701cdde78fb3608a06a802853ddb72d25ab",
+        "bytes": 389
+      },
+      "normalized": {
+        "path": "evidence\\calls\\10-ak-index-identity\\normalized.json",
+        "sha256": "2fab444580b97af98225952a329bdbcdfdef12ada307701144fd6f766c6150eb",
+        "bytes": 307
+      }
+    },
+    {
+      "id": "ak-index-daily",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "fail",
+        "nonemptySymbols": "fail",
+        "schema": "fail",
+        "value": "unverified"
+      },
+      "error": {
+        "path": "evidence\\calls\\11-ak-index-daily\\error.json",
+        "sha256": "50b813929c67e92206cc470ec1a5bea3af93924605ff1eb1d4162f9f29d04ed0",
+        "bytes": 313
+      }
+    },
+    {
+      "id": "ak-stock-daily-raw",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "fail",
+        "nonemptySymbols": "fail",
+        "schema": "fail",
+        "value": "unverified"
+      },
+      "error": {
+        "path": "evidence\\calls\\12-ak-stock-daily-raw\\error.json",
+        "sha256": "2fc1dff6cb1484e40ac70cf3f88cecb50fbfc6f4c01c028feef2004dc8587a42",
+        "bytes": 299
+      }
+    },
+    {
+      "id": "bs-stock-basic",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\13-bs-stock-basic\\raw.csv",
+        "sha256": "ade73e4303c0f8dcb8f5a24a8f4afa638054d36cca0045e45f1864e010b4c379",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\13-bs-stock-basic\\raw-meta.json",
+        "sha256": "29487fc0ed38ea4a2ca2c4d2197297dac62ec4edd6f4a14c33b34b05e952a041",
+        "bytes": 658
+      },
+      "normalized": {
+        "path": "evidence\\calls\\13-bs-stock-basic\\normalized.json",
+        "sha256": "8ba8ac4246670ae6b2bc9e2763fe3d0f08add5fd5bd561dbbf3924b561bd0057",
+        "bytes": 364
+      }
+    },
+    {
+      "id": "bs-stock-daily-raw",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\14-bs-stock-daily-raw\\raw.csv",
+        "sha256": "dafcf6f27963abda011fea17d24983d21f48f3a6cf7a601eabe8d767d1ba44a6",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\14-bs-stock-daily-raw\\raw-meta.json",
+        "sha256": "09e569d653daf67c58c889c21ed2cb3ea2c7676e0e68d5c881c7c6b734465111",
+        "bytes": 1099
+      },
+      "normalized": {
+        "path": "evidence\\calls\\14-bs-stock-daily-raw\\normalized.json",
+        "sha256": "5369f933b5e74f23ce327b3138a1bbcdf9f86985c3270b7172d31c666a6e5fe1",
+        "bytes": 54210
+      }
+    },
+    {
+      "id": "bs-trade-calendar-2024",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "pass"
+      },
+      "raw": {
+        "path": "evidence\\calls\\15-bs-trade-calendar-2024\\raw.csv",
+        "sha256": "2e1ac4b3cb1adb2fa063fb50047d5eced15b11f597332218259fab35f8ab5e2b",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\15-bs-trade-calendar-2024\\raw-meta.json",
+        "sha256": "97040b5d4dade25e01db43f868d37e1a1cb97d98615caf342e4e421596361a87",
+        "bytes": 474
+      },
+      "normalized": {
+        "path": "evidence\\calls\\15-bs-trade-calendar-2024\\normalized.json",
+        "sha256": "7c359ba991771c74c8613ab362ac47d9cb2881b7074ef588708c04101cf932c6",
+        "bytes": 29642
+      }
+    },
+    {
+      "id": "bs-stock-dividends-2024",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\16-bs-stock-dividends-2024\\raw.csv",
+        "sha256": "aa9d03efd5f9c130ae6af86ea1b5c50279c3fd488340589b476930e42543b32a",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\16-bs-stock-dividends-2024\\raw-meta.json",
+        "sha256": "58c33dce1163ac1086fbdeaf1d6b0eb6e9a2e8a2cf6cd4595c126406fe8cb116",
+        "bytes": 1523
+      },
+      "normalized": {
+        "path": "evidence\\calls\\16-bs-stock-dividends-2024\\normalized.json",
+        "sha256": "d00ee7e64b116c6cfb288694addac4ce0bf5fa90cc722fffbe756c21f9f75d52",
+        "bytes": 1487
+      }
+    },
+    {
+      "id": "bs-stock-adjust-factors-2024",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\17-bs-stock-adjust-factors-2024\\raw.csv",
+        "sha256": "6d720692762fcfbba1265e02503521e086791f8beda4863aa6985dd4402adfef",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\17-bs-stock-adjust-factors-2024\\raw-meta.json",
+        "sha256": "531ebc9ce22071ab28025009bf728a2190451c50ee7c5e50504cce055789deb5",
+        "bytes": 700
+      },
+      "normalized": {
+        "path": "evidence\\calls\\17-bs-stock-adjust-factors-2024\\normalized.json",
+        "sha256": "86d1298b4d58bdb9e8601e8619e8e6a75fd9cbebc6b3df2a8a35785ababc49b0",
+        "bytes": 677
+      }
+    },
+    {
+      "id": "bs-etf-daily-raw",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "pass"
+      },
+      "raw": {
+        "path": "evidence\\calls\\18-bs-etf-daily-raw\\raw.csv",
+        "sha256": "72be52d1bc65dc6934fdaba6468186bc161332cbf5799ae6bc751e4b8b772d08",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\18-bs-etf-daily-raw\\raw-meta.json",
+        "sha256": "ece5207dd4226d1fba65f44a4f706eefb0aaec12c482da30780fffcf46d7efb6",
+        "bytes": 868
+      },
+      "normalized": {
+        "path": "evidence\\calls\\18-bs-etf-daily-raw\\normalized.json",
+        "sha256": "7c72cd95e87ab8b33f3b56cc2f56e764020f9d34afb029c23b89fc7e7697225f",
+        "bytes": 53039
+      }
+    },
+    {
+      "id": "bs-index-daily-raw",
+      "evidenceSet": "evidence",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence\\calls\\19-bs-index-daily-raw\\raw.csv",
+        "sha256": "bb6363bcf5dbaab071d1163b1fea30e12cbf25f6c8a8955e3133ed31bae7deae",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence\\calls\\19-bs-index-daily-raw\\raw-meta.json",
+        "sha256": "a4e43df8c98a04eca0eb75ee65dc4205f85adbf71fc9e520df175db698221024",
+        "bytes": 868
+      },
+      "normalized": {
+        "path": "evidence\\calls\\19-bs-index-daily-raw\\normalized.json",
+        "sha256": "81cc6ed903de0a4ab22dcdb5244e27b1c1ca6cd3bc19f27ac1ffe8094bf88164",
+        "bytes": 57709
+      }
+    },
+    {
+      "id": "ak-alt-fund-identity",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\01-ak-alt-fund-identity\\raw.csv",
+        "sha256": "0cba53f00abdfe05d0bb39208b2459c595864ba1cdf21fd8caf82b59e8e62fc2",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\01-ak-alt-fund-identity\\raw-meta.json",
+        "sha256": "678d24011cd6d0c3c6be7e11253a4c34fb66ef1adcab79f981371866f6f2da47",
+        "bytes": 310
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\01-ak-alt-fund-identity\\normalized.json",
+        "sha256": "fafefb166e78ede335f7c50de52eec47f708c4cfc46b69f04095876db7dc7ac5",
+        "bytes": 4109
+      }
+    },
+    {
+      "id": "ak-alt-fund-unit-nav",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\02-ak-alt-fund-unit-nav\\raw.csv",
+        "sha256": "2699ac2d12c2f8c8b0425595ecf1d5922fdfb9a12fa377821601bfd845df1698",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\02-ak-alt-fund-unit-nav\\raw-meta.json",
+        "sha256": "2bfe7380ea4a5f5187e676be0ae3e4efdc208ad8e9c9dede787cbd051b84d13a",
+        "bytes": 396
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\02-ak-alt-fund-unit-nav\\normalized.json",
+        "sha256": "b034ad63c72c5dccac6beb60c922290e67df566f2bbbd98916ca45571331eb29",
+        "bytes": 16346
+      }
+    },
+    {
+      "id": "ak-alt-fund-cumulative-nav",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\03-ak-alt-fund-cumulative-nav\\raw.csv",
+        "sha256": "188185f09ab2deec1108c6c7e3ff7b9b8e3b14fa1f1600a9b20abc6dca7dbd19",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\03-ak-alt-fund-cumulative-nav\\raw-meta.json",
+        "sha256": "67cd34fc2881895855e327e0073d3d5a8c46dc1f0448aabb078a87f076396876",
+        "bytes": 343
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\03-ak-alt-fund-cumulative-nav\\normalized.json",
+        "sha256": "ce29e7043bac04257b7c7820da8228e55d9ab9cb4dc4bf489ac5a87f9267e92f",
+        "bytes": 16357
+      }
+    },
+    {
+      "id": "ak-alt-fund-dividends",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "fail",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\04-ak-alt-fund-dividends\\raw.csv",
+        "sha256": "729d5c0710c45391c6e257ada575893bd162b41c88cd6825990b845c26b74f06",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\04-ak-alt-fund-dividends\\raw-meta.json",
+        "sha256": "9171b2ff5ae88d3cedf0621dc654c3bff10f10f52cbca3f4d24c0b4b1484b276",
+        "bytes": 494
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\04-ak-alt-fund-dividends\\normalized.json",
+        "sha256": "567b0ff1fd524bb64b422eb75f9c2212b4d8e7a512e1fe37e6d02eb89b4d2710",
+        "bytes": 277
+      }
+    },
+    {
+      "id": "ak-alt-stock-daily-raw",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "pass"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\05-ak-alt-stock-daily-raw\\raw.csv",
+        "sha256": "bb88cd2a6347ce15ce1ec3aeff2e4c318ac6713ac8a08ae28ad8957791a3d5a8",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\05-ak-alt-stock-daily-raw\\raw-meta.json",
+        "sha256": "bd4679fcfa0a0327c68d255b4d05fd10877c76d6163a7003da05ec1d04d93af8",
+        "bytes": 611
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\05-ak-alt-stock-daily-raw\\normalized.json",
+        "sha256": "3b2b1f9ea91e3bd5225ae90ca55c01b30c782c2bea80bb588e876e5cf1f18089",
+        "bytes": 47702
+      }
+    },
+    {
+      "id": "ak-alt-index-daily",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "fail"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\06-ak-alt-index-daily\\raw.csv",
+        "sha256": "1026ecc4a2b6c30e098af6935e2ce94e384dc7aebe4d33c27d043f769ba2b4c5",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\06-ak-alt-index-daily\\raw-meta.json",
+        "sha256": "18ee91ddc470dec15706815da0df6196d4d49c7190cfb58a6cfb66527da448f8",
+        "bytes": 461
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\06-ak-alt-index-daily\\normalized.json",
+        "sha256": "dec27866ce7501fa5cb43b155da26fb40e37ed230fe1d25d269158b94d3ac240",
+        "bytes": 41970
+      }
+    },
+    {
+      "id": "bs-etf-basic",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\07-bs-etf-basic\\raw.csv",
+        "sha256": "d255a8395fa1eb4b5c6c9339ca129603e8e9c54eac611dc0c36b59f71216a21e",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\07-bs-etf-basic\\raw-meta.json",
+        "sha256": "c77c2519f28307df8a7189d07ca3032702c9696b525b315f5013cb44aec206b9",
+        "bytes": 658
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\07-bs-etf-basic\\normalized.json",
+        "sha256": "48f248b6541785cf9f3fd705c98278f1976b58d9cfcabc140beba28edbf5a95d",
+        "bytes": 388
+      }
+    },
+    {
+      "id": "bs-index-basic",
+      "evidenceSet": "evidence-supplement",
+      "layers": {
+        "call": "pass",
+        "nonemptySymbols": "pass",
+        "schema": "pass",
+        "value": "unverified"
+      },
+      "raw": {
+        "path": "evidence-supplement\\calls\\08-bs-index-basic\\raw.csv",
+        "sha256": "6fc34b23c86b3fdcc8556c047f452a823c803821d834c4d286eded837a6cf022",
+        "valid": true
+      },
+      "rawMeta": {
+        "path": "evidence-supplement\\calls\\08-bs-index-basic\\raw-meta.json",
+        "sha256": "faf65c41144d6f206e21bd37b21477bfcd30c48e5d5c91db92e359ed4c9e1c4c",
+        "bytes": 658
+      },
+      "normalized": {
+        "path": "evidence-supplement\\calls\\08-bs-index-basic\\normalized.json",
+        "sha256": "8b1af7cbe25fffb0e6e8f674df264d2fba4e5b0a1692599dd39d9a28e7cde398",
+        "bytes": 370
+      }
+    }
+  ],
+  "derivedReviews": [
+    {
+      "path": "evidence\\derived-review.json",
+      "sha256": "d0f253ad09bc1af185971079317ed501ef4ecaa4114eeba252bc3a42e935cbfd",
+      "bytes": 9305
+    },
+    {
+      "path": "evidence\\corporate-action-check.json",
+      "sha256": "55aa88ed244da26225f56374e1e63bb62b6197c77be70373af074cb177ddf260",
+      "bytes": 890
+    },
+    {
+      "path": "evidence-supplement\\supplement-derived-review.json",
+      "sha256": "28cd4050082861a2d93afd8c3c484c9564d3b0a7baf1493a220ebb668f8ab730",
+      "bytes": 5726
+    }
+  ],
+  "supportingFiles": [
+    {
+      "path": "scripts\\analyze_evidence.py",
+      "sha256": "1c4d2d231d7091e1f8572adea19016642ba6c67e70e81b117fe4e25d5d66137f",
+      "bytes": 8517
+    },
+    {
+      "path": "scripts\\inspect_sources.py",
+      "sha256": "719418fb910a69a9da9391f954fbe0d7fb20d30970e5f09328c49c8a413a829d",
+      "bytes": 2264
+    },
+    {
+      "path": "scripts\\run_probes.py",
+      "sha256": "e88e762881a2caa409acca8ed182170501e4ebb52614f9e2cfed4ddf7785457a",
+      "bytes": 30272
+    },
+    {
+      "path": "scripts\\run_supplement.py",
+      "sha256": "f8f42c7b3669355996fbe987b4804429f305f5d0dfefb747315c240f5d8010fa",
+      "bytes": 8883
+    },
+    {
+      "path": "scripts\\api-inspection.json",
+      "sha256": "729cd4c1b5aa9e805862443fb9b2eaa62833a1a0887a211e01a97a2c75c7e5f1",
+      "bytes": 58518
+    },
+    {
+      "path": "scripts\\official-static-notes.json",
+      "sha256": "1424df279d4f2f8786df8df177d099a5447f03f1744570deac65de9cf7b2d193",
+      "bytes": 3730
+    },
+    {
+      "path": "scripts\\pip-freeze.txt",
+      "sha256": "36826086b79c37132621742c5c35483263875caa383381f3639f13921c548959",
+      "bytes": 545
+    },
+    {
+      "path": "scripts\\run-output.txt",
+      "sha256": "51785dca87fc5005ba984a5f9e856ee9da6ae836672e3b8ad1bf124de6b04705",
+      "bytes": 6671
+    },
+    {
+      "path": "scripts\\supplement-output.txt",
+      "sha256": "d8ca2f990e652b24ac9874e90e3a7417a71981e09f5837b4a627487adc4e042b",
+      "bytes": 2751
+    }
+  ],
+  "researchReport": {
+    "path": "E:\\projects\\stock-race\\docs\\research\\2026-10-27-v3-legacy-data-source-evidence.md",
+    "sha256": "00f42363646134e0e16823f5ec49c28976c723d9631c68ca414298591eee3587",
+    "bytes": 23063
+  },
+  "integrity": {
+    "allManifestHashesValid": true,
+    "allRawHashesValid": true,
+    "rawEvidenceCount": 23,
+    "errorEvidenceCount": 4,
+    "normalizedEvidenceCount": 23,
+    "supportingFileCount": 9,
+    "allReferencedFilesExist": true
+  }
+}

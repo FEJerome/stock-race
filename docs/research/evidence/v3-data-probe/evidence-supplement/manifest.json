@@ -1,0 +1,694 @@
+{
+  "runId": "v3-data-probe-20261027T1605",
+  "startedAt": "2026-10-27T16:34:53.176+08:00",
+  "python": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+  "script": {
+    "path": "E:\\projects\\stock-race\\.local\\v3-data-probe-20261027T1605\\scripts\\run_supplement.py",
+    "sha256": "f8f42c7b3669355996fbe987b4804429f305f5d0dfefb747315c240f5d8010fa"
+  },
+  "packages": {
+    "akshare": "1.18.88",
+    "baostock": "0.9.4",
+    "pandas": "2.3.3",
+    "numpy": "2.2.6",
+    "requests": "2.34.2"
+  },
+  "fixedInterval": {
+    "start": "2024-01-02",
+    "end": "2024-12-31"
+  },
+  "comparisonDates": [
+    "2024-01-02",
+    "2024-12-31"
+  ],
+  "probes": [
+    {
+      "id": "ak-alt-fund-identity",
+      "source": "akshare",
+      "interface": "fund_individual_basic_info_xq",
+      "category": "current-metadata",
+      "asset": {
+        "code": "000001",
+        "expectedType": "ordinary open-end fund; namespace fund, not stock/index"
+      },
+      "request": {
+        "symbol": "000001",
+        "timeout": 20,
+        "reason": "110011 is QDII"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:34:53.502+08:00",
+      "endedAt": "2026-10-27T16:34:53.890+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 14,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 14,
+      "sourceEventTimes": {},
+      "derived": {},
+      "raw": {
+        "path": "calls\\01-ak-alt-fund-identity\\raw.csv",
+        "sha256": "0cba53f00abdfe05d0bb39208b2459c595864ba1cdf21fd8caf82b59e8e62fc2"
+      },
+      "durationSeconds": 0.391
+    },
+    {
+      "id": "ak-alt-fund-unit-nav",
+      "source": "akshare",
+      "interface": "fund_open_fund_info_em",
+      "category": "historical-nav",
+      "asset": {
+        "code": "000001",
+        "expectedType": "ordinary open-end fund; namespace fund, not stock/index"
+      },
+      "request": {
+        "symbol": "000001",
+        "indicator": "单位净值走势",
+        "sourceRange": "full returned history",
+        "localFilter": [
+          "2024-01-02",
+          "2024-12-31"
+        ]
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:34:53.891+08:00",
+      "endedAt": "2026-10-27T16:34:54.211+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 6030,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 6030,
+      "sourceEventTimes": {
+        "field": "净值日期",
+        "min": "2001-12-18",
+        "max": "2026-10-26"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 243,
+        "latestVisibleNavDateAtCollection": "2026-10-26",
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\02-ak-alt-fund-unit-nav\\raw.csv",
+        "sha256": "2699ac2d12c2f8c8b0425595ecf1d5922fdfb9a12fa377821601bfd845df1698"
+      },
+      "durationSeconds": 0.313
+    },
+    {
+      "id": "ak-alt-fund-cumulative-nav",
+      "source": "akshare",
+      "interface": "fund_open_fund_info_em",
+      "category": "historical-nav",
+      "asset": {
+        "code": "000001",
+        "expectedType": "ordinary open-end fund; namespace fund, not stock/index"
+      },
+      "request": {
+        "symbol": "000001",
+        "indicator": "累计净值走势",
+        "sourceRange": "full returned history",
+        "localFilter": [
+          "2024-01-02",
+          "2024-12-31"
+        ]
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:34:54.211+08:00",
+      "endedAt": "2026-10-27T16:34:54.328+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 6030,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 6030,
+      "sourceEventTimes": {
+        "field": "净值日期",
+        "min": "2001-12-18",
+        "max": "2026-10-26"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 243,
+        "latestVisibleNavDateAtCollection": "2026-10-26",
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\03-ak-alt-fund-cumulative-nav\\raw.csv",
+        "sha256": "188185f09ab2deec1108c6c7e3ff7b9b8e3b14fa1f1600a9b20abc6dca7dbd19"
+      },
+      "durationSeconds": 0.125
+    },
+    {
+      "id": "ak-alt-fund-dividends",
+      "source": "akshare",
+      "interface": "fund_open_fund_info_em",
+      "category": "corporate-action",
+      "asset": {
+        "code": "000001",
+        "expectedType": "ordinary open-end fund; namespace fund, not stock/index"
+      },
+      "request": {
+        "symbol": "000001",
+        "indicator": "分红送配详情",
+        "localDateFilter": [
+          "2024-01-02",
+          "2024-12-31"
+        ]
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:34:54.329+08:00",
+      "endedAt": "2026-10-27T16:34:54.852+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "fail",
+          "detail": {
+            "rowCount": 25,
+            "symbolOk": false
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 25,
+      "sourceEventTimes": {
+        "field": "除息日",
+        "min": "2002-06-26",
+        "max": "2025-09-22"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 0,
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\04-ak-alt-fund-dividends\\raw.csv",
+        "sha256": "729d5c0710c45391c6e257ada575893bd162b41c88cd6825990b845c26b74f06"
+      },
+      "durationSeconds": 0.515
+    },
+    {
+      "id": "ak-alt-stock-daily-raw",
+      "source": "akshare",
+      "interface": "stock_zh_a_daily",
+      "category": "historical-daily-alternative",
+      "asset": {
+        "code": "sh.600519",
+        "expectedType": "A-share stock"
+      },
+      "request": {
+        "symbol": "sh600519",
+        "start_date": "20240102",
+        "end_date": "20241231",
+        "adjust": "",
+        "reason": "stock_zh_a_hist connection failed; no retry"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:34:54.853+08:00",
+      "endedAt": "2026-10-27T16:34:55.208+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 242,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "pass",
+          "detail": {
+            "comparison": "600519 raw OHLC via AKShare alternative"
+          }
+        }
+      },
+      "rowCount": 242,
+      "sourceEventTimes": {
+        "field": "date",
+        "min": "2024-01-02",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 242
+      },
+      "raw": {
+        "path": "calls\\05-ak-alt-stock-daily-raw\\raw.csv",
+        "sha256": "bb88cd2a6347ce15ce1ec3aeff2e4c318ac6713ac8a08ae28ad8957791a3d5a8"
+      },
+      "durationSeconds": 0.36
+    },
+    {
+      "id": "ak-alt-index-daily",
+      "source": "akshare",
+      "interface": "stock_zh_index_daily",
+      "category": "historical-daily-alternative",
+      "asset": {
+        "code": "000300",
+        "expectedType": "index; adjustment and return-series type not labeled"
+      },
+      "request": {
+        "symbol": "sh000300",
+        "sourceRange": "full returned history",
+        "localFilter": [
+          "2024-01-02",
+          "2024-12-31"
+        ],
+        "adjustmentSemantics": "no adjust parameter; unlabeled"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:34:55.209+08:00",
+      "endedAt": "2026-10-27T16:34:55.329+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 6016,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "fail",
+          "detail": {
+            "comparison": "000300 index OHLC via AKShare alternative"
+          }
+        }
+      },
+      "rowCount": 6016,
+      "sourceEventTimes": {
+        "field": "date",
+        "min": "2024-01-02",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 242
+      },
+      "raw": {
+        "path": "calls\\06-ak-alt-index-daily\\raw.csv",
+        "sha256": "1026ecc4a2b6c30e098af6935e2ce94e384dc7aebe4d33c27d043f769ba2b4c5"
+      },
+      "durationSeconds": 0.125
+    },
+    {
+      "id": "bs-etf-basic",
+      "source": "baostock",
+      "interface": "query_stock_basic",
+      "category": "security-master",
+      "asset": {
+        "code": "sh.510300",
+        "expectedType": "ETF identity; T+1 not supplied by this interface"
+      },
+      "request": {
+        "code": "sh.510300"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:35:56.710+08:00",
+      "endedAt": "2026-10-27T16:35:56.779+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 1,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 1,
+      "sourceEventTimes": {},
+      "derived": {
+        "matchedCount": 1,
+        "identityName": "华泰柏瑞沪深300ETF"
+      },
+      "raw": {
+        "path": "calls\\07-bs-etf-basic\\raw.csv",
+        "sha256": "d255a8395fa1eb4b5c6c9339ca129603e8e9c54eac611dc0c36b59f71216a21e"
+      },
+      "durationSeconds": 0.078
+    },
+    {
+      "id": "bs-index-basic",
+      "source": "baostock",
+      "interface": "query_stock_basic",
+      "category": "security-master",
+      "asset": {
+        "code": "sh.000300",
+        "expectedType": "index identity"
+      },
+      "request": {
+        "code": "sh.000300"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:35:56.781+08:00",
+      "endedAt": "2026-10-27T16:35:57.085+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 1,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 1,
+      "sourceEventTimes": {},
+      "derived": {
+        "matchedCount": 1,
+        "identityName": "沪深300指数"
+      },
+      "raw": {
+        "path": "calls\\08-bs-index-basic\\raw.csv",
+        "sha256": "6fc34b23c86b3fdcc8556c047f452a823c803821d834c4d286eded837a6cf022"
+      },
+      "durationSeconds": 0.297
+    }
+  ],
+  "connections": [
+    {
+      "source": "baostock",
+      "action": "login",
+      "startedAt": "2026-10-27T16:34:55.330+08:00",
+      "response": {
+        "error_code": "0",
+        "error_msg": "success"
+      },
+      "success": true,
+      "endedAt": "2026-10-27T16:35:56.704+08:00",
+      "durationSeconds": 61.375
+    },
+    {
+      "source": "baostock",
+      "action": "logout",
+      "startedAt": "2026-10-27T16:35:57.090+08:00",
+      "response": {
+        "error_code": "0",
+        "error_msg": "success"
+      },
+      "success": true,
+      "endedAt": "2026-10-27T16:35:57.160+08:00",
+      "durationSeconds": 0.063
+    }
+  ],
+  "comparisons": [
+    {
+      "label": "600519 raw OHLC via AKShare alternative",
+      "left": "ak-alt-stock-daily-raw",
+      "right": "bs-stock-daily-raw",
+      "dates": {
+        "2024-01-02": {
+          "leftPresent": true,
+          "rightPresent": true,
+          "ohlc": {
+            "open": {
+              "left": 1715.0,
+              "right": 1715.0,
+              "equal": true
+            },
+            "high": {
+              "left": 1718.19,
+              "right": 1718.19,
+              "equal": true
+            },
+            "low": {
+              "left": 1678.1,
+              "right": 1678.1,
+              "equal": true
+            },
+            "close": {
+              "left": 1685.01,
+              "right": 1685.01,
+              "equal": true
+            }
+          },
+          "allOhlcEqual": true,
+          "volume": {
+            "left": 3215644.0,
+            "right": 3215644,
+            "unitVerified": false
+          },
+          "amount": {
+            "left": 5440082548.0,
+            "right": 5440082548.08
+          }
+        },
+        "2024-12-31": {
+          "leftPresent": true,
+          "rightPresent": true,
+          "ohlc": {
+            "open": {
+              "left": 1525.4,
+              "right": 1525.4,
+              "equal": true
+            },
+            "high": {
+              "left": 1545.0,
+              "right": 1545.0,
+              "equal": true
+            },
+            "low": {
+              "left": 1522.01,
+              "right": 1522.01,
+              "equal": true
+            },
+            "close": {
+              "left": 1524.0,
+              "right": 1524.0,
+              "equal": true
+            }
+          },
+          "allOhlcEqual": true,
+          "volume": {
+            "left": 3935445.0,
+            "right": 3935445,
+            "unitVerified": false
+          },
+          "amount": {
+            "left": 6033540366.0,
+            "right": 6033540366.22
+          }
+        }
+      },
+      "status": "pass",
+      "valueScope": "OHLC only on two fixed dates; volume/amount units not independently verified"
+    },
+    {
+      "label": "000300 index OHLC via AKShare alternative",
+      "left": "ak-alt-index-daily",
+      "right": "bs-index-daily-raw",
+      "dates": {
+        "2024-01-02": {
+          "leftPresent": true,
+          "rightPresent": true,
+          "ohlc": {
+            "open": {
+              "left": 3426.268,
+              "right": 3426.2684,
+              "equal": false
+            },
+            "high": {
+              "left": 3426.268,
+              "right": 3426.2684,
+              "equal": false
+            },
+            "low": {
+              "left": 3386.352,
+              "right": 3386.3522,
+              "equal": false
+            },
+            "close": {
+              "left": 3386.352,
+              "right": 3386.3522,
+              "equal": false
+            }
+          },
+          "allOhlcEqual": false,
+          "volume": {
+            "left": 11618072600,
+            "right": 11618072600,
+            "unitVerified": false
+          },
+          "amount": {
+            "left": null,
+            "right": 184096097448.7
+          }
+        },
+        "2024-12-31": {
+          "leftPresent": true,
+          "rightPresent": true,
+          "ohlc": {
+            "open": {
+              "left": 3995.871,
+              "right": 3995.8705,
+              "equal": false
+            },
+            "high": {
+              "left": 4004.346,
+              "right": 4004.3462,
+              "equal": false
+            },
+            "low": {
+              "left": 3934.911,
+              "right": 3934.9109,
+              "equal": false
+            },
+            "close": {
+              "left": 3934.911,
+              "right": 3934.9109,
+              "equal": false
+            }
+          },
+          "allOhlcEqual": false,
+          "volume": {
+            "left": 18392839700,
+            "right": 18392839700,
+            "unitVerified": false
+          },
+          "amount": {
+            "left": null,
+            "right": 347880439530.4
+          }
+        }
+      },
+      "status": "fail",
+      "valueScope": "OHLC only on two fixed dates; volume/amount units not independently verified"
+    }
+  ],
+  "notes": [
+    "No retries or synthetic fallback. Each library call is recorded independently.",
+    "Raw capture is the library-returned table serialized locally, not the upstream HTTP payload.",
+    "No real-time quote ranking is performed."
+  ],
+  "parentEvidence": {
+    "path": "E:\\projects\\stock-race\\.local\\v3-data-probe-20261027T1605\\evidence",
+    "manifestSha256": "137aad468901ae07448df4a1b866ba3e925754b0b71671f2b6ef88fc8cb5583b"
+  },
+  "helperScript": {
+    "path": "E:\\projects\\stock-race\\.local\\v3-data-probe-20261027T1605\\scripts\\run_probes.py",
+    "sha256": "e88e762881a2caa409acca8ed182170501e4ebb52614f9e2cfed4ddf7785457a"
+  },
+  "reason": [
+    "110011 identity is QDII-混合, so it is not the ordinary open-end P0 sample.",
+    "Failed AKShare history calls are not retried; each named same-library alternative is called once.",
+    "Baostock query_stock_basic is used once each for ETF/index identity supplementation."
+  ],
+  "externalEvidenceReferences": [
+    {
+      "id": "bs-stock-daily-raw",
+      "normalizedPath": "E:\\projects\\stock-race\\.local\\v3-data-probe-20261027T1605\\evidence\\calls\\14-bs-stock-daily-raw\\normalized.json",
+      "rawSha256": "dafcf6f27963abda011fea17d24983d21f48f3a6cf7a601eabe8d767d1ba44a6"
+    },
+    {
+      "id": "bs-index-daily-raw",
+      "normalizedPath": "E:\\projects\\stock-race\\.local\\v3-data-probe-20261027T1605\\evidence\\calls\\19-bs-index-daily-raw\\normalized.json",
+      "rawSha256": "bb6363bcf5dbaab071d1163b1fea30e12cbf25f6c8a8955e3133ed31bae7deae"
+    }
+  ],
+  "ordinaryFundClassification": {
+    "acceptedForNavProbe": true,
+    "excludedTermsFound": [],
+    "identityText": "华夏成长混合 华夏成长证券投资基金 混合型-偏股",
+    "rule": "matching fund identity plus fund_open_fund_info_em open-fund interface; this is not a legal product classification"
+  },
+  "alternativeFundVisibility": {
+    "collectedAt": "2026-10-27T16:35:57.164+08:00",
+    "latestVisibleUnitNavDate": "2026-10-26",
+    "latestVisibleCumulativeNavDate": "2026-10-26",
+    "publishedAtAvailable": false,
+    "limitation": "latest navDate in the returned table is not a publication timestamp"
+  },
+  "finishedAt": "2026-10-27T16:35:57.164+08:00"
+}

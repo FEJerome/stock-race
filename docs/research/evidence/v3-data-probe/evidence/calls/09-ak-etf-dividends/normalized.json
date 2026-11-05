@@ -1,0 +1,19 @@
+{
+  "rows": [
+    {
+      "日期": "2024-01-18",
+      "累计分红": 0.669
+    }
+  ],
+  "rowCount": 14,
+  "fixedIntervalRowCount": 1,
+  "symbolOk": true,
+  "schemaOk": true,
+  "schemaErrors": [],
+  "publishedAtPresent": false,
+  "sourceEventTimes": {
+    "field": "日期",
+    "min": "2012-12-18",
+    "max": "2026-01-19"
+  }
+}

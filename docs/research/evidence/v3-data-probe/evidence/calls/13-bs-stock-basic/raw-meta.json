@@ -1,0 +1,36 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "code",
+    "code_name",
+    "ipoDate",
+    "outDate",
+    "type",
+    "status"
+  ],
+  "dtypes": {
+    "code": "object",
+    "code_name": "object",
+    "ipoDate": "object",
+    "outDate": "object",
+    "type": "object",
+    "status": "object"
+  },
+  "shape": [
+    1,
+    6
+  ],
+  "responseMeta": {
+    "error_code": "0",
+    "error_msg": "success",
+    "fields": [
+      "code",
+      "code_name",
+      "ipoDate",
+      "outDate",
+      "type",
+      "status"
+    ]
+  },
+  "rawHash": "ade73e4303c0f8dcb8f5a24a8f4afa638054d36cca0045e45f1864e010b4c379"
+}

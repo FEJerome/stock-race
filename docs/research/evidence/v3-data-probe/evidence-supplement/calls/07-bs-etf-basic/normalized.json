@@ -1,0 +1,19 @@
+{
+  "rows": [
+    {
+      "code": "sh.510300",
+      "code_name": "华泰柏瑞沪深300ETF",
+      "ipoDate": "2012-05-28",
+      "outDate": "",
+      "type": "5",
+      "status": "1"
+    }
+  ],
+  "rowCount": 1,
+  "matchedCount": 1,
+  "symbolOk": true,
+  "schemaOk": true,
+  "schemaErrors": [],
+  "sourceEventTimes": {},
+  "identityName": "华泰柏瑞沪深300ETF"
+}

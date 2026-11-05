@@ -1,0 +1,17 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "日期",
+    "累计分红"
+  ],
+  "dtypes": {
+    "日期": "object",
+    "累计分红": "float64"
+  },
+  "shape": [
+    14,
+    2
+  ],
+  "responseMeta": null,
+  "rawHash": "c56cd33f17ae887f592810a776e147833d169d4eea9d55ce23b5d59cd671ede6"
+}

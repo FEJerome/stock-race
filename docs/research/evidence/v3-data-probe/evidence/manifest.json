@@ -1,0 +1,1165 @@
+{
+  "runId": "v3-data-probe-20261027T1605",
+  "startedAt": "2026-10-27T16:24:58.353+08:00",
+  "python": "3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]",
+  "script": {
+    "path": "E:\\projects\\stock-race\\.local\\v3-data-probe-20261027T1605\\scripts\\run_probes.py",
+    "sha256": "e88e762881a2caa409acca8ed182170501e4ebb52614f9e2cfed4ddf7785457a"
+  },
+  "packages": {
+    "akshare": "1.18.88",
+    "baostock": "0.9.4",
+    "pandas": "2.3.3",
+    "numpy": "2.2.6",
+    "requests": "2.34.2"
+  },
+  "fixedInterval": {
+    "start": "2024-01-02",
+    "end": "2024-12-31"
+  },
+  "comparisonDates": [
+    "2024-01-02",
+    "2024-12-31"
+  ],
+  "probes": [
+    {
+      "id": "ak-fund-identity",
+      "source": "akshare",
+      "interface": "fund_individual_basic_info_xq",
+      "category": "current-metadata",
+      "asset": {
+        "code": "110011",
+        "expectedType": "ordinary open-end fund"
+      },
+      "request": {
+        "symbol": "110011",
+        "timeout": 20
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:24:58.807+08:00",
+      "endedAt": "2026-10-27T16:24:59.017+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 14,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 14,
+      "sourceEventTimes": {},
+      "derived": {},
+      "raw": {
+        "path": "calls\\01-ak-fund-identity\\raw.csv",
+        "sha256": "ca3d3e90de24e8a2cf1be883fb4a81b5f63263db989aaac4c7fff46b24e126ba"
+      },
+      "durationSeconds": 0.203
+    },
+    {
+      "id": "ak-fund-unit-nav",
+      "source": "akshare",
+      "interface": "fund_open_fund_info_em",
+      "category": "historical-nav",
+      "asset": {
+        "code": "110011",
+        "expectedType": "ordinary open-end fund"
+      },
+      "request": {
+        "symbol": "110011",
+        "indicator": "单位净值走势",
+        "sourceRange": "full returned history",
+        "localFilter": [
+          "2024-01-02",
+          "2024-12-31"
+        ]
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:24:59.018+08:00",
+      "endedAt": "2026-10-27T16:24:59.367+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 4423,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 4423,
+      "sourceEventTimes": {
+        "field": "净值日期",
+        "min": "2008-06-19",
+        "max": "2026-10-26"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 243,
+        "latestVisibleNavDateAtCollection": "2026-10-26",
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\02-ak-fund-unit-nav\\raw.csv",
+        "sha256": "dcd8ed649bf5ed356b03848e365aa6a26ccbac1c9d5a12b135278572a59f2819"
+      },
+      "durationSeconds": 0.36
+    },
+    {
+      "id": "ak-fund-cumulative-nav",
+      "source": "akshare",
+      "interface": "fund_open_fund_info_em",
+      "category": "historical-nav",
+      "asset": {
+        "code": "110011",
+        "expectedType": "ordinary open-end fund"
+      },
+      "request": {
+        "symbol": "110011",
+        "indicator": "累计净值走势",
+        "sourceRange": "full returned history",
+        "localFilter": [
+          "2024-01-02",
+          "2024-12-31"
+        ]
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:24:59.367+08:00",
+      "endedAt": "2026-10-27T16:24:59.474+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 4423,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 4423,
+      "sourceEventTimes": {
+        "field": "净值日期",
+        "min": "2008-06-19",
+        "max": "2026-10-26"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 243,
+        "latestVisibleNavDateAtCollection": "2026-10-26",
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\03-ak-fund-cumulative-nav\\raw.csv",
+        "sha256": "edc0249eede1d6a83f98ec1063e352c8fc3688472da4b489429d719ab2c395f2"
+      },
+      "durationSeconds": 0.109
+    },
+    {
+      "id": "ak-fund-dividends",
+      "source": "akshare",
+      "interface": "fund_open_fund_info_em",
+      "category": "corporate-action",
+      "asset": {
+        "code": "110011",
+        "expectedType": "ordinary open-end fund"
+      },
+      "request": {
+        "symbol": "110011",
+        "indicator": "分红送配详情",
+        "localDateFilter": [
+          "2024-01-02",
+          "2024-12-31"
+        ]
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:24:59.487+08:00",
+      "endedAt": "2026-10-27T16:25:00.025+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "fail",
+          "detail": {
+            "rowCount": 4,
+            "symbolOk": false
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 4,
+      "sourceEventTimes": {
+        "field": "除息日",
+        "min": "2009-04-14",
+        "max": "2021-02-25"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 0,
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\04-ak-fund-dividends\\raw.csv",
+        "sha256": "b37ceb9d413bcd135475fdb064adb05380154785809011c04cba29317698cd7b"
+      },
+      "durationSeconds": 0.531
+    },
+    {
+      "id": "ak-etf-identity",
+      "source": "akshare",
+      "interface": "fund_individual_basic_info_xq",
+      "category": "current-metadata",
+      "asset": {
+        "code": "510300",
+        "expectedType": "exchange-traded equity ETF; T+1 requires separate rule evidence"
+      },
+      "request": {
+        "symbol": "510300",
+        "timeout": 20
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:00.026+08:00",
+      "endedAt": "2026-10-27T16:25:00.194+08:00",
+      "layers": {
+        "call": {
+          "status": "fail",
+          "detail": "KeyError: 'data'"
+        },
+        "nonemptySymbols": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "schema": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "call failed"
+        }
+      },
+      "error": "KeyError: 'data'",
+      "durationSeconds": 0.172
+    },
+    {
+      "id": "ak-etf-identity-alt",
+      "source": "akshare",
+      "interface": "fund_etf_spot_em",
+      "category": "current-metadata-etf-list",
+      "asset": {
+        "code": "510300",
+        "expectedType": "exchange-traded equity ETF; T+1 requires separate rule evidence"
+      },
+      "request": {
+        "filter": "代码=510300",
+        "reason": "primary identity did not return a usable match"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:00.195+08:00",
+      "endedAt": "2026-10-27T16:25:05.218+08:00",
+      "layers": {
+        "call": {
+          "status": "fail",
+          "detail": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        "nonemptySymbols": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "schema": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "call failed"
+        }
+      },
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+      "durationSeconds": 5.016
+    },
+    {
+      "id": "ak-etf-daily-raw",
+      "source": "akshare",
+      "interface": "fund_etf_hist_em",
+      "category": "historical-daily",
+      "asset": {
+        "code": "510300",
+        "expectedType": "exchange-traded equity ETF; T+1 requires separate rule evidence"
+      },
+      "request": {
+        "symbol": "510300",
+        "period": "daily",
+        "start_date": "20240102",
+        "end_date": "20241231",
+        "adjust": ""
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:05.219+08:00",
+      "endedAt": "2026-10-27T16:25:05.324+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 242,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "pass",
+          "detail": {
+            "comparison": "510300 raw OHLC"
+          }
+        }
+      },
+      "rowCount": 242,
+      "sourceEventTimes": {
+        "field": "日期",
+        "min": "2024-01-02",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 242
+      },
+      "raw": {
+        "path": "calls\\07-ak-etf-daily-raw\\raw.csv",
+        "sha256": "099c7b01e80f789dc091c46cbe2ec194642d30fe3d3774d2202783ce433b3e81"
+      },
+      "durationSeconds": 0.109
+    },
+    {
+      "id": "ak-etf-daily-qfq",
+      "source": "akshare",
+      "interface": "fund_etf_hist_em",
+      "category": "historical-daily-adjusted",
+      "asset": {
+        "code": "510300",
+        "expectedType": "exchange-traded equity ETF; T+1 requires separate rule evidence"
+      },
+      "request": {
+        "symbol": "510300",
+        "period": "daily",
+        "start_date": "20240102",
+        "end_date": "20241231",
+        "adjust": "qfq"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:05.326+08:00",
+      "endedAt": "2026-10-27T16:25:05.413+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 242,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 242,
+      "sourceEventTimes": {
+        "field": "日期",
+        "min": "2024-01-02",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 242
+      },
+      "raw": {
+        "path": "calls\\08-ak-etf-daily-qfq\\raw.csv",
+        "sha256": "da1d64e28031b9507a7cf22d7c558ce642f1db321710e6059027b5277a16584c"
+      },
+      "durationSeconds": 0.094
+    },
+    {
+      "id": "ak-etf-dividends",
+      "source": "akshare",
+      "interface": "fund_etf_dividend_sina",
+      "category": "corporate-action",
+      "asset": {
+        "code": "510300",
+        "expectedType": "exchange-traded equity ETF; T+1 requires separate rule evidence"
+      },
+      "request": {
+        "symbol": "sh510300",
+        "documentedField": "日期=除权除息日, 累计分红"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:05.414+08:00",
+      "endedAt": "2026-10-27T16:25:05.631+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 14,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 14,
+      "sourceEventTimes": {
+        "field": "日期",
+        "min": "2012-12-18",
+        "max": "2026-01-19"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 1,
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\09-ak-etf-dividends\\raw.csv",
+        "sha256": "c56cd33f17ae887f592810a776e147833d169d4eea9d55ce23b5d59cd671ede6"
+      },
+      "durationSeconds": 0.218
+    },
+    {
+      "id": "ak-index-identity",
+      "source": "akshare",
+      "interface": "index_stock_info",
+      "category": "reference-metadata",
+      "asset": {
+        "code": "000300",
+        "expectedType": "index; return series type must be explicit"
+      },
+      "request": {
+        "filter": "index_code=000300"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:05.632+08:00",
+      "endedAt": "2026-10-27T16:25:06.055+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 732,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 732,
+      "sourceEventTimes": {},
+      "derived": {
+        "matchedCount": 1,
+        "identityName": "沪深300"
+      },
+      "raw": {
+        "path": "calls\\10-ak-index-identity\\raw.csv",
+        "sha256": "157cb9bdc8ff3aa6481c8b3a5ada08c07657ac42fe37b95167084a97bd69d116"
+      },
+      "durationSeconds": 0.422
+    },
+    {
+      "id": "ak-index-daily",
+      "source": "akshare",
+      "interface": "index_zh_a_hist",
+      "category": "historical-daily",
+      "asset": {
+        "code": "000300",
+        "expectedType": "index; return series type must be explicit"
+      },
+      "request": {
+        "symbol": "000300",
+        "period": "daily",
+        "start_date": "20240102",
+        "end_date": "20241231",
+        "returnSeriesType": "not labeled by interface"
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:06.056+08:00",
+      "endedAt": "2026-10-27T16:25:10.672+08:00",
+      "layers": {
+        "call": {
+          "status": "fail",
+          "detail": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        "nonemptySymbols": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "schema": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "value": {
+          "status": "unverified",
+          "detail": {
+            "comparison": "000300 index OHLC"
+          }
+        }
+      },
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+      "durationSeconds": 4.61
+    },
+    {
+      "id": "ak-stock-daily-raw",
+      "source": "akshare",
+      "interface": "stock_zh_a_hist",
+      "category": "historical-daily",
+      "asset": {
+        "code": "sh.600519",
+        "expectedType": "A-share stock"
+      },
+      "request": {
+        "symbol": "600519",
+        "period": "daily",
+        "start_date": "20240102",
+        "end_date": "20241231",
+        "adjust": "",
+        "timeout": 20
+      },
+      "libraryVersion": "1.18.88",
+      "startedAt": "2026-10-27T16:25:10.673+08:00",
+      "endedAt": "2026-10-27T16:25:10.721+08:00",
+      "layers": {
+        "call": {
+          "status": "fail",
+          "detail": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+        },
+        "nonemptySymbols": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "schema": {
+          "status": "fail",
+          "detail": "no usable result"
+        },
+        "value": {
+          "status": "unverified",
+          "detail": {
+            "comparison": "600519 raw OHLC"
+          }
+        }
+      },
+      "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+      "durationSeconds": 0.047
+    },
+    {
+      "id": "bs-stock-basic",
+      "source": "baostock",
+      "interface": "query_stock_basic",
+      "category": "security-master",
+      "asset": {
+        "code": "sh.600519",
+        "expectedType": "A-share stock"
+      },
+      "request": {
+        "code": "sh.600519"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:25:58.603+08:00",
+      "endedAt": "2026-10-27T16:25:58.640+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 1,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 1,
+      "sourceEventTimes": {},
+      "derived": {
+        "matchedCount": 1,
+        "identityName": "贵州茅台"
+      },
+      "raw": {
+        "path": "calls\\13-bs-stock-basic\\raw.csv",
+        "sha256": "ade73e4303c0f8dcb8f5a24a8f4afa638054d36cca0045e45f1864e010b4c379"
+      },
+      "durationSeconds": 0.031
+    },
+    {
+      "id": "bs-stock-daily-raw",
+      "source": "baostock",
+      "interface": "query_history_k_data_plus",
+      "category": "historical-daily",
+      "asset": {
+        "code": "sh.600519",
+        "expectedType": "A-share stock"
+      },
+      "request": {
+        "code": "sh.600519",
+        "start_date": "2024-01-02",
+        "end_date": "2024-12-31",
+        "frequency": "d",
+        "adjustflag": "3",
+        "fields": "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:25:58.641+08:00",
+      "endedAt": "2026-10-27T16:25:58.938+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 242,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": {
+            "comparison": "600519 raw OHLC"
+          }
+        }
+      },
+      "rowCount": 242,
+      "sourceEventTimes": {
+        "field": "date",
+        "min": "2024-01-02",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 242
+      },
+      "raw": {
+        "path": "calls\\14-bs-stock-daily-raw\\raw.csv",
+        "sha256": "dafcf6f27963abda011fea17d24983d21f48f3a6cf7a601eabe8d767d1ba44a6"
+      },
+      "durationSeconds": 0.281
+    },
+    {
+      "id": "bs-trade-calendar-2024",
+      "source": "baostock",
+      "interface": "query_trade_dates",
+      "category": "trading-calendar",
+      "asset": {
+        "venue": "China exchange calendar",
+        "expectedType": "trading dates"
+      },
+      "request": {
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:25:59.028+08:00",
+      "endedAt": "2026-10-27T16:26:00.682+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 366,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "pass",
+          "detail": {
+            "2024-01-01_is_non_trading": true,
+            "2024-01-02_is_trading": true,
+            "2024-01-06_is_non_trading": true
+          }
+        }
+      },
+      "rowCount": 366,
+      "sourceEventTimes": {
+        "field": "calendar_date",
+        "min": "2024-01-01",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "valueChecks": {
+          "2024-01-01_is_non_trading": true,
+          "2024-01-02_is_trading": true,
+          "2024-01-06_is_non_trading": true
+        }
+      },
+      "raw": {
+        "path": "calls\\15-bs-trade-calendar-2024\\raw.csv",
+        "sha256": "2e1ac4b3cb1adb2fa063fb50047d5eced15b11f597332218259fab35f8ab5e2b"
+      },
+      "durationSeconds": 1.656
+    },
+    {
+      "id": "bs-stock-dividends-2024",
+      "source": "baostock",
+      "interface": "query_dividend_data",
+      "category": "corporate-action",
+      "asset": {
+        "code": "sh.600519",
+        "expectedType": "A-share stock"
+      },
+      "request": {
+        "code": "sh.600519",
+        "year": "2024",
+        "yearType": "operate"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:26:00.938+08:00",
+      "endedAt": "2026-10-27T16:26:01.014+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 2,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 2,
+      "sourceEventTimes": {
+        "field": "dividOperateDate",
+        "min": "2024-06-19",
+        "max": "2024-12-20"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 2,
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\16-bs-stock-dividends-2024\\raw.csv",
+        "sha256": "aa9d03efd5f9c130ae6af86ea1b5c50279c3fd488340589b476930e42543b32a"
+      },
+      "durationSeconds": 0.078
+    },
+    {
+      "id": "bs-stock-adjust-factors-2024",
+      "source": "baostock",
+      "interface": "query_adjust_factor",
+      "category": "corporate-action-adjustment",
+      "asset": {
+        "code": "sh.600519",
+        "expectedType": "A-share stock"
+      },
+      "request": {
+        "code": "sh.600519",
+        "start_date": "2024-01-02",
+        "end_date": "2024-12-31"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:26:01.015+08:00",
+      "endedAt": "2026-10-27T16:26:01.052+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 2,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": "awaiting independent comparison or reference"
+        }
+      },
+      "rowCount": 2,
+      "sourceEventTimes": {
+        "field": "dividOperateDate",
+        "min": "2024-06-19",
+        "max": "2024-12-20"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 2,
+        "publishedAtPresent": false
+      },
+      "raw": {
+        "path": "calls\\17-bs-stock-adjust-factors-2024\\raw.csv",
+        "sha256": "6d720692762fcfbba1265e02503521e086791f8beda4863aa6985dd4402adfef"
+      },
+      "durationSeconds": 0.047
+    },
+    {
+      "id": "bs-etf-daily-raw",
+      "source": "baostock",
+      "interface": "query_history_k_data_plus",
+      "category": "historical-daily-cross-check",
+      "asset": {
+        "code": "510300",
+        "expectedType": "exchange-traded equity ETF; T+1 requires separate rule evidence"
+      },
+      "request": {
+        "code": "sh.510300",
+        "start_date": "2024-01-02",
+        "end_date": "2024-12-31",
+        "frequency": "d",
+        "adjustflag": "3",
+        "fields": "date,code,open,high,low,close,preclose,volume,amount,adjustflag"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:26:01.053+08:00",
+      "endedAt": "2026-10-27T16:26:01.133+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 242,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "pass",
+          "detail": {
+            "comparison": "510300 raw OHLC"
+          }
+        }
+      },
+      "rowCount": 242,
+      "sourceEventTimes": {
+        "field": "date",
+        "min": "2024-01-02",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 242
+      },
+      "raw": {
+        "path": "calls\\18-bs-etf-daily-raw\\raw.csv",
+        "sha256": "72be52d1bc65dc6934fdaba6468186bc161332cbf5799ae6bc751e4b8b772d08"
+      },
+      "durationSeconds": 0.078
+    },
+    {
+      "id": "bs-index-daily-raw",
+      "source": "baostock",
+      "interface": "query_history_k_data_plus",
+      "category": "historical-daily-cross-check",
+      "asset": {
+        "code": "000300",
+        "expectedType": "index; return series type must be explicit"
+      },
+      "request": {
+        "code": "sh.000300",
+        "start_date": "2024-01-02",
+        "end_date": "2024-12-31",
+        "frequency": "d",
+        "adjustflag": "3",
+        "fields": "date,code,open,high,low,close,preclose,volume,amount,adjustflag"
+      },
+      "libraryVersion": "0.9.4",
+      "startedAt": "2026-10-27T16:26:01.135+08:00",
+      "endedAt": "2026-10-27T16:26:01.740+08:00",
+      "layers": {
+        "call": {
+          "status": "pass",
+          "detail": null
+        },
+        "nonemptySymbols": {
+          "status": "pass",
+          "detail": {
+            "rowCount": 242,
+            "symbolOk": true
+          }
+        },
+        "schema": {
+          "status": "pass",
+          "detail": []
+        },
+        "value": {
+          "status": "unverified",
+          "detail": {
+            "comparison": "000300 index OHLC"
+          }
+        }
+      },
+      "rowCount": 242,
+      "sourceEventTimes": {
+        "field": "date",
+        "min": "2024-01-02",
+        "max": "2024-12-31"
+      },
+      "derived": {
+        "fixedIntervalRowCount": 242
+      },
+      "raw": {
+        "path": "calls\\19-bs-index-daily-raw\\raw.csv",
+        "sha256": "bb6363bcf5dbaab071d1163b1fea30e12cbf25f6c8a8955e3133ed31bae7deae"
+      },
+      "durationSeconds": 0.61
+    }
+  ],
+  "connections": [
+    {
+      "source": "baostock",
+      "action": "login",
+      "startedAt": "2026-10-27T16:25:10.722+08:00",
+      "response": {
+        "error_code": "0",
+        "error_msg": "success"
+      },
+      "success": true,
+      "endedAt": "2026-10-27T16:25:58.598+08:00",
+      "durationSeconds": 47.875
+    },
+    {
+      "source": "baostock",
+      "action": "logout",
+      "startedAt": "2026-10-27T16:26:01.741+08:00",
+      "response": {
+        "error_code": "0",
+        "error_msg": "success"
+      },
+      "success": true,
+      "endedAt": "2026-10-27T16:26:02.028+08:00",
+      "durationSeconds": 0.281
+    }
+  ],
+  "comparisons": [
+    {
+      "label": "600519 raw OHLC",
+      "left": "ak-stock-daily-raw",
+      "right": "bs-stock-daily-raw",
+      "dates": {
+        "2024-01-02": {
+          "leftPresent": false,
+          "rightPresent": true
+        },
+        "2024-12-31": {
+          "leftPresent": false,
+          "rightPresent": true
+        }
+      },
+      "status": "unverified",
+      "valueScope": "OHLC only on two fixed dates; volume/amount units not independently verified"
+    },
+    {
+      "label": "510300 raw OHLC",
+      "left": "ak-etf-daily-raw",
+      "right": "bs-etf-daily-raw",
+      "dates": {
+        "2024-01-02": {
+          "leftPresent": true,
+          "rightPresent": true,
+          "ohlc": {
+            "open": {
+              "left": 3.502,
+              "right": 3.502,
+              "equal": true
+            },
+            "high": {
+              "left": 3.502,
+              "right": 3.502,
+              "equal": true
+            },
+            "low": {
+              "left": 3.451,
+              "right": 3.451,
+              "equal": true
+            },
+            "close": {
+              "left": 3.453,
+              "right": 3.453,
+              "equal": true
+            }
+          },
+          "allOhlcEqual": true,
+          "volume": {
+            "left": 9429306,
+            "right": 942930578,
+            "unitVerified": false
+          },
+          "amount": {
+            "left": 3269676679.0,
+            "right": 3269676679.0
+          }
+        },
+        "2024-12-31": {
+          "leftPresent": true,
+          "rightPresent": true,
+          "ohlc": {
+            "open": {
+              "left": 4.087,
+              "right": 4.087,
+              "equal": true
+            },
+            "high": {
+              "left": 4.094,
+              "right": 4.094,
+              "equal": true
+            },
+            "low": {
+              "left": 4.02,
+              "right": 4.02,
+              "equal": true
+            },
+            "close": {
+              "left": 4.022,
+              "right": 4.022,
+              "equal": true
+            }
+          },
+          "allOhlcEqual": true,
+          "volume": {
+            "left": 18436188,
+            "right": 1843618788,
+            "unitVerified": false
+          },
+          "amount": {
+            "left": 7479851076.0,
+            "right": 7479851076.0
+          }
+        }
+      },
+      "status": "pass",
+      "valueScope": "OHLC only on two fixed dates; volume/amount units not independently verified"
+    },
+    {
+      "label": "000300 index OHLC",
+      "left": "ak-index-daily",
+      "right": "bs-index-daily-raw",
+      "dates": {
+        "2024-01-02": {
+          "leftPresent": false,
+          "rightPresent": true
+        },
+        "2024-12-31": {
+          "leftPresent": false,
+          "rightPresent": true
+        }
+      },
+      "status": "unverified",
+      "valueScope": "OHLC only on two fixed dates; volume/amount units not independently verified"
+    }
+  ],
+  "notes": [
+    "No retries or synthetic fallback. Each library call is recorded independently.",
+    "Raw capture is the library-returned table serialized locally, not the upstream HTTP payload.",
+    "No real-time quote ranking is performed."
+  ],
+  "fundVisibility": {
+    "collectedAt": "2026-10-27T16:26:02.042+08:00",
+    "latestVisibleUnitNavDate": "2026-10-26",
+    "latestVisibleCumulativeNavDate": "2026-10-26",
+    "publishedAtAvailable": false,
+    "limitation": "latest navDate in the returned table is not a publication timestamp"
+  },
+  "finishedAt": "2026-10-27T16:26:02.042+08:00"
+}

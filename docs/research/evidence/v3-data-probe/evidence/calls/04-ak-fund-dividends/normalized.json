@@ -1,0 +1,14 @@
+{
+  "rows": [],
+  "rowCount": 4,
+  "fixedIntervalRowCount": 0,
+  "symbolOk": false,
+  "schemaOk": true,
+  "schemaErrors": [],
+  "publishedAtPresent": false,
+  "sourceEventTimes": {
+    "field": "除息日",
+    "min": "2009-04-14",
+    "max": "2021-02-25"
+  }
+}

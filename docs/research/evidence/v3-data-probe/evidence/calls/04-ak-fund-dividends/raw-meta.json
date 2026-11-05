@@ -1,0 +1,23 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "年份",
+    "权益登记日",
+    "除息日",
+    "每10份分红",
+    "分红发放日"
+  ],
+  "dtypes": {
+    "年份": "object",
+    "权益登记日": "object",
+    "除息日": "object",
+    "每10份分红": "object",
+    "分红发放日": "object"
+  },
+  "shape": [
+    4,
+    5
+  ],
+  "responseMeta": null,
+  "rawHash": "b37ceb9d413bcd135475fdb064adb05380154785809011c04cba29317698cd7b"
+}

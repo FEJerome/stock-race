@@ -1,0 +1,77 @@
+{
+  "accessDate": "2026-10-27",
+  "scope": "Public static pages only; no login content. WebFetch summaries are not raw page captures and therefore have no rawHash.",
+  "pages": [
+    {
+      "source": "AKShare",
+      "url": "https://akshare.akfamily.xyz/data/fund/fund_public.html",
+      "category": "official-interface-documentation",
+      "verifiedPoints": [
+        "fund_open_fund_info_em exposes unit NAV, cumulative NAV, dividend and split views; documented fields contain navDate-like dates but no publishedAt.",
+        "fund_individual_basic_info_xq returns item/value identity metadata.",
+        "fund_etf_hist_em supports empty adjust for raw, qfq and hfq; it returns OHLC trading data rather than fund NAV.",
+        "fund_etf_dividend_sina documents 日期 as 除权除息日 and only 累计分红."
+      ],
+      "rawHash": null
+    },
+    {
+      "source": "AKShare",
+      "url": "https://akshare.akfamily.xyz/data/index/index.html",
+      "category": "official-interface-documentation",
+      "verifiedPoints": [
+        "index_zh_a_hist accepts a six-digit index code without a market prefix and fixed absolute dates.",
+        "index_stock_info returns index_code/display_name/publish_date for identity checks.",
+        "The reviewed interface documentation does not label the history as price-return or total-return."
+      ],
+      "rawHash": null
+    },
+    {
+      "source": "AKShare",
+      "url": "https://akshare.akfamily.xyz/data/stock/stock.html",
+      "category": "official-interface-documentation",
+      "verifiedPoints": [
+        "stock_zh_a_hist supports raw/qfq/hfq and fixed absolute dates.",
+        "Documented volume unit is 手 and amount unit is 元.",
+        "No independent corporate-action event fields are documented in this interface."
+      ],
+      "rawHash": null
+    },
+    {
+      "source": "AKShare",
+      "url": "https://akshare.akfamily.xyz/special.html",
+      "category": "official-static-usage-statement",
+      "verifiedPoints": [
+        "声明 includes ‘仅用于学术研究，不可做任何商业用途’.",
+        "声明 says data do not constitute investment advice and some interfaces may be removed.",
+        "No upstream data storage/display/redistribution grant was found in the reviewed statement."
+      ],
+      "rawHash": null,
+      "limitation": "This is a usage restriction and disclaimer, not a redistribution license."
+    },
+    {
+      "source": "Baostock",
+      "url": "https://baostock.com/",
+      "category": "official-site-static-fetch",
+      "verifiedPoints": [
+        "The fetched public page exposed only a site shell to the reader; no data terms or technical field semantics could be verified from it."
+      ],
+      "rawHash": null,
+      "limitation": "No conclusion about the existence or absence of data license terms is drawn."
+    },
+    {
+      "source": "Baostock",
+      "url": "https://baostock.com/baostock/index.php/A%E8%82%A1K%E7%BA%BF%E6%95%B0%E6%8D%AE",
+      "category": "official-site-static-fetch",
+      "verifiedPoints": [
+        "The fetched public page likewise exposed only a site shell; adjustflag and field semantics require runtime/cross-source evidence or another official readable document."
+      ],
+      "rawHash": null
+    }
+  ],
+  "packageMetadata": {
+    "note": "Package license metadata describes code, not upstream market data.",
+    "akshare": {"version": "1.18.88", "license": "MIT", "project": "https://github.com/akfamily/akshare"},
+    "baostock": {"version": "0.9.4", "license": "BSD License", "homePage": "http://www.baostock.com"}
+  },
+  "usageDecision": "Probe evidence remains local. No long-term stability, commercial-use right or redistribution permission is claimed."
+}

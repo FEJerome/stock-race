@@ -1,0 +1,24 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "calendar_date",
+    "is_trading_day"
+  ],
+  "dtypes": {
+    "calendar_date": "object",
+    "is_trading_day": "object"
+  },
+  "shape": [
+    366,
+    2
+  ],
+  "responseMeta": {
+    "error_code": "0",
+    "error_msg": "success",
+    "fields": [
+      "calendar_date",
+      "is_trading_day"
+    ]
+  },
+  "rawHash": "2e1ac4b3cb1adb2fa063fb50047d5eced15b11f597332218259fab35f8ab5e2b"
+}

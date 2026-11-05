@@ -1,0 +1,11 @@
+{
+  "error": "ConnectionError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+  "request": {
+    "symbol": "600519",
+    "period": "daily",
+    "start_date": "20240102",
+    "end_date": "20241231",
+    "adjust": "",
+    "timeout": 20
+  }
+}

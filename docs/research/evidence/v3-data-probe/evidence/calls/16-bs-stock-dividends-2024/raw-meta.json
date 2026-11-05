@@ -1,0 +1,60 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "code",
+    "dividPreNoticeDate",
+    "dividAgmPumDate",
+    "dividPlanAnnounceDate",
+    "dividPlanDate",
+    "dividRegistDate",
+    "dividOperateDate",
+    "dividPayDate",
+    "dividStockMarketDate",
+    "dividCashPsBeforeTax",
+    "dividCashPsAfterTax",
+    "dividStocksPs",
+    "dividCashStock",
+    "dividReserveToStockPs"
+  ],
+  "dtypes": {
+    "code": "object",
+    "dividPreNoticeDate": "object",
+    "dividAgmPumDate": "object",
+    "dividPlanAnnounceDate": "object",
+    "dividPlanDate": "object",
+    "dividRegistDate": "object",
+    "dividOperateDate": "object",
+    "dividPayDate": "object",
+    "dividStockMarketDate": "object",
+    "dividCashPsBeforeTax": "object",
+    "dividCashPsAfterTax": "object",
+    "dividStocksPs": "object",
+    "dividCashStock": "object",
+    "dividReserveToStockPs": "object"
+  },
+  "shape": [
+    2,
+    14
+  ],
+  "responseMeta": {
+    "error_code": "0",
+    "error_msg": "success",
+    "fields": [
+      "code",
+      "dividPreNoticeDate",
+      "dividAgmPumDate",
+      "dividPlanAnnounceDate",
+      "dividPlanDate",
+      "dividRegistDate",
+      "dividOperateDate",
+      "dividPayDate",
+      "dividStockMarketDate",
+      "dividCashPsBeforeTax",
+      "dividCashPsAfterTax",
+      "dividStocksPs",
+      "dividCashStock",
+      "dividReserveToStockPs"
+    ]
+  },
+  "rawHash": "aa9d03efd5f9c130ae6af86ea1b5c50279c3fd488340589b476930e42543b32a"
+}

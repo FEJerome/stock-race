@@ -1,0 +1,60 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "date",
+    "code",
+    "open",
+    "high",
+    "low",
+    "close",
+    "preclose",
+    "volume",
+    "amount",
+    "adjustflag",
+    "turn",
+    "tradestatus",
+    "pctChg",
+    "isST"
+  ],
+  "dtypes": {
+    "date": "object",
+    "code": "object",
+    "open": "object",
+    "high": "object",
+    "low": "object",
+    "close": "object",
+    "preclose": "object",
+    "volume": "object",
+    "amount": "object",
+    "adjustflag": "object",
+    "turn": "object",
+    "tradestatus": "object",
+    "pctChg": "object",
+    "isST": "object"
+  },
+  "shape": [
+    242,
+    14
+  ],
+  "responseMeta": {
+    "error_code": "0",
+    "error_msg": "success",
+    "fields": [
+      "date",
+      "code",
+      "open",
+      "high",
+      "low",
+      "close",
+      "preclose",
+      "volume",
+      "amount",
+      "adjustflag",
+      "turn",
+      "tradestatus",
+      "pctChg",
+      "isST"
+    ]
+  },
+  "rawHash": "dafcf6f27963abda011fea17d24983d21f48f3a6cf7a601eabe8d767d1ba44a6"
+}

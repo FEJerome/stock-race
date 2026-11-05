@@ -1,0 +1,50 @@
+{
+  "recordedAt": "2026-10-27T17:30:53+08:00",
+  "accessDate": "2026-10-27",
+  "scope": "Public official static material only; no login content and no new market-data API.",
+  "retrievalLimit": "Sources were read through the public WebFetch tool. This file records the resulting evidence notes, not a raw page snapshot. Live URLs must be rechecked for independent review; later page content is not evidence of this review.",
+  "sources": [
+    {
+      "authority": "中国证券监督管理委员会",
+      "url": "https://www.csrc.gov.cn/csrc/c106256/c1653985/content.shtml",
+      "observed": [
+        "第十四条第（三）项：开放式基金不晚于每个开放日的次日披露开放日份额净值和累计净值。",
+        "第十四条第（四）项：不晚于半年度和年度最后一日的次日披露相应净值。",
+        "条款给出披露截止日，不给具体发布时间或历史publishedAt字段。"
+      ]
+    },
+    {
+      "authority": "中国政府网（证监会令第158号公开文本）",
+      "url": "https://www.gov.cn/gongbao/content/2019/content_5462516.htm",
+      "observed": [
+        "公开文本与上述开放式基金及半年度/年度最后一日净值披露要求一致。",
+        "未提供逐条历史NAV的发布时间字段。"
+      ]
+    },
+    {
+      "authority": "华夏基金管理有限公司",
+      "url": "https://www.chinaamc.com/fund/000001/jijinfeilv.shtml",
+      "observed": [
+        "页面显示华夏成长混合000001，最新净值日期2026-10-26，单位净值1.019，累计净值3.592。",
+        "历史净值表可见净值日期、单位净值和累计净值，未找到独立publishedAt或历史发布时间字段。"
+      ]
+    }
+  ],
+  "localNavComparison": {
+    "localEvidenceManifest": "evidence-supplement/manifest.json",
+    "localEvidenceManifestSha256": "e6ea793b9ee5f724a0199faa45693393122c763965a4773ca4b19f2cbf8f0dde",
+    "navDate": "2026-10-26",
+    "akshareUnitNav": "1.019",
+    "akshareCumulativeNav": "3.592",
+    "chinaamcUnitNav": "1.019",
+    "chinaamcCumulativeNav": "3.592",
+    "exactMatch": true,
+    "scope": "Only the latest NAV date/value pair was compared. No historical publishedAt is implied."
+  },
+  "interpretation": {
+    "legalDeadline": "披露截止要求，不是实际发布时间。",
+    "pagePublishedAt": "本次页面未找到。",
+    "historicalReplayPublishedAt": "本次公开静态补证未获得，不等于证明所有渠道永远不存在。",
+    "specialNavDate": "2024-06-30非交易日NAV与半年度最后一日特别披露要求一致，但仍不能推出实际发布时间。"
+  }
+}

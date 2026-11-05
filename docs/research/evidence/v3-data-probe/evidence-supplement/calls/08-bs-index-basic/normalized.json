@@ -1,0 +1,19 @@
+{
+  "rows": [
+    {
+      "code": "sh.000300",
+      "code_name": "沪深300指数",
+      "ipoDate": "2005-04-08",
+      "outDate": "",
+      "type": "2",
+      "status": "1"
+    }
+  ],
+  "rowCount": 1,
+  "matchedCount": 1,
+  "symbolOk": true,
+  "schemaOk": true,
+  "schemaErrors": [],
+  "sourceEventTimes": {},
+  "identityName": "沪深300指数"
+}

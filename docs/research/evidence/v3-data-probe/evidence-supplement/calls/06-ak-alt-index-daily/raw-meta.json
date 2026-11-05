@@ -1,0 +1,25 @@
+{
+  "format": "library DataFrame to UTF-8 CSV",
+  "columns": [
+    "date",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume"
+  ],
+  "dtypes": {
+    "date": "object",
+    "open": "float64",
+    "high": "float64",
+    "low": "float64",
+    "close": "float64",
+    "volume": "int64"
+  },
+  "shape": [
+    6016,
+    6
+  ],
+  "responseMeta": null,
+  "rawHash": "1026ecc4a2b6c30e098af6935e2ce94e384dc7aebe4d33c27d043f769ba2b4c5"
+}
