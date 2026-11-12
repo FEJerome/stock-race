@@ -1,61 +1,51 @@
 #!/usr/bin/env python3
 """
-测试API密钥验证逻辑
+测试API密钥验证逻辑（卫生版）
+
+安全口径：
+- 不打印任何密钥值，只报告「已设置/未设置」与验证布尔结果。
+- 不读取 .env / .env.production 等实际环境文件。
+- 待测密钥从环境变量 TEST_API_KEY 读取；不内置任何形似真实的密钥字面量。
+
+用法：
+    BACKEND_API_KEY=<本地值> TEST_API_KEY=<待测值> python test_api_key.py
 """
 
 import os
 import sys
 
-# 添加AI服务路径
-sys.path.append('/home/fe-jerome/projects/stock-race/ai-service/src')
+# 添加AI服务路径（按本机checkout位置设置 AI_SERVICE_SRC 环境变量）
+AI_SERVICE_SRC = os.getenv("AI_SERVICE_SRC")
+if AI_SERVICE_SRC:
+    sys.path.append(AI_SERVICE_SRC)
 
-# 测试环境变量
-print("=== 环境变量测试 ===")
-print(f"BACKEND_API_KEY: {os.getenv('BACKEND_API_KEY')}")
+# 测试环境变量（只报状态，不报值）
+print("=== 环境变量状态 ===")
+print(f"BACKEND_API_KEY: {'已设置' if os.getenv('BACKEND_API_KEY') else '未设置'}")
 print(f"当前目录: {os.getcwd()}")
 
-# 测试配置加载
+# 测试配置加载（不打印 settings 内容，避免泄漏配置中的敏感项）
 try:
     from ai_service.core.config import settings
-    print(f"\n=== 配置测试 ===")
-    print(f"BACKEND_API_KEY from settings: {getattr(settings, 'BACKEND_API_KEY', 'NOT SET')}")
-    print(f"所有设置: {settings.dict()}")
+    print("\n=== 配置加载 ===")
+    print(f"BACKEND_API_KEY in settings: {'已设置' if getattr(settings, 'BACKEND_API_KEY', None) else '未设置'}")
 except Exception as e:
-    print(f"配置加载错误: {e}")
+    print(f"配置加载错误: {type(e).__name__}: {e}")
 
-# 测试API密钥验证
+# 测试API密钥验证（只输出布尔结果）
 try:
     from ai_service.core.security import validate_api_key
 
-    print(f"\n=== API密钥验证测试 ===")
+    print("\n=== API密钥验证测试 ===")
 
-    test_key = "stock-race-ai-key-production"
-    print(f"测试密钥: {test_key}")
-    print(f"验证结果: {validate_api_key(test_key)}")
+    candidate = os.getenv("TEST_API_KEY")
+    if candidate:
+        print(f"TEST_API_KEY 验证结果: {validate_api_key(candidate)}")
+    else:
+        print("未提供 TEST_API_KEY 环境变量，跳过有效密钥验证")
 
-    # 测试其他密钥
-    test_keys = [
-        "stock-race-api-key-123",
-        "test-api-key",
-        "stock-race-ai-key",
-        "wrong-key"
-    ]
-
-    for key in test_keys:
-        print(f"密钥 '{key}': {validate_api_key(key)}")
+    # 永假样本：公开仓库中的固定无效串，仅验证拒绝路径
+    print(f"无效密钥验证结果（应为 False）: {validate_api_key('definitely-invalid-key')}")
 
 except Exception as e:
-    print(f"API密钥验证错误: {e}")
-    import traceback
-    traceback.print_exc()
-
-# 测试直接从.env文件读取
-print(f"\n=== 直接读取.env文件 ===")
-env_file = "/home/fe-jerome/projects/stock-race/ai-service/.env.production"
-if os.path.exists(env_file):
-    with open(env_file, 'r') as f:
-        for line in f:
-            if 'BACKEND_API_KEY' in line:
-                print(f"从.env.production读取: {line.strip()}")
-else:
-    print(f"文件不存在: {env_file}")
+    print(f"API密钥验证错误: {type(e).__name__}: {e}")

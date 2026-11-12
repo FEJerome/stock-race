@@ -3,6 +3,7 @@ Security utilities for AI Service.
 """
 
 from jose import jwt
+import os
 import time
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
@@ -16,7 +17,8 @@ from .config import settings
 
 # JWT configuration
 JWT_ALGORITHM = "HS256"
-JWT_SECRET_KEY = "stock-race-ai-service-secret-key-change-in-production"  # Should be in environment variables
+# JWT 密钥必须来自环境变量，不设默认值；缺失时显式报错。
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
 JWT_REFRESH_TOKEN_EXPIRE_DAYS = 7
 
@@ -26,6 +28,13 @@ security = HTTPBearer()
 class AuthError(Exception):
     """Authentication error."""
     pass
+
+
+def _get_jwt_secret() -> str:
+    """Return JWT secret from environment, or raise if not configured."""
+    if not JWT_SECRET_KEY:
+        raise AuthError("JWT_SECRET_KEY environment variable is not set")
+    return JWT_SECRET_KEY
 
 
 def create_access_token(
@@ -41,7 +50,7 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire, "type": "access"})
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, _get_jwt_secret(), algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
 
@@ -58,14 +67,14 @@ def create_refresh_token(
         expire = datetime.utcnow() + timedelta(days=JWT_REFRESH_TOKEN_EXPIRE_DAYS)
 
     to_encode.update({"exp": expire, "type": "refresh"})
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, _get_jwt_secret(), algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
 
 def verify_token(token: str) -> Dict[str, Any]:
     """Verify JWT token and return payload."""
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, _get_jwt_secret(), algorithms=[JWT_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
         raise AuthError("Token has expired")
@@ -128,36 +137,38 @@ async def get_current_user_id(
 
 
 def validate_api_key(api_key: str) -> bool:
-    """Validate API key."""
-    # In production, this should check against a database or key management service
-    # For now, we'll use a simple check
+    """Validate API key against keys configured via environment.
 
-    # Valid keys - production API keys
-    valid_keys = [
-        "stock-race-ai-key-production",  # Production backend API key
-        "stock-race-api-key-production",  # Production backend API key alternative
-        "stock-race-data-key-production", # Data service API key
-        "stock-race-api-key-123",         # Development key
-        "test-api-key",                   # Test key
-        "stock-race-ai-key"               # Legacy key
-    ]
+    Valid keys come only from configuration, never from source code:
+    - BACKEND_API_KEY: primary service-to-service key
+    - AI_SERVICE_API_KEYS: optional comma-separated list of additional keys
 
-    # Try to load from environment as fallback
+    If no key is configured, validation fails closed (denies all keys).
+    """
+    valid_keys = []
+
+    # Load from application settings
     try:
-        from .config import settings
-        if hasattr(settings, 'BACKEND_API_KEY') and settings.BACKEND_API_KEY:
-            if settings.BACKEND_API_KEY not in valid_keys:
-                valid_keys.append(settings.BACKEND_API_KEY)
-    except:
+        if getattr(settings, "BACKEND_API_KEY", None):
+            valid_keys.append(settings.BACKEND_API_KEY)
+    except Exception:
         pass
 
-    # Also check environment variable directly
-    import os
+    # Also check environment variables directly
     backend_api_key = os.getenv("BACKEND_API_KEY")
     if backend_api_key and backend_api_key not in valid_keys:
         valid_keys.append(backend_api_key)
 
-    print(f"DEBUG: Validating API key. Valid keys: {valid_keys[:3]}...")  # Debug log
+    extra_keys = os.getenv("AI_SERVICE_API_KEYS", "")
+    for key in extra_keys.split(","):
+        key = key.strip()
+        if key and key not in valid_keys:
+            valid_keys.append(key)
+
+    if not valid_keys:
+        logger.warning("No API keys configured (BACKEND_API_KEY / AI_SERVICE_API_KEYS); denying all keys")
+        return False
+
     return api_key in valid_keys
 
 

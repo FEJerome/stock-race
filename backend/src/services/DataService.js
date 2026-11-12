@@ -1,10 +1,12 @@
 import axios from 'axios';
+import { requireEnv } from '../utils/requireEnv.js';
 
 export class DataService {
   constructor() {
     // 数据服务配置
     this.dataServiceUrl = process.env.DATA_SERVICE_URL || 'http://localhost:8001';
-    this.dataServiceApiKey = process.env.DATA_SERVICE_API_KEY || 'stock-race-data-key';
+    // 服务间 API 密钥不设默认值；缺失即显式报错。
+    this.dataServiceApiKey = requireEnv('DATA_SERVICE_API_KEY');
     this.dataServiceApiPrefix = process.env.DATA_SERVICE_API_PREFIX || '/api/v1';
     this.timeout = parseInt(process.env.DATA_SERVICE_TIMEOUT) || 10000;
     this.maxRetries = parseInt(process.env.DATA_SERVICE_MAX_RETRIES) || 3;

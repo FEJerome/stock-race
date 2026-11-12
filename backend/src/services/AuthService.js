@@ -2,12 +2,14 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { userRepository } from '../models/index.js';
 import { systemLogRepository } from '../models/index.js';
+import { requireEnv } from '../utils/requireEnv.js';
 
 export class AuthService {
   constructor() {
-    this.jwtSecret = process.env.JWT_SECRET || 'stock-race-secret-key';
+    // 密钥与管理员口令不设弱默认值；缺失即显式报错。
+    this.jwtSecret = requireEnv('JWT_SECRET');
     this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '24h';
-    this.adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    this.adminPassword = requireEnv('ADMIN_PASSWORD');
   }
 
   /**

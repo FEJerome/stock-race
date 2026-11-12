@@ -168,13 +168,10 @@ CREATE TRIGGER update_stocks_updated_at BEFORE UPDATE ON stocks
 CREATE TRIGGER update_positions_updated_at BEFORE UPDATE ON positions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert sample data
-INSERT INTO users (email, username, password_hash, full_name, is_admin) VALUES
-('admin@stock-race.com', 'admin', '$2b$10$YourHashedPasswordHere', 'System Administrator', TRUE),
-('user1@example.com', 'trader1', '$2b$10$YourHashedPasswordHere', 'Trader One', FALSE),
-('user2@example.com', 'trader2', '$2b$10$YourHashedPasswordHere', 'Trader Two', FALSE)
-ON CONFLICT (email) DO NOTHING;
+-- 种子用户已移除：开源仓库不内置任何预设账号（原样例使用占位哈希）。
+-- 如需本地演示账号，请在本机用应用注册流程或自建脚本创建，口令不得提交进仓库。
 
+-- Insert sample stock metadata (no credentials involved)
 INSERT INTO stocks (symbol, name, exchange, sector) VALUES
 ('000001.SZ', '平安银行', 'SZSE', '金融'),
 ('000002.SZ', '万科A', 'SZSE', '房地产'),

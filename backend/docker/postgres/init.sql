@@ -7,10 +7,12 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
 
 -- 创建监控角色
+-- 不在源码中设置口令：角色创建时口令为 NULL（无法口令登录）。
+-- 如需启用监控登录，初始化后在本机执行：ALTER ROLE monitor PASSWORD '<本地随机口令>';（口令不得提交进仓库）
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'monitor') THEN
-        CREATE ROLE monitor WITH LOGIN PASSWORD 'monitor_password' NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
+        CREATE ROLE monitor WITH LOGIN NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;
     END IF;
 END
 $$;

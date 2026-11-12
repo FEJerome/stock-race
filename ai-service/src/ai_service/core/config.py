@@ -27,7 +27,8 @@ class Settings(BaseSettings):
     DB_PORT: int = int(os.getenv("DB_PORT", 5432))
     DB_NAME: str = os.getenv("DB_NAME", "stock_race")
     DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
+    # 数据库密码不设弱口令默认值；缺失为 None，连接时必须显式提供。
+    DB_PASSWORD: Optional[str] = os.getenv("DB_PASSWORD")
 
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")

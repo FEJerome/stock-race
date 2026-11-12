@@ -44,7 +44,12 @@ async function seedUsers(prisma) {
   console.log('👤 创建用户数据...');
 
   const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash('admin123', salt);
+  // 种子管理员口令必须经 SEED_ADMIN_PASSWORD 环境变量提供，不设弱口令默认值
+  const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!seedAdminPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD environment variable is required to seed the admin user');
+  }
+  const passwordHash = await bcrypt.hash(seedAdminPassword, salt);
 
   const user = await prisma.user.create({
     data: {

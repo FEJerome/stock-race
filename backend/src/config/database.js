@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import { requireEnv } from '../utils/requireEnv.js';
 
 dotenv.config();
 
@@ -150,7 +151,8 @@ export const databaseConfig = {
     port: parseInt(process.env.DB_PORT || '5432'),
     database: process.env.DB_NAME || 'stockrace',
     username: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
+    // 密码不设弱口令默认值；缺失时显式报错。
+    password: requireEnv('DB_PASSWORD'),
     ssl: process.env.DB_SSL === 'true',
     pool: {
       min: parseInt(process.env.DB_POOL_MIN || '2'),

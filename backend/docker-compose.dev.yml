@@ -19,8 +19,8 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/stock_race
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: development-secret-key-change-in-production
-      ADMIN_PASSWORD: admin123
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       CORS_ORIGIN: http://localhost:3000
       DEBUG: stock-race:*
       LOG_LEVEL: debug
@@ -125,7 +125,7 @@ services:
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@stockrace.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD must be set}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
     ports:
@@ -144,7 +144,7 @@ services:
     environment:
       REDIS_HOSTS: local:redis:6379
       HTTP_USER: admin
-      HTTP_PASSWORD: admin123
+      HTTP_PASSWORD: ${HTTP_PASSWORD:?HTTP_PASSWORD must be set}
     ports:
       - "8081:8081"
     networks:
@@ -182,7 +182,7 @@ services:
     container_name: stock-race-grafana
     restart: unless-stopped
     environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_SECURITY_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       GF_INSTALL_PLUGINS: grafana-piechart-panel
     ports:
       - "3002:3000"

@@ -58,8 +58,8 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/stock_race
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: development-secret-key-change-in-production
-      ADMIN_PASSWORD: admin123
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       CORS_ORIGIN: http://localhost:3000
     ports:
       - "3001:3001"
@@ -82,7 +82,7 @@ services:
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@stockrace.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD must be set}
     ports:
       - "5050:80"
     volumes:

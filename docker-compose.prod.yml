@@ -12,7 +12,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-stock_race_prod}
       POSTGRES_USER: ${POSTGRES_USER:-prod_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -38,7 +38,7 @@ services:
     environment:
       POSTGRES_DB: ${TSDB_DB:-stock_race_tsdb_prod}
       POSTGRES_USER: ${TSDB_USER:-tsdb_user}
-      POSTGRES_PASSWORD: ${TSDB_PASSWORD:-change_me_in_production}
+      POSTGRES_PASSWORD: ${TSDB_PASSWORD:?TSDB_PASSWORD must be set}
     volumes:
       - timescaledb_data_prod:/var/lib/postgresql/data
       - ./docker/timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -63,7 +63,7 @@ services:
     restart: always
     command: >
       sh -c "redis-server
-      --requirepass ${REDIS_PASSWORD:-change_me_in_production}
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       --appendonly yes
       --maxmemory ${REDIS_MAX_MEMORY:-256mb}
       --maxmemory-policy allkeys-lru"
@@ -72,7 +72,7 @@ services:
     networks:
       - stock-race-prod-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-change_me_in_production}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -102,8 +102,8 @@ services:
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_DB:-stock_race_prod}
       - DB_USER=${POSTGRES_USER:-prod_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-change_me_in_production}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-change_me_in_production}@redis:6379
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379
       - NODE_ENV=production
       - AI_SERVICE_URL=http://ai-service:8000
       - DATA_SERVICE_URL=http://data-service:8001
@@ -143,8 +143,8 @@ services:
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_DB:-stock_race_prod}
       - DB_USER=${POSTGRES_USER:-prod_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-change_me_in_production}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-change_me_in_production}@redis:6379
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379
       - DEBUG=False
       - BACKEND_URL=http://backend:3001
       - DATA_SERVICE_URL=http://data-service:8001
@@ -186,13 +186,13 @@ services:
       - TSDB_PORT=5432
       - TSDB_NAME=${TSDB_DB:-stock_race_tsdb_prod}
       - TSDB_USER=${TSDB_USER:-tsdb_user}
-      - TSDB_PASSWORD=${TSDB_PASSWORD:-change_me_in_production}
+      - TSDB_PASSWORD=${TSDB_PASSWORD:?TSDB_PASSWORD must be set}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_DB:-stock_race_prod}
       - DB_USER=${POSTGRES_USER:-prod_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-change_me_in_production}
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-change_me_in_production}@redis:6379
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379
       - DEBUG=False
       - BACKEND_URL=http://backend:3001
     volumes:
@@ -299,7 +299,7 @@ services:
     restart: always
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set}
       - GF_SERVER_ROOT_URL=${GRAFANA_URL:-http://localhost:3002}
       - GF_INSTALL_PLUGINS=
     volumes:

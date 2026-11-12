@@ -9,7 +9,8 @@ services:
     environment:
       POSTGRES_DB: stock_race
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      # 密码必须经环境变量提供，不设弱口令默认值
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     ports:
       - "5432:5432"
     volumes:
@@ -31,7 +32,7 @@ services:
     environment:
       POSTGRES_DB: stock_race_tsdb
       POSTGRES_USER: timescale
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${TSDB_PASSWORD:?TSDB_PASSWORD must be set}
     ports:
       - "5433:5432"
     volumes:
@@ -80,7 +81,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=stock_race
       - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       - REDIS_URL=redis://redis:6379
       - FRONTEND_URL=http://localhost:3000
       - AI_SERVICE_URL=http://ai-service:8000
@@ -114,7 +115,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=stock_race
       - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       - REDIS_URL=redis://redis:6379
       - BACKEND_URL=http://backend:3001
       - DATA_SERVICE_URL=http://data-service:8001
@@ -148,12 +149,12 @@ services:
       - TSDB_PORT=5432
       - TSDB_NAME=stock_race_tsdb
       - TSDB_USER=timescale
-      - TSDB_PASSWORD=password
+      - TSDB_PASSWORD=${TSDB_PASSWORD:?TSDB_PASSWORD must be set}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=stock_race
       - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       - REDIS_URL=redis://redis:6379
       - BACKEND_URL=http://backend:3001
       - AI_SERVICE_URL=http://ai-service:8000
@@ -192,7 +193,7 @@ services:
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@stock-race.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD must be set}
     ports:
       - "5050:80"
     volumes:

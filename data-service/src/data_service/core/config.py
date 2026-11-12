@@ -28,14 +28,16 @@ class Settings(BaseSettings):
     TSDB_PORT: int = int(os.getenv("TSDB_PORT", 5433))
     TSDB_NAME: str = os.getenv("TSDB_NAME", "stock_race_tsdb")
     TSDB_USER: str = os.getenv("TSDB_USER", "timescale")
-    TSDB_PASSWORD: str = os.getenv("TSDB_PASSWORD", "password")
+    # 数据库密码不设弱口令默认值；缺失为 None，连接时必须显式提供。
+    TSDB_PASSWORD: Optional[str] = os.getenv("TSDB_PASSWORD")
 
     # PostgreSQL (for metadata)
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
     DB_PORT: int = int(os.getenv("DB_PORT", 5432))
     DB_NAME: str = os.getenv("DB_NAME", "stock_race")
     DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
+    # 数据库密码不设弱口令默认值；缺失为 None，连接时必须显式提供。
+    DB_PASSWORD: Optional[str] = os.getenv("DB_PASSWORD")
 
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379")

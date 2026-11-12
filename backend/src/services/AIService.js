@@ -1,10 +1,12 @@
 import axios from 'axios';
+import { requireEnv } from '../utils/requireEnv.js';
 
 export class AIService {
   constructor() {
     // AI服务配置
     this.aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
-    this.aiServiceApiKey = process.env.AI_SERVICE_API_KEY || 'stock-race-ai-key';
+    // 服务间 API 密钥不设默认值；缺失即显式报错。
+    this.aiServiceApiKey = requireEnv('AI_SERVICE_API_KEY');
     this.timeout = parseInt(process.env.AI_SERVICE_TIMEOUT) || 30000;
     this.maxRetries = parseInt(process.env.AI_SERVICE_MAX_RETRIES) || 3;
     this.retryDelay = parseInt(process.env.AI_SERVICE_RETRY_DELAY) || 1000;
