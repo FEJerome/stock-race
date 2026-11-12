@@ -50,8 +50,7 @@ const FEW_SHOT_ASSISTANT = JSON.stringify({
   },
 });
 
-function repairSection(request: ModelDraftRequest): string {
-  if (!request.repairIssues || request.repairIssues.length === 0) return "";
+function repairContent(request: ModelDraftRequest & { kind: "repair" }): string {
   const lines = request.repairIssues.map(
     (issue) => `- [${issue.code}] ${issue.path}: ${issue.message}`,
   );
@@ -62,16 +61,24 @@ function repairSection(request: ModelDraftRequest): string {
 }
 
 /**
- * 确定性 prompt 组装：system（角色+边界+能力清单）+ few-shot + 对话历史 +
- * 当前意图/基线 AST/修复轮结构化错误。manifest 序列化输入即确定性输出，
- * 其 digest 由 s3-manifest-deterministic 冻结看护。
+ * 确定性 prompt 组装：
+ * - 首发：system（角色+边界+能力清单）+ few-shot + 对话历史 + 意图/基线 AST；
+ * - 修复轮（契约 3.3）：system（角色+边界+能力清单）+ 仅结构化错误，
+ *   不带意图、对话历史、基线 AST，也不重复 few-shot。
+ * manifest 序列化输入即确定性输出，其 digest 由 s3-manifest-deterministic 冻结看护。
  */
 export function buildDraftMessages(request: ModelDraftRequest): ChatMessage[] {
+  const system: ChatMessage = {
+    role: "system",
+    content: `${SYSTEM_PROMPT_DRAFT}
+
+capability manifest:\n${JSON.stringify(request.capabilityManifest)}`,
+  };
+  if (request.kind === "repair") {
+    return [system, { role: "user", content: repairContent(request) }];
+  }
   const messages: ChatMessage[] = [
-    {
-      role: "system",
-      content: `${SYSTEM_PROMPT_DRAFT}\n\ncapability manifest:\n${JSON.stringify(request.capabilityManifest)}`,
-    },
+    system,
     { role: "user", content: FEW_SHOT_USER },
     { role: "assistant", content: FEW_SHOT_ASSISTANT },
   ];
@@ -83,8 +90,6 @@ export function buildDraftMessages(request: ModelDraftRequest): ChatMessage[] {
     sections.push(`基线策略 AST（在此之上调整）：\n${request.baseCanonicalAst}`);
   }
   sections.push(`用户意图：${request.intent}`);
-  const repair = repairSection(request);
-  if (repair !== "") sections.push(repair);
   messages.push({ role: "user", content: sections.join("\n\n") });
   return messages;
 }

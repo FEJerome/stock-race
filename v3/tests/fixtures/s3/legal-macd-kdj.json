@@ -1,24 +1,97 @@
 {
   "schemaVersion": "1.0.0",
-  "name": "MACD 三日内金叉，KDJ 过滤",
+  "name": "阿一面试样例·MACD 三日内金叉，KDJ 过滤",
   "indicators": {
-    "m": {"use": "macd@1", "params": {"fast": 12, "slow": 26, "signal": 9}},
-    "k": {"use": "kdj@1", "params": {"period": 9, "kSmooth": 3, "dSmooth": 3}}
+    "m": {
+      "use": "macd@1",
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      }
+    },
+    "k": {
+      "use": "kdj@1",
+      "params": {
+        "period": 9,
+        "kSmooth": 3,
+        "dSmooth": 3
+      }
+    }
   },
-  "entry": {"all": [
-    {"within": {"window": 3, "condition":
-      {"crossAbove": [{"ref": "m.dif"}, {"ref": "m.dea"}]}}},
-    {"gt": [{"ref": "k.k"}, {"ref": "k.d"}]},
-    {"lt": [{"ref": "k.j"}, {"const": "90"}]}
-  ]},
-  "exits": [{"any": [
-    {"crossBelow": [{"ref": "m.dif"}, {"ref": "m.dea"}]},
-    {"gte": [{"ref": "position.barsHeld"}, {"const": "20"}]}
-  ]}],
+  "entry": {
+    "all": [
+      {
+        "within": {
+          "window": 3,
+          "condition": {
+            "crossAbove": [
+              {
+                "ref": "m.dif"
+              },
+              {
+                "ref": "m.dea"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "gt": [
+          {
+            "ref": "k.k"
+          },
+          {
+            "ref": "k.d"
+          }
+        ]
+      },
+      {
+        "lt": [
+          {
+            "ref": "k.j"
+          },
+          {
+            "const": "90"
+          }
+        ]
+      }
+    ]
+  },
+  "exits": [
+    {
+      "any": [
+        {
+          "crossBelow": [
+            {
+              "ref": "m.dif"
+            },
+            {
+              "ref": "m.dea"
+            }
+          ]
+        },
+        {
+          "gte": [
+            {
+              "ref": "position.barsHeld"
+            },
+            {
+              "const": "20"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "position": {
     "side": "long",
     "allowAdd": false,
-    "entrySize": {"cashFraction": "0.50"},
-    "exitSize": {"positionFraction": "1.00"}
+    "entrySize": {
+      "cashFraction": "0.50"
+    },
+    "exitSize": {
+      "positionFraction": "1.00"
+    }
   }
 }

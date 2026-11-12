@@ -33,7 +33,7 @@ export type ConfirmStrategyResult =
     }
   | {
       readonly ok: false;
-      readonly code: "CONFIRM_DIGEST_MISMATCH" | "CONFIRM_INVALID_DRAFT";
+      readonly code: "CONFIRM_DIGEST_MISMATCH" | "CONFIRM_INVALID_DRAFT" | "STRATEGY_ID_UNKNOWN";
       readonly message: string;
       readonly issues: readonly ValidationIssue[] | null;
       readonly actualDigest: string | null;
@@ -98,14 +98,24 @@ export async function confirmStrategy(
       actualDigest: strategyDigest,
     };
   }
-  const strategyId = input.strategyId ?? (await store.allocateStrategyId());
-  const revision = await store.nextRevision(strategyId);
-  const confirmation: ConfirmedRevision = {
-    strategyId,
-    revision,
-    digest: strategyDigest,
-    createdAt: (options.now ?? (() => new Date().toISOString()))(),
-  };
-  await store.saveConfirmation(confirmation, canonicalAst);
+  // M2：strategyId 由 application 分配；caller 指定的 id 必须已存在，
+  // 否则破坏分配唯一性（F10 v2 只允许沿用既往确认过的 id）。
+  if (input.strategyId !== undefined && !(await store.hasStrategy(input.strategyId))) {
+    return {
+      ok: false,
+      code: "STRATEGY_ID_UNKNOWN",
+      message: `未知 strategyId：${input.strategyId}，不得由 caller 自创`,
+      issues: null,
+      actualDigest: strategyDigest,
+    };
+  }
+  const confirmation = await store.commitConfirmation(
+    {
+      ...(input.strategyId !== undefined ? { strategyId: input.strategyId } : {}),
+      digest: strategyDigest,
+      createdAt: (options.now ?? (() => new Date().toISOString()))(),
+    },
+    canonicalAst,
+  );
   return { ok: true, confirmation, canonicalAst, strategyDigest };
 }

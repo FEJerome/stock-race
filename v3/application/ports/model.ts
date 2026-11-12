@@ -11,20 +11,33 @@ export interface ConversationTurn {
   readonly content: string;
 }
 
-export interface ModelDraftRequest {
-  /** 用户自然语言意图。 */
-  readonly intent: string;
-  /** 阿一面试多轮历史，首轮为空。 */
-  readonly conversation: readonly ConversationTurn[];
+interface ModelDraftRequestBase {
   /** 来自 createCapabilityManifest 的确定性能力清单。 */
   readonly capabilityManifest: CapabilityManifest;
-  /** F10 调整 v2 的基线 canonical AST。 */
-  readonly baseCanonicalAst?: string;
-  /** 修复轮输入：结构化校验错误回灌（契约 3.3，修复轮只给结构化错误与能力清单）。 */
-  readonly repairIssues?: readonly ValidationIssue[];
   /** 0=首发；1/2=修复轮（上限两轮，契约 3.3）。 */
   readonly attempt: number;
 }
+
+/**
+ * 首发请求：自然语言意图 + 面试历史 + 可选基线 AST。
+ * 修复轮请求（契约 3.3 原文「模型修复只接收结构化错误与能力清单」）：
+ * 判别联合从类型上封死意图/对话/基线混入修复轮的可能。
+ */
+export type ModelDraftRequest =
+  | (ModelDraftRequestBase & {
+      readonly kind: "draft";
+      /** 用户自然语言意图。 */
+      readonly intent: string;
+      /** 阿一面试多轮历史，首轮为空。 */
+      readonly conversation: readonly ConversationTurn[];
+      /** F10 调整 v2 的基线 canonical AST。 */
+      readonly baseCanonicalAst?: string;
+    })
+  | (ModelDraftRequestBase & {
+      readonly kind: "repair";
+      /** 修复轮唯一业务载荷：结构化校验错误。 */
+      readonly repairIssues: readonly ValidationIssue[];
+    });
 
 export type ModelErrorClass = NonNullable<ModelProvenance["errorClass"]>;
 

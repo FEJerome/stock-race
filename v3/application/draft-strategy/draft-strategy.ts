@@ -74,14 +74,18 @@ export async function draftStrategy(
   let repairIssues: readonly ValidationIssue[] | undefined;
 
   for (let attempt = 0; attempt < DRAFT_MAX_ATTEMPTS; attempt += 1) {
-    const request: ModelDraftRequest = {
-      intent: input.intent,
-      conversation,
-      capabilityManifest,
-      ...(input.baseCanonicalAst !== undefined ? { baseCanonicalAst: input.baseCanonicalAst } : {}),
-      ...(repairIssues !== undefined ? { repairIssues } : {}),
-      attempt,
-    };
+    // 契约 3.3：修复轮只接收结构化错误与能力清单——意图/对话/基线只出现在首发。
+    const request: ModelDraftRequest =
+      attempt === 0
+        ? {
+            kind: "draft",
+            intent: input.intent,
+            conversation,
+            capabilityManifest,
+            ...(input.baseCanonicalAst !== undefined ? { baseCanonicalAst: input.baseCanonicalAst } : {}),
+            attempt,
+          }
+        : { kind: "repair", repairIssues: repairIssues ?? [], capabilityManifest, attempt };
     const response = await port.draft(request);
     provenance.push(response.provenance);
     if (!response.ok) {

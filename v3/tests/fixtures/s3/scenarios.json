@@ -1,45 +1,104 @@
 {
   "legal-macd-kdj": {
-    "attempts": [{"rawTextFile": "legal-macd-kdj.json"}]
+    "attempts": [
+      {
+        "rawTextFile": "legal-macd-kdj.json"
+      }
+    ]
   },
   "legal-plain-price": {
-    "attempts": [{"rawTextFile": "legal-plain-price.json"}]
+    "attempts": [
+      {
+        "rawTextFile": "legal-plain-price.json"
+      }
+    ]
   },
   "legal-kdj-only": {
-    "attempts": [{"rawTextFile": "legal-kdj-only.json"}]
+    "attempts": [
+      {
+        "rawTextFile": "legal-kdj-only.json"
+      }
+    ]
   },
   "bad-json-truncated": {
-    "attempts": [{"rawTextFile": "bad-json-truncated.txt"}]
+    "attempts": [
+      {
+        "rawTextFile": "bad-json-truncated.txt"
+      }
+    ]
   },
   "unknown-indicator": {
-    "attempts": [{"rawTextFile": "unknown-indicator.json"}]
+    "attempts": [
+      {
+        "rawTextFile": "unknown-indicator.json"
+      }
+    ]
   },
   "extra-field": {
-    "attempts": [{"rawTextFile": "extra-field.json"}]
+    "attempts": [
+      {
+        "rawTextFile": "extra-field.json"
+      }
+    ]
   },
   "numeric-const": {
-    "attempts": [{"rawTextFile": "numeric-const.json"}]
+    "attempts": [
+      {
+        "rawTextFile": "numeric-const.json"
+      }
+    ]
   },
   "future-reference": {
-    "attempts": [{"rawTextFile": "future-reference.json"}]
+    "attempts": [
+      {
+        "rawTextFile": "future-reference.json"
+      }
+    ],
+    "_note": "负 lag 在 schema 层被拒（periods=nonNegativeSafeInteger），不进入语义轮；未来引用样例故采用未声明 ref（UNKNOWN_REFERENCE）"
   },
   "repair-success-at-attempt-1": {
     "attempts": [
-      {"rawTextFile": "unknown-indicator.json"},
-      {"rawTextFile": "legal-macd-kdj.json"}
+      {
+        "rawTextFile": "unknown-indicator.json"
+      },
+      {
+        "rawTextFile": "legal-macd-kdj.json"
+      }
     ]
   },
   "repair-exhausted": {
     "attempts": [
-      {"rawTextFile": "unknown-indicator.json"},
-      {"rawTextFile": "extra-field.json"},
-      {"rawTextFile": "bad-json-truncated.txt"}
+      {
+        "rawTextFile": "unknown-indicator.json"
+      },
+      {
+        "rawTextFile": "extra-field.json"
+      },
+      {
+        "rawTextFile": "bad-json-truncated.txt"
+      }
     ]
   },
   "timeout": {
-    "attempts": [{"error": {"class": "TIMEOUT", "message": "simulated timeout", "retryable": true}}]
+    "attempts": [
+      {
+        "error": {
+          "class": "TIMEOUT",
+          "message": "simulated timeout",
+          "retryable": true
+        }
+      }
+    ]
   },
   "transport-5xx": {
-    "attempts": [{"error": {"class": "UNAVAILABLE", "message": "simulated HTTP 503", "retryable": true}}]
+    "attempts": [
+      {
+        "error": {
+          "class": "UNAVAILABLE",
+          "message": "simulated HTTP 503",
+          "retryable": true
+        }
+      }
+    ]
   }
 }

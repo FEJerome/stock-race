@@ -71,12 +71,12 @@ describe("S3 draft 链路（deterministic fake 驱动，契约 7.2 S3 行）", (
     expect(result.provenance.map((entry) => entry.attempt)).toEqual([0, 1]);
     expect(port.requests).toHaveLength(2);
     expect(port.requests[1]!.attempt).toBe(1);
-    expect(port.requests[1]!.repairIssues).toBeDefined();
-    expect(port.requests[1]!.repairIssues!.length).toBeGreaterThan(0);
-    expect(
-      port.requests[1]!.repairIssues!.some((issue) => issue.code === "UNKNOWN_INDICATOR"),
-    ).toBe(true);
-    expect(port.requests[1]!.capabilityManifest.manifestVersion).toBe("1.0.0");
+    expect(port.requests[1]!.kind).toBe("repair");
+    const repair = port.requests[1]!;
+    if (repair.kind !== "repair") throw new Error("expected repair request");
+    expect(repair.repairIssues.length).toBeGreaterThan(0);
+    expect(repair.repairIssues.some((issue) => issue.code === "UNKNOWN_INDICATOR")).toBe(true);
+    expect(repair.capabilityManifest.manifestVersion).toBe("1.0.0");
   });
 
   it("s3-draft-repair-exhausted: 两轮仍坏 → REPAIR_EXHAUSTED/model-error，port 恰好 3 次", async () => {

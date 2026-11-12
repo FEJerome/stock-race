@@ -87,7 +87,17 @@ export async function callChatCompletions(
         lastError = error;
         continue;
       }
-      const payload = (await response.json()) as unknown;
+      let payload: unknown;
+      try {
+        payload = await response.json();
+      } catch {
+        // 200 但响应体非 JSON：这是 BAD_OUTPUT（模型/网关输出问题），不是网络错误，不重试
+        return {
+          ok: false,
+          error: { class: "BAD_OUTPUT", message: "response body is not valid JSON", retryable: false },
+          latencyMs: Date.now() - startedAt,
+        };
+      }
       const latencyMs = Date.now() - startedAt;
       const content =
         isRecord(payload) && Array.isArray(payload.choices) && isRecord(payload.choices[0]) &&
