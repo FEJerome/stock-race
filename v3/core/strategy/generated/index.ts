@@ -7,3 +7,5 @@ export type { RunSpec } from "./run-spec.types.js";
 export type { DataSnapshot } from "./data-snapshot.types.js";
 export type { RunEvent } from "./run-event.types.js";
 export type { Report } from "./report.types.js";
+export type { ModelProvenance } from "./model-provenance.types.js";
+export type { ConfirmedRevision } from "./confirmed-revision.types.js";

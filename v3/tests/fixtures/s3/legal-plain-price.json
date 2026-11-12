@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "收盘价站上20日前收盘价",
+  "indicators": {},
+  "entry": {"gt": [{"ref": "close"}, {"lag": {"input": {"ref": "close"}, "periods": 20}}]},
+  "exits": [{"lt": [{"ref": "close"}, {"lag": {"input": {"ref": "close"}, "periods": 20}}]}],
+  "position": {
+    "side": "long",
+    "allowAdd": false,
+    "entrySize": {"cashFraction": "0.50"},
+    "exitSize": {"positionFraction": "1.00"}
+  }
+}

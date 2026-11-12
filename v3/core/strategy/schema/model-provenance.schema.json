@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stock-race.local/schema/model-provenance.schema.json",
+  "title": "ModelProvenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["provider", "modelId", "attempt", "latencyMs"],
+  "properties": {
+    "provider": {"enum": ["kimi", "deterministic-fake"]},
+    "modelId": {"type": "string", "minLength": 1, "maxLength": 256},
+    "attempt": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"},
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["promptTokens", "completionTokens"],
+      "properties": {
+        "promptTokens": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"},
+        "completionTokens": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"}
+      }
+    },
+    "latencyMs": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"},
+    "errorClass": {"enum": ["TIMEOUT", "UNAVAILABLE", "BAD_OUTPUT", "RATE_LIMITED", "AUTH", "UNKNOWN"]}
+  }
+}

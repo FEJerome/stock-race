@@ -17,6 +17,8 @@ const artifacts = [
   ["data-snapshot.schema.json", "data-snapshot.types.ts", "DataSnapshot"],
   ["run-event.schema.json", "run-event.types.ts", "RunEvent"],
   ["report.schema.json", "report.types.ts", "Report"],
+  ["model-provenance.schema.json", "model-provenance.types.ts", "ModelProvenance"],
+  ["confirmed-revision.schema.json", "confirmed-revision.types.ts", "ConfirmedRevision"],
 ];
 
 const options = {

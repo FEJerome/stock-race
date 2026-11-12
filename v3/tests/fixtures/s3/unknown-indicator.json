@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "未知指标版本",
+  "indicators": {
+    "m": {"use": "macd@99", "params": {"fast": 12, "slow": 26, "signal": 9}}
+  },
+  "entry": {"gt": [{"ref": "m.dif"}, {"const": "0"}]},
+  "exits": [{"lt": [{"ref": "m.dif"}, {"const": "0"}]}],
+  "position": {
+    "side": "long",
+    "allowAdd": false,
+    "entrySize": {"cashFraction": "0.50"},
+    "exitSize": {"positionFraction": "1.00"}
+  }
+}

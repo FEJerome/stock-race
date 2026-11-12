@@ -1,0 +1,1 @@
+{"schemaVersion": "1.0.0", "name": "被截断的模型输出", "indicators": {"m": {"use": "macd@1", "par

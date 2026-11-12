@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "const 用了 JSON number",
+  "indicators": {},
+  "entry": {"gt": [{"ref": "close"}, {"const": 90.0}]},
+  "exits": [{"lt": [{"ref": "close"}, {"const": "80"}]}],
+  "position": {
+    "side": "long",
+    "allowAdd": false,
+    "entrySize": {"cashFraction": "0.50"},
+    "exitSize": {"positionFraction": "1.00"}
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "KDJ 金叉入场",
+  "indicators": {
+    "k": {"use": "kdj@1", "params": {"period": 9, "kSmooth": 3, "dSmooth": 3}}
+  },
+  "entry": {"crossAbove": [{"ref": "k.k"}, {"ref": "k.d"}]},
+  "exits": [{"crossBelow": [{"ref": "k.k"}, {"ref": "k.d"}]}],
+  "position": {
+    "side": "long",
+    "allowAdd": false,
+    "entrySize": {"cashFraction": "0.50"},
+    "exitSize": {"positionFraction": "1.00"}
+  }
+}
