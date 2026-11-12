@@ -434,14 +434,14 @@
         const avatar = document.createElement("img");
         avatar.className = "dialogue-avatar";
         avatar.src = "./hengyi-logo.svg";
-        avatar.alt = "衡一";
+        avatar.alt = "阿一";
         wrapper.append(avatar);
       }
       const content = document.createElement("div");
       content.className = "dialogue-content";
       const speaker = document.createElement("span");
       speaker.className = "dialogue-speaker";
-      speaker.textContent = step.speaker === "ai" ? "衡一 · 演示" : "老板 · 演示";
+      speaker.textContent = step.speaker === "ai" ? "阿一 · 演示" : "老板 · 演示";
       const bubble = document.createElement("div");
       bubble.className = "dialogue-bubble";
       bubble.textContent = step.text;
@@ -461,7 +461,7 @@
     const input = $("#dialogue-input");
     input.disabled = !next || next.speaker !== "user";
     input.value = next?.speaker === "user" ? next.text : "";
-    input.placeholder = next ? "听衡一说……" : "面试完成";
+    input.placeholder = next ? "听阿一说……" : "面试完成";
     $("#dialogue-send").disabled = !next;
     $("#dialogue-send").textContent = next?.speaker === "user" ? "回答" : next ? "继续" : "即将确认";
     renderRulesPreview(script, stage);
@@ -528,7 +528,7 @@
 
   function setStage(stage) {
     if (stage === "confirm" && !dialogueComplete()) { toast("先完成面试，再确认工作手册。"); return; }
-    if (stage === "dispatch" && !state.confirmedDemo) { toast("先完成演示确认，再派遣衡一。"); return; }
+    if (stage === "dispatch" && !state.confirmedDemo) { toast("先完成演示确认，再派遣阿一。"); return; }
     state.stage = stage;
     if (stage === "watch") showScene("b");
     else if (stage === "review") showScene("c");
@@ -868,7 +868,7 @@
       answer.replaceChildren();
       const avatar = document.createElement("span");
       avatar.className = "chat-avatar";
-      avatar.textContent = "衡";
+      avatar.textContent = "阿";
       const text = document.createElement("p");
       text.textContent = reviewAnswers[button.dataset.reviewQuestion];
       answer.append(avatar, text);
