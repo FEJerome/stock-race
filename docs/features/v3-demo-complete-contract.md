@@ -2,7 +2,7 @@
 
 ## 状态
 
-**御主已于 2026-10-28 按推荐口径终审通过；SR-006 S0 与 SR-007 S1 均已完成并合并。SR-008「V3 S2 股票内核与 CLI」已按冻结的 Demo 执行与报告假设开放，后续切片仍按依赖与质量闸逐段推进。**
+**御主已于 2026-10-28 按推荐口径终审通过；SR-006 S0 与 SR-007 S1 均已完成并合并。SR-008「V3 S2 股票内核与 CLI」已按冻结的 Demo 执行与报告假设开放，后续切片仍按依赖与质量闸逐段推进。2026-11-12 御主按推荐口径拍板 SR-011 十一项业务假设，本文件随之升版：新增第 11 章「两态与实时值守（live-sim）契约」并冻结；该章不构成施工授权，schema 本体与代码实现归后续施工棒。**
 
 本文件整合已确认决策、已完成研究与 S0/S1 冻结值，是当前唯一实施正典。它不构成业务实现、运行验收、真实模型能力、数据许可或外部部署证明。S0 仅允许在规划侧分配的独立 worktree 中按第 8.1 节安装最小依赖、编写契约骨架与测试；真实模型调用、外部真实数据接入、公开数据打包、部署和其他切片仍需后续相应授权。
 
@@ -20,6 +20,7 @@
 | [V3 视觉展示叙事](../decisions/2026-10-27-v3-demo-visual-narrative.md) | 三幕叙事、四分钟展示、版本对比、视觉与内核并行 |
 | [历史数据源证据](../research/2026-10-27-v3-legacy-data-source-evidence.md) | 历史声称/脚本/真实 JSON 的证据分层、旧缺陷和最小验证地图 |
 | [真实数据源最小探针](../research/2026-10-27-v3-data-source-probe.md) | 四资产局部真实结果、四层验证、kill unknown、数据许可限制 |
+| [两态与实时值守契约冻结](../decisions/2026-11-12-v3-two-modes-contract-freeze.md) | SR-011 十一项拍板口径、live-sim 与历史 Run 两态边界、第 11 章新增内容的授权边界 |
 
 本文件对既有 decisions/research 只引用、不复制其完整调研过程或原始数据集。第 4.2 节另含本轮新增的官方静态补证，按“官方 URL＋访问日期＋字段摘录＋本地探针对账”单列证据索引，不冒称既有研究报告内容。
 
@@ -774,3 +775,130 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 - Kimi 的真实 provider model id、结构化输出、限额、成本与错误语义未探针；真实生成 v1/调整 v2 与付费调用须单独 opt-in，fake 不抵扣最终门禁。
 - 数据许可与公开展示未开放；AKShare/Baostock 原始数据继续本地，公开样本、分发、部署和 SR-004 另批。
 - 本契约通过不等于全部功能已完成。SR-006 S0 与 SR-007 S1 已完成并合并；当前仅开放 SR-008 S2，S3 及后续切片仍须依第 8 章顺序和质量闸推进。
+
+---
+
+## 11. 两态与实时值守（live-sim）契约（2026-11-12 冻结）
+
+本章由 SR-011「V3 两态与实时值守契约升版」形成，十一项业务假设已于 2026-11-12 由御主按推荐口径拍板（见 [两态与实时值守契约冻结](../decisions/2026-11-12-v3-two-modes-contract-freeze.md)）。本章是 live-sim 值守态的唯一契约住所；它不构成施工授权，schema JSON 本体与代码实现归后续施工棒，且真实行情/新闻源接入仍须按第 7.1 节真实集成口径单独 opt-in 授权。
+
+### 11.1 两态定义与总边界
+
+- 本契约自此区分两态：**历史 Run 态**（第 5 章冻结快照回测，输入为不可变 DataSnapshot）与 **live-sim 值守态**（对同一已确认策略，在交易日推进中按周期采集新可见数据并持续模拟执行）。两态共享同一确定性内核与 DSL 语义，但身份、存储、事件身份标识与展示口径分离。
+- **两态均永不接实盘**：live-sim 信号不出本地、不接券商、不构成荐股或收益承诺；live-sim 的“实时”仅指按交易日节奏值守本地模拟，不接入真实交易链路。
+- live 值守资产范围**仅沪深股票先行**；ETF、基金、指数维持第 4.1 节既有仅分析门禁，live 态不放宽任何资产门禁。
+
+### 11.2 总架构：滚动观测＋每周期全量确定性重跑
+
+live-sim 不新建增量撮合内核。每个值守周期：采集本周期新可见 bar 追加进 live 累积观测 → 以累积观测构造完整 live 域 DataSnapshot → 以同一已确认策略**全量重跑**既有确定性引擎 → 事件链与账本由引擎整体再生；对外呈现的“本周期新事件”为事件链新增 seq 后缀。
+
+- 该架构使幂等与崩溃恢复由引擎确定性天然保证，并与历史 Run 共用同一执行语义，避免两套成交逻辑漂移。
+- 代价为 O(n²) 累计计算量；日频单资产在观测数为数千根量级时，单次重跑须仍满足第 7.5 节 P95＜2 秒候选预算，超出时先上浮审预算再考虑优化。
+- 接口上预留未来增量引擎升级路径，但本版不建增量引擎；core 目标零语义改动（见 11.13）。
+
+### 11.3 唤醒周期与 EOD 兜底窗口
+
+- **仅 EOD 唤醒**：调度器（hosts/local 层）按交易日历在每个交易日收盘后唤醒一次，本版不设盘中周期唤醒。A 股 09:30–11:30／13:00–15:00 仅作调度参照，live-sim 不模拟盘中撮合。
+- 唤醒动作＝调用 application 用例 `runLiveCycle(liveRunId, injectedClock)`。用例内**不调用大模型**，仅评估已确认 AST，并携带 `expectedDigest` 核验 confirmed revision 未变（同第 3.3 节确认口径）。
+- **唤醒时点不早于 15:30（Asia/Shanghai）**；自唤醒时点起的数据可见兜底窗口内，预期交易日 bar 仍未可见即按 stale 路径处理（见 11.9）。兜底窗口具体时长属于实施期显式配置，须版本化并在值守界面展示，不作为本章冻结值。
+
+### 11.4 点时可见性与观测记录
+
+- 每个 live 观测必须记录 `{dataAsOf（交易日期/navDate）、observedAt（采集墙钟，Asia/Shanghai）、source{name, interface, libraryVersion}、publishedAt?}`；采集时间不得冒充官方发布时间，navDate 与 publishedAt 语义分离（同第 3.5 节）。
+- 唤醒时必须校验预期交易日 bar 是否已可见；未可见→stale 路径，**不得以旧 bar 冒充新观测**，不用前向填充、不以 0 充价（与第 5.5 节同口径）。
+- 观测追加按 `(date, source, contentDigest)` 去重，重复采集不得膨胀输入。
+
+### 11.5 模拟成交确认时点：T+1 EOD 回填
+
+live 沿用 cn-stock 日历与第 5.3 节 T 信号/T+1 开盘时间线语义，但成交确认的可见时点如实后移：**T 日 EOD 评估产生意图，T+1 日 EOD 唤醒取得 T+1 完整 bar 后才回填开盘价模拟成交**——即模拟成交确认比信号晚一个交易日。该延迟是如实语义而非缺陷，值守界面必须明确展示「成交确认比信号晚一交易日」。盘中开盘价即时回填为未选用的备选，本版不实施。
+
+### 11.6 live 执行 profile `cn-stock-live-sim@1`
+
+- live 成交假设**新立独立 profile `cn-stock-live-sim@1`**，初版数值与第 7.2.3 节回测冻结值逐项对齐：开盘价 ±1 tick 方向滑点、买入 100 股整数倍、当日买不可卖、四桶现金（available/reserved/unsettled/receivable）、费用组件分别 `ROUND_HALF_UP` 至 Money scale=2 后求和。
+- 独立 profile 版本化使 live 假设未来可独立演化，而不污染回测冻结值；两 profile 数值对齐是初始状态，不是永久绑定。
+- 公司行动在 live 域同样以登记/除息/派息真实日期入账；所需日期或金额数据缺失时该周期**阻断**而非猜测。
+
+### 11.7 live 虚拟账本：初始资金、持久化与恢复
+
+- live 虚拟账本初始资金**独立设定**，默认 `100000.00 CNY`（Money scale=2 十进制字符串），与任何历史 Run 资金互不引用。
+- 落地第 2.4 节文件布局约定，新增 live 命名空间：
+
+```text
+v3-data/live/<liveRunId>/
+  live-run-spec.json
+  observations.jsonl
+  news.jsonl
+  events.jsonl
+  manifest.json
+```
+
+- `liveRunId` 由 `{strategyDigest, assetId, liveProfileVersion, createdAt}` 标识；`createdAt` 进身份不进 digest，liveRunId 不同于内容寻址 runDigest。
+- 持久化内容＝累积观测＋最新完整事件链＋LiveRunSpec；账本四桶不落盘，由重跑再生。所有写入原子化（同第 2.3 节规则），读取校验 manifest 与内容 digest，不完整写入不得被当作成功周期。
+- **恢复**：崩溃/重启后加载持久化输入重跑至当前周期，结果与不间断运行字节等价（由确定性保证，契约测试验证）。
+
+### 11.8 幂等
+
+- 唤醒键＝`(liveRunId, tradingDate, phase)`。同键重复触发→重放同输入重跑→事件链哈希链字节相同，不产生重复事件、不重复入账。
+- 观测去重规则见 11.4；幂等性与恢复语义由 11.14 的契约测试强制验证。
+
+### 11.9 stale 与值守 paused
+
+- 数据源未更新（最新可见 bar 日期 < 预期交易日）时：不评估信号、不生成意图；事件链入账 `StaleDataDetected` 事件（或以 `MarkToMarket` 携带 STALE 标记），估值沿用最后价并显式标记。
+- **连续 N=3 个周期 stale → 值守转 `paused` 状态并 surfaced 给用户**；paused 期间不再产生信号与成交意图。
+- stale 处理与第 5.5 节回测规则同口径：不前向填充、不以 0 充价。
+
+### 11.10 新闻观察边界
+
+- **新闻本版仅作观察入账、值守展示与复盘素材，不进入 AST 求值**；DSL 语义不变，SeriesExpr/BoolExpr 只消费行情序列。历史新闻回测本版不做；新闻进信号语义须另开 AST 扩展专项。
+- 新闻以独立 `NewsObservation{contentDigest, title, source, publishedAt, observedAt, assetRefs[]}` 存储；live 事件链以新事件类型（见 11.12）引用其 contentDigest，保证事件链完整性证明。
+- **无真实 publishedAt 的新闻显式标记 `UNKNOWN_PUBLISH_TIME` 且不入账**；按 contentDigest 去重。
+- 新闻源许可与行情同等审查，**未核许可源不接入**；AKShare 类「仅学术研究」声明的来源直接排除于开源分发（同第 7.3 节口径）。
+
+### 11.11 与历史 Run 的隔离和展示层口径
+
+- live 命名空间与 `runs/<runDigest>/` **物理分离**。历史回测永不读取 live 数据；live 运行不得修改任何历史 Run 文件。
+- P0 **禁止 live↔历史跨态契约 compare**；compare 仍只发生在第 3.7 节约束的同态运行之间。
+- live 报告与事件显式携带 `mode:"live-sim"`，永不冒充冻结快照回测。
+- **展示层允许 live 与历史 Run 同屏并列，但强制 mode 标识**；同屏并列是展示安排，不构成契约 compare。
+
+### 11.12 schema 升版路径
+
+- **run-event 走同一 schema 文件 minor 升版**（不另立 live-event schema）：扩展 `type` 枚举（新增 `StaleDataDetected`、`ContextObserved` 等 live 事件类型）与 `phase` 枚举（如需），`eventVersion` 升 minor；保持单一事件链语义与同一哈希链机制。
+- 新增 `live-run-spec.schema.json`、`live-observation.schema.json`、`news-observation.schema.json`；全部走既有 `generate:types`＋`check:generated` 管道，类型只由 schema 生成。
+- schema JSON 本体改动与类型重新生成归后续施工棒，不在本章冻结文件面内。
+
+### 11.13 接口边界与文件影响约束
+
+- **core 目标零语义改动**：`executeStockRun` 原样复用；`core/engine`、`core/market`、`core/report` 不改。core 不进时钟——墙钟仅经 application 的 ClockPort 注入。live 累积观测须能构造合法 DataSnapshot（fixture adapter 已有 materializeSnapshot 回填 digest 的先例，live adapter 同法）。
+- **application 新增 ports 层**：`ClockPort`（墙钟注入点）、`LiveMarketDataPort`（按交易日取最新可见 bar）、`NewsSourcePort`、`LiveRunStorePort`（观测/事件链/manifest 持久化）、`CalendarPort`（交易日历查询）。新用例：`create-live-run`、`run-live-cycle`（单周期：采集→校验可见性→追加观测→重跑→持久化→返回增量事件）、`pause-live-run`、`project-live-status`。既有 `validate-strategy`、`run-backtest` 等用例不变。
+- **adapters 新增**：`adapters/market/live-poll/`（真实行情轮询；真实集成另按 S7 口径单独授权，自动化测试使用 fixture 实现）、`adapters/news/<source>/`（源选型待专项）、`adapters/persistence/file/`（LiveRunStore 文件实现，原子写入）、`adapters/market/fixture` 增补「bar 可见时刻表」夹具能力。
+- **hosts**：调度器装配于 hosts/local 层；任何新增依赖（含调度库）须按依赖 diff 上浮审定，本章不预设具体调度库，也不改变 hosts/local 既有依赖口径。hosts/cli 增补 live 调试命令候选（手动触发单周期，便于 golden 复现）。hosts/web 值守状态只读投影归 S4 后段，不在本章范围。
+
+### 11.14 live 契约测试与 golden 要求
+
+核心手法为**伪实时确定性测试**：FixedClock（注入时钟序列）＋ FixtureLiveMarketData（预排「bar 可见时刻表」）驱动多周期 `runLiveCycle`；live 引擎本体确定性，不确定性全部隔离在 adapter 注入层。
+
+1. **多周期 golden**：手排 5–10 交易日小日历＋逐日 bar，逐周期触发；golden＝完整事件链与最终账本，事件逐条先手算再比对，不得由实现反推（承第 7.2.1 节纪律）。
+2. **幂等**：同周期重复触发，断言事件链哈希链字节不变、观测文件行数不变。
+3. **恢复**：第 k 周期后丢弃全部内存态，仅从 LiveRunStore 恢复续跑至末周期，与不间断 golden 字节等价。
+4. **stale**：bar 停滞夹具→断言 `StaleDataDetected`/STALE 入账且无意图无成交；连续 3 周期→paused 并 surfaced。
+5. **新闻边界**：无 publishedAt 拒绝入账；重复内容 digest 去重；注入新闻前后交易类事件（SignalEvaluated/OrderIntentCreated/OrderFilled）逐条一致——证明新闻不进信号。
+6. **隔离**：live 全程运行后断言历史 `runs/` 目录 digest 集不变；跨态 compare 请求显式拒绝。
+7. **先红方式**：可编译中性桩＋行为断言（承 S0/S1/S2 惯例：缺模块/编译失败不算有效红），保存 caseId、命令、退出码与 red 日志。
+8. **跨宿主**：Node 与测试专用 Chromium 对同一伪实时注入序列比事件链字节等价（承 S8 口径）。
+
+### 11.15 旧资产复用结论（live 相关部分）
+
+以下结论由 SR-011 首棒只读调研形成，证据分层与未核验项已在调研交接档标注；任何复用仍须逐项过第 9.1 节移植门槛。
+
+- **可候选移植**：AKShare/Baostock 独立同步库调用（钉住来源 commit、剥离旧 async executor 包装、统一复权口径、补来源/单位/时间元数据与负例）。
+- **仅作参考**：旧字段映射/解析负例、Timescale upsert 表结构、缓存 TTL 分层与故障转移思路；其实现与随机兜底耦合，不可继承。
+- **不可复用**：定时调度（历史无真实调度实现，值守调度层须全新建）；WebSocket 推送链路；旧 VirtualTradingService（维持第 9.1 节排除）。
+- **新闻/舆情**：main 侧为零；develop 侧历史资产未经本轮亲核，如需要须另立项评估，不得直接取用。
+
+### 11.16 本章非目标与后续授权边界
+
+- 不设盘中周期唤醒、不模拟盘中撮合；不做增量执行引擎；新闻不进信号、不做历史新闻回测。
+- 真实行情源、真实新闻源的接入与值守调度部署不在本章授权内，须按第 7.1 节真实集成口径与对应切片专项授权。
+- 本章冻结不构成任何施工授权；schema JSON 本体、类型重新生成与全部代码实现归后续施工棒，仍须实施者自验、检验与未参与实施的独立复审。
+- 已识别遗留开口：值守 `paused` 后的恢复语义（用户显式恢复 vs 数据恢复后自动继续）尚未拍板，对应施工切片启动前须回到规划侧裁定，不得由实现者自行选默认值。
