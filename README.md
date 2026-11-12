@@ -1,5 +1,8 @@
 # Stock-Race
 
+> **注意：`frontend/`、`backend/`、`ai-service/`、`data-service/` 四个旧模块为历史归档代码，不代表当前代码质量与可用性。**
+> **Note: the four legacy modules (`frontend/`, `backend/`, `ai-service/`, `data-service/`) are historical archives and do not represent current code quality or usability.**
+
 Stock-Race 是一个围绕股票模拟交易、策略验证与模型实验展开的项目。当前仓库保留 2026 年 2 月形成的早期实现，正在重新核验并改造为可研究、可复现、可协作的开源工具项目。
 
 > **仅用于模拟与研究，不接入实盘交易。历史文档中的“完成”“生产就绪”或部署描述，不代表当前已经验证。**
