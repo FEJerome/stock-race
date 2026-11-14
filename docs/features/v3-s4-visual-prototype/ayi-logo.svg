@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
-  <title id="title">衡一标识</title>
-  <desc id="desc">青色与金色构成的 H 形时间轨迹，象征规则、历史与复盘。</desc>
+  <title id="title">阿一标识</title>
+  <desc id="desc">青色与金色构成的 A／一形时间轨迹，象征规则、历史与复盘。</desc>
   <defs>
     <linearGradient id="metal" x1="18" y1="108" x2="110" y2="20" gradientUnits="userSpaceOnUse">
       <stop stop-color="#00d4ff"/>
@@ -14,9 +14,10 @@
   </defs>
   <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#ground)" stroke="url(#metal)" stroke-width="2"/>
   <circle cx="64" cy="64" r="43" fill="none" stroke="url(#metal)" stroke-width="2" opacity=".34"/>
-  <path d="M38 39v50M79 39v50M38 64h41" fill="none" stroke="url(#metal)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M43 89 L64 39 L85 89" fill="none" stroke="url(#metal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 68h26" fill="none" stroke="url(#metal)" stroke-width="8" stroke-linecap="round"/>
   <path d="M84 31h14v14" fill="none" stroke="#ffd700" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
   <path d="m98 31-19 19" fill="none" stroke="#ffd700" stroke-width="5" stroke-linecap="round"/>
-  <circle cx="38" cy="89" r="5" fill="#00d4ff"/>
+  <circle cx="43" cy="89" r="5" fill="#00d4ff"/>
   <circle cx="98" cy="31" r="4" fill="#ffd700"/>
 </svg>

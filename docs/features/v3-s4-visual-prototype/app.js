@@ -433,7 +433,7 @@
       if (step.speaker === "ai") {
         const avatar = document.createElement("img");
         avatar.className = "dialogue-avatar";
-        avatar.src = "./hengyi-logo.svg";
+        avatar.src = "./ayi-logo.svg";
         avatar.alt = "阿一";
         wrapper.append(avatar);
       }
