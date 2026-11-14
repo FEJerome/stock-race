@@ -1,0 +1,43 @@
+name: V3 CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'v3/**'
+      - '.github/workflows/v3.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'v3/**'
+      - '.github/workflows/v3.yml'
+
+jobs:
+  v3:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: v3/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./v3
+      run: npm ci
+
+    - name: Verify generated types are in sync
+      working-directory: ./v3
+      run: npm run check:generated
+
+    - name: Type check
+      working-directory: ./v3
+      run: npm run typecheck
+
+    - name: Run tests
+      working-directory: ./v3
+      run: npm test
