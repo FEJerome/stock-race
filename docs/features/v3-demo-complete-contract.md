@@ -542,7 +542,7 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 | 错误语义 | PASS（既往证据抵扣） | 2026-11-12 已实测失效/伪造 key 同构 HTTP 401 语义 |
 
 - 真实调用 6/6（预算硬顶内完成，无超限、无重试）；成本元数据合计 7650 tokens（prompt 6442 + completion 1208），其中缓存命中 1792；脱敏留痕，prompt/响应原文与凭据不落仓。
-- **口径差异（留规划台裁决，未自行消解）**：契约 6.3 字面要求「真实 Kimi K3.1 Pro」，本次验收 provider 为 DeepSeek。若裁决按御主实际供 key 的 provider 计，则 6.3 探针面 PASS，剩余仅 Demo 主流程用户确认环节（属 S4 范围）；若坚持字面 Kimi K3.1 Pro，则 Kimi 侧保持未验证，需另配有效 Moonshot key 重做同名探针。
+- **口径差异已裁决（2026-11-15，规划台直裁）**：契约 6.3 字面要求「真实 Kimi K3.1 Pro」，本次验收 provider 为御主实际供 key 的 DeepSeek `deepseek-flash`（11-12 御主已拍改道 DeepSeek，11-14 御主重发 DeepSeek key 解除前置）；直裁结论为按实际 provider 验收成立，**契约 6.3 探针面 PASS**。Kimi 侧保持未验证；若未来启用 Kimi，须另配有效 Moonshot key 重做同名探针，不得以本次 DeepSeek 证据外推抵扣。
 - 对 `deepseek-flash` 的能力边界不作外推声称：JSON Schema 原生模式不可用、json_object 截断行为均为单次样本观察。
 
 ---
