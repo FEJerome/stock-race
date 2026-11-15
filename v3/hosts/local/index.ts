@@ -13,7 +13,7 @@ export interface LocalServerHandle {
   close(): Promise<void>;
 }
 
-/** 启动 loopback-only 本地 API（port 0 = 随机空闲端口，测试友好；契约 2.3 默认仅 loopback）。 */
+/** Starts a loopback-only local API (port 0 = random free port, test-friendly; contract 2.3 defaults to loopback only). */
 export async function startLocalServer(options: LocalCompositionOptions): Promise<LocalServerHandle> {
   const composition = createLocalComposition(options);
   const server = createServer((request, response) => {

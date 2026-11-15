@@ -1,5 +1,6 @@
 /**
- * 凭据只经此处在 composition root 读取注入；不进 AST/快照/日志/provenance/错误消息。
+ * Credentials are read and injected only here at the composition root; they
+ * never enter an AST/snapshot/log/provenance/error message.
  */
 export function readSecretFromEnv(name: string): string {
   const value = process.env[name];

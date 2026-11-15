@@ -15,11 +15,14 @@ export interface DraftStrategyInput {
 }
 
 /**
- * 结果轴对齐产品状态矩阵：valid / invalid / model-error。
- * - valid：某一轮输出通过完整校验链（parseJsonInput→schema→语义→canonical→回读）。
- * - invalid：模型给出了草稿但校验不过，且修复无进展（输出逐字节重复即提前停修）。
- * - model-error：port 层失败（TIMEOUT/UNAVAILABLE…），或两轮修复仍坏（REPAIR_EXHAUSTED）。
- * provenance 覆盖每一次 port 调用，attempts=port 调用次数。
+ * Result axis aligned with the product state matrix: valid / invalid / model-error.
+ * - valid: some round's output passed the full validation chain
+ *   (parseJsonInput → schema → semantics → canonical → readback).
+ * - invalid: the model produced a draft that fails validation and repair
+ *   makes no progress (byte-identical repeated output stops repair early).
+ * - model-error: port-level failure (TIMEOUT/UNAVAILABLE…), or still broken
+ *   after two repair rounds (REPAIR_EXHAUSTED).
+ * provenance covers every port call; attempts = number of port calls.
  */
 export type DraftStrategyResult =
   | {
@@ -51,16 +54,19 @@ export type DraftStrategyResult =
       readonly attempts: number;
     };
 
-/** 修复轮上限：首发 + 两轮修复（契约 3.3）。 */
+/** Repair-round cap: initial draft + two repair rounds (contract 3.3). */
 export const DRAFT_MAX_ATTEMPTS = 3;
 
 /**
- * 编排（方案 §2.2）：组装请求 → port.draft → parseJsonInput → 复用
- * validateStrategyUseCase 全链。port 返回的 rawText 不受信任，唯一解析
- * 入口在校验链内部。invalid 且仍有修复轮 → issues 回灌；模型逐字节重复
- * 上一稿视为无进展，提前停在 invalid；两轮仍坏 → REPAIR_EXHAUSTED。
- * port 层失败（超时/不可用）→ model-error，保留 intent 与最后草稿，不切 fake。
- * 用例无状态；产品状态轴由 host 持有。
+ * Orchestration (plan §2.2): assemble request → port.draft → parseJsonInput →
+ * reuse the full validateStrategyUseCase chain. rawText returned by the port
+ * is untrusted; the validation chain is the single parsing entry point.
+ * If invalid and repair rounds remain → feed issues back; byte-identical
+ * repetition of the previous draft counts as no progress and stops early at
+ * invalid; still broken after two rounds → REPAIR_EXHAUSTED.
+ * Port-level failure (timeout/unavailable) → model-error, keeping intent and
+ * the last draft, with no fallback to a fake.
+ * The use case is stateless; the product state axis is held by the host.
  */
 export async function draftStrategy(
   port: StrategyDraftPort,
@@ -74,7 +80,7 @@ export async function draftStrategy(
   let repairIssues: readonly ValidationIssue[] | undefined;
 
   for (let attempt = 0; attempt < DRAFT_MAX_ATTEMPTS; attempt += 1) {
-    // 契约 3.3：修复轮只接收结构化错误与能力清单——意图/对话/基线只出现在首发。
+    // Contract 3.3: repair rounds receive only structured errors and the capability manifest — intent/conversation/baseline appear in the initial draft only.
     const request: ModelDraftRequest =
       attempt === 0
         ? {
@@ -102,7 +108,7 @@ export async function draftStrategy(
       };
     }
     if (lastRawText !== null && response.rawText === lastRawText) {
-      // 逐字节重复上一稿：修复无新信息，提前停在 invalid（deterministic fake 下精确可判定）。
+      // Byte-identical repeat of the previous draft: repair carries no new information, stop early at invalid (exactly decidable under the deterministic fake).
       return {
         ok: false,
         status: "invalid",

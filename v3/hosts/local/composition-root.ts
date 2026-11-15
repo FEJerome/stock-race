@@ -6,26 +6,27 @@ import type { StrategyDraftPort } from "../../application/ports/model.js";
 import type { StrategyStore } from "../../application/ports/strategy-store.js";
 
 export interface LocalCompositionOptions {
-  /** v3-data 根目录（确认/运行结果落盘）。 */
+  /** v3-data root directory (confirmations/run results are persisted here). */
   readonly dataRoot: string;
-  /** Kimi 凭据与模型配置；apiKey 经 secret provider 注入，不出现在任何返回值中。 */
+  /** Kimi credentials and model config; the apiKey is injected via the secret provider and never appears in any returned value. */
   readonly kimi: {
     readonly apiKey: string;
     readonly modelId: string;
     readonly baseUrl?: string;
     readonly timeoutMs?: number;
   };
-  /** 脱敏元数据落盘路径（.local/ 下）。 */
+  /** Persistence path for redacted metadata (under .local/). */
   readonly metadataLogPath?: string;
   /**
-   * 显式测试装配开关（契约 6.2）：仅测试代码可注入 deterministic fake。
-   * 对外主流程构造路径不接受此参数之外的任何 port 注入。
+   * Explicit test-wiring switch (contract 6.2): only test code may inject the
+   * deterministic fake. The public main-flow construction path accepts no port
+   * injection other than this parameter.
    */
   readonly testOverrides?: { readonly modelPort?: StrategyDraftPort };
 }
 
 export interface LocalComposition {
-  /** 对外可见的 adapter 标识（用于「fake 不进真实主流程」断言）。 */
+  /** Adapter identity visible to the outside (used for the "fake never enters the real main flow" assertion). */
   readonly adapterInfo: { readonly provider: "kimi" | "test-override"; readonly modelId: string };
   readonly modelPort: StrategyDraftPort;
   readonly store: StrategyStore;
@@ -33,10 +34,13 @@ export interface LocalComposition {
 }
 
 /**
- * hosts/local 组合根（node:http 零依赖，decisions 2026-11-12 第 3 项）。
- * 默认仅装配真实 Kimi adapter；deterministic fake 只能经 testOverrides
- * 由测试显式注入，本模块不 import 任何 deterministic 实现。
- * prompt/响应原文不落盘；仅请求元数据追加到 metadataLogPath（.local/）。
+ * hosts/local composition root (node:http, zero dependencies; decisions
+ * 2026-11-12 item 3).
+ * By default only the real Kimi adapter is wired; the deterministic fake can
+ * be injected by tests only through testOverrides — this module imports no
+ * deterministic implementation.
+ * Prompt/response bodies are never persisted; only request metadata is
+ * appended to metadataLogPath (.local/).
  */
 export function createLocalComposition(options: LocalCompositionOptions): LocalComposition {
   const store = createFileStrategyStore(options.dataRoot);
