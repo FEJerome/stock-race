@@ -2,10 +2,12 @@ import type { ModelDraftRequest } from "../../../application/ports/model.js";
 import type { ChatMessage } from "./client.js";
 
 /**
- * 阿一 system prompt（草案）：角色 + 三边界（对话引导脚本 §3：只引导表达 /
- * 收敛 AST / 不替代权威回读；不荐股）。
- * 文案终审权在维护者（decisions 2026-11-12 第 9 项），本稿仅为施工占位，
- * 未终审前不得对外声称定稿。
+ * A YI system prompt (draft): role + three boundaries (conversation-guidance
+ * script §3: guide expression only / converge to AST / never replace the
+ * authoritative readback; no stock recommendations).
+ * Final copy approval rests with the maintainer (decisions 2026-11-12 item 9);
+ * this draft is a construction placeholder and must not be presented as final
+ * before that approval.
  */
 const SYSTEM_PROMPT_DRAFT = [
   "你是「阿一」，基金公司的第一位 AI 经理人，一名对话式策略私教。",
@@ -61,11 +63,14 @@ function repairContent(request: ModelDraftRequest & { kind: "repair" }): string 
 }
 
 /**
- * 确定性 prompt 组装：
- * - 首发：system（角色+边界+能力清单）+ few-shot + 对话历史 + 意图/基线 AST；
- * - 修复轮（契约 3.3）：system（角色+边界+能力清单）+ 仅结构化错误，
- *   不带意图、对话历史、基线 AST，也不重复 few-shot。
- * manifest 序列化输入即确定性输出，其 digest 由 s3-manifest-deterministic 冻结看护。
+ * Deterministic prompt assembly:
+ * - Initial: system (role + boundaries + capability manifest) + few-shot +
+ *   conversation history + intent / baseline AST;
+ * - Repair round (contract 3.3): system (role + boundaries + capability
+ *   manifest) + structured errors only — no intent, no conversation history,
+ *   no baseline AST, and no repeated few-shot.
+ * Serializing the manifest input is the deterministic output; its digest is
+ * pinned and guarded by s3-manifest-deterministic.
  */
 export function buildDraftMessages(request: ModelDraftRequest): ChatMessage[] {
   const system: ChatMessage = {

@@ -8,9 +8,9 @@ export interface ChatMessage {
 export interface KimiClientOptions {
   readonly apiKey: string;
   readonly modelId: string;
-  /** Moonshot OpenAI 兼容端点（官方文档口径，探针证实前不作能力声称）。 */
+  /** Moonshot OpenAI-compatible endpoint (per official docs; no capability claims until verified by probe). */
   readonly baseUrl?: string;
-  /** 单请求超时（默认 60s，方案 §2.4）。 */
+  /** Per-request timeout (default 60s, plan §2.4). */
   readonly timeoutMs?: number;
   readonly fetchImpl?: typeof fetch;
 }
@@ -26,7 +26,7 @@ export type KimiCallResult =
 
 const DEFAULT_BASE_URL = "https://api.moonshot.cn/v1";
 const DEFAULT_TIMEOUT_MS = 60_000;
-/** 仅网络错误/5xx 重试一次；4xx/429 不重试（遇 429 停手上浮）。 */
+/** Retry once only for network errors/5xx; never retry 4xx/429 (a 429 surfaces immediately). */
 const MAX_NETWORK_RETRIES = 1;
 
 function classifyHttp(status: number): ModelCallError {
@@ -47,8 +47,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * 单次 chat/completions 调用（含一次网络重试）。错误消息只含状态码/错误类，
- * 不回显响应体或请求头，apiKey 不出现在任何返回值中。
+ * Single chat/completions call (including one network retry). Error messages
+ * contain only the status code / error class — never the response body or
+ * request headers — and the apiKey never appears in any returned value.
  */
 export async function callChatCompletions(
   options: KimiClientOptions,
@@ -60,7 +61,7 @@ export async function callChatCompletions(
   const body = JSON.stringify({
     model: options.modelId,
     messages,
-    // 传输格式假设为 JSON object；原生 JSON Schema 能力待探针证实，本地严格校验不依赖传输格式（契约 6.3）。
+    // Transport format assumed to be JSON object; native JSON Schema capability awaits probe verification — local strict validation does not depend on the transport format (contract 6.3).
     response_format: { type: "json_object" },
   });
 
@@ -91,7 +92,7 @@ export async function callChatCompletions(
       try {
         payload = await response.json();
       } catch {
-        // 200 但响应体非 JSON：这是 BAD_OUTPUT（模型/网关输出问题），不是网络错误，不重试
+        // 200 with a non-JSON body: BAD_OUTPUT (a model/gateway output problem), not a network error — do not retry
         return {
           ok: false,
           error: { class: "BAD_OUTPUT", message: "response body is not valid JSON", retryable: false },
@@ -123,7 +124,7 @@ export async function callChatCompletions(
         ? { class: "TIMEOUT", message: `request aborted after ${timeoutMs}ms`, retryable: true }
         : { class: "UNAVAILABLE", message: `network error: ${error instanceof Error ? error.name : "unknown"}`, retryable: true };
       if (attemptIndex === MAX_NETWORK_RETRIES || isAbort) {
-        // 超时不重试（单次预算内直接上浮），网络错误重试一次
+        // Timeouts are never retried (surface within the single-attempt budget); network errors are retried once
         return { ok: false, error: classified, latencyMs: Date.now() - startedAt };
       }
       lastError = classified;

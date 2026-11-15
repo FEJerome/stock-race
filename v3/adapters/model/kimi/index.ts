@@ -7,7 +7,7 @@ import type {
 import { callChatCompletions } from "./client.js";
 import { buildDraftMessages } from "./prompt.js";
 
-/** 脱敏请求元数据（decisions 2026-11-12 第 5 项：prompt/响应原文不落盘，仅元数据落 .local）。 */
+/** Redacted request metadata (decisions 2026-11-12 item 5: prompt/response bodies are never persisted; only metadata lands in .local). */
 export interface ModelRequestMetadata {
   readonly at: string;
   readonly provider: "kimi";
@@ -19,21 +19,22 @@ export interface ModelRequestMetadata {
 }
 
 export interface KimiAdapterOptions {
-  /** 仅 composition root 从 secret provider 注入；不得进日志/错误消息/provenance。 */
+  /** Injected by the composition root only, from the secret provider; must never reach logs/error messages/provenance. */
   readonly apiKey: string;
-  /** 真实 provider model id 须经探针证实后配置，adapter 不设默认值。 */
+  /** The real provider model id must be configured after probe verification; the adapter sets no default. */
   readonly modelId: string;
-  /** Moonshot OpenAI 兼容端点（探针证实前不作能力声称）。 */
+  /** Moonshot OpenAI-compatible endpoint (no capability claims until verified by probe). */
   readonly baseUrl?: string;
-  /** 单请求超时，默认 60s。 */
+  /** Per-request timeout, default 60s. */
   readonly timeoutMs?: number;
   readonly fetchImpl?: typeof fetch;
   readonly metadataSink?: (entry: ModelRequestMetadata) => void;
 }
 
 /**
- * 真实 Kimi adapter（契约 6.1）：仅存在于 hosts/local composition root；
- * 返回 rawText 不解析；不产生订单/不改 RunSpec/不逐日调用/不替代回读。
+ * Real Kimi adapter (contract 6.1): exists only in the hosts/local
+ * composition root; returns rawText unparsed; creates no orders, mutates no
+ * RunSpec, performs no per-bar calls, and never replaces the readback.
  */
 export function createKimiAdapter(options: KimiAdapterOptions): StrategyDraftPort {
   return {
