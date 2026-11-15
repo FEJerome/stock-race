@@ -180,6 +180,7 @@ cd scripts/demo_data && ./import_demo_data.sh
 - **Grafana仪表板**: http://localhost:3002
 
 ### 默认登录凭证
+> 注：`demo_user`/`demo123` 为脚本播种的本地演示账户，`TEST_ONLY_admin_password` 为非生产测试占位口令，均不适用于任何公开部署。
 - **演示用户**: `demo_user` / `demo123`
 - **管理员**: `admin` / `TEST_ONLY_admin_password` (首次登录后请修改)
 

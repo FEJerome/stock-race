@@ -202,7 +202,7 @@ fi
 echo -n "测试用户认证API... "
 auth_response=$(curl -s -X POST "http://localhost:3001/api/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"demo_user","password":"<demo-password>"}' 2>/dev/null || true)
+  -d "{\"username\":\"demo_user\",\"password\":\"${DEMO_PASSWORD:-<demo-password>}\"}" 2>/dev/null || true)
 
 if echo "$auth_response" | grep -q "success"; then
     echo -e "${GREEN}✓ 正常${NC}"
