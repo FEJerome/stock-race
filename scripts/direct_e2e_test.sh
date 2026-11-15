@@ -99,7 +99,7 @@ run_test "AI决策生成" "http://localhost:8000/api/v1/decision/generate" "POST
 # 步骤5: 用户认证测试
 echo "步骤5: 用户认证测试"
 echo "------------------"
-run_test "用户登录" "http://localhost:3001/api/auth/login" "POST" '{"password":"admin123"}'
+run_test "用户登录" "http://localhost:3001/api/auth/login" "POST" "{\"password\":\"${ADMIN_PASSWORD:-<your-admin-password>}\"}"
 
 # 步骤6: 综合功能测试
 echo "步骤6: 综合功能测试"
@@ -136,7 +136,7 @@ echo "4. 前端服务: $(curl -s -o /dev/null -w "%{http_code}" http://localhost
 echo ""
 echo "用户流程模拟结果:"
 echo "1. 访问前端界面: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 | grep -q '200' && echo -e "${GREEN}✅ 成功${NC}" || echo -e "${RED}❌ 失败${NC}")"
-echo "2. 用户登录: $(curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d '{"password":"admin123"}' | grep -q '"success":true' && echo -e "${GREEN}✅ 成功${NC}" || echo -e "${YELLOW}⚠️  可能失败${NC}")"
+echo "2. 用户登录: $(curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d "{\"password\":\"${ADMIN_PASSWORD:-<your-admin-password>}\"}" | grep -q '"success":true' && echo -e "${GREEN}✅ 成功${NC}" || echo -e "${YELLOW}⚠️  可能失败${NC}")"
 echo "3. 查看实时行情: $(curl -s "http://localhost:3001/api/stocks/realtime?symbol=000001.SZ" | grep -q '"success":true' && echo -e "${GREEN}✅ 成功${NC}" || echo -e "${YELLOW}⚠️  降级模式${NC}")"
 echo "4. AI交易决策: $(curl -s -X POST http://localhost:8000/api/v1/decision/generate -H "Content-Type: application/json" -d '{"symbol":"000001.SZ","current_price":15.5,"portfolio_value":100000,"risk_level":"medium"}' | grep -q '"decision":' && echo -e "${GREEN}✅ 成功${NC}" || echo -e "${YELLOW}⚠️  需要认证${NC}")"
 echo "5. 模拟交易: $(echo -e "${YELLOW}⚠️  需要认证和数据库${NC}")"

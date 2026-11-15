@@ -99,7 +99,8 @@ async function testUserLogin() {
 
   try {
     const response = await axios.post(`${config.backend}/api/auth/login`, {
-      password: 'admin123'
+      // Test-only fixture: the backend admin password comes from the ADMIN_PASSWORD env var
+      password: process.env.ADMIN_PASSWORD || 'TEST_ONLY_admin_password'
     }, {
       headers: { 'Content-Type': 'application/json' }
     });

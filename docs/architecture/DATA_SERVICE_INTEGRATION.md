@@ -15,7 +15,7 @@ DataService现在支持可配置的API前缀，以适配不同版本的数据服
 # 数据服务配置
 DATA_SERVICE_URL=http://localhost:8001
 DATA_SERVICE_API_PREFIX=/api/v1
-DATA_SERVICE_API_KEY=stock-race-data-key
+DATA_SERVICE_API_KEY=__SET_LOCAL_ONLY__
 ```
 
 ### 2. API端点映射
@@ -196,7 +196,7 @@ console.log('健康检查:', await dataService.testConnection());
 # 数据服务基础配置
 DATA_SERVICE_URL=http://localhost:8001
 DATA_SERVICE_API_PREFIX=/api/v1
-DATA_SERVICE_API_KEY=stock-race-data-key
+DATA_SERVICE_API_KEY=__SET_LOCAL_ONLY__
 
 # 超时和重试配置
 DATA_SERVICE_TIMEOUT=10000
