@@ -53,10 +53,11 @@ const Login: React.FC = () => {
     }
   };
 
+  // Test-only demo credentials for local development; never use in production
   const handleDemoLogin = () => {
     form.setFieldsValue({
-      username: 'admin',
-      password: 'admin123',
+      username: 'mock-admin',
+      password: 'TEST_ONLY_password',
     });
   };
 
@@ -183,10 +184,10 @@ const Login: React.FC = () => {
               <Card size="small" bordered style={{ background: token.colorFillAlter }}>
                 <Paragraph type="secondary" style={{ margin: 0 }}>
                   <Space direction="vertical" size="small">
-                    <Text strong>用户名:</Text>
-                    <Text code>admin</Text>
-                    <Text strong>密码:</Text>
-                    <Text code>admin123</Text>
+                    <Text strong>用户名 (测试专用):</Text>
+                    <Text code>mock-admin</Text>
+                    <Text strong>密码 (测试专用):</Text>
+                    <Text code>TEST_ONLY_password</Text>
                     <Button
                       type="dashed"
                       size="small"

@@ -63,7 +63,7 @@ echo "------------------------"
 
 run_test "股票数据API" "curl -s 'http://localhost:3001/api/stocks?limit=1' | jq -e '.success == true'"
 run_test "数据服务股票报价" "curl -s 'http://localhost:8001/api/v1/stocks/000001.SZ/quote' | jq -e '.symbol'"
-run_test "AI服务API密钥认证" "curl -s -X POST http://localhost:8000/api/v1/decision/service-generate -H 'Content-Type: application/json' -H 'X-API-Key: stock-race-ai-key-production' -d '{\"account_id\": \"test\", \"stock_code\": \"000001.SZ\", \"market_data\": {\"price\": 20}}' | jq -e '.metadata.authenticated_by == \"service_api_key\"'"
+run_test "AI服务API密钥认证" "curl -s -X POST http://localhost:8000/api/v1/decision/service-generate -H 'Content-Type: application/json' -H 'X-API-Key: ${AI_SERVICE_API_KEY:-<your-ai-service-api-key>}' -d '{\"account_id\": \"test\", \"stock_code\": \"000001.SZ\", \"market_data\": {\"price\": 20}}' | jq -e '.metadata.authenticated_by == \"service_api_key\"'"
 
 echo ""
 echo "🔐 第3部分: 安全配置测试"

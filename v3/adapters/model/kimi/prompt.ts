@@ -4,7 +4,7 @@ import type { ChatMessage } from "./client.js";
 /**
  * 阿一 system prompt（草案）：角色 + 三边界（对话引导脚本 §3：只引导表达 /
  * 收敛 AST / 不替代权威回读；不荐股）。
- * 文案终审权在御主（decisions 2026-11-12 第 9 项），本稿仅为施工占位，
+ * 文案终审权在维护者（decisions 2026-11-12 第 9 项），本稿仅为施工占位，
  * 未终审前不得对外声称定稿。
  */
 const SYSTEM_PROMPT_DRAFT = [

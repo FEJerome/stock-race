@@ -81,8 +81,8 @@ run_test "前端可访问性" "http://localhost:3000"
 # 步骤2: 数据服务测试
 echo "步骤2: 数据服务测试"
 echo "------------------"
-run_test "数据服务股票列表" "http://localhost:8001/api/v1/stocks?limit=3" "GET" "" "-H 'X-API-Key: stock-race-data-key'"
-run_test "数据服务股票报价" "http://localhost:8001/api/v1/stocks/000001.SZ/quote" "GET" "" "-H 'X-API-Key: stock-race-data-key'"
+run_test "数据服务股票列表" "http://localhost:8001/api/v1/stocks?limit=3" "GET" "" "-H 'X-API-Key: ${DATA_SERVICE_API_KEY:-<your-data-service-api-key>}'"
+run_test "数据服务股票报价" "http://localhost:8001/api/v1/stocks/000001.SZ/quote" "GET" "" "-H 'X-API-Key: ${DATA_SERVICE_API_KEY:-<your-data-service-api-key>}'"
 
 # 步骤3: 后端API测试（应该触发降级模式）
 echo "步骤3: 后端API测试（降级模式）"

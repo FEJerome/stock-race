@@ -181,14 +181,15 @@ get_current_admin_user = auth_handler.get_current_admin_user
 # Mock user database for development
 # In production, this would connect to a real user database
 class MockUserDB:
-    """Mock user database for development."""
+    """Mock user database for development and tests only. Never use in production."""
 
+    # Test-only credentials for local development; replace with a real user store in production
     users = {
         "admin": {
             "user_id": "1",
             "username": "admin",
             "email": "admin@stockrace.com",
-            "password": "admin123",  # In production, use hashed passwords
+            "password": "TEST_ONLY_admin_password",  # Test-only; in production, use hashed passwords
             "is_admin": True,
             "is_active": True
         },
@@ -196,7 +197,7 @@ class MockUserDB:
             "user_id": "2",
             "username": "user1",
             "email": "user1@stockrace.com",
-            "password": "user123",
+            "password": "TEST_ONLY_user1_password",  # Test-only; in production, use hashed passwords
             "is_admin": False,
             "is_active": True
         }

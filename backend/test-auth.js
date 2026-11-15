@@ -76,7 +76,8 @@ async function runTests() {
   // 4. 测试有效登录
   console.log('\n4️⃣  有效登录测试');
   const validLogin = await testEndpoint('POST', '/auth/login', {
-    password: 'admin123'  // 默认密码
+    // Test-only fixture: the backend admin password comes from the ADMIN_PASSWORD env var
+    password: process.env.ADMIN_PASSWORD || 'TEST_ONLY_admin_password'
   });
 
   if (validLogin.success && validLogin.data.success) {
