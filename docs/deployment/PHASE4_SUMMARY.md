@@ -181,7 +181,7 @@ cd scripts/demo_data && ./import_demo_data.sh
 
 ### 默认登录凭证
 - **演示用户**: `demo_user` / `demo123`
-- **管理员**: `admin` / `admin123` (首次登录后请修改)
+- **管理员**: `admin` / `TEST_ONLY_admin_password` (首次登录后请修改)
 
 ## 📈 性能与扩展性
 

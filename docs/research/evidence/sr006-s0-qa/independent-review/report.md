@@ -12,7 +12,7 @@ PASS；无必修项，建议合并送审 commit `1836cef7d43399dc40ea4e1d8bb1c96
 
 ## 实际复跑
 
-在 `E:\projects\stock-race\.claude\worktrees\sr006-s0\v3` 执行：
+在维护者本机 `sr006-s0` worktree 的 `v3` 目录执行（原始绝对路径为私有环境路径，不再记录）：
 
 ```sh
 npm ci && npm run check:generated && npm run typecheck && npm test

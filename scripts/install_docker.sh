@@ -55,7 +55,7 @@ echo "📋 下一步操作："
 echo "1. 重新登录或运行: newgrp docker"
 echo "2. 验证安装: docker --version"
 echo "3. 验证Docker Compose: docker-compose --version"
-echo "4. 启动服务: cd /home/fe-jerome/projects/stock-race && docker-compose up -d"
+echo "4. 启动服务: cd /path/to/stock-race && docker-compose up -d"
 echo ""
 
 # 显示版本信息

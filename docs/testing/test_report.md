@@ -69,7 +69,7 @@ redis-cli ping
 ```bash
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"password":"admin123"}'
+  -d '{"password":"TEST_ONLY_admin_password"}'
 ```
 
 **预期结果**: 返回JWT token

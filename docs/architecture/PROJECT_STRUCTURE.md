@@ -152,7 +152,7 @@ stock-race/
 - **后端API文档**: http://localhost:3001/api-docs
 - **AI服务**: http://localhost:8000
 - **数据服务**: http://localhost:8001
-- **pgAdmin**: http://localhost:5050 (用户名: admin@stock-race.com, 密码: admin123)
+- **pgAdmin**: http://localhost:5050 (用户名: admin@stock-race.com, 密码: TEST_ONLY_admin_password)
 - **Redis Commander**: http://localhost:8081
 
 ## 项目特点

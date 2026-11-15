@@ -11,7 +11,7 @@
 
 ## 修改的文件
 
-### 1. `/home/fe-jerome/projects/stock-race/data-service/src/data_service/storage/database.py`
+### 1. `/path/to/stock-race/data-service/src/data_service/storage/database.py`
 **主要修改：**
 - `connect()`方法：数据库连接失败时降级到内存模式，不抛出异常
 - 所有查询方法（`get_latest_quote`, `get_stock_history`, `get_stock_info`, `search_stocks`, `get_data_quality_metrics`）：数据库不可用时返回模拟数据
@@ -24,15 +24,15 @@
   - `_generate_simulated_search_results()`：生成模拟搜索结果
   - `_generate_simulated_data_quality_metrics()`：生成模拟数据质量指标
 
-### 2. `/home/fe-jerome/projects/stock-race/data-service/src/data_service/services/data_service.py`
+### 2. `/path/to/stock-race/data-service/src/data_service/services/data_service.py`
 **修改：**
 - `initialize()`方法：数据库连接失败时记录警告但不阻止服务初始化
 
-### 3. `/home/fe-jerome/projects/stock-race/data-service/src/data_service/main.py`
+### 3. `/path/to/stock-race/data-service/src/data_service/main.py`
 **修改：**
 - `lifespan()`函数：数据库初始化失败时记录警告但不阻止服务启动
 
-### 4. `/home/fe-jerome/projects/stock-race/data-service/src/data_service/storage/cache.py`
+### 4. `/path/to/stock-race/data-service/src/data_service/storage/cache.py`
 **添加：**
 - `connect()`方法：为了与DataService接口兼容
 - `close()`方法：清理内存缓存
@@ -92,7 +92,7 @@ await self.database_storage.save_stock_quote(quote)  # 失败 → 静默忽略�
 ## 测试验证
 
 ### 测试脚本
-创建了测试脚本：`/home/fe-jerome/projects/stock-race/test_database_fallback_simple.py`
+创建了测试脚本：`/path/to/stock-race/test_database_fallback_simple.py`
 
 ### 测试结果
 ✅ 数据库连接失败时自动降级到内存模式

@@ -202,7 +202,7 @@ fi
 echo -n "测试用户认证API... "
 auth_response=$(curl -s -X POST "http://localhost:3001/api/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"username":"demo_user","password":"demo123"}' 2>/dev/null || true)
+  -d '{"username":"demo_user","password":"<demo-password>"}' 2>/dev/null || true)
 
 if echo "$auth_response" | grep -q "success"; then
     echo -e "${GREEN}✓ 正常${NC}"
@@ -270,7 +270,7 @@ echo "  • Prometheus监控: http://localhost:9090"
 echo "  • Grafana仪表板: http://localhost:3002"
 echo ""
 echo "🔧 默认登录凭证："
-echo "  • 演示用户: demo_user / demo123"
+echo "  • 演示用户: demo_user / <demo-password>"
 echo "  • 管理员: admin / ${ADMIN_PASSWORD:-<your-admin-password>}"
 echo ""
 echo "📝 后续步骤："

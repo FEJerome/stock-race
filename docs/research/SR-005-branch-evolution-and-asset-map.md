@@ -2,7 +2,7 @@
 
 - 日期：2026-10-27
 - 范围：`047bbf9..b70ca94` 的 develop 关键演进、develop 顶点 `local/` 的真实架构，以及 main 旧 v1 与 10 月新增底座的资产处置。
-- 场地：新正典为 `E:\projects\stock-race` 的 main；develop 证据来自 `E:\projects\stock-race-legacy-develop` 的 detached `b70ca94`。
+- 场地：新正典为维护者本机 stock-race 仓库的 main 检出；develop 证据来自 stock-race-legacy-develop 仓库的 detached `b70ca94`（原始绝对路径为私有环境路径，不再记录）。
 - 方法：三条独立只读盘点，主会话抽核分支拓扑、关键提交、Local 决策/交易/适配器边界与资产处置依据；不逐提交复述，不做全仓审计。
 - 边界：未联网、安装、启动、操作数据库/API、运行测试或历史脚本；未读取实际环境文件及既定脱敏跳过文件。除本报告外未修改文件。
 

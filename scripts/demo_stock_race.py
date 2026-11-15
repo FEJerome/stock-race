@@ -541,13 +541,13 @@ def main():
 
     print("\n🚀 完整项目启动方式：")
     print("  1. 使用Docker Compose一键启动：")
-    print("     cd /home/fe-jerome/projects/stock-race")
+    print("     cd /path/to/stock-race")
     print("     docker-compose up -d")
     print("  2. 访问前端界面：http://localhost:3000")
     print("  3. 登录测试账号：demo@example.com / demo123")
 
     print("\n📁 项目文档位置：")
-    print("  - 主文档：/home/fe-jerome/projects/stock-race/CLAUDE.md")
+    print("  - 主文档：/path/to/stock-race/CLAUDE.md")
     print("  - 架构设计：docs/architecture/SYSTEM_ARCHITECTURE.md")
     print("  - API文档：http://localhost:3001/api-docs (启动后)")
 

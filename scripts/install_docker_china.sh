@@ -158,7 +158,7 @@ docker ps 2>/dev/null && echo "✅ Docker运行正常" || echo "⚠️ Docker运
 echo ""
 echo "📋 下一步操作："
 echo "1. 重新登录或运行: newgrp docker"
-echo "2. 启动服务: cd /home/fe-jerome/projects/stock-race && docker-compose up -d"
+echo "2. 启动服务: cd /path/to/stock-race && docker-compose up -d"
 echo ""
 echo "🔄 如果遇到权限问题，可以尝试："
 echo "   sudo chmod 666 /var/run/docker.sock"
