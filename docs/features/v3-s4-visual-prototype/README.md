@@ -1,5 +1,7 @@
 # V3 S4 视觉浏览器原型
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 > 状态：S4 设计闸第 3 件候选稿，待与 Feature Map、线框／状态矩阵一起由维护者统一设计终审；本原型不授权 S4 业务实施。
 >
 > 命名注记（2026-11-14 维护者终审拍板）：AI 经理人中文名定为 **阿一**（2026-11-11 拍板），英文拼写定名 **A YI**；旧名「衡一 / HENG YI」弃用、「阿衡」禁用。角色标识定为青金 A／一形时间轨迹（[ayi-logo.svg](ayi-logo.svg)）；视觉方向定为深海军蓝＋青金、专业官网式角色主页＋克制游戏感，原型在此基底上精修。
