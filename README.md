@@ -1,45 +1,48 @@
 # Stock-Race
 
-> **注意：`frontend/`、`backend/`、`ai-service/`、`data-service/` 四个旧模块为历史归档代码，不代表当前代码质量与可用性。**
+> 中文读者：`docs/` 下部分文档为中文，核心篇目英文版迁移中（decisions 与 SYSTEM_ARCHITECTURE 优先）。
+
 > **Note: the four legacy modules (`frontend/`, `backend/`, `ai-service/`, `data-service/`) are historical archives and do not represent current code quality or usability.**
 
-Stock-Race 是一个围绕股票模拟交易、策略验证与模型实验展开的项目。当前仓库保留 2026 年 2 月形成的早期实现，正在重新核验并改造为可研究、可复现、可协作的开源工具项目。
+Stock-Race is a project built around simulated stock trading, strategy validation, and model experimentation. This repository retains the early implementation formed in February 2026, which is being re-verified and reworked into a research-friendly, reproducible, and collaborative open-source tool project.
 
-> **仅用于模拟与研究，不接入实盘交易。历史文档中的“完成”“生产就绪”或部署描述，不代表当前已经验证。**
+> **For simulation and research only — never connected to live trading. Claims of "complete" or "production-ready" status, or deployment descriptions in historical documents, do not represent current verified state.**
 
-## 当前仓库包含什么
+## What this repository contains
 
-| 目录 | 历史实现 |
+| Directory | Description |
 |---|---|
-| `frontend/` | React + TypeScript 前端 |
-| `backend/` | Node.js + Express 业务后端 |
-| `ai-service/` | Python + FastAPI 模型交互与决策服务 |
-| `data-service/` | Python + FastAPI 行情数据采集与处理服务 |
-| `docs/` | 设计、调研、任务与协作文档 |
-| `scripts/` | 历史安装、演示和验证脚本，运行前必须审查 |
+| `frontend/` | React + TypeScript frontend (historical archive) |
+| `backend/` | Node.js + Express business backend (historical archive) |
+| `ai-service/` | Python + FastAPI model interaction and decision service (historical archive) |
+| `data-service/` | Python + FastAPI market data collection and processing service (historical archive) |
+| `v3/` | Active development area — TypeScript workspace (`core/`, `application/`, `adapters/`, `hosts/`, `tests/`) |
+| `docs/` | Design, research, task, and collaboration documents; see [docs/README.md](docs/README.md) for the index |
+| `scripts/` | Historical installation, demo, and validation scripts — must be reviewed before running |
 
-这些模块的存在不等于它们已经能够协同运行。代码、接口、依赖和数据链将在独立调研与环境任务中逐项核验。
+The presence of these modules does not mean they can run together. Code, interfaces, dependencies, and data pipelines will be verified item by item in dedicated research and environment tasks.
 
-## 当前环境与安全边界
+## Current environment and safety boundaries
 
-- 当前按本地开发项目管理，没有在线生产实例需要维护。
-- 实际 `.env*` 文件可能含历史配置或凭据，不属于可公开示例；安全模板统一使用 `.env.example`。
-- 在环境指南完成核验前，不要按历史文档执行系统安装、数据库重置或生产部署。
-- 历史模型 API、数据源和脚本可能已失效，未经明确任务不调用外部付费服务。
+- This project is managed as a local development project; there is no online production instance to maintain.
+- Actual `.env*` files may contain historical configuration or credentials and are not publishable examples; safety templates use `.env.example` as the standard template.
+- Until the environment guide completes verification, do not follow historical documents to perform system-level installs, database resets, or production deployments.
+- Historical model APIs, data sources, and scripts may no longer work; do not call external paid services without an explicit task.
 
-## 从哪份文档开始
+## Where to start reading
 
-- 项目会话稳定规则：[CLAUDE.md](CLAUDE.md)
-- 协作角色、质量闸与工作区规则：[协作规则](docs/development/COLLABORATION.md)
-- 真实技术栈与开发约定：[开发约定](docs/development/CODING_STANDARDS.md)
-- 环境核验状态：[环境指南](docs/usage/QUICK_START.md)
-- 任务规格与验收：[feature 文档](docs/features/README.md)
-- 调研证据：[research 文档](docs/research/README.md)
-- 技术决策：[decision 文档](docs/decisions/README.md)
-- 早期架构资料的可信度说明：[历史架构资料](docs/architecture/README.md)
+- Stable rules for project sessions: [CLAUDE.md](CLAUDE.md)
+- Collaboration roles, quality gates, and workspace rules: [COLLABORATION.md](docs/development/COLLABORATION.md)
+- Verified tech stack and development conventions: [CODING_STANDARDS.md](docs/development/CODING_STANDARDS.md)
+- Environment verification status: [QUICK_START.md](docs/usage/QUICK_START.md)
+- Task specifications and acceptance criteria: [features/](docs/features/README.md)
+- Research evidence: [research/](docs/research/README.md)
+- Technical decisions: [decisions/](docs/decisions/README.md)
+- Credibility notes for early architecture material: [architecture/](docs/architecture/README.md)
+- Full documentation index: [docs/README.md](docs/README.md)
 
-## 文档维护原则
+## Documentation maintenance principles
 
-实时任务状态由项目指定的 STATUS 底账维护，README 不复制任务清单。方案细节归 feature 或 decision 文档，调研结论必须有证据，会话消息与交接草稿不作为最终知识住所。
+Live task status is maintained by the project-designated STATUS ledger; this README does not duplicate task lists. Design details belong in feature or decision documents, research conclusions must carry evidence, and session messages or handoff drafts are not the final home of knowledge.
 
-环境启动命令将在配置和依赖核验后补充；在此之前，本仓库不提供未经验证的“一键启动”承诺。
+Environment startup commands will be added after configuration and dependency verification; until then, this repository makes no unverified "one-click startup" promises.
