@@ -10,8 +10,8 @@ const OPTIONS = {
 
 const MESSAGES = [{ role: "user" as const, content: "ping" }];
 
-describe("S3 复审回归：kimi client 错误分类与重试边界", () => {
-  it("s3-kimi-bad-output: 200 但非 JSON 响应体 → BAD_OUTPUT，不重试", async () => {
+describe("S3 re-review regression: kimi client error classification and retry boundaries", () => {
+  it("s3-kimi-bad-output: 200 with a non-JSON body → BAD_OUTPUT, no retry", async () => {
     let calls = 0;
     const fetchImpl = (async () => {
       calls += 1;
@@ -24,7 +24,7 @@ describe("S3 复审回归：kimi client 错误分类与重试边界", () => {
     expect(calls).toBe(1);
   });
 
-  it("s3-kimi-retry-once: 网络错误仅重试一次，随后 UNAVAILABLE 上浮", async () => {
+  it("s3-kimi-retry-once: network errors retry exactly once, then surface as UNAVAILABLE", async () => {
     let calls = 0;
     const fetchImpl = (async () => {
       calls += 1;
@@ -33,10 +33,10 @@ describe("S3 复审回归：kimi client 错误分类与重试边界", () => {
     const result = await callChatCompletions({ ...OPTIONS, fetchImpl }, MESSAGES);
     if (result.ok) throw new Error("expected failure");
     expect(result.error.class).toBe("UNAVAILABLE");
-    expect(calls).toBe(2); // 首发 + 恰好一次重试
+    expect(calls).toBe(2); // initial call + exactly one retry
   });
 
-  it("s3-kimi-429-no-retry: 429 不重试，RATE_LIMITED 直接上浮", async () => {
+  it("s3-kimi-429-no-retry: 429 is never retried, RATE_LIMITED surfaces immediately", async () => {
     let calls = 0;
     const fetchImpl = (async () => {
       calls += 1;

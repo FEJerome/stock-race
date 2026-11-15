@@ -8,7 +8,7 @@ import type {
 } from "../../../application/ports/model.js";
 import { parseJsonInput } from "../../../core/strategy/validation/json-input.js";
 
-/** canned 输出的一步：要么固定 rawText，要么固定错误。 */
+/** One step of canned output: either a fixed rawText or a fixed error. */
 export type FakeScenarioStep =
   | { readonly rawText: string }
   | { readonly error: { readonly class: ModelErrorClass; readonly message: string; readonly retryable: boolean } };
@@ -16,7 +16,7 @@ export type FakeScenarioStep =
 export type FakeScenarioTable = Readonly<Record<string, readonly FakeScenarioStep[]>>;
 
 export interface DeterministicFakeAdapter extends StrategyDraftPort {
-  /** 测试观测用：记录每次收到的请求。 */
+  /** For test observation: records every request received. */
   readonly requests: readonly ModelDraftRequest[];
 }
 
@@ -26,10 +26,12 @@ interface ScenarioFileStep {
 }
 
 /**
- * deterministic fake（契约 6.2）：scenario 键控 canned 输出，不做关键字理解；
- * 无命中 scenario 构造即抛错（防误用）；attempt 超出序列时重复最后一步。
- * 只能由测试装配注入，不进 hosts/local 对外主流程。
- * provenance 恒为 deterministic-fake，latencyMs 恒 0（确定性，不引墙钟）。
+ * Deterministic fake (contract 6.2): scenario-keyed canned output, no keyword
+ * understanding; constructing with an unknown scenario throws immediately
+ * (misuse guard); an attempt beyond the sequence repeats the last step.
+ * Injectable only by test wiring, never part of the hosts/local public flow.
+ * provenance is always deterministic-fake and latencyMs is always 0
+ * (deterministic — no wall clock involved).
  */
 export function createDeterministicFakeAdapter(options: {
   readonly scenarios: FakeScenarioTable;
@@ -60,7 +62,7 @@ export function createDeterministicFakeAdapter(options: {
   };
 }
 
-/** 从 fixtures 目录读取 scenarios.json 与其引用的 rawText 文件。 */
+/** Reads scenarios.json from a fixtures directory along with the rawText files it references. */
 export function loadFakeScenarios(dir: string): FakeScenarioTable {
   const index = parseJsonInput(readFileSync(path.join(dir, "scenarios.json"), "utf8")) as Record<
     string,

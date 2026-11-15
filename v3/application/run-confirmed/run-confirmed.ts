@@ -2,9 +2,10 @@ import type { StockRunInput, StockRunResult } from "../../core/engine/types.js";
 import type { StrategyStore } from "../ports/strategy-store.js";
 
 /**
- * confirmed 闸（契约 3.3：未确认拒绝运行），叠加在引擎层
- * STRATEGY_DIGEST_MISMATCH 兜底之前。真实主流程不得经
- * prepareFixtureRun 的 digest 自动回填。
+ * Confirmed gate (contract 3.3: unconfirmed strategies are refused a run),
+ * layered before the engine-level STRATEGY_DIGEST_MISMATCH backstop. The real
+ * main flow must never go through prepareFixtureRun's automatic digest
+ * backfill.
  */
 export type ConfirmedRunResult =
   | { readonly ok: true; readonly result: StockRunResult }
@@ -17,9 +18,10 @@ export type ConfirmedRunResult =
 import { runBacktest } from "../run-backtest/index.js";
 
 /**
- * confirmed 闸（契约 3.3：未确认拒绝运行），叠加在引擎层
- * STRATEGY_DIGEST_MISMATCH 兜底之前。真实主流程不得经
- * prepareFixtureRun 的 digest 自动回填——本用例只做查闸，不改写 input。
+ * Confirmed gate (contract 3.3: unconfirmed strategies are refused a run),
+ * layered before the engine-level STRATEGY_DIGEST_MISMATCH backstop. The real
+ * main flow must never go through prepareFixtureRun's automatic digest
+ * backfill — this use case only checks the gate and never rewrites input.
  */
 export async function runConfirmedBacktest(
   store: StrategyStore,

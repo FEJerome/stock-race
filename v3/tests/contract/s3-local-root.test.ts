@@ -17,8 +17,8 @@ async function postJson(url: string, body: unknown): Promise<{ status: number; j
   return { status: response.status, json: await response.json() };
 }
 
-describe("S3 hosts/local 组合根边界（node:http 零依赖）", () => {
-  it("s3-fake-not-in-local-root: 对外组合根只装配真实 adapter；fake 无命中 scenario 即抛错", async () => {
+describe("S3 hosts/local composition-root boundaries (node:http, zero dependencies)", () => {
+  it("s3-fake-not-in-local-root: public composition root wires only the real adapter; a fake with no matching scenario throws", async () => {
     const handle: LocalServerHandle = await startLocalServer({
       dataRoot: tmpDataRoot(),
       kimi: KIMI_TEST_CONFIG,
@@ -29,20 +29,20 @@ describe("S3 hosts/local 组合根边界（node:http 零依赖）", () => {
     } finally {
       await handle.close();
     }
-    // 看护：hosts/local 源码不得 import deterministic fake 实现
+    // Guard: hosts/local sources must not import the deterministic fake implementation
     const hostsDir = path.resolve(testRoot, "..", "hosts", "local");
     for (const file of readdirSync(hostsDir)) {
       if (!file.endsWith(".ts")) continue;
       const source = readFileSync(path.join(hostsDir, file), "utf8");
       expect(source.includes("model/deterministic")).toBe(false);
     }
-    // 防误用：无命中 scenario 构造即抛错
+    // Misuse guard: constructing with an unknown scenario throws
     expect(() =>
       createDeterministicFakeAdapter({ scenarios: fakeScenarios(), scenario: "no-such-scenario" }),
     ).toThrow();
   });
 
-  it("s3-fake-provenance-label: fake 结果经 Local API 透出 deterministic-fake 标识", async () => {
+  it("s3-fake-provenance-label: fake results surface the deterministic-fake label through the Local API", async () => {
     const handle = await startLocalServer({
       dataRoot: tmpDataRoot(),
       kimi: KIMI_TEST_CONFIG,
@@ -64,7 +64,7 @@ describe("S3 hosts/local 组合根边界（node:http 零依赖）", () => {
     }
   });
 
-  it("s3-real-failure-no-fallback: 真实 adapter 失败 → model-error，不触碰 fake", async () => {
+  it("s3-real-failure-no-fallback: real adapter failure → model-error, never touches the fake", async () => {
     const handle = await startLocalServer({
       dataRoot: tmpDataRoot(),
       kimi: { ...KIMI_TEST_CONFIG, baseUrl: "http://127.0.0.1:1", timeoutMs: 1000 },
@@ -88,7 +88,7 @@ describe("S3 hosts/local 组合根边界（node:http 零依赖）", () => {
     }
   });
 
-  it("s3-local-run-gate: 未确认策略经 Local API 构造 run → 409 STRATEGY_NOT_CONFIRMED", async () => {
+  it("s3-local-run-gate: run built via Local API for an unconfirmed strategy → 409 STRATEGY_NOT_CONFIRMED", async () => {
     const handle = await startLocalServer({
       dataRoot: tmpDataRoot(),
       kimi: KIMI_TEST_CONFIG,

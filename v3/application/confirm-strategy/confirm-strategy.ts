@@ -10,17 +10,17 @@ import { validateStrategySemantics } from "../../core/strategy/validation/semant
 import type { StrategyStore } from "../ports/strategy-store.js";
 
 export interface ConfirmStrategyInput {
-  /** 缺省时由 application 分配新 strategyId（F10 调整 v2 时传入既有 id）。 */
+  /** When omitted, the application allocates a new strategyId (pass an existing id for F10 adjust-v2). */
   readonly strategyId?: string;
-  /** 用户当前看到并确认的草稿（与回读同源的 AST）。 */
+  /** The draft the user currently sees and confirms (AST from the same source as the readback). */
   readonly currentDraft: unknown;
-  /** 用户确认时回读中展示的 expectedDigest。 */
+  /** The expectedDigest shown in the readback at confirm time. */
   readonly expectedDigest: string;
   readonly observationKind?: ObservationKind;
 }
 
 export interface ConfirmStrategyOptions {
-  /** 可注入时钟（测试确定性）；createdAt 只作展示元数据，不进 digest。 */
+  /** Injectable clock (test determinism); createdAt is display metadata only and never enters the digest. */
   readonly now?: () => string;
 }
 
@@ -40,10 +40,12 @@ export type ConfirmStrategyResult =
     };
 
 /**
- * 确认（方案 §2.3）：重算 canonical+digest，与 expectedDigest 不等 →
- * CONFIRM_DIGEST_MISMATCH（回 valid 不得确认，且不消耗 strategyId/revision）；
- * 相符 → application 分配 strategyId（缺省时）与单调递增 revision → 持久化。
- * createdAt 仅展示元数据，不进 digest（契约 3.1）。
+ * Confirmation (plan §2.3): recompute canonical+digest; if it differs from
+ * expectedDigest → CONFIRM_DIGEST_MISMATCH (nothing but a valid readback may
+ * be confirmed, and no strategyId/revision is consumed);
+ * if it matches → the application allocates the strategyId (when omitted)
+ * and a monotonically increasing revision → persisted.
+ * createdAt is display metadata only and never enters the digest (contract 3.1).
  */
 export async function confirmStrategy(
   store: StrategyStore,
@@ -98,8 +100,9 @@ export async function confirmStrategy(
       actualDigest: strategyDigest,
     };
   }
-  // M2：strategyId 由 application 分配；caller 指定的 id 必须已存在，
-  // 否则破坏分配唯一性（F10 v2 只允许沿用既往确认过的 id）。
+  // M2: strategyId is allocated by the application; a caller-supplied id must
+  // already exist, otherwise allocation uniqueness breaks (F10 v2 only allows
+  // reusing previously confirmed ids).
   if (input.strategyId !== undefined && !(await store.hasStrategy(input.strategyId))) {
     return {
       ok: false,

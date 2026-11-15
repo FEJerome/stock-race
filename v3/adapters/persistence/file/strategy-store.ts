@@ -5,7 +5,7 @@ import { digestCanonical } from "../../../core/strategy/canonical/digest.js";
 import { ContractError } from "../../../core/strategy/canonical/errors.js";
 import type { ConfirmedRevision } from "../../../core/strategy/generated/confirmed-revision.types.js";
 
-/** 契约白名单：digest=sha256:64hex；strategyId=strategy-XXXXXX。进文件层前强制执行。 */
+/** Contract whitelist: digest=sha256:64hex; strategyId=strategy-XXXXXX. Enforced before anything reaches the file layer. */
 export const STORE_DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
 export const STORE_STRATEGY_ID_PATTERN = /^strategy-[0-9]{6}$/;
 
@@ -23,7 +23,7 @@ export function assertStoreStrategyId(strategyId: string): void {
 
 let tempCounter = 0;
 
-/** 原子写：同目录临时文件 + rename，不完整写入不得被当作成功（契约 2.3 末句）。 */
+/** Atomic write: temp file in the same directory + rename; a partial write must never count as success (final clause of contract 2.3). */
 async function writeFileAtomic(file: string, content: string): Promise<void> {
   await mkdir(path.dirname(file), { recursive: true });
   const temp = `${file}.tmp-${process.pid}-${(tempCounter += 1)}`;
@@ -37,13 +37,15 @@ interface StrategyIndex {
 }
 
 /**
- * v3-data/strategies/ 文件布局（decisions 2026-11-12 第 4 项）：
- *   <rootDir>/strategies/counter.json                             strategyId 计数器
- *   <rootDir>/strategies/<digest-hex>/strategy.json               canonical AST 原文
+ * v3-data/strategies/ file layout (decisions 2026-11-12 item 4):
+ *   <rootDir>/strategies/counter.json                             strategyId counter
+ *   <rootDir>/strategies/<digest-hex>/strategy.json               raw canonical AST
  *   <rootDir>/strategies/<digest-hex>/confirmations/<id>-r<n>.json ConfirmedRevision
- *   <rootDir>/strategies/index/<strategyId>.json                  revision 索引
- * digest 含 "sha256:" 前缀，落盘路径只取 hex 段（Windows 文件名禁冒号）。
- * 所有路径输入先过白名单；变更操作经单进程串行队列生效。
+ *   <rootDir>/strategies/index/<strategyId>.json                  revision index
+ * The digest carries the "sha256:" prefix, but persisted paths use only the
+ * hex segment (colons are forbidden in Windows file names).
+ * All path inputs pass the whitelist first; mutating operations take effect
+ * through a single-process serial queue.
  */
 export function createFileStrategyStore(rootDir: string): StrategyStore {
   const strategiesDir = path.join(rootDir, "strategies");
@@ -59,7 +61,7 @@ export function createFileStrategyStore(rootDir: string): StrategyStore {
     return path.join(indexDir, `${strategyId}.json`);
   };
 
-  // M3：单进程串行队列——分配 id/revision 与落盘作为一个关键段生效，并发不重号。
+  // M3: single-process serial queue — id/revision allocation and persistence take effect as one critical section, so concurrent calls never double-allocate.
   let queue: Promise<unknown> = Promise.resolve();
   function enqueue<T>(operation: () => Promise<T>): Promise<T> {
     const run = queue.then(operation, operation);
@@ -140,7 +142,7 @@ export function createFileStrategyStore(rootDir: string): StrategyStore {
         if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
         throw error;
       }
-      // 契约 2.3 末句：读取时校验内容 digest，不完整/被篡改内容不得当作成功
+      // Final clause of contract 2.3: verify the content digest on read — partial/tampered content must never count as success
       if (digestCanonical(content) !== digest) {
         throw new ContractError("STORE_CONTENT_DIGEST_MISMATCH", `策略内容与 digest 不符：${digest}`);
       }
@@ -149,7 +151,7 @@ export function createFileStrategyStore(rootDir: string): StrategyStore {
   };
 }
 
-/** 供测试/诊断枚举：列出 index 目录下已知 strategyId。 */
+/** For test/diagnostic enumeration: lists known strategyIds under the index directory. */
 export async function listStrategyIds(rootDir: string): Promise<readonly string[]> {
   try {
     const files = await readdir(path.join(rootDir, "strategies", "index"));

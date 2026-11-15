@@ -6,29 +6,29 @@ import { createCapabilityManifest } from "../../core/strategy/registry/capabilit
 import { createRegistryV1 } from "../../core/strategy/registry/v1.js";
 import { fakePort, tmpStrategyStore } from "../s3-helpers.js";
 
-describe("S3 边界与标识", () => {
-  it("s3-manifest-deterministic: createCapabilityManifest 输出 digest 固定（prompt 输入契约）", () => {
+describe("S3 boundaries and identities", () => {
+  it("s3-manifest-deterministic: createCapabilityManifest output digest is fixed (prompt-input contract)", () => {
     const first = digestJson(createCapabilityManifest(createRegistryV1()));
     const second = digestJson(createCapabilityManifest(createRegistryV1()));
     expect(first).toBe(second);
-    // golden 冻结值（2026-11-12 实施时算出并冻结）：任何 manifest 漂移都会打破本断言
+    // golden frozen value (computed and frozen at implementation on 2026-11-12): any manifest drift breaks this assertion
     expect(first).toBe("sha256:03ed1d7aa51a6fb9ead4fb330d1743bf976f3a6d071aac586b66f35fac3f86bc");
   });
 
-  it("s3-fake-not-counted-as-real: fake 产出在验收层可经 provenance 识别，且不进确认记录", async () => {
+  it("s3-fake-not-counted-as-real: fake output is identifiable at acceptance time via provenance and never enters confirmation records", async () => {
     const { store } = tmpStrategyStore();
     const result = await draftStrategy(fakePort("legal-macd-kdj"), { intent: "识别 fake" });
     if (!result.ok) throw new Error("draft should be valid");
-    // 验收层可识别：每一次调用的 provider/modelId 都是 deterministic-fake
+    // Identifiable at acceptance: every call's provider/modelId is deterministic-fake
     expect(result.provenance.length).toBeGreaterThan(0);
     for (const entry of result.provenance) {
       expect(entry.provider).toBe("deterministic-fake");
       expect(entry.modelId).toBe("deterministic-fake");
     }
-    // fake 标识不混入策略产物：canonical AST / digest / 回读中无 fake 字样
+    // The fake label never leaks into strategy artifacts: no fake marker in canonical AST / digest / readback
     expect(result.canonicalAst).not.toContain("deterministic-fake");
     expect(JSON.stringify(result.readback)).not.toContain("deterministic-fake");
-    // ConfirmedRevision 只含 {strategyId, revision, digest, createdAt}，无 provenance 通道
+    // ConfirmedRevision contains only {strategyId, revision, digest, createdAt} — no provenance channel
     const confirmed = await confirmStrategy(
       store,
       { currentDraft: JSON.parse(result.canonicalAst), expectedDigest: result.strategyDigest },

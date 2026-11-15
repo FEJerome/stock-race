@@ -1,32 +1,36 @@
 import type { ConfirmedRevision } from "../../core/strategy/generated/confirmed-revision.types.js";
 
 export interface ConfirmationAllocation {
-  /** 缺省时由 store 分配新 strategyId；指定时必须是已存在（有过确认）的 id。 */
+  /** When omitted, the store allocates a new strategyId; when supplied, it must be an existing (already confirmed) id. */
   readonly strategyId?: string;
   readonly digest: string;
   readonly createdAt: string;
 }
 
 /**
- * 确认与 revision 持久化 port（契约 3.1：strategyId/revision 由 application 分配；
- * decisions 2026-11-12 第 4 项：v3-data/strategies/<strategyDigest>/ 文件布局）。
- * createdAt 等展示元数据不进 strategyDigest。
+ * Port for confirmation and revision persistence (contract 3.1: strategyId /
+ * revision are allocated by the application; decisions 2026-11-12 item 4:
+ * v3-data/strategies/<strategyDigest>/ file layout).
+ * Display metadata such as createdAt never enters the strategyDigest.
  *
- * 分配与写入收敛为单个 commitConfirmation 原子操作：实现方在内部串行化，
- * 调用方不得自行拼接「分配 id → 取 revision → 落盘」三段（并发下会重号）。
+ * Allocation and persistence collapse into the single atomic
+ * commitConfirmation operation: the implementation serializes internally, and
+ * callers must not hand-roll the "allocate id → take revision → persist"
+ * sequence themselves (it would double-allocate under concurrency).
  */
 export interface StrategyStore {
-  /** strategyId 是否已存在（有过至少一次确认）。 */
+  /** Whether the strategyId already exists (has at least one confirmation). */
   hasStrategy(strategyId: string): Promise<boolean>;
   /**
-   * 原子完成「分配 id（缺省时）→ 分配单调 revision → 落盘」，
-   * 返回完整 ConfirmedRevision。并发调用必须串行生效、revision 不重号。
+   * Atomically performs "allocate id (when omitted) → allocate monotonic
+   * revision → persist" and returns the complete ConfirmedRevision.
+   * Concurrent calls must serialize so revisions never collide.
    */
   commitConfirmation(allocation: ConfirmationAllocation, canonicalAst: string): Promise<ConfirmedRevision>;
-  /** 查询指定 strategyId+revision 的确认记录；未确认返回 null。 */
+  /** Looks up the confirmation record for a given strategyId+revision; null when unconfirmed. */
   findConfirmation(strategyId: string, revision: number): Promise<ConfirmedRevision | null>;
-  /** 列出某 strategyId 的全部确认记录（按 revision 升序）。 */
+  /** Lists all confirmation records for a strategyId (ascending by revision). */
   listConfirmations(strategyId: string): Promise<readonly ConfirmedRevision[]>;
-  /** 按 digest 读取已确认的 canonical AST；不存在返回 null；内容与 digest 不符必须拒绝。 */
+  /** Reads the confirmed canonical AST by digest; null when absent; content that does not match the digest must be rejected. */
   loadCanonicalAst(digest: string): Promise<string | null>;
 }

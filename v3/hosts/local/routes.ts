@@ -13,13 +13,14 @@ import { parseJsonInput } from "../../core/strategy/validation/json-input.js";
 import type { LocalComposition } from "./composition-root.js";
 
 /**
- * node:http 路由（默认仅 loopback 监听，契约 2.3）：
+ * node:http routes (loopback-only by default, contract 2.3):
  *   GET  /capabilities
  *   POST /strategies/draft
  *   POST /strategies/confirm
  *   POST /runs
  *   GET  /runs/:runDigest
- * 响应中的 provenance 原样透出 provider 标识（fake 结果必须可识别）。
+ * provenance in responses passes the provider label through verbatim (fake
+ * results must stay identifiable).
  */
 export function createLocalRequestHandler(
   composition: LocalComposition,
@@ -39,7 +40,7 @@ export function createLocalRequestHandler(
   };
 
   let tempCounter = 0;
-  /** 原子写：同目录临时文件 + rename（契约 2.3 末句）。 */
+  /** Atomic write: temp file in the same directory + rename (final clause of contract 2.3). */
   const writeFileAtomic = async (file: string, content: string): Promise<void> => {
     await mkdir(path.dirname(file), { recursive: true });
     const temp = `${file}.tmp-${process.pid}-${(tempCounter += 1)}`;
@@ -47,7 +48,7 @@ export function createLocalRequestHandler(
     await rename(temp, file);
   };
 
-  /** B1：runDigest 过契约白名单后才允许进入路径拼接。 */
+  /** B1: runDigest may enter path joining only after passing the contract whitelist. */
   const runDigestPath = (runDigest: string): string => {
     if (!STORE_DIGEST_PATTERN.test(runDigest)) {
       throw new ContractError("INVALID_STORE_DIGEST", "runDigest 不符白名单");
@@ -132,7 +133,7 @@ export function createLocalRequestHandler(
       }
       if (request.method === "GET" && url.pathname.startsWith("/runs/")) {
         const runDigest = decodeURIComponent(url.pathname.slice("/runs/".length));
-        // 白名单校验在内层 try 之外：ContractError 必须冒到统一 catch 映射 400，不得吞成 404
+        // Whitelist check stays outside the inner try: the ContractError must bubble to the unified catch and map to 400, never be swallowed into a 404
         const file = runDigestPath(runDigest);
         try {
           const content = await readFile(file, "utf8");

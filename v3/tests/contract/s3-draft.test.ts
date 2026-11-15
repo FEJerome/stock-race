@@ -7,8 +7,8 @@ import {
 import { readJsonFixture } from "../helpers.js";
 import { fakePort } from "../s3-helpers.js";
 
-describe("S3 draft 链路（deterministic fake 驱动，契约 7.2 S3 行）", () => {
-  it("s3-draft-legal: legal-macd-kdj 一轮通过，canonicalAst/digest/readback 齐全", async () => {
+describe("S3 draft pipeline (driven by the deterministic fake, contract 7.2 S3 row)", () => {
+  it("s3-draft-legal: legal-macd-kdj passes in one round with canonicalAst/digest/readback all present", async () => {
     const result = await draftStrategy(fakePort("legal-macd-kdj"), {
       intent: "MACD 三日内金叉，KDJ 过滤",
     });
@@ -29,12 +29,12 @@ describe("S3 draft 链路（deterministic fake 驱动，契约 7.2 S3 行）", (
     });
   });
 
-  it("s3-draft-bad-json: 截断 JSON 在 json-input 边界拒绝，无 digest", async () => {
+  it("s3-draft-bad-json: truncated JSON rejected at the json-input boundary, no digest", async () => {
     const result = await draftStrategy(fakePort("bad-json-truncated"), { intent: "任意" });
     if (result.ok || result.status !== "invalid") throw new Error("expected invalid");
     expect("strategyDigest" in result).toBe(false);
     expect(result.issues.some((issue) => issue.code === "INVALID_JSON")).toBe(true);
-    expect(result.attempts).toBe(2); // 重复 canned 输出逐字节相同 → 修复无进展提前停
+    expect(result.attempts).toBe(2); // repeated canned output is byte-identical → repair makes no progress and stops early
   });
 
   it("s3-draft-unknown-indicator: macd@99 → UNKNOWN_INDICATOR", async () => {
@@ -45,25 +45,25 @@ describe("S3 draft 链路（deterministic fake 驱动，契约 7.2 S3 行）", (
     ).toBe(true);
   });
 
-  it("s3-draft-extra-field: additionalProperties 拒绝", async () => {
+  it("s3-draft-extra-field: additionalProperties rejected", async () => {
     const result = await draftStrategy(fakePort("extra-field"), { intent: "任意" });
     if (result.ok || result.status !== "invalid") throw new Error("expected invalid");
     expect(result.issues.some((issue) => issue.code === "ADDITIONAL_PROPERTY")).toBe(true);
   });
 
-  it("s3-draft-numeric-const: const 用 JSON number → UNSAFE_JSON_NUMBER_TOKEN", async () => {
+  it("s3-draft-numeric-const: const as JSON number → UNSAFE_JSON_NUMBER_TOKEN", async () => {
     const result = await draftStrategy(fakePort("numeric-const"), { intent: "任意" });
     if (result.ok || result.status !== "invalid") throw new Error("expected invalid");
     expect(result.issues.some((issue) => issue.code === "UNSAFE_JSON_NUMBER_TOKEN")).toBe(true);
   });
 
-  it("s3-draft-future-reference: 未声明 ref → UNKNOWN_REFERENCE", async () => {
+  it("s3-draft-future-reference: undeclared ref → UNKNOWN_REFERENCE", async () => {
     const result = await draftStrategy(fakePort("future-reference"), { intent: "任意" });
     if (result.ok || result.status !== "invalid") throw new Error("expected invalid");
     expect(result.issues.some((issue) => issue.code === "UNKNOWN_REFERENCE")).toBe(true);
   });
 
-  it("s3-draft-repair-success: attempt0 坏 → issues 回灌 → attempt1 合法", async () => {
+  it("s3-draft-repair-success: attempt0 broken → issues fed back → attempt1 legal", async () => {
     const port = fakePort("repair-success-at-attempt-1");
     const result = await draftStrategy(port, { intent: "先错后对" });
     if (!result.ok) throw new Error(`expected valid, got ${result.status}`);
@@ -79,18 +79,18 @@ describe("S3 draft 链路（deterministic fake 驱动，契约 7.2 S3 行）", (
     expect(repair.capabilityManifest.manifestVersion).toBe("1.0.0");
   });
 
-  it("s3-draft-repair-exhausted: 两轮仍坏 → REPAIR_EXHAUSTED/model-error，port 恰好 3 次", async () => {
+  it("s3-draft-repair-exhausted: still broken after two rounds → REPAIR_EXHAUSTED/model-error, port called exactly 3 times", async () => {
     const port = fakePort("repair-exhausted");
     const result = await draftStrategy(port, { intent: "屡修屡坏" });
     if (result.ok || result.status !== "model-error") throw new Error("expected model-error");
     expect(result.errorCode).toBe("REPAIR_EXHAUSTED");
     expect(result.issues).not.toBeNull();
     expect(result.intent).toBe("屡修屡坏");
-    expect(port.requests).toHaveLength(3); // 首发+2 修复，第 4 次不发生
+    expect(port.requests).toHaveLength(3); // initial + 2 repairs; a 4th call never happens
     expect(result.attempts).toBe(3);
   });
 
-  it("s3-draft-timeout: port 超时 → model-error，保留 intent，不修复不重试到上层", async () => {
+  it("s3-draft-timeout: port timeout → model-error, intent preserved, no repair or upward retry", async () => {
     const result = await draftStrategy(fakePort("timeout"), { intent: "会超时的意图" });
     if (result.ok || result.status !== "model-error") throw new Error("expected model-error");
     expect(result.errorCode).toBe("TIMEOUT");
@@ -100,7 +100,7 @@ describe("S3 draft 链路（deterministic fake 驱动，契约 7.2 S3 行）", (
     expect(result.provenance[0]!.errorClass).toBe("TIMEOUT");
   });
 
-  it("s3-draft-transport-error: 传输 5xx → model-error，不切 fake", async () => {
+  it("s3-draft-transport-error: transport 5xx → model-error, no fallback to fake", async () => {
     const result = await draftStrategy(fakePort("transport-5xx"), { intent: "服务不可用" });
     if (result.ok || result.status !== "model-error") throw new Error("expected model-error");
     expect(result.errorCode).toBe("UNAVAILABLE");
@@ -108,7 +108,7 @@ describe("S3 draft 链路（deterministic fake 驱动，契约 7.2 S3 行）", (
     expect(result.attempts).toBe(1);
   });
 
-  it("s3-draft-observation-kind: kdj@1 仅 ohlcv，在 nav kind 下 OBSERVATION_KIND_UNSUPPORTED", async () => {
+  it("s3-draft-observation-kind: kdj@1 is ohlcv-only, OBSERVATION_KIND_UNSUPPORTED under nav kind", async () => {
     const result = await draftStrategy(fakePort("legal-kdj-only"), {
       intent: "基金净值上跑 KDJ",
       observationKind: "nav",
