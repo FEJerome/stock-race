@@ -32,6 +32,7 @@ The presence of these modules does not mean they can run together. Code, interfa
 ## Where to start reading
 
 - Stable rules for project sessions: [CLAUDE.md](CLAUDE.md)
+- How to contribute — collaboration workflow and public repository boundaries: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Collaboration roles, quality gates, and workspace rules: [COLLABORATION.md](docs/development/COLLABORATION.md)
 - Verified tech stack and development conventions: [CODING_STANDARDS.md](docs/development/CODING_STANDARDS.md)
 - Environment verification status: [QUICK_START.md](docs/usage/QUICK_START.md)

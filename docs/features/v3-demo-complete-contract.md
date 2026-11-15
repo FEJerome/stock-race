@@ -1,5 +1,7 @@
 # Stock-Race V3 Demo 完整契约
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 ## 状态
 
 **维护者已于 2026-10-28 按推荐口径终审通过；SR-006 S0 与 SR-007 S1 均已完成并合并。SR-008「V3 S2 股票内核与 CLI」已按冻结的 Demo 执行与报告假设开放，后续切片仍按依赖与质量闸逐段推进。2026-11-12 维护者按推荐口径拍板 SR-011 十一项业务假设，本文件随之升版：新增第 11 章「两态与实时值守（live-sim）契约」并冻结；该章不构成施工授权，schema 本体与代码实现归后续施工棒。**

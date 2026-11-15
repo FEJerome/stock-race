@@ -1,5 +1,7 @@
 # SR-002 开发环境与敏感配置治理
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 ## 状态与目标
 
 已在独立分支 `SR-002-env-governance` 完成最小环境治理，基线为本地 main `b5edf4f147152fb1ec0fd72aee8eb0931291ac8b`。本任务只处理环境文件跟踪、安全模板、本地数据忽略和环境文档，不构成旧服务或 V3 的运行验收。

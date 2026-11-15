@@ -1,5 +1,7 @@
 # SR-014 删旧 CI/CD 与 V3 CI 重建 — 执行报告
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 - **执行人**：实施会话（执行验证台）
 - **日期**：2026-11-15
 - **分支**：`sr-014-cicd`（worktree，基线 origin/main = e3bc511）

@@ -1,5 +1,7 @@
 # V3 S4 命名返修与维护者终审材料（SR-010 前置棒）
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 > 状态：维护者终审材料，2026-11-12 由 SR-010 S4 前置棒整理；本文档不授权 S4 实施。
 >
 > 定案注记（2026-11-15 返修棒补记）：维护者 2026-11-14 晚已就 §3 三题全部拍板——英文定名 **A YI**（HENG YI 弃用）、标识沿用青金时间轨迹语言改 A／一意象（`hengyi-logo.svg` → `ayi-logo.svg`）、风格方向定为深海军蓝＋青金／专业官网式角色主页＋克制游戏感。下文 §3 清单为拍板前历史记录，返修结果见 [V3 S4 命名与视觉返修报告](v3-s4-naming-rework-report.md)。

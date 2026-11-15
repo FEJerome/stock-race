@@ -1,7 +1,7 @@
-# Decision 文档
+# Decision Records
 
-本目录记录会影响项目技术方向、接口、数据或安全边界的正式决策。
+This directory holds formal decisions that affect the project's technical direction, interfaces, data, or security boundaries.
 
-每份决策至少包含：日期、背景、决定、理由、影响范围、替代方案和后续验证入口。只记录已经拍板的内容，不存放头脑风暴或实时任务状态。
+Each decision record includes at a minimum: date, background, the decision itself, rationale, scope of impact, alternatives considered, and an entry point for follow-up verification. Only finalized decisions are recorded here — no brainstorming or live task status.
 
-规划侧私人背景、会议材料和任务编排记录不进入本仓库；本目录只保留适合项目长期公开维护的技术决策。
+Private planning background, meeting material, and task-orchestration records do not belong in this repository; this directory keeps only technical decisions suitable for long-term public maintenance.
