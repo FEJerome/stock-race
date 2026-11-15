@@ -1,77 +1,67 @@
-# Stock-Race 协作底座
+# Stock-Race Collaboration Baseline
 
-本文件只承载所有项目会话必须稳定知道的事实与边界。实时任务、在飞状态和资源占用由维护者指定的规划信源承载，不写入本文件。
+This file carries only the facts and boundaries that every project session must know reliably. Live task state and resource allocation are maintained in the maintainer's planning system and are not written here.
 
-## 项目事实
+## Project Facts
 
-- 本仓库是 Stock-Race 的历史代码基线，主要代码形成于 2026 年 2 月；文档中的完成度、可用性和部署描述不代表现状已验证。
-- 代码分为四个模块：`frontend/`（React + TypeScript）、`backend/`（Node.js + Express）、`ai-service/`（Python + FastAPI）、`data-service/`（Python + FastAPI）。
-- 项目只用于模拟交易、策略研究及相关工具实验，**不得接入实盘交易**。
-- 当前没有需要维护的生产实例。历史部署文档不是当前运行手册。
+- This repository is the historical code baseline of Stock-Race. Most of the code was written in February 2026; claims about completeness, usability, or deployment in the documentation do **not** represent a currently verified state.
+- The code is organized into four modules: `frontend/` (React + TypeScript), `backend/` (Node.js + Express), `ai-service/` (Python + FastAPI), and `data-service/` (Python + FastAPI). Active development currently happens in `v3/`.
+- The project is for simulated trading, strategy research, and tooling experiments only. **It must never be connected to live trading.**
+- There is no production instance to maintain. Historical deployment documents are not current runbooks.
 
-## 默认安全边界
+## Default Safety Boundaries
 
-- 未经任务明确授权，不安装依赖、不启动服务、不修改数据库、不部署，也不调用付费模型或外部数据写入接口。
-- `.env`、`.env.local`、`.env.production`、`.env.test` 等实际环境文件一律按敏感资料处理；除 `.env.example` 外，不因调研而读取、打印或复制其中的值。
-- 凭据不得进入对话、日志、测试快照、提交或公开文档。发现疑似有效凭据时，只报告文件与变量名，先由维护者决定处置。
-- 不执行历史文档中的清库、重置、系统级安装或生产部署命令。历史脚本也须先审查，再按当次任务授权运行。
-- 业务代码、环境治理由独立任务处理；协作底座任务不得顺手修改业务实现。
+- Do not install dependencies, start services, modify databases, deploy, or call paid models or external data-write APIs without explicit authorization for the task at hand.
+- Treat real environment files (`.env`, `.env.local`, `.env.production`, `.env.test`, etc.) as sensitive material. Except for `.env.example`, never read, print, or copy their values for investigation purposes.
+- Credentials must never enter conversations, logs, test snapshots, commits, or public documentation. If a potentially valid credential is found, report only the file and variable name and let the maintainer decide how to handle it.
+- Do not run database wipes, resets, system-level installs, or production deployment commands from historical documents. Review historical scripts before running them, and only under explicit task authorization.
+- Business code and environment governance are handled by dedicated tasks; a collaboration-baseline task must not piggyback changes to the business implementation.
 
-## 新会话启动
+## Starting a New Session
 
-1. 先读本文件和当次任务卡，确认任务编号、目标、范围、交付物与验收条件。
-2. 按任务需要阅读 [协作规则](docs/development/COLLABORATION.md)、[开发约定](docs/development/CODING_STANDARDS.md) 和相关 feature 文档。
-3. 直接核对相关代码、测试和依赖清单；不要为“了解全貌”加载全部历史文档。
-4. 环境任务先读 [环境指南](docs/usage/QUICK_START.md)，架构调研先读 [历史资料说明](docs/architecture/README.md)。
-5. 需要写时间戳时，先从系统取得真实日期时间；不要估算。
+1. Read this file and the current task brief first; confirm the task goal, scope, deliverables, and acceptance criteria.
+2. Read [Collaboration Rules](docs/development/COLLABORATION.md), [Coding Standards](docs/development/CODING_STANDARDS.md), and relevant feature documents as the task requires.
+3. Verify against the actual code, tests, and dependency manifests directly; do not load every historical document just to "get the full picture."
+4. For environment tasks, start with the [Environment Guide](docs/usage/QUICK_START.md); for architecture research, start with the [Historical Architecture Notes](docs/architecture/README.md).
+5. When a timestamp is needed, take the real date and time from the system; do not estimate.
 
-## 主子智能体分工
+## Division of Labor Between Main and Sub-agents
 
-这里的子智能体是主会话内通过 Agent 工具发起的短任务，不是新的规划岗位，不获得额外授权，也不改变当次任务的责任归属。
+Sub-agents here are short tasks launched within the main session via the Agent tool. They are not new planning roles, receive no additional authorization, and do not change who is responsible for the task.
 
-- 主智能体保留任务拆解、关键证据亲核、风险判断、结论整合与交付，不无差别复读全部资料。
-- 对相互独立的代码盘点、只读检索、配置与链接扫描、资料汇编，优先拆成边界清楚的小任务交给子智能体；主智能体根据返回的证据路径做必要抽核，避免整仓由主上下文通读。
-- 子智能体默认只读，不得读取实际环境文件、运行历史脚本、修改业务代码或调用外部服务；其输出必须区分事实、推断与未核验项。
-- 交易语义、跨模块接口、安全风险和产品结论由主智能体亲核，子智能体结果不能直接替代裁决。
-- 不为调用而调用；无法有效拆分的小任务由主智能体直接完成。大型资料先建索引或检索，再定点阅读，主上下文与额度是成本资产。
+- The main agent keeps task decomposition, hands-on verification of key evidence, risk judgment, conclusion synthesis, and delivery. It does not indiscriminately re-read all materials.
+- Independent code inventory, read-only searches, configuration and link scans, and document compilation are preferentially delegated to sub-agents with clear boundaries; the main agent spot-checks the returned evidence paths instead of reading the whole repository into its own context.
+- Sub-agents are read-only by default: they must not read real environment files, run historical scripts, modify business code, or call external services. Their output must distinguish facts, inferences, and unverified items.
+- Trading semantics, cross-module interfaces, security risks, and product conclusions are verified hands-on by the main agent; sub-agent results do not replace that judgment.
+- Do not delegate for delegation's sake. Tasks too small to split effectively are done directly by the main agent. For large material, build an index or search first, then read selectively — main-context and quota are cost assets.
 
-## 文档信任顺序
+## Documentation Trust Order
 
-1. 当前任务契约与验收条件；
-2. 实际代码、测试、依赖清单和运行证据；
-3. `docs/features/`、`docs/research/`、`docs/decisions/` 中经核验的记录；
-4. 其他 2026 年 2 月形成的设计、完成报告和部署文档，仅作历史参考。
+1. The current task contract and its acceptance criteria;
+2. Actual code, tests, dependency manifests, and runtime evidence;
+3. Verified records in `docs/features/`, `docs/research/`, and `docs/decisions/`;
+4. Other design, completion, and deployment documents from February 2026, for historical reference only.
 
-文档之间冲突时，先报告并核实，不选择最方便的一份照做。
+When documents conflict, report and verify the conflict first — do not simply follow whichever document is most convenient.
 
-## 协作与 Git 边界
+## Collaboration and Git Boundaries
 
-- 角色是岗位，不绑定固定会话名或人格。规划、执行、检验、机械修改与复审的职责见协作规则。
-- 执行会话默认只处理当次任务，不自行扩大范围、派单、合并或分配共享资源；维护者对具体动作的直接授权优先。
-- `main` 是共享基线。实施任务使用独立工作区和分支，不在主工作区直接提交。
-- 提交前审查变更面，只添加明确文件，禁止全量 `git add`；提交、合并和推送按当次授权执行。
-- 执行者必须自验；代码、多文件配置和环境改动须由未参与实施的独立会话复审。用户可见的呈现变化还须维护者终审。
-- 跨会话消息只用于提问、交货和求裁，重要结论必须回到任务文档。
+- Roles are positions, not fixed session names or personas. Responsibilities for planning, implementation, review, mechanical changes, and re-review are defined in the collaboration rules.
+- An execution session handles only its own task by default. It does not expand scope, dispatch other tasks, merge, or allocate shared resources on its own; direct authorization from the maintainer takes precedence for specific actions.
+- `main` is the shared baseline. Implementation work happens in a dedicated worktree and branch; do not commit directly in the main checkout.
+- Review the change surface before committing; add only explicit files — blanket `git add` is forbidden. Commit, merge, and push only as authorized for the task.
+- The executor must self-verify. Code, multi-file configuration, and environment changes require re-review by an independent session that did not participate in the implementation. User-visible presentation changes additionally require the maintainer's final sign-off.
+- Cross-session messages are only for asking questions, delivering work, and requesting decisions. Important conclusions must be recorded back in the task document.
 
-## 智能体纪律（2026-11-14/15 口径）
+## Documentation Index
 
-- **模型选档**：规划台用 K3.1 Pro High；后台任务用 K3 High 或 K2.8，按任务卡选档；独立复审不用 K2.8 主档；新会话的档位由御主亲手选定。
-- **账号与派单**：派单前查账号一 5 小时窗口额度，低于 20% 则改派账号二；主从同号，账号一的子智能体仅用 kimi-coding。
-- **无人值守**：遇求裁事项挂起并记入待裁清单，继续下一项可自动推进的任务；禁止交互式问答阻塞流程。
-- **Git 边界**：从者在各自 worktree 内 commit，可 push 自己的 feature 分支；`main` 仅由规划台合并与推送。
-- **语言**：新代码注释、commit message、文档一律英文。
-- **Issue / STATUS 分工**：Issue 是公开任务事实的唯一住所；STATUS 只记内部状态并链接 Issue；SR↔Issue 映射单向存于 STATUS；内部编号黑话（如 SR-xxx）不得进入公开侧（Issue/PR/commit/公开文档）。
-- **后台会话派单**：若派单限制 `--tools`，必须包含 SendMessage。
-
-## 文档入口
-
-| 用途 | 入口 |
+| Purpose | Entry |
 |---|---|
-| 人类项目入口 | [README.md](README.md) |
-| 协作角色与质量闸 | [docs/development/COLLABORATION.md](docs/development/COLLABORATION.md) |
-| 开发约定 | [docs/development/CODING_STANDARDS.md](docs/development/CODING_STANDARDS.md) |
-| 任务执行正典 | [docs/features/](docs/features/README.md) |
-| 调研证据 | [docs/research/](docs/research/README.md) |
-| 技术决策 | [docs/decisions/](docs/decisions/README.md) |
-| 环境指南 | [docs/usage/QUICK_START.md](docs/usage/QUICK_START.md) |
-| 历史架构资料说明 | [docs/architecture/README.md](docs/architecture/README.md) |
+| Human project entry | [README.md](README.md) |
+| Collaboration roles and quality gates | [docs/development/COLLABORATION.md](docs/development/COLLABORATION.md) |
+| Coding standards | [docs/development/CODING_STANDARDS.md](docs/development/CODING_STANDARDS.md) |
+| Task execution canon | [docs/features/](docs/features/README.md) |
+| Research evidence | [docs/research/](docs/research/README.md) |
+| Technical decisions | [docs/decisions/](docs/decisions/README.md) |
+| Environment guide | [docs/usage/QUICK_START.md](docs/usage/QUICK_START.md) |
+| Historical architecture notes | [docs/architecture/README.md](docs/architecture/README.md) |

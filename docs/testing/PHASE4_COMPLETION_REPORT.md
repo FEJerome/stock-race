@@ -1,3 +1,5 @@
+> **Historical note**: This is a historical report from an earlier phase; it does not represent the current verified state.
+
 # Stock Race 阶段四完成报告
 
 ## 🎯 项目概述

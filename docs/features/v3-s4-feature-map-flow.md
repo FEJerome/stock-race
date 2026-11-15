@@ -1,5 +1,7 @@
 # V3 S4 前置设计：Feature Map 与用户流程
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 > 状态：S4 设计闸第 1 件候选稿，待三件套齐全后由维护者统一设计终审；本文不授权 S4 实施。
 >
 > 命名注记（2026-11-14 维护者终审拍板）：AI 经理人中文名定为 **阿一**（2026-11-11 拍板），英文拼写定名 **A YI**；旧名「衡一 / HENG YI」弃用、「阿衡」禁用。

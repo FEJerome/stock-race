@@ -1,5 +1,7 @@
 # V3 S4 命名与视觉返修报告（SR-010 S4 前置棒·连庄返修）
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 > 状态：返修完成，2026-11-15；达到「可终审」状态，审美最终放行归维护者视觉走查。
 >
 > 依据：维护者 2026-11-14 晚就 [命名返修与终审材料](v3-s4-naming-review-materials.md) §3 三题全部拍板（按规划台推荐）；任务输入为该材料 §2 命中点清单与 [视觉浏览器原型](v3-s4-visual-prototype/README.md)。

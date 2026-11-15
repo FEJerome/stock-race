@@ -1,5 +1,7 @@
 # SR-001 协作底座重建
 
+*Chinese working canon kept for traceability; not product documentation.*
+
 ## 目标
 
 把仓库从早期多智能体模板集合改为可供规划、执行、检验、机械修改与独立复审核验使用的项目现场，同时不改变业务实现。

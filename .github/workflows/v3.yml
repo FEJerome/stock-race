@@ -2,7 +2,7 @@ name: V3 CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'v3/**'
       - '.github/workflows/v3.yml'
