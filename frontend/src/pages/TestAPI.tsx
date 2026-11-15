@@ -44,7 +44,8 @@ const TestAPI: React.FC = () => {
       run: async () => {
         const startTime = Date.now();
         try {
-          const result = await authService.login({ username: 'admin', password: 'admin123' });
+          // Test-only mock credentials for local development; never use in production
+          const result = await authService.login({ username: 'mock-admin', password: 'TEST_ONLY_password' });
           const time = Date.now() - startTime;
           return {
             status: 'success' as const,

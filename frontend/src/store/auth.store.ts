@@ -35,12 +35,13 @@ export const useAuthStore = create<AuthState>()(
           // 模拟API调用 - 实际项目中替换为真实API
           await new Promise(resolve => setTimeout(resolve, 1000));
 
-          if (username === 'admin' && password === 'admin123') {
+          // Test-only mock credentials for local development; never use in production
+          if (username === 'mock-admin' && password === 'TEST_ONLY_password') {
             const mockUser: User = {
               id: '1',
-              username: 'admin',
-              email: 'admin@stock-race.com',
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+              username: 'mock-admin',
+              email: 'mock-admin@stock-race.com',
+              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mock-admin',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };

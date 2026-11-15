@@ -150,7 +150,7 @@ else
 fi
 
 echo -n "检查Redis连接... "
-if docker-compose -f docker-compose.prod.yml exec -T redis redis-cli -a CHANGE_ME_IN_PRODUCTION ping > /dev/null 2>&1; then
+if docker-compose -f docker-compose.prod.yml exec -T redis redis-cli -a "${REDIS_PASSWORD:-<your-redis-password>}" ping > /dev/null 2>&1; then
     echo -e "${GREEN}✓ 正常${NC}"
 else
     echo -e "${RED}✗ 异常${NC}"
@@ -213,7 +213,7 @@ fi
 echo -n "测试AI决策API... "
 ai_response=$(curl -s -X POST "http://localhost:8000/api/v1/decision/service-generate" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: stock-race-ai-key-production" \
+  -H "X-API-Key: ${AI_SERVICE_API_KEY:-<your-ai-service-api-key>}" \
   -d '{
     "account_id": "test-account-001",
     "stock_code": "000001.SZ",
@@ -271,7 +271,7 @@ echo "  • Grafana仪表板: http://localhost:3002"
 echo ""
 echo "🔧 默认登录凭证："
 echo "  • 演示用户: demo_user / demo123"
-echo "  • 管理员: admin / admin123"
+echo "  • 管理员: admin / ${ADMIN_PASSWORD:-<your-admin-password>}"
 echo ""
 echo "📝 后续步骤："
 echo "  1. 修改所有默认密码和API密钥"

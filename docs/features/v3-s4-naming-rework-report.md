@@ -1,12 +1,12 @@
 # V3 S4 命名与视觉返修报告（SR-010 S4 前置棒·连庄返修）
 
-> 状态：返修完成，2026-11-15；达到「可终审」状态，审美最终放行归御主视觉走查。
+> 状态：返修完成，2026-11-15；达到「可终审」状态，审美最终放行归维护者视觉走查。
 >
-> 依据：御主 2026-11-14 晚就 [命名返修与终审材料](v3-s4-naming-review-materials.md) §3 三题全部拍板（按规划台推荐）；任务输入为该材料 §2 命中点清单与 [视觉浏览器原型](v3-s4-visual-prototype/README.md)。
+> 依据：维护者 2026-11-14 晚就 [命名返修与终审材料](v3-s4-naming-review-materials.md) §3 三题全部拍板（按规划台推荐）；任务输入为该材料 §2 命中点清单与 [视觉浏览器原型](v3-s4-visual-prototype/README.md)。
 
-## 1. 御主三题定案与返修对应
+## 1. 维护者三题定案与返修对应
 
-| # | 御主定案（2026-11-14） | 返修处置 |
+| # | 维护者定案（2026-11-14） | 返修处置 |
 |---|---|---|
 | ① 英文拼写 | 定名 **A YI**，HENG YI 全部弃用 | 5 份文档＋原型全部英文命中点改为 A YI；`hengyi-logo.svg` 改名 `ayi-logo.svg` 并同步全部引用 |
 | ② 角色标识 | 保留青金时间轨迹设计语言，字形改「A／一」意象，不推倒重来 | 重设计 `ayi-logo.svg`：H 形改为 A 形双斜笔＋「一」横杠，青金渐变、圆环轨迹、金色箭头与双端点全部沿用 |
@@ -20,25 +20,25 @@
 |---|---|---|
 | `index.html` 品牌区 | `hengyi-logo.svg` 引用＋「标识待终审」源码注释 | `ayi-logo.svg` 引用，注释移除 |
 | `index.html` 角色卡顶部 | 可见 badge「标识待终审」 | 移除（「铜牌 · 暂未开放」badge 保留） |
-| `index.html` 角色头像 | `hengyi-logo.svg` 引用＋「标识待终审」注释、alt 含「标识待御主终审」 | `ayi-logo.svg`，alt 改为「阿一的青金 A／一形时间轨迹标识」 |
+| `index.html` 角色头像 | `hengyi-logo.svg` 引用＋「标识待终审」注释、alt 含「标识待维护者终审」 | `ayi-logo.svg`，alt 改为「阿一的青金 A／一形时间轨迹标识」 |
 | `index.html` 角色名英文行 | `HENG YI`＋可见 badge「英文拼写待终审」 | `A YI`，badge 移除 |
 | `index.html` B 场景 eyebrow | `HENG YI AT WORK`＋源码注释 | `A YI AT WORK`，注释移除 |
 | `app.js` 面试对话头像 | `avatar.src = "./hengyi-logo.svg"` | `"./ayi-logo.svg"` |
 | `hengyi-logo.svg` | H 形青金时间轨迹标识 | 删除（`git rm`） |
 | `ayi-logo.svg` | —（新增） | A／一形青金时间轨迹标识，title/desc 同步为「阿一标识」 |
-| `README.md` §头部注记、§1.1、§logo 小节、§文件清单、§7 第 9/10 项 | HENG YI／hengyi-logo.svg＋「待御主终审定拼写」「标识待御主终审」 | A YI／ayi-logo.svg，定案表述，第 9/10 项标注「已定案（2026-11-14 御主拍板）」 |
+| `README.md` §头部注记、§1.1、§logo 小节、§文件清单、§7 第 9/10 项 | HENG YI／hengyi-logo.svg＋「待维护者终审定拼写」「标识待维护者终审」 | A YI／ayi-logo.svg，定案表述，第 9/10 项标注「已定案（2026-11-14 维护者拍板）」 |
 
 ### 文档（docs/features/）
 
 | 文档 | 命中点 | 处置 |
 |---|---|---|
-| `v3-s4-manager-time-travel-concept.md` | 头部注记＋§1「阿一 / HENG YI（待御主终审定拼写）」 | 「阿一 / A YI」，注记定案化 |
-| `v3-s4-dialogue-guide.md` | 头部注记＋§1「阿一 / HENG YI（待御主终审定拼写）」 | 「阿一 / A YI」，注记定案化 |
+| `v3-s4-manager-time-travel-concept.md` | 头部注记＋§1「阿一 / HENG YI（待维护者终审定拼写）」 | 「阿一 / A YI」，注记定案化 |
+| `v3-s4-dialogue-guide.md` | 头部注记＋§1「阿一 / HENG YI（待维护者终审定拼写）」 | 「阿一 / A YI」，注记定案化 |
 | `v3-s4-feature-map-flow.md` | 头部注记 | 注记定案化（正文无英文命中点） |
 | `v3-s4-wireframe-state-matrix.md` | 头部注记 | 注记定案化（正文无英文命中点） |
 | `v3-s4-naming-review-materials.md` | §3 三题为拍板前记录 | 头部加 2026-11-15 定案注记并指向本报告；正文历史记录保留不动 |
 
-保留说明：各文档头部「旧名『衡一 / HENG YI』弃用」为命名沿革注记，按任务约定保留；README §7 第 1～8 项（首屏代入感、动效节奏等）属御主视觉走查项，非命名三题，保留待走查。
+保留说明：各文档头部「旧名『衡一 / HENG YI』弃用」为命名沿革注记，按任务约定保留；README §7 第 1～8 项（首屏代入感、动效节奏等）属维护者视觉走查项，非命名三题，保留待走查。
 
 ## 3. 新标识设计说明（ayi-logo.svg）
 
@@ -51,7 +51,7 @@
 ## 4. 自验证据
 
 - `node --check app.js` 与 `node --check data.js`：通过（输出 `JS_SYNTAX_OK`）。
-- 逐文件 grep（`HENG|hengyi|衡一|待御主终审定|英文拼写待终审|标识待终审`，docs/features 全目录）：原型四件（index.html / app.js / data.js / styles.css）与新 SVG **零命中**；5 份文档正文零命中，仅各文档头部命名沿革注记与命名材料文档历史段落保留旧名字样（任务约定允许）。
+- 逐文件 grep（`HENG|hengyi|衡一|待维护者终审定|英文拼写待终审|标识待终审`，docs/features 全目录）：原型四件（index.html / app.js / data.js / styles.css）与新 SVG **零命中**；5 份文档正文零命中，仅各文档头部命名沿革注记与命名材料文档历史段落保留旧名字样（任务约定允许）。
 - 引用完整性：解析 index.html 全部本地 `src/href`——`./styles.css`、`./data.js`、`./app.js`、`./ayi-logo.svg` 均存在，`ALL_REFS_OK`；`hengyi-logo.svg` 已不存在且无残留引用。
 - 新 SVG 结构自检：含 A 形主路径与「一」横杠路径，title/desc 为「阿一标识」。
 
@@ -59,9 +59,9 @@
 
 - 未触碰 `v3/` 代码、契约文档与 golden 数据；改动仅限 `docs/features/` 下 S4 材料与原型。
 - 公开仓材料未写入从者人格名与私人企划；风格未做重做，仅在既定基底上完成命名与标识返修。
-- 审美最终放行归御主视觉走查；本棒交付到「可终审」状态。
+- 审美最终放行归维护者视觉走查；本棒交付到「可终审」状态。
 
-## 6. 御主终审建议看点（4 格）
+## 6. 维护者终审建议看点（4 格）
 
 | 点哪里 | 看什么 | 怎么算过 |
 |---|---|---|
