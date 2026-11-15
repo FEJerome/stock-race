@@ -528,6 +528,23 @@ P0 不多空反转、不日内止损成交、不默认加仓。数量按成交�
 
 **Demo 真实用户主流程必须使用真实 Kimi K3.1 Pro 生成和调整策略；真实能力未探针前，最终主流程放行仍被阻断。** 最终放行必须至少完成一次真实 Kimi 成功生成 v1、一次真实 Kimi 成功调整形成 v2，并分别通过 schema/语义校验、权威回读和用户确认；fake 只能抵扣自动化测试，不能抵扣这两项真实验收。其真实 provider model id、原生 JSON Schema 能力、上下文、限额、价格和错误语义均不作能力声称。自动化开发/契约测试只使用 fake；真实模型集成与主流程验收必须单独 opt-in 并另行授权。若仅支持 JSON object，传输格式与本地严格校验必须分别陈述。
 
+#### 6.3.1 真实模型探针验收结论（2026-11-15）
+
+2026-11-15 完成真实 provider 探针验收（SR-009），provider 为 DeepSeek `deepseek-flash`（御主当次实际供 key 的 provider，非 Kimi），验收结论如下：
+
+| 验收项 | 结果 | 证据摘要 |
+|---|---|---|
+| 连通与模型发现 | PASS | 凭据连通，chat 优先模型确认为 `deepseek-flash` |
+| 原生 JSON Schema 能力 | 本样本不支持 | json_schema 模式返回 HTTP 400；探针按契约降级 json_object，传输格式与本地严格校验分别陈述，不作能力外推 |
+| 真实生成 v1 | PASS | 单次生成 HTTP 200，过本地 schema/语义完整校验链，canonical digest `sha256:0b33a64e…526800`，意图忠实并经权威回读逐条核对一致 |
+| 真实调整形成 v2 | PASS | 基于模型生成 v1（非 few-shot 兜底），过同一校验链，digest `sha256:cdcfcf87…85371e`，唯一差异为 MACD signal 9→5，权威回读一致 |
+| 对抗边界 | PASS | 诱导下单/代码/荐股被模型拒单，拒单输出被本地严格校验拦截（非合法 StrategyDraft）；全程无降级、无 fake 抵扣 |
+| 错误语义 | PASS（既往证据抵扣） | 2026-11-12 已实测失效/伪造 key 同构 HTTP 401 语义 |
+
+- 真实调用 6/6（预算硬顶内完成，无超限、无重试）；成本元数据合计 7650 tokens（prompt 6442 + completion 1208），其中缓存命中 1792；脱敏留痕，prompt/响应原文与凭据不落仓。
+- **口径差异（留规划台裁决，未自行消解）**：契约 6.3 字面要求「真实 Kimi K3.1 Pro」，本次验收 provider 为 DeepSeek。若裁决按御主实际供 key 的 provider 计，则 6.3 探针面 PASS，剩余仅 Demo 主流程用户确认环节（属 S4 范围）；若坚持字面 Kimi K3.1 Pro，则 Kimi 侧保持未验证，需另配有效 Moonshot key 重做同名探针。
+- 对 `deepseek-flash` 的能力边界不作外推声称：JSON Schema 原生模式不可用、json_object 截断行为均为单次样本观察。
+
 ---
 
 ## 7. 契约测试与验收矩阵
