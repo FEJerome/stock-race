@@ -4,7 +4,7 @@
 
 > **Note: the four legacy modules (`frontend/`, `backend/`, `ai-service/`, `data-service/`) are historical archives and do not represent current code quality or usability.**
 
-Stock-Race is a project built around simulated stock trading, strategy validation, and model experimentation. This repository retains the early implementation formed in February 2026, which is being re-verified and reworked into a researchable, reproducible, and collaborative open-source tool project.
+Stock-Race is a project built around simulated stock trading, strategy validation, and model experimentation. This repository retains the early implementation formed in February 2026, which is being re-verified and reworked into a research-friendly, reproducible, and collaborative open-source tool project.
 
 > **For simulation and research only — never connected to live trading. Claims of "complete" or "production-ready" status, or deployment descriptions in historical documents, do not represent current verified state.**
 
@@ -25,7 +25,7 @@ The presence of these modules does not mean they can run together. Code, interfa
 ## Current environment and safety boundaries
 
 - This project is managed as a local development project; there is no online production instance to maintain.
-- Actual `.env*` files may contain historical configuration or credentials and are not publishable examples; safety templates use `.env.example` uniformly.
+- Actual `.env*` files may contain historical configuration or credentials and are not publishable examples; safety templates use `.env.example` as the standard template.
 - Until the environment guide completes verification, do not follow historical documents to perform system-level installs, database resets, or production deployments.
 - Historical model APIs, data sources, and scripts may no longer work; do not call external paid services without an explicit task.
 
