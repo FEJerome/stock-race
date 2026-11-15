@@ -62,7 +62,7 @@
   ```bash
   curl -X POST http://localhost:3001/api/auth/login \
     -H "Content-Type: application/json" \
-    -d '{"username":"admin","password":"admin123"}'
+    -d '{"username":"admin","password":"TEST_ONLY_admin_password"}'
   # 响应: 成功返回JWT token、sessionId和用户信息
   ```
 
@@ -199,7 +199,7 @@
 
 #### 步骤1: 用户登录
 1. 访问前端界面: http://localhost:3000
-2. 使用用户名: `admin`，密码: `admin123` 登录
+2. 使用用户名: `admin`，密码: `TEST_ONLY_admin_password` 登录
 3. 验证登录成功后跳转到交易界面
 
 #### 步骤2: 股票数据查看
@@ -296,7 +296,7 @@ echo "=== Stock-Race 功能验证 ==="
 echo "1. 后端服务: $(curl -s http://localhost:3001/api/health | grep -o '"status":"[^"]*"' | cut -d'"' -f4)"
 echo "2. AI服务: $(curl -s http://localhost:8000/api/v1/health/ | grep -o '"status":"[^"]*"' | cut -d'"' -f4)"
 echo "3. 数据服务: $(curl -s http://localhost:8001/health | grep -o '"status":"[^"]*"' | cut -d'"' -f4)"
-echo "4. 用户登录: $(curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"admin123"}' | grep -o '"success":[^,]*' | cut -d':' -f2)"
+echo "4. 用户登录: $(curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"TEST_ONLY_admin_password"}' | grep -o '"success":[^,]*' | cut -d':' -f2)"
 echo "=== 验证完成 ==="
 ```
 

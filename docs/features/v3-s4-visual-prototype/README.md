@@ -48,7 +48,7 @@
 
 ## 1.3 历史视觉基底与双主题（2026-10-29，第四轮）
 
-本轮直接拆解维护者历史 demo 的 CSS 与组件结构作为基底：`E:\projects\career-designer\.playwright-mcp\sr-demo-ref\offline-demo.html`，原始出处 `b70ca94:local/demo/offline-demo.html`。没有引入 Vue、CDN 或旧业务逻辑，原型仍为纯静态 HTML/CSS/JS。
+本轮直接拆解维护者历史 demo 的 CSS 与组件结构作为基底（维护者本机的 demo 快照，路径为私有环境路径，不再记录绝对路径），原始出处 `b70ca94:local/demo/offline-demo.html`。没有引入 Vue、CDN 或旧业务逻辑，原型仍为纯静态 HTML/CSS/JS。
 
 ### 保留并替换的视觉语言
 

@@ -28,8 +28,8 @@ sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE stock_race TO postgre
 
 echo "📋 导入数据库初始化脚本..."
 # 导入初始化脚本
-if [ -f "/home/fe-jerome/projects/stock-race/docker/postgres/init.sql" ]; then
-    sudo -u postgres psql -d stock_race -f /home/fe-jerome/projects/stock-race/docker/postgres/init.sql
+if [ -f "/path/to/stock-race/docker/postgres/init.sql" ]; then
+    sudo -u postgres psql -d stock_race -f /path/to/stock-race/docker/postgres/init.sql
     echo "✅ 数据库初始化脚本导入成功"
 else
     echo "⚠️ 警告：数据库初始化脚本未找到"
@@ -151,10 +151,10 @@ echo "# 检查数据库连接"
 echo "psql -h localhost -U postgres -d stock_race -c \"SELECT COUNT(*) FROM users;\" 2>/dev/null || echo '请安装psql客户端: sudo apt-get install postgresql-client'"
 echo ""
 echo "🚀 下一步：启动应用服务"
-echo "1. 后端服务：cd /home/fe-jerome/projects/stock-race/backend && npm run dev"
-echo "2. AI服务：cd /home/fe-jerome/projects/stock-race/ai-service && python -m uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000"
-echo "3. 数据服务：cd /home/fe-jerome/projects/stock-race/data-service && python -m uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001"
-echo "4. 前端服务：cd /home/fe-jerome/projects/stock-race/frontend && npm run dev"
+echo "1. 后端服务：cd /path/to/stock-race/backend && npm run dev"
+echo "2. AI服务：cd /path/to/stock-race/ai-service && python -m uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000"
+echo "3. 数据服务：cd /path/to/stock-race/data-service && python -m uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001"
+echo "4. 前端服务：cd /path/to/stock-race/frontend && npm run dev"
 echo ""
 echo "📝 注意："
 echo "- 所有服务将使用localhost而不是Docker容器名"

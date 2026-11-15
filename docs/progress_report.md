@@ -142,38 +142,38 @@ redis-cli ping
 ### 2. 安装应用依赖
 ```bash
 # 后端依赖
-cd /home/fe-jerome/projects/stock-race/backend
+cd /path/to/stock-race/backend
 npm install
 
 # 前端依赖
-cd /home/fe-jerome/projects/stock-race/frontend
+cd /path/to/stock-race/frontend
 npm install
 
 # AI服务依赖
-cd /home/fe-jerome/projects/stock-race/ai-service
+cd /path/to/stock-race/ai-service
 pip install -r requirements.txt
 
 # 数据服务依赖
-cd /home/fe-jerome/projects/stock-race/data-service
+cd /path/to/stock-race/data-service
 pip install -r requirements.txt
 ```
 
 ### 3. 启动所有服务（4个终端）
 ```bash
 # 终端1：后端服务（端口3001）
-cd /home/fe-jerome/projects/stock-race/backend
+cd /path/to/stock-race/backend
 npm run dev
 
 # 终端2：AI服务（端口8000）
-cd /home/fe-jerome/projects/stock-race/ai-service
+cd /path/to/stock-race/ai-service
 python -m uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000
 
 # 终端3：数据服务（端口8001）
-cd /home/fe-jerome/projects/stock-race/data-service
+cd /path/to/stock-race/data-service
 python -m uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001
 
 # 终端4：前端服务（端口3000）
-cd /home/fe-jerome/projects/stock-race/frontend
+cd /path/to/stock-race/frontend
 npm run dev
 ```
 

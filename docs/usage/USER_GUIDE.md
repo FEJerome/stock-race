@@ -36,7 +36,7 @@ docker-compose logs -f [service_name]
   - 密码: `demo123`
 - **管理员用户**:
   - 用户名: `admin`
-  - 密码: `admin123` (首次登录后请修改)
+  - 密码: `TEST_ONLY_admin_password` (首次登录后请修改)
 
 ## 📋 核心功能
 

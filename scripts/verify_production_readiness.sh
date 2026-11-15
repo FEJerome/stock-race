@@ -76,17 +76,17 @@ echo ""
 echo "⚙️ 第4部分: 配置检查"
 echo "-------------------"
 
-run_test "生产环境配置文件" "ls /home/fe-jerome/projects/stock-race/*/.env.production 2>/dev/null | wc -l | grep -q '^[0-9]'"
-run_test "Docker生产配置" "test -f /home/fe-jerome/projects/stock-race/docker-compose.prod.yml"
-run_test "监控配置" "test -f /home/fe-jerome/projects/stock-race/monitoring/prometheus.yml"
+run_test "生产环境配置文件" "ls /path/to/stock-race/*/.env.production 2>/dev/null | wc -l | grep -q '^[0-9]'"
+run_test "Docker生产配置" "test -f /path/to/stock-race/docker-compose.prod.yml"
+run_test "监控配置" "test -f /path/to/stock-race/monitoring/prometheus.yml"
 
 echo ""
 echo "📁 第5部分: 文档检查"
 echo "-------------------"
 
-run_test "核心文档存在" "test -f /home/fe-jerome/projects/stock-race/CLAUDE.md"
-run_test "部署文档存在" "test -f /home/fe-jerome/projects/stock-race/docs/deployment/PRODUCTION_CHECKLIST.md"
-run_test "用户文档存在" "test -f /home/fe-jerome/projects/stock-race/docs/usage/USER_GUIDE.md"
+run_test "核心文档存在" "test -f /path/to/stock-race/CLAUDE.md"
+run_test "部署文档存在" "test -f /path/to/stock-race/docs/deployment/PRODUCTION_CHECKLIST.md"
+run_test "用户文档存在" "test -f /path/to/stock-race/docs/usage/USER_GUIDE.md"
 
 echo ""
 echo "📊 测试结果汇总"

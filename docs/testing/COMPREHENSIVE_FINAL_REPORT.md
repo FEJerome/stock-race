@@ -113,13 +113,13 @@
 
 2. **获取测试凭据**：
    - 用户名: `admin`
-   - 密码: `admin123`
+   - 密码: `TEST_ONLY_admin_password`
 
 ### 核心功能测试步骤
 
 #### 步骤1: 用户登录和界面访问
 1. 访问前端界面: http://localhost:3000
-2. 使用用户名`admin`，密码`admin123`登录
+2. 使用用户名`admin`，密码`TEST_ONLY_admin_password`登录
 3. 验证登录成功后跳转到交易界面
 4. 检查顶部导航栏显示用户信息
 
@@ -252,7 +252,7 @@ echo "=== Stock-Race 快速功能验证 ==="
 echo "1. 后端服务: $(curl -s http://localhost:3001/api/health | grep -o '"status":"[^"]*"' | cut -d'"' -f4)"
 echo "2. AI服务: $(curl -s http://localhost:8000/api/v1/health/ | grep -o '"status":"[^"]*"' | cut -d'"' -f4)"
 echo "3. 数据服务: $(curl -s http://localhost:8001/health | grep -o '"status":"[^"]*"' | cut -d'"' -f4)"
-echo "4. 用户登录: $(curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"admin123"}' | grep -o '"success":[^,]*' | cut -d':' -f2)"
+echo "4. 用户登录: $(curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d '{"username":"admin","password":"TEST_ONLY_admin_password"}' | grep -o '"success":[^,]*' | cut -d':' -f2)"
 echo "5. 股票列表: $(curl -s "http://localhost:3001/api/stocks?limit=1" | grep -o '"success":[^,]*' | cut -d':' -f2)"
 echo "6. 股票搜索: $(curl -s "http://localhost:3001/api/stocks/search?q=600" | grep -o '"success":[^,]*' | cut -d':' -f2)"
 echo "=== 验证完成 ==="

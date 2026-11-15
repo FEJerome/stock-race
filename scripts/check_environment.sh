@@ -46,7 +46,7 @@ echo ""
 echo "4. 检查项目依赖..."
 
 # 后端依赖
-if [ -d "/home/fe-jerome/projects/stock-race/backend/node_modules" ]; then
+if [ -d "/path/to/stock-race/backend/node_modules" ]; then
     echo "  ✅ 后端依赖已安装"
 else
     echo "  ⚠️  后端依赖未安装"
@@ -54,7 +54,7 @@ else
 fi
 
 # 前端依赖
-if [ -d "/home/fe-jerome/projects/stock-race/frontend/node_modules" ]; then
+if [ -d "/path/to/stock-race/frontend/node_modules" ]; then
     echo "  ✅ 前端依赖已安装"
 else
     echo "  ⚠️  前端依赖未安装"
@@ -62,7 +62,7 @@ else
 fi
 
 # AI服务依赖
-if [ -d "/home/fe-jerome/projects/stock-race/ai-service/venv" ] || python3 -c "import fastapi" 2>/dev/null; then
+if [ -d "/path/to/stock-race/ai-service/venv" ] || python3 -c "import fastapi" 2>/dev/null; then
     echo "  ✅ AI服务依赖已安装"
 else
     echo "  ⚠️  AI服务依赖未安装"
@@ -70,7 +70,7 @@ else
 fi
 
 # 数据服务依赖
-if [ -d "/home/fe-jerome/projects/stock-race/data-service/venv" ] || python3 -c "import fastapi" 2>/dev/null; then
+if [ -d "/path/to/stock-race/data-service/venv" ] || python3 -c "import fastapi" 2>/dev/null; then
     echo "  ✅ 数据服务依赖已安装"
 else
     echo "  ⚠️  数据服务依赖未安装"
@@ -97,19 +97,19 @@ echo ""
 echo "🚀 启动所有服务（需要在4个终端分别执行）："
 echo ""
 echo "# 终端1：后端服务（端口3001）"
-echo "cd /home/fe-jerome/projects/stock-race/backend"
+echo "cd /path/to/stock-race/backend"
 echo "npm run dev"
 echo ""
 echo "# 终端2：AI服务（端口8000）"
-echo "cd /home/fe-jerome/projects/stock-race/ai-service"
+echo "cd /path/to/stock-race/ai-service"
 echo "python -m uvicorn ai_service.main:app --reload --host 0.0.0.0 --port 8000"
 echo ""
 echo "# 终端3：数据服务（端口8001）"
-echo "cd /home/fe-jerome/projects/stock-race/data-service"
+echo "cd /path/to/stock-race/data-service"
 echo "python -m uvicorn data_service.main:app --reload --host 0.0.0.0 --port 8001"
 echo ""
 echo "# 终端4：前端服务（端口3000）"
-echo "cd /home/fe-jerome/projects/stock-race/frontend"
+echo "cd /path/to/stock-race/frontend"
 echo "npm run dev"
 echo ""
 echo "🔍 验证服务健康："
