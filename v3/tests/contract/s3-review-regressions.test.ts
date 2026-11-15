@@ -40,8 +40,8 @@ async function confirmFirst(store: Parameters<typeof confirmStrategy>[0]) {
   return { draft, confirmed };
 }
 
-describe("S3 复审回归：B1 路径拼接白名单", () => {
-  it("s3-store-path-guard: 畸形 digest/strategyId 在进文件层前被拒", async () => {
+describe("S3 re-review regression: B1 path-join whitelist", () => {
+  it("s3-store-path-guard: malformed digest/strategyId rejected before the file layer", async () => {
     const { store } = tmpStrategyStore();
     const traversalDigest = "sha256:../../etc/passwd";
     await expect(store.loadCanonicalAst(traversalDigest)).rejects.toBeInstanceOf(ContractError);
@@ -65,7 +65,7 @@ describe("S3 复审回归：B1 路径拼接白名单", () => {
     ).rejects.toMatchObject({ code: "INVALID_STORE_DIGEST" });
   });
 
-  it("s3-local-run-digest-guard: GET /runs 的 runDigest 不过白名单 → 400，不发生路径穿越", async () => {
+  it("s3-local-run-digest-guard: runDigest outside the whitelist on GET /runs → 400, no path traversal", async () => {
     const handle = await startLocalServer({ dataRoot: tmpDataRoot(), kimi: KIMI_TEST_CONFIG });
     try {
       const evil = encodeURIComponent("sha256:../../../../package.json");
@@ -79,8 +79,8 @@ describe("S3 复审回归：B1 路径拼接白名单", () => {
   });
 });
 
-describe("S3 复审回归：B2 原子写与读取 digest 校验", () => {
-  it("s3-store-read-digest-check: strategy.json 被篡改 → 读取拒作已确认策略", async () => {
+describe("S3 re-review regression: B2 atomic write and read-time digest check", () => {
+  it("s3-store-read-digest-check: tampered strategy.json → read refuses to treat it as a confirmed strategy", async () => {
     const { rootDir, store } = tmpStrategyStore();
     const { confirmed } = await confirmFirst(store);
     const digestHex = confirmed.confirmation.digest.replace(/^sha256:/, "");
@@ -91,7 +91,7 @@ describe("S3 复审回归：B2 原子写与读取 digest 校验", () => {
     });
   });
 
-  it("s3-store-atomic-write: 确认落盘后无临时文件残留", async () => {
+  it("s3-store-atomic-write: no temp-file leftovers after confirmation persists", async () => {
     const { rootDir, store } = tmpStrategyStore();
     await confirmFirst(store);
     const walk = (dir: string): string[] =>
@@ -105,8 +105,8 @@ describe("S3 复审回归：B2 原子写与读取 digest 校验", () => {
   });
 });
 
-describe("S3 复审回归：M1 修复轮载荷最小化（契约 3.3）", () => {
-  it("s3-repair-payload-minimal: 修复轮只发结构化错误与能力清单", async () => {
+describe("S3 re-review regression: M1 repair-round payload minimization (contract 3.3)", () => {
+  it("s3-repair-payload-minimal: repair rounds carry only structured errors and the capability manifest", async () => {
     const port = fakePort("repair-success-at-attempt-1");
     const result = await draftStrategy(port, { intent: "初轮意图不应出现在修复轮" });
     if (!result.ok) throw new Error("expected valid");
@@ -129,8 +129,8 @@ describe("S3 复审回归：M1 修复轮载荷最小化（契约 3.3）", () => 
   });
 });
 
-describe("S3 复审回归：M2/M3 strategyId 唯一性与并发", () => {
-  it("s3-confirm-unknown-id: caller 指定未知 strategyId → STRATEGY_ID_UNKNOWN", async () => {
+describe("S3 re-review regression: M2/M3 strategyId uniqueness and concurrency", () => {
+  it("s3-confirm-unknown-id: caller-supplied unknown strategyId → STRATEGY_ID_UNKNOWN", async () => {
     const { store } = tmpStrategyStore();
     const draft = v2Draft();
     const result = await confirmStrategy(
@@ -146,7 +146,7 @@ describe("S3 复审回归：M2/M3 strategyId 唯一性与并发", () => {
     expect(result.code).toBe("STRATEGY_ID_UNKNOWN");
   });
 
-  it("s3-confirm-concurrent: 同 strategyId 并发确认 → revision 串行递增不重号", async () => {
+  it("s3-confirm-concurrent: concurrent confirms on one strategyId → revisions serialize and never collide", async () => {
     const { store } = tmpStrategyStore();
     const { confirmed } = await confirmFirst(store);
     const strategyId = confirmed.confirmation.strategyId;
@@ -170,8 +170,8 @@ describe("S3 复审回归：M2/M3 strategyId 唯一性与并发", () => {
   });
 });
 
-describe("S3 复审回归：MINOR 宿主边界", () => {
-  it("s3-local-run-bad-body: POST /runs 缺 strategy 引用 → 400 而非 500", async () => {
+describe("S3 re-review regression: MINOR host boundaries", () => {
+  it("s3-local-run-bad-body: POST /runs missing strategy reference → 400, not 500", async () => {
     const handle = await startLocalServer({ dataRoot: tmpDataRoot(), kimi: KIMI_TEST_CONFIG });
     try {
       const response = await fetch(`${handle.url}/runs`, {

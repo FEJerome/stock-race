@@ -29,7 +29,7 @@ function editedV2(): StrategyDraft {
   return draft;
 }
 
-/** 真实主流程构造：不经 prepareFixtureRun，digest 一律显式来自确认记录/计算值。 */
+/** Real main-flow construction: no prepareFixtureRun; every digest comes explicitly from a confirmation record or a computed value. */
 function realRunInput(strategy: StrategyDraft, strategyRef: RunSpec["strategy"]) {
   const snapshot = loadSnapshotFile(path.join(testRoot, "fixtures", "s2", "basic-snapshot.json"));
   const runSpec = clone(readJsonFixture("fixtures/s2/basic-run-spec.json")) as RunSpec;
@@ -44,8 +44,8 @@ function realRunInput(strategy: StrategyDraft, strategyRef: RunSpec["strategy"])
   };
 }
 
-describe("S3 confirm 状态机与 digest 链", () => {
-  it("s3-confirm-happy: expectedDigest 确认 → ConfirmedRevision 落盘", async () => {
+describe("S3 confirm state machine and digest chain", () => {
+  it("s3-confirm-happy: expectedDigest confirms → ConfirmedRevision persisted", async () => {
     const { rootDir, store } = tmpStrategyStore();
     const draft = await draftLegalMacdKdj();
     const result = await confirmStrategy(
@@ -67,7 +67,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     expect(existsSync(path.join(rootDir, "strategies", digestHex, "strategy.json"))).toBe(true);
   });
 
-  it("s3-confirm-mismatch: 确认期间内容被替换 → CONFIRM_DIGEST_MISMATCH，禁止确认", async () => {
+  it("s3-confirm-mismatch: content swapped during confirmation → CONFIRM_DIGEST_MISMATCH, confirmation refused", async () => {
     const { store } = tmpStrategyStore();
     const draft = await draftLegalMacdKdj();
     const stale = await draftStrategy(fakePort("legal-plain-price"), { intent: "旧草稿" });
@@ -80,7 +80,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     if (result.ok) throw new Error("expected mismatch");
     expect(result.code).toBe("CONFIRM_DIGEST_MISMATCH");
     expect(result.actualDigest).toBe(draft.strategyDigest);
-    // 被拒内容不得占用 strategyId/revision：随后正确确认仍从 strategy-000001/r1 开始
+    // Rejected content must not consume strategyId/revision: a later valid confirm still starts at strategy-000001/r1
     const retry = await confirmStrategy(
       store,
       { currentDraft: JSON.parse(draft.canonicalAst), expectedDigest: draft.strategyDigest },
@@ -91,7 +91,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     expect(retry.confirmation.revision).toBe(1);
   });
 
-  it("s3-confirm-stale-after-edit: confirmed 后改语义，旧 digest RunSpec 被引擎拒（无 fixture 回填）", async () => {
+  it("s3-confirm-stale-after-edit: semantics changed after confirm, engine rejects the old-digest RunSpec (no fixture backfill)", async () => {
     const { store } = tmpStrategyStore();
     const draft = await draftLegalMacdKdj();
     const confirmed = await confirmStrategy(
@@ -103,7 +103,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     const v2 = editedV2();
     const v2Digest = digestStrategyDraft(v2);
     expect(v2Digest).not.toBe(draft.strategyDigest);
-    // 旧 revision 的 RunSpec + 新 AST：若 digest 被 fixture 式回填则引擎不会拒，本断言即看护
+    // old-revision RunSpec + new AST: if the digest were fixture-backfilled the engine would not reject — this assertion guards that
     const input = realRunInput(v2, {
       id: confirmed.confirmation.strategyId,
       revision: confirmed.confirmation.revision,
@@ -117,7 +117,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     }
   });
 
-  it("s3-run-requires-confirmed: 未确认 revision 构造 run → confirmed 闸拒绝，不进引擎", async () => {
+  it("s3-run-requires-confirmed: run built from an unconfirmed revision → refused by the confirmed gate, engine never entered", async () => {
     const { store } = tmpStrategyStore();
     const draft = await draftLegalMacdKdj();
     const confirmed = await confirmStrategy(
@@ -136,7 +136,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     const gated = await runConfirmedBacktest(store, input);
     if (gated.ok) throw new Error("gate must reject unconfirmed revision");
     expect(gated.code).toBe("STRATEGY_NOT_CONFIRMED");
-    // 完全未知的 strategyId 同样拒绝
+    // a completely unknown strategyId is refused the same way
     const unknown = await runConfirmedBacktest(store, realRunInput(v2, {
       id: "strategy-999999",
       revision: 1,
@@ -146,7 +146,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     expect(unknown.code).toBe("STRATEGY_NOT_CONFIRMED");
   });
 
-  it("s3-revision-monotonic: 同 strategyId 两次确认 revision 递增、digest 各自独立", async () => {
+  it("s3-revision-monotonic: two confirms on one strategyId increment revision, digests stay independent", async () => {
     const { store } = tmpStrategyStore();
     const v1 = await draftLegalMacdKdj();
     const first = await confirmStrategy(
@@ -173,7 +173,7 @@ describe("S3 confirm 状态机与 digest 链", () => {
     expect(second.confirmation.digest).not.toBe(first.confirmation.digest);
     const all = await store.listConfirmations(first.confirmation.strategyId);
     expect(all.map((entry) => entry.revision)).toEqual([1, 2]);
-    // F10 v2 保留基线标识：旧 revision 记录仍可查
+    // F10 v2 keeps the baseline identity: the old revision record remains queryable
     expect((await store.findConfirmation(first.confirmation.strategyId, 1))?.digest).toBe(
       first.confirmation.digest,
     );
