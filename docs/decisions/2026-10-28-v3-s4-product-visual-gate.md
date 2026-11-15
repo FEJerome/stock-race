@@ -1,22 +1,24 @@
-# 2026-10-28 · V3 S4 产品流程与视觉设计前置闸
+# 2026-10-28 · V3 S4 Product Flow and Visual Design Pre-gate
 
-## 决定
+*Translated from the Chinese original on 2026-11-15.*
 
-维护者同意在 S4 前端实施前增加产品流程与视觉设计硬闸。详细验收要求唯一住所为 [V3 Demo 完整契约第 1.5 节](../features/v3-demo-complete-contract.md#15-s4-产品流程与视觉设计前置闸维护者批准)。
+## Decision
 
-S4 开工前必须完成：
+The maintainer agreed to add a hard product-flow and visual-design gate before S4 frontend implementation. The sole residence of the detailed acceptance requirements is [V3 Demo Complete Contract section 1.5](../features/v3-demo-complete-contract.md#15-s4-产品流程与视觉设计前置闸维护者批准).
 
-1. 一页 Feature Map＋用户流程，连接输入意图、生成、校验、确认、运行、回放、调整与比较，并写清用户动作、系统反馈和验收结果。
-2. 三场景线框与状态矩阵，既覆盖成功路径，也覆盖模型/数据错误、未确认、无交易、数据不足和全部拒单等状态。
-3. 实际视觉稿或浏览器原型，在目标展示尺寸下审查配色、字体、信息密度、图表、动效和三幕衔接。
+Before S4 starts, the following must be completed:
 
-硬性顺序：
+1. A one-page Feature Map plus user flow connecting input intent, generation, validation, confirmation, run, replay, adjustment, and comparison, with user actions, system feedback, and acceptance results spelled out.
+2. Three-scene wireframes and a state matrix covering not only the happy path but also model/data errors, unconfirmed, no-trades, insufficient-data, and all-orders-rejected states.
+3. Actual visual designs or a browser prototype, reviewed at the target display size for color, typography, information density, charts, animation, and act transitions.
 
-> S2 形成真实 golden 事件流 → 三件套 → 维护者设计终审 → S4 实施 → 自动化交互验收 → 零上下文候选评审 → 维护者最终视觉走查。
+Hard sequence:
 
-## 边界
+> S2 produces real golden event streams → the three artifacts → maintainer design final review → S4 implementation → automated interaction acceptance → zero-context candidate review → maintainer final visual walkthrough.
 
-- 本决定只增加 S4 前置质量闸，不返工 S0/S1/S2，也不提前开放 S4。
-- 三件套形成后须进入 feature 正典并保留可复核版本，不能只存在会话或聊天记录中。
-- 轻量用例图服务于理解与验收，不增加繁重 UML 维护负担。
-- S3 可在自身授权与真实模型单独 opt-in 边界内并行；真实 Kimi 调用仍未授权。
+## Boundary
+
+- This decision only adds an S4 pre-quality gate; it does not rework S0/S1/S2 nor open S4 early.
+- After the three artifacts are formed, they must enter the feature canon and keep a reviewable version; they must not exist only in sessions or chat logs.
+- Lightweight use-case diagrams serve understanding and acceptance and add no heavy UML maintenance burden.
+- S3 may proceed in parallel within its own authorization and the separate opt-in boundary for the real model; real Kimi calls remain unauthorized.

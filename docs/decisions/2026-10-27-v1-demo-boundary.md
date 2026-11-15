@@ -1,40 +1,42 @@
-# 2026-10-27 · V1 策略实验台边界
+# 2026-10-27 · V1 Strategy Lab Boundary
 
-## 状态
+*Translated from the Chinese original on 2026-11-15.*
 
-已确认。本决策只约束原称 V1、现称 **V3 Demo** 的技术边界，不代表业务实现已经完成。产品代际命名见 [V3 Demo 命名与分支代际](2026-10-27-v3-demo-naming.md)。
+## Status
 
-## 1. V1 不支持同场组合交易
+Confirmed. This decision constrains only the technical boundary of what was originally called V1 and is now called the **V3 Demo**; it does not mean the business implementation is complete. Product generation naming is defined in [V3 Demo Naming and Branch Generations](2026-10-27-v3-demo-naming.md).
 
-V1 每个运行任务只针对一个资产进行策略推演，不同时交易多个资产，不引入组合资金分配、跨资产再平衡或组合级净值。
+## 1. V1 does not support same-session portfolio trading
 
-股票、ETF、基金、指数等资产类型应通过各自的数据与执行语义处理，不能为了统一而假定指数可直接交易或所有资产共用一套成交规则。
+Each V1 run task simulates a strategy against a single asset only; it does not trade multiple assets simultaneously and does not introduce portfolio capital allocation, cross-asset rebalancing, or portfolio-level net value.
 
-## 2. 策略表达采用受控高自由度语言
+Asset types such as stocks, ETFs, funds, and indices must each be handled with their own data and execution semantics; uniformity must not be achieved by assuming that an index can be traded directly or that all assets share one set of fill rules.
 
-长期采用“声明式策略语言＋受控指标/函数注册表”：
+## 2. Strategy expression uses a controlled high-freedom language
 
-`自然语言 → 结构化策略 → 静态校验 → 用户确认 → 确定性执行`
+Long-term approach: "declarative strategy language + controlled indicator/function registry":
 
-- 支持指标参数、表达式、逻辑组合、时间窗口、交易动作和规则版本。
-- 模型不直接生成并执行任意 Python/JavaScript 代码，也不直接产生订单。
-- 不支持的指标、函数或语义必须明确报错，不能假装理解后生成结果。
-- 规则、指标和执行结果必须可校验、可解释、可复现。
+`natural language → structured strategy → static validation → user confirmation → deterministic execution`
 
-## 3. V1 视觉采用深色策略指挥舱
+- Supports indicator parameters, expressions, logic composition, time windows, trade actions, and rule versions.
+- The model does not directly generate and execute arbitrary Python/JavaScript code, nor does it directly produce orders.
+- Unsupported indicators, functions, or semantics must raise explicit errors; the system must not pretend to understand and then generate results.
+- Rules, indicators, and execution results must be verifiable, explainable, and reproducible.
 
-视觉表现是核心验收，不是实施完成后的附加美化。首版按三个场景设计：
+## 3. V1 visuals use a dark strategy command deck
 
-1. **策略生成舱**：自然语言交互、结构化规则、参数和逻辑解释。
-2. **历史推演剧场**：自动历史回放，价格、指标、订单与净值同步呈现，支持暂停、加速和跳过。
-3. **结果与对比报告**：收益、回撤、订单、资产结果和规则版本的完整报告。
+Visual presentation is a core acceptance criterion, not post-implementation polish. The first version is designed around three scenes:
 
-采用深色机构终端、青蓝/金色高光、高质量图表和克制动效。自动计算优先，逐日检查只是可选视图，不要求用户逐日点击。
+1. **Strategy generation deck**: natural-language interaction, structured rules, parameters, and logic explanation.
+2. **Historical replay theater**: automatic historical replay with prices, indicators, orders, and net value presented in sync; supports pause, speed-up, and skip.
+3. **Results and comparison report**: a complete report of returns, drawdown, orders, per-asset results, and rule versions.
 
-已确认的展示主线与四分钟剧本见 [V3 Demo 视觉展示叙事](2026-10-27-v3-demo-visual-narrative.md)。
+Adopt a dark institutional terminal style with cyan/blue and gold highlights, high-quality charts, and restrained animation. Automatic computation takes priority; per-day inspection is only an optional view and users are not required to click through day by day.
 
-## 4. SR 与私人投资工具的绝对边界
+The confirmed presentation storyline and four-minute script are in [V3 Demo Visual Narrative](2026-10-27-v3-demo-visual-narrative.md).
 
-Stock-Race 只用于通用模拟、策略研究与相关工具实验，**永不接入实盘交易、真实券商下单或真实账户凭据**。固定证券与历史区间仅作为研究样本，不构成荐股或实际买卖建议。
+## 4. Absolute boundary between SR and private investment tools
 
-如果未来为家人或特定用户开发涉及具体荐股、明确买卖点、个性化操作建议或真实账户功能的工具，必须作为**独立、私人使用的项目**单独设计、审查和管理，不得在 SR 内增加实盘适配器或以共享内核为由突破本边界。私人项目是否复用通用技术，须在另个项目中重新授权与验证。
+Stock-Race is for general simulation, strategy research, and related tool experiments only, and **will never connect to live trading, real broker order placement, or real account credentials**. Fixed securities and historical intervals serve only as research samples and do not constitute stock recommendations or actual buy/sell advice.
+
+If tools involving specific stock recommendations, explicit buy/sell points, personalized operation advice, or real account features are ever developed for family members or specific users, they must be designed, reviewed, and managed as a **separate, privately used project**; SR must not add a live-trading adapter or breach this boundary in the name of a shared kernel. Whether a private project reuses generic technology must be re-authorized and re-validated within that separate project.

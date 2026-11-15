@@ -1,24 +1,26 @@
-# 2026-10-28 · V3 Demo 完整契约终审通过与 S0 开放
+# 2026-10-28 · V3 Demo Complete Contract Final Approval and S0 Opening
 
-## 决定
+*Translated from the Chinese original on 2026-11-15.*
 
-维护者按规划侧推荐口径终审通过 [V3 Demo 完整契约](../features/v3-demo-complete-contract.md)。送审正典 SHA-256=`537fbf224baa2226c0515bcaea73ba10b48a6e38d248d76643950f51f66441b3`。
+## Decision
 
-1. 普通场外开放式基金采用 `NEXT_DAY_END_CONSERVATIVE`：NAV_T 在 T 的次日 23:59:59（Asia/Shanghai）后才可见，再于之后首个合格开放日按未知 NAV 申赎。该规则是明确展示的保守产品假设，不是实际 `publishedAt`；真实发布时间路径留作后续升级。
-2. T+1 股票 ETF 在完整公司行动与执行证据补齐前仅分析、不执行；其他 ETF subtype 继续显式拒绝。
-3. 视觉采用单页三幕与约四分钟展示节奏。首屏四指标为累计收益、最大回撤、交易次数、相对买入持有；胜率放详细层，最终审美仍由维护者视觉走查。
-4. 600519/2024 只作默认验证样本，不构成资产、代码或年份上限。支持更多独立单资产、自选区间及快照内全历史，并完整展示费用、滑点、可见性与指数假设。
-5. Demo 真实用户主流程使用真实 Kimi，deterministic fake 仅用于自动化测试。真实模型调用另行授权；原始数据继续本地保存，不默认公开打包。
+The maintainer gave final approval to the [V3 Demo Complete Contract](../features/v3-demo-complete-contract.md) per the planning side's recommended wording. Submitted canon SHA-256=`537fbf224baa2226c0515bcaea73ba10b48a6e38d248d76643950f51f66441b3`.
 
-## 开工边界
+1. Ordinary off-exchange open-end funds use `NEXT_DAY_END_CONSERVATIVE`: NAV_T becomes visible only after 23:59:59 on day T+1 (Asia/Shanghai), and subscription/redemption then occurs at unknown NAV on the first eligible open day thereafter. This rule is an explicitly presented conservative product assumption, not the actual `publishedAt`; the real publication-time path is left for a future upgrade.
+2. T+1 stock ETFs are analysis-only and not executed until complete corporate-action and execution evidence is in place; other ETF subtypes remain explicitly rejected.
+3. Visuals use a single-page three-act layout with an approximately four-minute presentation pace. The four first-screen indicators are cumulative return, maximum drawdown, trade count, and return versus buy-and-hold; win rate moves to the detail layer, and final aesthetics remain subject to the maintainer's visual walkthrough.
+4. 600519/2024 serves only as the default validation sample and does not constitute an upper limit on assets, codes, or years. More independent single assets, user-selected intervals, and full in-snapshot history are supported, with fees, slippage, visibility, and index assumptions fully displayed.
+5. The demo's real user main flow uses real Kimi; deterministic fake is used only for automated testing. Real model calls are separately authorized; raw data continues to be stored locally and is not publicly packaged by default.
 
-- 仅开放 **SR-006「V3 S0 契约骨架」**，在规划侧分配的独立 worktree 中实施第 8.1 节最小工程、schema/canonical/digest 与契约测试。
-- S0 完成后须经实施者自验、检验与未参与实施的独立复审；通过后才开放 S1。S2 及后续切片不因本次终审自动开工。
-- 不授权真实 Kimi、真实行情接入、公开数据分发、部署、推送远端或 SR-004。
-- 契约变更须回到同一 feature 正典并复审，不另建平行规格。
+## Work-start boundary
 
-## 同版修订 · newline canonical golden 哈希勘误
+- Only **SR-006 "V3 S0 Contract Skeleton"** is opened, implementing the section 8.1 minimal engineering, schema/canonical/digest, and contract tests in an independent worktree assigned by the planning side.
+- After S0 completes, it must pass the implementer's self-verification, inspection, and an independent review by a session not involved in the implementation; only then is S1 opened. S2 and subsequent slices do not automatically start because of this final approval.
+- Real Kimi, real market data access, public data distribution, deployment, remote pushes, and SR-004 are not authorized.
+- Contract changes must return to the same feature canon for re-review; no parallel specification is to be created.
 
-S0 实施前检验发现 newline 向量的 canonical JSON 与显式 hex 正确，但登记的 SHA-256 错误。仅将该项哈希由 `7db16a5860923cd8050cbca1670d36b60aa97cc97077c285a101e1be696e494e` 修正为 `26b5d4c3cec8a6c2f500cbbf0905fe6d8343628630d9d7921862512dfba45364`；canonical JSON 与 hex=`7b 22 73 22 3a 22 5c 6e e4 b8 ad 22 7d` 不变。全部 8 个 canonical 向量已按显式字节重新独立复核。
+## Same-version revision · newline canonical golden hash erratum
 
-修订后完整契约 SHA-256=`3b8b444b8a268758bf99c804c6d77c6737e3ddfd9e903e8f5a5bfe8190d85e9d`。本勘误不改变五项终审结论、S0 范围或后续授权边界。
+Before S0 implementation, inspection found that the newline vector's canonical JSON and explicit hex were correct, but the registered SHA-256 was wrong. Only that hash is corrected from `7db16a5860923cd8050cbca1670d36b60aa97cc97077c285a101e1be696e494e` to `26b5d4c3cec8a6c2f500cbbf0905fe6d8343628630d9d7921862512dfba45364`; the canonical JSON and hex=`7b 22 73 22 3a 22 5c 6e e4 b8 ad 22 7d` are unchanged. All 8 canonical vectors have been independently re-verified against explicit bytes.
+
+Post-revision complete contract SHA-256=`3b8b444b8a268758bf99c804c6d77c6737e3ddfd9e903e8f5a5bfe8190d85e9d`. This erratum does not change the five final-approval conclusions, the S0 scope, or the subsequent authorization boundary.

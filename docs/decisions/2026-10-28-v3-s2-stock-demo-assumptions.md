@@ -1,37 +1,39 @@
-# 2026-10-28 · V3 S2 股票 Demo 执行与报告假设终审
+# 2026-10-28 · V3 S2 Stock Demo Execution and Reporting Assumptions Final Approval
 
-## 决定
+*Translated from the Chinese original on 2026-11-15.*
 
-维护者批准按推荐口径开放 **SR-008「V3 股票内核与 CLI」**。完整冻结值唯一住所为 [V3 Demo 完整契约第 7.2.3 节](../features/v3-demo-complete-contract.md#723-s2-股票执行与报告冻结值维护者终审通过)，本档只记录拍板摘要与证据入口。
+## Decision
 
-1. 初始资金允许用户在 `1000.00～100000000.00 CNY` 内自填，默认 `100000.00`，实际值进入 RunSpec/digest；compare 必须同初始资金。
-2. 佣金为成交金额万 2.5、单笔最低 5 元、买卖双向，明确属于 Demo 假设。印花税卖出万 5，过户费万 0.1、买卖双向；各费用分别 HALF_UP 到分后求和。
-3. 固定 1 tick 方向滑点，买入向上、卖出向下；买入 100 股整数倍，非整手卖出仅允许整笔卖出剩余可卖零股。
-4. 沿用 T 日信号、T+1 开盘成交与当日买入不可卖。现金、持仓和公司行动按 `cn-stock-settlement@1` 入账；分红现金不再投，送转进入持仓，红利税不模拟并明确展示。
-5. 成本配对、买入持有和最大回撤按 `cn-stock-report@1` 执行，包括 FIFO、费用后已平仓批次胜率、同假设买入持有，以及运行前初始现金回撤锚点。
+The maintainer approved opening **SR-008 "V3 Stock Kernel and CLI"** per the recommended wording. The sole residence of the complete frozen values is [V3 Demo Complete Contract section 7.2.3](../features/v3-demo-complete-contract.md#723-s2-股票执行与报告冻结值维护者终审通过); this document records only the approval summary and evidence entry points.
 
-## 生效期与官方证据
+1. Initial capital may be user-entered within `1000.00～100000000.00 CNY`, defaulting to `100000.00`; the actual value enters RunSpec/digest; compare must use the same initial capital.
+2. Commission is 0.025% of trade amount, minimum 5 CNY per order, charged on both buy and sell — explicitly a Demo assumption. Stamp tax is 0.05% on sell; transfer fee is 0.01‰ of trade amount, charged on both sides; each fee is HALF_UP-rounded to the cent and then summed.
+3. Fixed 1-tick directional slippage: upward on buys, downward on sells; buys in integral multiples of 100 shares; non-round-lot sells are allowed only as selling the entire remaining odd-lot position in a single order.
+4. T-day signal, T+1 open fill, and same-day buys not sellable. Cash, positions, and corporate actions are booked per `cn-stock-settlement@1`; cash dividends are not reinvested, bonus/split shares enter the position, and dividend tax is not simulated but is explicitly displayed.
+5. Cost pairing, buy-and-hold, and maximum drawdown follow `cn-stock-report@1`, including FIFO, post-fee win rate of closed lots, buy-and-hold under the same assumptions, and a pre-run initial-cash drawdown anchor.
 
-- 2024 年卖出印花税为 0.05%：法定证券交易印花税向出让方征收，2023-08-28 起减半。
-- 沪深 A 股过户费自 2022-04-29 起为成交金额 0.01‰、双向收取。
-- 为支持多年区间，契约保留 2023-08-28 前后的印花税生效分段；早于 2022-04-29 的成交显式拒绝，不套现费率倒算。
-- 佣金、固定滑点、保守现金结算及红利税省略均为显式 Demo 假设，不宣称所有券商或实盘完整规则。
+## Effective-period evidence and official sources
 
-来源：
-- [财政部、税务总局关于减半征收证券交易印花税的公告](https://www.gov.cn/zhengce/zhengceku/202308/content_6900443.htm)
-- [《中华人民共和国印花税法》](https://fgk.chinatax.gov.cn/zcfgk/c100009/c5193058/content.html)
-- [中国结算过户费调整（央视报道）](http://jingji.cctv.com/2022/04/29/ARTIfffB49l5SPprJ1xJuymW220429.shtml)
+- The 2024 sell-side stamp tax is 0.05%: statutory securities transaction stamp tax is levied on the transferor, halved since 2023-08-28.
+- The Shanghai/Shenzhen A-share transfer fee has been 0.01‰ of trade amount, charged on both sides, since 2022-04-29.
+- To support multi-year intervals, the contract keeps a stamp-tax effective-period split before/after 2023-08-28; trades earlier than 2022-04-29 are explicitly rejected, with no retroactive fee-rate derivation.
+- Commission, fixed slippage, conservative cash settlement, and the omission of dividend tax are all explicit Demo assumptions; no claim is made that these are the complete rules of all brokers or of live trading.
 
-## 授权边界
+Sources:
+- [Announcement by the Ministry of Finance and the State Taxation Administration on halving the securities transaction stamp tax](https://www.gov.cn/zhengce/zhengceku/202308/content_6900443.htm)
+- [Stamp Tax Law of the People's Republic of China](https://fgk.chinatax.gov.cn/zcfgk/c100009/c5193058/content.html)
+- [ChinaClear transfer fee adjustment (CCTV report)](http://jingji.cctv.com/2022/04/29/ARTIfffB49l5SPprJ1xJuymW220429.shtml)
 
-仅开放手工/合成快照、股票纯内核、文件快照适配器与 CLI 的 S2 实施。真实行情接入、真实 Kimi、公开数据、部署、远端推送及 S3 以后切片均未授权。实施须先形成逐事件手算 golden 和有效 red，再完成自验、检验与零上下文独立复审。
+## Authorization boundary
 
-## 同版澄清 · S2 检验三项语义
+Only the S2 implementation of manual/synthetic snapshots, the stock pure kernel, the file snapshot adapter, and the CLI is opened. Real market data access, real Kimi, public data, deployment, remote pushes, and S3-and-later slices are not authorized. Implementation must first produce per-event hand-computed goldens and valid reds, then complete self-verification, inspection, and zero-context independent review.
 
-S2 检验后，规划侧在不改变维护者已批准业务包的前提下明确：
+## Same-version clarification · three S2 inspection semantics
 
-1. 买入持有起点是该策略在当前 RunSpec/warmup 下首个允许成交的 session，不是区间首 session，也不等待实际信号；无信号策略仍有基准。
-2. 送转不改变原买入批次总现金成本，只调整/稀释剩余批次成本；不得制造零成本收益或丢失现金对账。
-3. `position.state` 为数值序列 `0=flat、1=long`，与当根 quantity 一致；当根 quantity/availableCash 使用实际成交/结算后的状态。
+After S2 inspection, the planning side clarified, without changing the business package already approved by the maintainer:
 
-同时补明 RunEvent 证据要求：原 intent、实际 fill、数量修正原因与 inputRefs 必须完整，不得默认空引用或静默改数量。实现缺陷与上述澄清均按同一正典返修并复验，不开放后续切片。
+1. The buy-and-hold starting point is the first session in which the strategy is allowed to fill under the current RunSpec/warmup — not the first session of the interval, and not waiting for an actual signal; a no-signal strategy still has a benchmark.
+2. Bonus/split shares do not change the total cash cost of the original buy lots; they only adjust/dilute the cost of the remaining lots; zero-cost gains must not be fabricated, and cash reconciliation must not be lost.
+3. `position.state` is a numeric sequence `0=flat, 1=long`, consistent with the current-bar quantity; the current bar's quantity/availableCash uses the state after actual fills/settlement.
+
+The RunEvent evidence requirements are also clarified: the original intent, actual fill, quantity-correction reason, and inputRefs must be complete; empty references by default or silently changing quantities are forbidden. Implementation defects and the above clarifications are all remediated and re-verified against the same canon, without opening subsequent slices.
