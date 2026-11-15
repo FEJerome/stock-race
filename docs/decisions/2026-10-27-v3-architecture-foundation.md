@@ -1,24 +1,26 @@
-# 2026-10-27 · V3 技术底座与 P0 资产范围
+# 2026-10-27 · V3 Technical Foundation and P0 Asset Scope
 
-## 状态
+*Translated from the Chinese original on 2026-11-15.*
 
-技术方向已确认；详细 schema、真实数据源、具体费率与外部模型能力仍须通过后续契约和探针冻结。本决策不授权业务实施或外部调用。
+## Status
 
-## 决定
+Technical direction confirmed; detailed schemas, real data sources, specific fee rates, and external model capabilities still need to be frozen through follow-up contracts and probes. This decision does not authorize business implementation or external calls.
 
-1. **V3 使用 TypeScript 严格模式实现唯一纯模拟内核**，首宿主为本地单用户 Web：Node 20+ Express API/BFF 与 React/Vite；CLI 为第二验收宿主。新施工根为 `v3/`，按 `core / application / adapters / hosts` 分层，依赖方向为 `hosts → application → core`，adapters 不互调，core 不依赖 I/O、系统时钟、随机数或环境变量。
-2. 策略采用版本化 JSON Schema、生成类型和受控指标/函数注册表，不使用字符串求值或任意代码执行。权威语义回读由 canonical AST 与注册表确定性渲染；用户确认绑定 strategy digest，修改后必须生成新 revision 并重新确认。
-3. 内核从冻结输入一次生成完整有序事件与报告。运行中不访问网络、模型或墙钟，不以随机结果兜底；历史剧场只移动回放 cursor，不重新执行交易。
-4. 首版运行存储采用不可变数据快照与内容寻址 JSON 文件，不为本地 Demo 预设数据库。旧 Python 采集器若复用，只作为离线导入器。
-5. **P0 资产范围**：
-   - 沪深股票：真实日历、T+1、费用、公司行动和交易限制。
-   - 场内 ETF：先限定 T+1 股票 ETF，其他 subtype 显式拒绝。
-   - 场外开放式基金：按 NAV 可见时点、未知净值申赎、份额确认和现金到账处理；QDII、货币、封闭和其他基金 profile 不在首版范围。
-   - 指数：可分析、可作基准，不可直接成交，不生成虚假订单或资金曲线。
-6. 视觉契约与内核并行推进。三场景可提前消费契约测试产生的 golden 事件流，但不得以静态 mock 或伪造收益替代真实运行结果。
-7. 旧 main 的 `data-service/` 是数据源历史调研的第一研究对象，develop 只用于对照同名目录的增量与补充。历史结论和测试只作为验证地图，不直接视为当前可用事实。
-8. 真实数据源、展示区间、费用滑点 profile 和 Kimi K3.1 Pro 结构化输出能力仍需分别验证；实际外部调用必须另行授权，旧模型配置不得作为新模型能力证据。
+## Decision
 
-## 后续验证入口
+1. **V3 uses a single pure-simulation kernel implemented in TypeScript strict mode**; the first host is a local single-user Web app: Node 20+ Express API/BFF and React/Vite; the CLI is the second acceptance host. The new construction root is `v3/`, layered as `core / application / adapters / hosts`, with dependency direction `hosts → application → core`; adapters do not call each other, and core depends on no I/O, system clock, randomness, or environment variables.
+2. Strategies use versioned JSON Schema, generated types, and a controlled indicator/function registry; no string evaluation or arbitrary code execution. Authoritative semantic readback is rendered deterministically from the canonical AST and the registry; user confirmation binds to a strategy digest, and any modification must produce a new revision and require re-confirmation.
+3. The kernel generates the complete ordered event stream and report in one pass from frozen inputs. No network, model, or wall-clock access during a run, and no random-result fallback; the historical theater only moves the replay cursor and does not re-execute trades.
+4. First-version run storage uses immutable data snapshots and content-addressed JSON files; no database is presumed for the local demo. The old Python collector, if reused, serves only as an offline importer.
+5. **P0 asset scope**:
+   - Shanghai/Shenzhen A-share stocks: real calendar, T+1, fees, corporate actions, and trading restrictions.
+   - Exchange-traded funds (ETF): initially limited to T+1 stock ETFs; other subtypes are explicitly rejected.
+   - Off-exchange open-end funds: handled by NAV visibility time, subscription/redemption at unknown NAV, share confirmation, and cash arrival; QDII, money market, closed-end, and other fund profiles are out of scope for the first version.
+   - Indices: analyzable and usable as benchmarks; not directly tradable; no fake orders or fake equity curves are generated.
+6. The visual contract and the kernel proceed in parallel. The three scenes may consume the golden event streams produced by contract tests ahead of time, but must not substitute static mocks or fabricated returns for real run results.
+7. The old main branch's `data-service/` is the first research target for data-source historical research; develop is used only to compare increments and supplements of the same-named directory. Historical conclusions and tests serve only as a verification map and are not directly treated as currently available facts.
+8. Real data sources, display intervals, fee/slippage profiles, and Kimi K3.1 Pro structured-output capabilities still need separate verification; actual external calls must be separately authorized, and old model configuration must not be used as evidence of new model capability.
 
-后续完整 V3 契约应给出 DSL/RunSpec/DataSnapshot/RunEvent、指标 golden、资产时间线、模型负例、跨宿主一致性和回放一致性验收。具体数据源与模型探针结果形成后，再冻结对应 profile 和适配器契约。
+## Follow-up verification entry points
+
+The follow-up complete V3 contract should specify acceptance for DSL/RunSpec/DataSnapshot/RunEvent, indicator goldens, asset timelines, model negative cases, cross-host consistency, and replay consistency. Once concrete data-source and model probe results exist, the corresponding profiles and adapter contracts are then frozen.

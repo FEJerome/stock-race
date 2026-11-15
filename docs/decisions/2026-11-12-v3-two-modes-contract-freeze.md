@@ -1,70 +1,72 @@
-# 2026-11-12 · V3 两态与实时值守（live-sim）契约冻结
+# 2026-11-12 · V3 Two Modes and Live Watch (live-sim) Contract Freeze
 
-> 同日维护者追加拍板两条补丁（paused 恢复正式条款、市场 profile 扩展点），契约最新哈希见文末「2026-11-12 补丁」节。
+*Translated from the Chinese original on 2026-11-15.*
 
-## 决定
+> The maintainer appended two same-day decisions as patches (paused-resume formal clause, market profile extension point); the latest contract hash is in the "2026-11-12 Patches" section at the end.
 
-维护者按规划侧推荐口径终审通过 **SR-011「V3 两态与实时值守契约升版」**，完整冻结文本唯一住所为 [V3 Demo 完整契约第 11 章](../features/v3-demo-complete-contract.md#11-两态与实时值守live-sim契约2026-11-12-冻结)。升版后契约全文 SHA-256=`08df4ecb0abf81792fcead4ae2534e5dfe546beeecdba8503f930c51b2f8a33f`。十一项业务假设全部照推荐口径拍板：
+## Decision
 
-1. **唤醒周期**：仅每交易日收盘后 EOD 唤醒一次，不设盘中周期。
-2. **模拟成交确认时点**：T+1 EOD 回填开盘价，值守界面明示「成交确认比信号晚一交易日」；盘中即时回填备选不采用。
-3. **EOD 唤醒时点**：不早于 15:30（Asia/Shanghai），兜底窗口内数据未到即按 stale 处理；窗口具体时长为实施期显式配置，须版本化并展示。
-4. **live 值守资产范围**：仅沪深股票先行；ETF、基金、指数维持既有仅分析门禁。
-5. **新闻定位**：仅观察入账＋值守展示＋复盘素材，不进 AST 信号；无真实 publishedAt 者标记 `UNKNOWN_PUBLISH_TIME` 且不入账。
-6. **stale 阈值**：连续 N=3 周期 stale → 值守转 `paused` 并 surfaced 给用户。
-7. **live 虚拟账本初始资金**：独立设定，默认 `100000.00 CNY`，与历史 Run 资金互不引用。
-8. **展示层口径**：允许 live 与历史 Run 同屏并列，强制 mode 标识，不构成契约 compare；P0 禁止跨态契约 compare。
-9. **新闻源许可**：未核许可源不接入；AKShare 类「仅学术研究」声明直接排除于开源分发。
-10. **live 执行 profile**：新立独立 `cn-stock-live-sim@1`，初版数值与第 7.2.3 节回测冻结值逐项对齐，未来可独立演化而不污染回测冻结值。
-11. **run-event schema 升版路径**：同一 schema 文件 minor 升版（A 案），不另立 live-event schema；新增 live-run-spec/live-observation/news-observation 三个 schema，全部走既有 `generate:types`＋`check:generated` 管道。
+The maintainer gave final approval to **SR-011 "V3 Two-Modes and Live Watch Contract Upgrade"** per the planning side's recommended wording; the sole residence of the complete frozen text is [V3 Demo Complete Contract chapter 11](../features/v3-demo-complete-contract.md#11-两态与实时值守live-sim契约2026-11-12-冻结). Post-upgrade full-contract SHA-256=`08df4ecb0abf81792fcead4ae2534e5dfe546beeecdba8503f930c51b2f8a33f`. All eleven business assumptions were approved per the recommended wording:
 
-## 架构基调
+1. **Wake cycle**: only one EOD wake per trading day after close; no intraday cycles.
+2. **Simulated fill confirmation time**: T+1 EOD backfills the open price, and the watch UI states "fill confirmation lags the signal by one trading day"; the intraday immediate-backfill alternative is not adopted.
+3. **EOD wake time**: no earlier than 15:30 (Asia/Shanghai); if data has not arrived within the fallback window, it is treated as stale; the exact window duration is an explicit implementation-time configuration, must be versioned, and must be displayed.
+4. **live watch asset scope**: Shanghai/Shenzhen stocks first; ETFs, funds, and indices keep the existing analysis-only gate.
+5. **News positioning**: observation bookkeeping + watch display + review material only; not fed into AST signals; items without a real publishedAt are marked `UNKNOWN_PUBLISH_TIME` and not booked.
+6. **stale threshold**: N=3 consecutive stale cycles → the watch turns `paused` and is surfaced to the user.
+7. **live virtual ledger initial capital**: set independently, defaulting to `100000.00 CNY`, with no cross-reference to historical Run capital.
+8. **Display-layer wording**: live and historical Runs may be shown side by side on one screen, with a mandatory mode indicator; this does not constitute a contract compare; P0 forbids cross-mode contract compare.
+9. **News source licensing**: sources without verified licenses are not connected; AKShare-style "academic research only" statements are directly excluded from open-source distribution.
+10. **live execution profile**: a new independent `cn-stock-live-sim@1`, with initial values aligned item-by-item to the section 7.2.3 backtest frozen values; it may evolve independently in the future without polluting the backtest frozen values.
+11. **run-event schema upgrade path**: minor upgrade of the same schema file (option A); no separate live-event schema; three new schemas — live-run-spec / live-observation / news-observation — all go through the existing `generate:types` + `check:generated` pipeline.
 
-live-sim 采用**滚动观测＋每周期全量确定性重跑**：每周期以累积观测构造完整 live 域 DataSnapshot，由同一确定性引擎整体再生事件链与账本。core 目标零语义改动；幂等与崩溃恢复由确定性天然保证。总架构与九维度细则以契约第 11.2～11.12 节为准，本档不复制全文。
+## Architectural stance
 
-## 理由
+live-sim adopts **rolling observation + full deterministic re-run per cycle**: each cycle builds a complete live-domain DataSnapshot from accumulated observations, and the same deterministic engine regenerates the entire event chain and ledger. Core targets zero semantic change; idempotency and crash recovery are guaranteed by determinism. The overall architecture and the nine-dimension details follow contract sections 11.2–11.12; this document does not reproduce the full text.
 
-- 复用已冻结的确定性内核，避免两套成交逻辑漂移；幂等、恢复与跨宿主一致性均可由确定性证明与字节级 golden 强制。
-- 独立 `liveRunId`、独立 live 命名空间与强制 `mode:"live-sim"` 标识，保证 live 值守永不冒充冻结快照回测，两态隔离可机器验证。
-- T+1 EOD 回填是如实语义：不伪造盘中开盘价可见时点，延迟在值守界面显式展示。
+## Rationale
 
-## 影响范围
+- Reuses the frozen deterministic kernel, avoiding drift between two sets of fill logic; idempotency, recovery, and cross-host consistency can all be enforced by determinism proofs and byte-level goldens.
+- An independent `liveRunId`, an independent live namespace, and the mandatory `mode:"live-sim"` indicator ensure live watch can never impersonate a frozen-snapshot backtest, and the two-mode isolation is machine-verifiable.
+- T+1 EOD backfill is truthful semantics: it does not fabricate an intraday open-price visibility time, and the delay is explicitly displayed in the watch UI.
 
-- 契约新增第 11 章（11.1～11.16），并更新状态节与第 0.1 节引用表；既有第 1～10 章语义不变。
-- 后续施工面：`application` 新增 ports 层与四个 live 用例；`adapters` 新增 live-poll/news/persistence-file；调度器装配于 hosts/local 层；core/engine/market/report 不改。
-- 旧资产复用结论（契约第 11.15 节）：值守调度层须全新建，历史无真实调度实现可复用。
+## Impact scope
 
-## 替代方案
+- The contract adds chapter 11 (11.1–11.16) and updates the status section and the section 0.1 reference table; the semantics of existing chapters 1–10 are unchanged.
+- Follow-up construction surface: `application` gains a ports layer and four live use cases; `adapters` gains live-poll / news / persistence-file; the scheduler is assembled in the hosts/local layer; core/engine/market/report are unchanged.
+- Legacy asset reuse conclusion (contract section 11.15): the watch scheduling layer must be built entirely new; there is no real scheduling implementation in history to reuse.
 
-- 盘中周期唤醒与 T+1 盘中开盘价即时回填：需开盘价可见时点探针支撑，本版不设，留作后续升级路径。
-- live 独立事件 schema（B 案）：隔离更彻底，但双链双 schema 维护成本高、剧场/报告投影需处理两种事件，未采用。
-- 增量执行引擎：本版不建，接口预留升级路径；O(n²) 重跑在日频单资产规模内由第 7.5 节性能预算约束。
+## Alternatives
 
-## 授权边界
+- Intraday-cycle wake and immediate T+1 intraday open-price backfill: requires probes on open-price visibility time; not in this version, left as a future upgrade path.
+- Separate live event schema (option B): more thorough isolation, but high dual-chain dual-schema maintenance cost, and the theater/report projections would have to handle two event types; not adopted.
+- Incremental execution engine: not built in this version; interfaces reserve an upgrade path; O(n²) re-runs at daily-frequency single-asset scale are bounded by the section 7.5 performance budget.
 
-本次冻结**不构成施工授权**。schema JSON 本体改动、类型重新生成与全部代码实现归后续施工棒；真实行情源、真实新闻源接入与值守调度部署仍须按契约第 7.1 节真实集成口径单独 opt-in 授权。实施仍须先形成手算 golden 与有效 red，再完成自验、检验与未参与实施的独立复审。
+## Authorization boundary
 
-## 遗留开口
+This freeze **does not constitute construction authorization**. Schema JSON body changes, type regeneration, and all code implementation belong to the follow-up implementation tranche; real market data source integration, real news source integration, and watch scheduling deployment still require separate opt-in authorization per the section 7.1 real-integration wording. Implementation must still first produce hand-computed goldens and valid reds, then complete self-verification, inspection, and independent review by a session not involved in the implementation.
 
-值守 `paused` 后的恢复语义（用户显式恢复 vs 数据恢复后自动继续）尚未拍板，对应施工切片启动前须回到规划侧裁定，不得由实现者自行选默认值。
+## Open items
 
-> 2026-11-12 已拍板闭环：**恢复＝用户显式恢复**，见文末「2026-11-12 补丁」节。
+The resume semantics after the watch turns `paused` (explicit user resume vs. auto-continue after data recovers) are not yet decided; before the corresponding construction slice starts, this must return to the planning side for adjudication, and implementers must not pick a default on their own.
 
-## 后续验证入口
+> Closed on 2026-11-12: **resume = explicit user resume**; see the "2026-11-12 Patches" section at the end.
 
-- 契约第 11.14 节八项契约测试要求（多周期手算 golden、幂等、恢复、stale→paused、新闻边界、隔离、先红、跨宿主字节等价）。
-- 契约第 11.16 节非目标与授权边界；任何超面施工先回到本决策与第 11 章核对。
+## Follow-up verification entry points
 
-## 2026-11-12 补丁（维护者拍板，同日追加）
+- The eight contract test requirements in contract section 11.14 (multi-cycle hand-computed goldens, idempotency, recovery, stale→paused, news boundary, isolation, red-first, cross-host byte equivalence).
+- Contract section 11.16 non-goals and authorization boundary; any out-of-scope construction first returns to this decision and chapter 11 for verification.
 
-### 补丁一：paused 恢复语义转正式条款
+## 2026-11-12 Patches (maintainer decisions, appended same day)
 
-值守连续 3 周期 stale 转 `paused` 后，**恢复＝用户显式恢复**：界面如实呈现缺勤区间（起止交易日与周期数）与原因，用户确认后确定性引擎以累积观测补齐欠账周期再续跑；**不做静默自动恢复**，数据恢复不触发自动续跑。理由：与「不冒充、不粉饰」契约精神一致——经理人缺勤应让老板看见。契约落点：11.9 新增正式条款、11.14 测试要求第 4 项扩充恢复断言、11.16 遗留歧义项闭环（本章当前无未拍板遗留开口）。
+### Patch 1: paused-resume semantics promoted to a formal clause
 
-### 补丁二：市场 profile 配置化扩展点（新增契约 11.17）
+After the watch turns `paused` following 3 consecutive stale cycles, **resume = explicit user resume**: the UI truthfully presents the absent interval (start/end trading days and cycle count) and the reason; after user confirmation, the deterministic engine catches up the owed cycles from accumulated observations and then continues; **no silent automatic resume** — data recovery does not trigger auto-continue. Rationale: consistent with the contract spirit of "no impersonation, no whitewashing" — an absentee manager should be visible to the boss. Contract landing: new formal clause in 11.9, expanded recovery assertions in item 4 of the 11.14 test requirements, and closure of the open-ambiguity item in 11.16 (this chapter currently has no undecided open items).
 
-成交与市场规则采用**配置化市场 profile** 形态内建，面向国际化保留扩展性（后续至少支持美股）。profile＝版本化配置包（`名称@版本`，digest 进 RunSpec）；参数维度九项＝交易日历／交易时段（含盘前盘后开关）／结算 T+n／最小交易单位（整股或碎股）／当日买可卖／费用组件表／价格限制规则（涨跌停或熔断）／公司行动处理／货币与精度。**本版只声明扩展点、不实现美股**（承 2026-10-27 不为未来提前建设先例）；未来加美股＝新 profile 配置＋新数据源适配器＋新日历，**内核零改**，启用前仍须单独授权并过既有质量闸。
+### Patch 2: market profile configuration extension point (new contract 11.17)
 
-### 补丁后冻结口径
+Fills and market rules are built in as a **configuration-driven market profile**, preserving extensibility for internationalization (supporting at least US stocks later). Profile = a versioned configuration package (`name@version`, digest enters RunSpec); nine parameter dimensions = trading calendar / trading sessions (including pre-market and after-hours switches) / settlement T+n / minimum trading unit (round lot or fractional shares) / same-day buy sellability / fee component table / price-limit rules (price limits or circuit breakers) / corporate-action handling / currency and precision. **This version only declares the extension point and does not implement US stocks** (per the 2026-10-27 precedent of not building ahead for the future); adding US stocks later = new profile configuration + new data source adapter + new calendar, **zero kernel changes**, still requiring separate authorization and passing the existing quality gates before enablement.
 
-补丁后契约全文 SHA-256=`c6cc44ea20c904afcbb92fdd5c43450add7ec37e18813867f5b3109229a4cddd`（文件字节口径，同前文哈希口径）。两条补丁均属契约声明与语义条款，**不构成施工授权**；schema JSON 本体、类型重新生成与代码实现的授权边界同上文「授权边界」节不变。
+### Post-patch frozen wording
+
+Post-patch full-contract SHA-256=`c6cc44ea20c904afcbb92fdd5c43450add7ec37e18813867f5b3109229a4cddd` (file-byte basis, same hashing basis as above). Both patches are contract declarations and semantic clauses and **do not constitute construction authorization**; the authorization boundary for schema JSON bodies, type regeneration, and code implementation is unchanged from the "Authorization boundary" section above.

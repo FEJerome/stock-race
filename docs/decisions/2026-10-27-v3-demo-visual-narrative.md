@@ -1,37 +1,39 @@
-# 2026-10-27 · V3 Demo 视觉展示叙事
+# 2026-10-27 · V3 Demo Visual Presentation Narrative
 
-## 状态
+*Translated from the Chinese original on 2026-11-15.*
 
-展示主线已确认；逐幕布局、动效细节和最终视觉验收仍待后续契约终审。
+## Status
 
-## 核心叙事
+The presentation storyline is confirmed; per-scene layouts, animation details, and final visual acceptance still await follow-up contract final review.
 
-**把一句投资想法，变成一条能检查、能解释、能复现的策略，再亲眼看见它走过历史。**
+## Core narrative
 
-模型不替用户下单；模型负责把意图转成可审计的规则，确定性内核负责执行。
+**Turn one investment idea into a strategy that can be inspected, explained, and reproduced — then watch it walk through history with your own eyes.**
 
-## 三幕叙事
+The model does not place orders for the user; the model turns intent into auditable rules, and the deterministic kernel executes them.
 
-### 1. 策略生成舱：想法变成规则
+## Three-act narrative
 
-自然语言输入与修改、结构化规则、静态校验和模型语义回读必须形成可见联动。用户能够检查指标、参数、买卖条件与逻辑关系；每次有效修改形成规则版本，只有用户确认并锁定后才能运行。
+### Act 1. Strategy generation deck: idea becomes rules
 
-### 2. 历史推演剧场：规则走过真实历史
+Natural-language input and modification, structured rules, static validation, and model semantic readback must form a visible linkage. Users can inspect indicators, parameters, buy/sell conditions, and logical relationships; every effective modification forms a rule version, and a run is allowed only after the user confirms and locks it.
 
-完整结果由内核一次性确定性算定，前端动画只负责回放，不逐日请求模型或重新决定交易。价格、指标、订单、规则解释、净值与回撤共享同一时间轴；支持自动播放、暂停、加速、拖动和跳到结果。
+### Act 2. Historical replay theater: rules walk through real history
 
-### 3. 结果与版本对比：看见代价，而不只是收益
+The complete result is computed once, deterministically, by the kernel; the frontend animation only replays it, requesting nothing from the model per day and never re-deciding trades. Prices, indicators, orders, rule explanations, net value, and drawdown share one timeline; supports auto-play, pause, speed-up, scrubbing, and jump-to-result.
 
-报告同时呈现收益、最大回撤、交易表现和相对买入持有的结果，并保留订单与规则版本。用户可修改参数形成新版本，在同一资产、同一历史区间比较版本；该比较不构成组合交易。
+### Act 3. Results and version comparison: see the cost, not just the returns
 
-## 团队展示剧本
+The report presents returns, maximum drawdown, trade performance, and results versus buy-and-hold together, and keeps orders and rule versions. Users can modify parameters to form a new version and compare versions on the same asset over the same historical interval; this comparison does not constitute portfolio trading.
 
-目标时长约四分钟：
+## Team presentation script
 
-1. 用自然语言生成 MACD+KDJ 组合策略。
-2. 展示结构化校验和语义回读，由用户确认并锁定。
-3. 一键运行，在历史剧场展示关键联动后跳到完整结果。
-4. 修改参数形成规则 v2，与 v1 对比。
-5. 以“模型不直接下单，意图成为可审计规则，确定性内核负责执行”收尾。
+Target duration about four minutes:
 
-视觉华丽与叙事完整性属于核心验收，不是功能完成后的附加美化；最终审美终审由维护者执行。
+1. Generate a MACD+KDJ combined strategy in natural language.
+2. Show structured validation and semantic readback; the user confirms and locks.
+3. One-click run; show key linkages in the historical theater, then jump to the complete result.
+4. Modify parameters to form rule v2 and compare with v1.
+5. Close with "the model does not place orders directly; intent becomes auditable rules, and the deterministic kernel executes them."
+
+Visual splendor and narrative completeness are core acceptance criteria, not post-feature polish; final aesthetic review is performed by the maintainer.

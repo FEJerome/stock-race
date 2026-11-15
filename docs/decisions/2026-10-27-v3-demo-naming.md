@@ -1,24 +1,26 @@
-# 2026-10-27 · V3 Demo 命名与分支代际
+# 2026-10-27 · V3 Demo Naming and Branch Generations
 
-## 状态
+*Translated from the Chinese original on 2026-11-15.*
 
-已确认。本决策只统一产品代际与分支使用方式，不代表 V3 功能已经实现。
+## Status
 
-## 背景
+Confirmed. This decision only unifies product generation naming and branch usage; it does not mean V3 features have been implemented.
 
-仓库已有两个历史阶段：旧 main 上的四服务模拟项目曾形成 `v1.0.0`，develop 后续承载 v2 重新设计、Local 实现与 MVP/Full 规划。若将当前 AI 策略实验台再次称为 V1，会与历史版本混淆。
+## Background
 
-## 决定
+The repository already has two historical phases: the four-service simulation project on old main once formed `v1.0.0`, and develop subsequently carried the v2 redesign, the Local implementation, and the MVP/Full planning. Calling the current AI strategy lab "V1" again would confuse it with the historical versions.
 
-1. 当前产品代际正式命名为 **Stock-Race V3 Demo**。
-   - V1：旧 main 上的四服务股票模拟项目。
-   - V2：develop 上的重新设计、Local 实现与 MVP/Full 规划。
-   - V3：当前以声明式策略语言、确定性模拟内核、模型规则生成与三场景视觉为方向的 AI 策略实验台。
-2. V3 是产品代际名，不是新分支名；在形成正式发布前不称为 `v3.0.0`。
-3. 当前本地 main 是后续唯一施工与集成正典。develop 保留为独立历史资产线，不删除、不整支合并、不在其上继续开发。
-4. 历史 main/develop 中的代码与设计只按能力定向研究、移植和验证，不因所在分支较新或较旧而直接决定取舍。
-5. 历史文档保留原文；现行文档和后续技术契约使用 V3 Demo。既有任务编号不受命名变化影响。
+## Decision
 
-## 影响范围
+1. The current product generation is officially named **Stock-Race V3 Demo**.
+   - V1: the four-service stock simulation project on old main.
+   - V2: the redesign, Local implementation, and MVP/Full planning on develop.
+   - V3: the current AI strategy lab oriented around a declarative strategy language, a deterministic simulation kernel, model-generated rules, and three-scene visuals.
+2. V3 is a product generation name, not a new branch name; it is not called `v3.0.0` before a formal release exists.
+3. The current local main is the sole construction and integration canon going forward. develop remains an independent historical asset line: not deleted, not merged wholesale, and not developed on further.
+4. Code and designs in historical main/develop are researched, ported, and verified in a capability-directed manner; their relative age must not by itself decide what is kept or discarded.
+5. Historical documents are kept in their original language; current documents and subsequent technical contracts use V3 Demo. Existing task numbers are unaffected by the naming change.
 
-`2026-10-27-v1-demo-boundary.md` 中已确认的技术边界继续有效，其中现行 Demo 的“V1”称呼由本决策统一调整为“V3”。后续目录、接口、测试和验收文档应使用 V3 Demo，避免再建立另一套代际命名。
+## Impact scope
+
+The technical boundary confirmed in `2026-10-27-v1-demo-boundary.md` remains in effect, with the current demo's "V1" wording uniformly adjusted to "V3" by this decision. Subsequent directories, interfaces, tests, and acceptance documents should use V3 Demo and avoid creating yet another generation naming scheme.
