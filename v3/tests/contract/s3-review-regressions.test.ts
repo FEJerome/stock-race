@@ -125,7 +125,7 @@ describe("S3 re-review regression: M1 repair-round payload minimization (contrac
       expect(repair.repairIssues.length).toBeGreaterThan(0);
       expect(repair.repairIssues.some((issue) => issue.code === "UNKNOWN_INDICATOR")).toBe(true);
     }
-    expect(repair.capabilityManifest.manifestVersion).toBe("1.0.0");
+    expect(repair.capabilityManifest.manifestVersion).toBe("1.1.0");
   });
 });
 

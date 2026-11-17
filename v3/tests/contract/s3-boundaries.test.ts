@@ -11,8 +11,10 @@ describe("S3 boundaries and identities", () => {
     const first = digestJson(createCapabilityManifest(createRegistryV1()));
     const second = digestJson(createCapabilityManifest(createRegistryV1()));
     expect(first).toBe(second);
-    // golden frozen value (computed and frozen at implementation on 2026-11-12): any manifest drift breaks this assertion
-    expect(first).toBe("sha256:03ed1d7aa51a6fb9ead4fb330d1743bf976f3a6d071aac586b66f35fac3f86bc");
+    // golden frozen value (recomputed on 2026-11-17 when the S4 supplement added the
+    // allocationTemplates section, bumping manifestVersion to 1.1.0 per contract chapter 12.1):
+    // any manifest drift breaks this assertion
+    expect(first).toBe("sha256:a34b0760a97a8e4973e3d6e7420a49cd94a7078d530fac93347115a70cd5940d");
   });
 
   it("s3-fake-not-counted-as-real: fake output is identifiable at acceptance time via provenance and never enters confirmation records", async () => {

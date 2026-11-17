@@ -76,7 +76,7 @@ describe("S3 draft pipeline (driven by the deterministic fake, contract 7.2 S3 r
     if (repair.kind !== "repair") throw new Error("expected repair request");
     expect(repair.repairIssues.length).toBeGreaterThan(0);
     expect(repair.repairIssues.some((issue) => issue.code === "UNKNOWN_INDICATOR")).toBe(true);
-    expect(repair.capabilityManifest.manifestVersion).toBe("1.0.0");
+    expect(repair.capabilityManifest.manifestVersion).toBe("1.1.0");
   });
 
   it("s3-draft-repair-exhausted: still broken after two rounds → REPAIR_EXHAUSTED/model-error, port called exactly 3 times", async () => {
