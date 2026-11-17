@@ -29,7 +29,7 @@
     "initialCash": {"$ref": "common.schema.json#/$defs/decimalString"},
     "finalEquity": {"$ref": "common.schema.json#/$defs/decimalString"},
     "metrics": {"type": "object", "additionalProperties": false, "required": ["cumulativeReturn", "maxDrawdown", "tradeCount", "winRate", "winRateReason", "excessReturn", "excessReturnReason"], "properties": {"cumulativeReturn": {"$ref": "common.schema.json#/$defs/decimalString"}, "maxDrawdown": {"$ref": "common.schema.json#/$defs/decimalString"}, "tradeCount": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"}, "winRate": {"type": ["string", "null"]}, "winRateReason": {"type": ["string", "null"]}, "excessReturn": {"type": ["string", "null"]}, "excessReturnReason": {"type": ["string", "null"]}}},
-    "daily": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["date", "equity", "drawdown", "cash", "positions"], "properties": {"date": {"type": "string"}, "equity": {"$ref": "common.schema.json#/$defs/decimalString"}, "drawdown": {"$ref": "common.schema.json#/$defs/decimalString"}, "cash": {"$ref": "#/$defs/cash"}, "positions": {"type": "array", "items": {"$ref": "#/$defs/position"}}}}},
+    "daily": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["date", "equity", "drawdown", "cash", "positions"], "properties": {"date": {"type": "string"}, "equity": {"$ref": "common.schema.json#/$defs/decimalString"}, "drawdown": {"$ref": "common.schema.json#/$defs/decimalString"}, "cash": {"$ref": "#/$defs/cash"}, "positions": {"type": "array", "items": {"$ref": "#/$defs/assetPosition"}}}}},
     "assets": {
       "type": "array",
       "minItems": 2,
@@ -52,7 +52,7 @@
     "rejections": {"type": "array", "items": true},
     "fees": {"$ref": "#/$defs/fees"},
     "cash": {"$ref": "#/$defs/cash"},
-    "positions": {"type": "array", "items": {"$ref": "#/$defs/position"}},
+    "positions": {"type": "array", "items": {"$ref": "#/$defs/assetPosition"}},
     "buyAndHold": {"type": "object", "additionalProperties": false, "required": ["finalEquity", "cumulativeReturn", "reason"], "properties": {"finalEquity": {"type": ["string", "null"]}, "cumulativeReturn": {"type": ["string", "null"]}, "reason": {"type": ["string", "null"]}}},
     "assumptions": {"type": "array", "items": {"type": "string"}},
     "warnings": {"type": "array", "items": {"type": "string"}},
@@ -60,6 +60,18 @@
     "reportDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
   },
   "$defs": {
+    "assetPosition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetId", "total", "sellable", "reserved", "unsettled"],
+      "properties": {
+        "assetId": {"type": "string", "minLength": 1, "maxLength": 256},
+        "total": {"$ref": "common.schema.json#/$defs/decimalString"},
+        "sellable": {"$ref": "common.schema.json#/$defs/decimalString"},
+        "reserved": {"$ref": "common.schema.json#/$defs/decimalString"},
+        "unsettled": {"$ref": "common.schema.json#/$defs/decimalString"}
+      }
+    },
     "cash": {"type": "object", "additionalProperties": false, "required": ["available", "reserved", "unsettled", "receivable", "total"], "properties": {"available": {"$ref": "common.schema.json#/$defs/decimalString"}, "reserved": {"$ref": "common.schema.json#/$defs/decimalString"}, "unsettled": {"$ref": "common.schema.json#/$defs/decimalString"}, "receivable": {"$ref": "common.schema.json#/$defs/decimalString"}, "total": {"$ref": "common.schema.json#/$defs/decimalString"}}},
     "position": {"type": "object", "additionalProperties": false, "required": ["total", "sellable", "reserved", "unsettled"], "properties": {"total": {"$ref": "common.schema.json#/$defs/decimalString"}, "sellable": {"$ref": "common.schema.json#/$defs/decimalString"}, "reserved": {"$ref": "common.schema.json#/$defs/decimalString"}, "unsettled": {"$ref": "common.schema.json#/$defs/decimalString"}}},
     "fees": {"type": "object", "additionalProperties": false, "required": ["commission", "transferFee", "stampDuty", "total"], "properties": {"commission": {"$ref": "common.schema.json#/$defs/decimalString"}, "transferFee": {"$ref": "common.schema.json#/$defs/decimalString"}, "stampDuty": {"$ref": "common.schema.json#/$defs/decimalString"}, "total": {"$ref": "common.schema.json#/$defs/decimalString"}}}

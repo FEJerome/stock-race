@@ -101,7 +101,7 @@ export interface Report2 {
     equity: string;
     drawdown: string;
     cash: Cash;
-    positions: Position[];
+    positions: AssetPosition[];
   }[];
   /**
    * @minItems 2
@@ -219,7 +219,7 @@ export interface Report2 {
   rejections: unknown[];
   fees: Fees;
   cash: Cash;
-  positions: Position[];
+  positions: AssetPosition[];
   buyAndHold: {
     finalEquity: string | null;
     cumulativeReturn: string | null;
@@ -237,7 +237,8 @@ export interface Cash {
   receivable: string;
   total: string;
 }
-export interface Position {
+export interface AssetPosition {
+  assetId: string;
   total: string;
   sellable: string;
   reserved: string;
@@ -248,4 +249,10 @@ export interface Fees {
   transferFee: string;
   stampDuty: string;
   total: string;
+}
+export interface Position {
+  total: string;
+  sellable: string;
+  reserved: string;
+  unsettled: string;
 }

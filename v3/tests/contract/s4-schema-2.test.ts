@@ -115,6 +115,23 @@ describe("S4 StrategyDraft 2.0.0 negative vectors", () => {
     expect(issues.every((issue) => issue.path === "/allocation" || issue.path.startsWith("/allocation/"))).toBe(true);
   });
 
+  it("rejects equal-split params on a first-come-first-served template", () => {
+    const draft = base();
+    draft.allocation = { template: "first-come-first-served@1", params: { maxPositions: 3 } };
+    const issues = issuesOf(draft);
+    expect(issues.length).toBeGreaterThan(0);
+    expect(issues.every((issue) => issue.path === "/allocation" || issue.path.startsWith("/allocation/"))).toBe(true);
+  });
+
+  it("rejects non-integer and string-typed maxPositions values", () => {
+    const fractional = base();
+    fractional.allocation = { template: "equal-split@1", params: { maxPositions: 2.5 } };
+    expect(issuesOf(fractional).length).toBeGreaterThan(0);
+    const stringTyped = base();
+    stringTyped.allocation = { template: "equal-split@1", params: { maxPositions: "3" } };
+    expect(issuesOf(stringTyped).length).toBeGreaterThan(0);
+  });
+
   it("rejects numeric (non-string) stop-loss fractions", () => {
     const draft = base();
     draft.risk.positionStopLossFraction = 0.08;
@@ -187,6 +204,7 @@ describe("S4 Report 2.0.0 and SensitivityReport vectors", () => {
   const digest = "sha256:" + "ab".repeat(32);
   const cash = { available: "1.00", reserved: "0.00", unsettled: "0.00", receivable: "0.00", total: "1.00" };
   const position = { total: "0", sellable: "0", reserved: "0", unsettled: "0" };
+  const assetPosition = { assetId: "stock:synthetic.alpha", ...position };
   const fees = { commission: "0.00", transferFee: "0.00", stampDuty: "0.00", total: "0.00" };
 
   const validReport2 = {
@@ -209,7 +227,15 @@ describe("S4 Report 2.0.0 and SensitivityReport vectors", () => {
       excessReturn: null,
       excessReturnReason: "BUY_AND_HOLD_UNAVAILABLE",
     },
-    daily: [],
+    daily: [
+      {
+        date: "2024-01-02",
+        equity: "100000.00",
+        drawdown: "0.000000000000",
+        cash,
+        positions: [assetPosition, { assetId: "stock:synthetic.beta", ...position }],
+      },
+    ],
     assets: [
       { assetId: "stock:synthetic.alpha", fillCount: 0, fees, endingPosition: position, positionStopLossTriggers: 0 },
       { assetId: "stock:synthetic.beta", fillCount: 0, fees, endingPosition: position, positionStopLossTriggers: 0 },
@@ -219,7 +245,7 @@ describe("S4 Report 2.0.0 and SensitivityReport vectors", () => {
     rejections: [],
     fees,
     cash,
-    positions: [],
+    positions: [assetPosition],
     buyAndHold: { finalEquity: null, cumulativeReturn: null, reason: "NO_FILLS" },
     assumptions: [],
     warnings: ["NO_FILLS"],
@@ -253,6 +279,19 @@ describe("S4 Report 2.0.0 and SensitivityReport vectors", () => {
 
   it("accepts a minimal valid Report 2.0.0", () => {
     expect(validateReport2(validReport2)).toEqual([]);
+  });
+
+  it("rejects a position entry without assetId in Report 2.0.0", () => {
+    const report = JSON.parse(JSON.stringify(validReport2));
+    report.positions = [position];
+    expect(
+      validateReport2(report).some((issue) => issue.code === "REQUIRED_PROPERTY" && issue.path === "/positions/0/assetId"),
+    ).toBe(true);
+    const dailyBad = JSON.parse(JSON.stringify(validReport2));
+    dailyBad.daily[0].positions[1] = { ...position };
+    expect(
+      validateReport2(dailyBad).some((issue) => issue.code === "REQUIRED_PROPERTY" && issue.path === "/daily/0/positions/1/assetId"),
+    ).toBe(true);
   });
 
   it("reverts the 1.0.0 snapshotDigest field in Report 2.0.0", () => {
