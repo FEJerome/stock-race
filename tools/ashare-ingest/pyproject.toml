@@ -1,0 +1,23 @@
+[project]
+name = "ashare-ingest"
+version = "0.1.0"
+description = "Offline A-share snapshot importer for stock-race v3 (fetch -> clean -> reconcile -> prepared JSON; TS materializes the frozen snapshot)."
+requires-python = ">=3.12"
+dependencies = [
+  "baostock==0.9.4",
+  "akshare==1.20.65",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

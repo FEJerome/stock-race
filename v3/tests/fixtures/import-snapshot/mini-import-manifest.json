@@ -1,0 +1,23 @@
+{
+  "assetId": "stock:cn-a.sh.600519",
+  "fixedRange": {
+    "start": "2024-03-04",
+    "end": "2024-03-08"
+  },
+  "adjustmentFormula": "adjustment-formula@1",
+  "toolVersion": "ashare-ingest@0.1.0",
+  "importRunId": "fixture-run",
+  "rawInputs": [
+    {
+      "rawFile": "bs-600519-fixture-raw.csv",
+      "rawSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "source": "baostock",
+      "interface": "query_history_k_data_plus",
+      "libraryVersion": "00.9.40",
+      "capturedAt": "2024-03-08T00:00:00+0800"
+    }
+  ],
+  "reconcileReport": "reports/reconcile-fixture-run.md",
+  "selectionRationale": "hand-authored contract fixture",
+  "selectedAt": "2024-03-08"
+}
