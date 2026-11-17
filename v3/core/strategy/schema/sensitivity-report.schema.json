@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stock-race.local/schema/sensitivity-report.schema.json",
+  "title": "SensitivityReport",
+  "description": "Standalone overfitting-gate artifact produced by analyze-sensitivity (S4 supplement chapter 12.7). Never part of the core Report digest semantics.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sensitivityReportVersion", "strategyDigest", "strategyRevision", "baseRunDigest", "variants", "verdict"],
+  "properties": {
+    "sensitivityReportVersion": {"const": "1.0.0"},
+    "strategyDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "strategyRevision": {"$ref": "common.schema.json#/$defs/positiveSafeInteger"},
+    "baseRunDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["variantId", "paramPath", "baseValue", "perturbedValue", "runDigest", "metrics", "flip"],
+        "properties": {
+          "variantId": {"type": "string", "minLength": 1, "maxLength": 256},
+          "paramPath": {"$ref": "common.schema.json#/$defs/jsonPointer"},
+          "baseValue": {"type": ["string", "integer"]},
+          "perturbedValue": {"type": ["string", "integer"]},
+          "runDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cumulativeReturn", "maxDrawdown", "tradeCount", "excessReturn"],
+            "properties": {
+              "cumulativeReturn": {"$ref": "common.schema.json#/$defs/decimalString"},
+              "maxDrawdown": {"$ref": "common.schema.json#/$defs/decimalString"},
+              "tradeCount": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"},
+              "excessReturn": {"type": ["string", "null"]}
+            }
+          },
+          "flip": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["cumulativeReturnSignChanged", "excessReturnReversed"],
+            "properties": {
+              "cumulativeReturnSignChanged": {"type": "boolean"},
+              "excessReturnReversed": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trustworthy", "flippedVariantCount", "reasons"],
+      "properties": {
+        "trustworthy": {"type": "boolean"},
+        "flippedVariantCount": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"},
+        "reasons": {"type": "array", "items": {"enum": ["CUMULATIVE_RETURN_SIGN_FLIP", "EXCESS_RETURN_REVERSAL"]}}
+      }
+    }
+  }
+}

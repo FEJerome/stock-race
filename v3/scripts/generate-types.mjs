@@ -19,6 +19,10 @@ const artifacts = [
   ["report.schema.json", "report.types.ts", "Report"],
   ["model-provenance.schema.json", "model-provenance.types.ts", "ModelProvenance"],
   ["confirmed-revision.schema.json", "confirmed-revision.types.ts", "ConfirmedRevision"],
+  ["strategy-draft-2.schema.json", "strategy-draft-2.types.ts", "StrategyDraft2"],
+  ["run-spec-2.schema.json", "run-spec-2.types.ts", "RunSpec2"],
+  ["report-2.schema.json", "report-2.types.ts", "Report2"],
+  ["sensitivity-report.schema.json", "sensitivity-report.types.ts", "SensitivityReport"],
 ];
 
 const options = {

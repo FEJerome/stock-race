@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stock-race.local/schema/report-2.schema.json",
+  "title": "Report2",
+  "description": "Constrained portfolio report (S4 supplement chapter 12). Single-asset Report 1.0.0 remains frozen in report.schema.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["reportVersion", "runDigest", "strategyDigest", "snapshots", "range", "initialCash", "finalEquity", "metrics", "daily", "assets", "orders", "fills", "rejections", "fees", "cash", "positions", "buyAndHold", "assumptions", "warnings", "eventDigest", "reportDigest"],
+  "properties": {
+    "reportVersion": {"const": "2.0.0"},
+    "runDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "strategyDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "snapshots": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assetId", "snapshotDigest"],
+        "properties": {
+          "assetId": {"type": "string", "minLength": 1, "maxLength": 256},
+          "snapshotDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "range": {"type": "object", "additionalProperties": false, "required": ["start", "end"], "properties": {"start": {"type": "string"}, "end": {"type": "string"}}},
+    "initialCash": {"$ref": "common.schema.json#/$defs/decimalString"},
+    "finalEquity": {"$ref": "common.schema.json#/$defs/decimalString"},
+    "metrics": {"type": "object", "additionalProperties": false, "required": ["cumulativeReturn", "maxDrawdown", "tradeCount", "winRate", "winRateReason", "excessReturn", "excessReturnReason"], "properties": {"cumulativeReturn": {"$ref": "common.schema.json#/$defs/decimalString"}, "maxDrawdown": {"$ref": "common.schema.json#/$defs/decimalString"}, "tradeCount": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"}, "winRate": {"type": ["string", "null"]}, "winRateReason": {"type": ["string", "null"]}, "excessReturn": {"type": ["string", "null"]}, "excessReturnReason": {"type": ["string", "null"]}}},
+    "daily": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["date", "equity", "drawdown", "cash", "positions"], "properties": {"date": {"type": "string"}, "equity": {"$ref": "common.schema.json#/$defs/decimalString"}, "drawdown": {"$ref": "common.schema.json#/$defs/decimalString"}, "cash": {"$ref": "#/$defs/cash"}, "positions": {"type": "array", "items": {"$ref": "#/$defs/position"}}}}},
+    "assets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assetId", "fillCount", "fees", "endingPosition", "positionStopLossTriggers"],
+        "properties": {
+          "assetId": {"type": "string", "minLength": 1, "maxLength": 256},
+          "fillCount": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"},
+          "fees": {"$ref": "#/$defs/fees"},
+          "endingPosition": {"$ref": "#/$defs/position"},
+          "positionStopLossTriggers": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"}
+        }
+      }
+    },
+    "orders": {"type": "array", "items": true},
+    "fills": {"type": "array", "items": true},
+    "rejections": {"type": "array", "items": true},
+    "fees": {"$ref": "#/$defs/fees"},
+    "cash": {"$ref": "#/$defs/cash"},
+    "positions": {"type": "array", "items": {"$ref": "#/$defs/position"}},
+    "buyAndHold": {"type": "object", "additionalProperties": false, "required": ["finalEquity", "cumulativeReturn", "reason"], "properties": {"finalEquity": {"type": ["string", "null"]}, "cumulativeReturn": {"type": ["string", "null"]}, "reason": {"type": ["string", "null"]}}},
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "eventDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "reportDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "cash": {"type": "object", "additionalProperties": false, "required": ["available", "reserved", "unsettled", "receivable", "total"], "properties": {"available": {"$ref": "common.schema.json#/$defs/decimalString"}, "reserved": {"$ref": "common.schema.json#/$defs/decimalString"}, "unsettled": {"$ref": "common.schema.json#/$defs/decimalString"}, "receivable": {"$ref": "common.schema.json#/$defs/decimalString"}, "total": {"$ref": "common.schema.json#/$defs/decimalString"}}},
+    "position": {"type": "object", "additionalProperties": false, "required": ["total", "sellable", "reserved", "unsettled"], "properties": {"total": {"$ref": "common.schema.json#/$defs/decimalString"}, "sellable": {"$ref": "common.schema.json#/$defs/decimalString"}, "reserved": {"$ref": "common.schema.json#/$defs/decimalString"}, "unsettled": {"$ref": "common.schema.json#/$defs/decimalString"}}},
+    "fees": {"type": "object", "additionalProperties": false, "required": ["commission", "transferFee", "stampDuty", "total"], "properties": {"commission": {"$ref": "common.schema.json#/$defs/decimalString"}, "transferFee": {"$ref": "common.schema.json#/$defs/decimalString"}, "stampDuty": {"$ref": "common.schema.json#/$defs/decimalString"}, "total": {"$ref": "common.schema.json#/$defs/decimalString"}}}
+  }
+}

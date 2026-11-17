@@ -4,9 +4,9 @@
   "title": "CapabilityManifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["manifestVersion", "registryVersion", "observationKinds", "indicators", "seriesFunctions", "contextRefs"],
+  "required": ["manifestVersion", "registryVersion", "observationKinds", "indicators", "seriesFunctions", "contextRefs", "allocationTemplates"],
   "properties": {
-    "manifestVersion": {"const": "1.0.0"},
+    "manifestVersion": {"const": "1.1.0"},
     "registryVersion": {"const": "1.0.0"},
     "observationKinds": {
       "type": "array",
@@ -25,9 +25,25 @@
     "contextRefs": {
       "type": "array",
       "items": {"$ref": "#/$defs/contextRef"}
+    },
+    "allocationTemplates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/allocationTemplate"}
     }
   },
   "$defs": {
+    "decimalParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "minimum", "maximum"],
+      "properties": {
+        "type": {"const": "decimal"},
+        "minimum": {"$ref": "common.schema.json#/$defs/decimalString"},
+        "maximum": {"$ref": "common.schema.json#/$defs/decimalString"},
+        "description": {"type": "string"}
+      }
+    },
     "parameter": {
       "type": "object",
       "additionalProperties": false,
@@ -98,6 +114,27 @@
         "ref": {"type": "string", "minLength": 1},
         "type": {"enum": ["scalar", "price", "quantity", "rate", "state"]},
         "observationKinds": {"type": "array", "minItems": 1, "items": {"enum": ["ohlcv", "nav", "index"]}}
+      }
+    },
+    "allocationTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "version", "use", "paramSchema", "description"],
+      "properties": {
+        "key": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+        "version": {"$ref": "common.schema.json#/$defs/positiveSafeInteger"},
+        "use": {"type": "string", "pattern": "^[a-z][a-z0-9-]*@[1-9][0-9]*$"},
+        "paramSchema": {
+          "type": "object",
+          "propertyNames": {"$ref": "common.schema.json#/$defs/asciiIdentifier"},
+          "additionalProperties": {
+            "oneOf": [
+              {"$ref": "#/$defs/parameter"},
+              {"$ref": "#/$defs/decimalParameter"}
+            ]
+          }
+        },
+        "description": {"type": "string", "minLength": 1}
       }
     }
   }

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stock-race.local/schema/strategy-draft-2.schema.json",
+  "title": "StrategyDraft2",
+  "description": "Four-cell constrained portfolio strategy draft (S4 supplement chapter 12). 1.0.0 single-asset semantics remain frozen in strategy-draft.schema.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "name", "universe", "indicators", "entry", "exits", "risk", "allocation", "position"],
+  "properties": {
+    "schemaVersion": {"const": "2.0.0"},
+    "name": {"type": "string", "minLength": 1, "maxLength": 256},
+    "universe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assets"],
+      "properties": {
+        "assets": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 256}
+        }
+      }
+    },
+    "indicators": {
+      "type": "object",
+      "propertyNames": {"$ref": "common.schema.json#/$defs/asciiIdentifier"},
+      "additionalProperties": {"$ref": "strategy-draft.schema.json#/$defs/indicator"}
+    },
+    "entry": {"$ref": "strategy-draft.schema.json#/$defs/boolExpression"},
+    "exits": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "strategy-draft.schema.json#/$defs/boolExpression"}
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["positionStopLossFraction", "portfolioStopFraction"],
+      "properties": {
+        "positionStopLossFraction": {"$ref": "common.schema.json#/$defs/decimalString"},
+        "portfolioStopFraction": {"$ref": "common.schema.json#/$defs/decimalString"}
+      }
+    },
+    "allocation": {
+      "oneOf": [
+        {"$ref": "#/$defs/fcfsAllocation"},
+        {"$ref": "#/$defs/equalSplitAllocation"}
+      ]
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["side", "allowAdd", "exitSize"],
+      "properties": {
+        "side": {"const": "long"},
+        "allowAdd": {"const": false},
+        "exitSize": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["positionFraction"],
+          "properties": {
+            "positionFraction": {"$ref": "common.schema.json#/$defs/decimalString"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fcfsAllocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["template", "params"],
+      "properties": {
+        "template": {"const": "first-come-first-served@1"},
+        "params": {"$ref": "#/$defs/fcfsParams"}
+      }
+    },
+    "equalSplitAllocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["template", "params"],
+      "properties": {
+        "template": {"const": "equal-split@1"},
+        "params": {"$ref": "#/$defs/equalSplitParams"}
+      }
+    },
+    "fcfsParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxPerAssetCashFraction"],
+      "properties": {
+        "maxPerAssetCashFraction": {"$ref": "common.schema.json#/$defs/decimalString"}
+      }
+    },
+    "equalSplitParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxPositions"],
+      "properties": {
+        "maxPositions": {"$ref": "common.schema.json#/$defs/positiveSafeInteger"}
+      }
+    }
+  }
+}
