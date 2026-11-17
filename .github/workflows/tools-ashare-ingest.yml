@@ -1,0 +1,29 @@
+name: AShare Ingest Tool CI
+
+on:
+  push:
+    paths:
+      - 'tools/ashare-ingest/**'
+      - '.github/workflows/tools-ashare-ingest.yml'
+  pull_request:
+    paths:
+      - 'tools/ashare-ingest/**'
+      - '.github/workflows/tools-ashare-ingest.yml'
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install pytest only (fetch dependencies stay offline)
+      run: pip install pytest
+
+    - name: Run offline importer tests
+      working-directory: ./tools/ashare-ingest
+      run: python -m pytest

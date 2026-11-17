@@ -1,0 +1,130 @@
+{
+  "snapshotVersion": "1.0.0",
+  "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "assetIdentity": {
+    "assetId": "stock:cn-a.sh.600519",
+    "type": "stock",
+    "sourceTypeRaw": "cn-a-share",
+    "status": "active"
+  },
+  "observationKind": "ohlcv",
+  "sessions": [
+    {
+      "date": "2024-03-04",
+      "status": "trading",
+      "bar": {
+        "date": "2024-03-04",
+        "open": "10.000000",
+        "high": "10.500000",
+        "low": "9.800000",
+        "close": "10.200000",
+        "volume": "1000000.000000",
+        "signalOpen": "7.600000",
+        "signalHigh": "7.980000",
+        "signalLow": "7.448000",
+        "signalClose": "7.752000"
+      }
+    },
+    {
+      "date": "2024-03-05",
+      "status": "suspended"
+    },
+    {
+      "date": "2024-03-06",
+      "status": "trading",
+      "bar": {
+        "date": "2024-03-06",
+        "open": "10.200000",
+        "high": "10.400000",
+        "low": "10.100000",
+        "close": "10.000000",
+        "volume": "0.000000",
+        "signalOpen": "7.752000",
+        "signalHigh": "7.904000",
+        "signalLow": "7.676000",
+        "signalClose": "7.600000"
+      }
+    },
+    {
+      "date": "2024-03-07",
+      "status": "trading",
+      "bar": {
+        "date": "2024-03-07",
+        "open": "7.700000",
+        "high": "7.800000",
+        "low": "7.500000",
+        "close": "7.600000",
+        "volume": "1500000.000000",
+        "signalOpen": "7.700000",
+        "signalHigh": "7.800000",
+        "signalLow": "7.500000",
+        "signalClose": "7.600000"
+      }
+    },
+    {
+      "date": "2024-03-08",
+      "status": "trading",
+      "bar": {
+        "date": "2024-03-08",
+        "open": "7.650000",
+        "high": "7.750000",
+        "low": "7.550000",
+        "close": "7.700000",
+        "volume": "1200000.000000",
+        "signalOpen": "7.650000",
+        "signalHigh": "7.750000",
+        "signalLow": "7.550000",
+        "signalClose": "7.700000"
+      }
+    }
+  ],
+  "corporateActions": [
+    {
+      "type": "bonusIssue",
+      "recordDate": "2024-03-06",
+      "exDate": "2024-03-07",
+      "listingDate": "2024-03-12",
+      "ratioNumerator": 1,
+      "ratioDenominator": 4
+    },
+    {
+      "type": "cashDividend",
+      "recordDate": "2024-03-06",
+      "exDate": "2024-03-07",
+      "payDate": "2024-03-20",
+      "cashPerShare": "0.500000"
+    }
+  ],
+  "source": [
+    {
+      "name": "baostock",
+      "interface": "query_history_k_data_plus",
+      "libraryVersion": "00.9.40"
+    },
+    {
+      "name": "akshare/eastmoney",
+      "interface": "stock_zh_a_hist_em",
+      "libraryVersion": "1.20.65"
+    }
+  ],
+  "fixedRange": {
+    "start": "2024-03-04",
+    "end": "2024-03-08"
+  },
+  "adjustment": "raw",
+  "pricePrecision": 6,
+  "volumeUnit": "share",
+  "qualityIssues": [
+    {
+      "code": "ZERO_VOLUME_TRADING_DAY",
+      "blocking": false,
+      "message": "tradestatus=1 with volume=0 on 1 day(s): 2024-03-06"
+    },
+    {
+      "code": "SUSPENDED_SESSIONS_PRESENT",
+      "blocking": false,
+      "message": "1 suspended session(s) in range"
+    }
+  ],
+  "usageRestriction": "hand-authored contract fixture only"
+}
