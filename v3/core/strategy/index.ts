@@ -23,6 +23,7 @@ export * from "./evaluation/within.js";
 export * from "./evaluation/warmup.js";
 export * from "./evaluation/evaluate.js";
 export * from "./validation/semantic-validator.js";
+export * from "./validation/semantic-validator-2.js";
 export * from "./validation/contract-validators.js";
 export * from "./readback/readback.js";
 export * from "./readback/templates-zh-cn.js";
