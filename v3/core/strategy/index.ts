@@ -26,4 +26,5 @@ export * from "./validation/semantic-validator.js";
 export * from "./validation/semantic-validator-2.js";
 export * from "./validation/contract-validators.js";
 export * from "./readback/readback.js";
+export * from "./readback/readback-2.js";
 export * from "./readback/templates-zh-cn.js";
