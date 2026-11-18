@@ -1,0 +1,2035 @@
+{
+  "fcfsSimultaneous": {
+    "runDigest": "sha256:383daa1a17ab779e5f0d3f3bd895d80a531ea0a6aad25af7c65c9918ef52d2f7",
+    "finalEquity": "11183.94",
+    "metrics": {
+      "cumulativeReturn": "0.118394000000",
+      "maxDrawdown": "0.000000000000",
+      "tradeCount": 2,
+      "winRate": null,
+      "winRateReason": "NO_CLOSED_BATCHES",
+      "excessReturn": "-0.039798000000",
+      "excessReturnReason": null
+    },
+    "fees": {
+      "commission": "10.00",
+      "transferFee": "0.06",
+      "stampDuty": "0.00",
+      "total": "10.06"
+    },
+    "cash": {
+      "available": "3983.94",
+      "reserved": "0.00",
+      "unsettled": "0.00",
+      "receivable": "0.00",
+      "total": "3983.94"
+    },
+    "positions": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "total": "300",
+        "sellable": "300",
+        "reserved": "0",
+        "unsettled": "0"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "total": "300",
+        "sellable": "300",
+        "reserved": "0",
+        "unsettled": "0"
+      }
+    ],
+    "assets": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "fillCount": 1,
+        "fees": {
+          "commission": "5.00",
+          "transferFee": "0.03",
+          "stampDuty": "0.00",
+          "total": "5.03"
+        },
+        "endingPosition": {
+          "total": "300",
+          "sellable": "300",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "fillCount": 1,
+        "fees": {
+          "commission": "5.00",
+          "transferFee": "0.03",
+          "stampDuty": "0.00",
+          "total": "5.03"
+        },
+        "endingPosition": {
+          "total": "300",
+          "sellable": "300",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      }
+    ],
+    "buyAndHold": {
+      "finalEquity": "11581.92",
+      "cumulativeReturn": "0.158192000000",
+      "reason": null
+    },
+    "fills": [
+      {
+        "assetId": "stock:synthetic.beta",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "300",
+        "amount": "3003.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "0.00",
+        "fees": "5.03",
+        "cashDelta": "-3008.03"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "300",
+        "amount": "3003.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "0.00",
+        "fees": "5.03",
+        "cashDelta": "-3008.03"
+      }
+    ],
+    "rejections": [],
+    "daily": [
+      {
+        "date": "2024-01-02",
+        "equity": "10000.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "6016.06",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "10000.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-03",
+        "equity": "10583.94",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "3983.94"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "300"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "300"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-04",
+        "equity": "10583.94",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "3983.94"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-05",
+        "equity": "11183.94",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "3983.94"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-08",
+        "equity": "11183.94",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "3983.94"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      }
+    ],
+    "assumptions": [
+      "cn-stock-demo-fee@1",
+      "cn-stock-one-tick@1",
+      "cn-stock-settlement@1",
+      "cn-stock-report@1",
+      "first-come-first-served@1",
+      "DIVIDEND_TAX_NOT_SIMULATED",
+      "SYNTHETIC_DEMO_ONLY_NOT_LIVE_TRADING"
+    ],
+    "warnings": []
+  },
+  "equalSplitSlots": {
+    "runDigest": "sha256:0351de064cbb22eef28f452f3bba6735e33c62c495b17eab9294d91069a28d00",
+    "finalEquity": "11581.92",
+    "metrics": {
+      "cumulativeReturn": "0.158192000000",
+      "maxDrawdown": "0.000000000000",
+      "tradeCount": 2,
+      "winRate": null,
+      "winRateReason": "NO_CLOSED_BATCHES",
+      "excessReturn": "-0.019399000000",
+      "excessReturnReason": null
+    },
+    "fees": {
+      "commission": "10.00",
+      "transferFee": "0.08",
+      "stampDuty": "0.00",
+      "total": "10.08"
+    },
+    "cash": {
+      "available": "1981.92",
+      "reserved": "0.00",
+      "unsettled": "0.00",
+      "receivable": "0.00",
+      "total": "1981.92"
+    },
+    "positions": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "total": "400",
+        "sellable": "400",
+        "reserved": "0",
+        "unsettled": "0"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "total": "400",
+        "sellable": "400",
+        "reserved": "0",
+        "unsettled": "0"
+      },
+      {
+        "assetId": "stock:synthetic.gamma",
+        "total": "0",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "0"
+      }
+    ],
+    "assets": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "fillCount": 1,
+        "fees": {
+          "commission": "5.00",
+          "transferFee": "0.04",
+          "stampDuty": "0.00",
+          "total": "5.04"
+        },
+        "endingPosition": {
+          "total": "400",
+          "sellable": "400",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "fillCount": 1,
+        "fees": {
+          "commission": "5.00",
+          "transferFee": "0.04",
+          "stampDuty": "0.00",
+          "total": "5.04"
+        },
+        "endingPosition": {
+          "total": "400",
+          "sellable": "400",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      },
+      {
+        "assetId": "stock:synthetic.gamma",
+        "fillCount": 0,
+        "fees": {
+          "commission": "0.00",
+          "transferFee": "0.00",
+          "stampDuty": "0.00",
+          "total": "0.00"
+        },
+        "endingPosition": {
+          "total": "0",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      }
+    ],
+    "buyAndHold": {
+      "finalEquity": "11775.91",
+      "cumulativeReturn": "0.177591000000",
+      "reason": null
+    },
+    "fills": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "400",
+        "amount": "4004.00",
+        "commission": "5.00",
+        "transferFee": "0.04",
+        "stampDuty": "0.00",
+        "fees": "5.04",
+        "cashDelta": "-4009.04"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "400",
+        "amount": "4004.00",
+        "commission": "5.00",
+        "transferFee": "0.04",
+        "stampDuty": "0.00",
+        "fees": "5.04",
+        "cashDelta": "-4009.04"
+      }
+    ],
+    "rejections": [
+      {
+        "assetId": "stock:synthetic.gamma",
+        "date": "2024-01-02",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "NO_FREE_POSITION_SLOT"
+      },
+      {
+        "assetId": "stock:synthetic.gamma",
+        "date": "2024-01-03",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "NO_FREE_POSITION_SLOT"
+      },
+      {
+        "assetId": "stock:synthetic.gamma",
+        "date": "2024-01-04",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "NO_FREE_POSITION_SLOT"
+      },
+      {
+        "assetId": "stock:synthetic.gamma",
+        "date": "2024-01-05",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "NO_FREE_POSITION_SLOT"
+      }
+    ],
+    "daily": [
+      {
+        "date": "2024-01-02",
+        "equity": "10000.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1981.92",
+          "reserved": "8018.08",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "10000.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.gamma",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-03",
+        "equity": "10781.92",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1981.92",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1981.92"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "400",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "400"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "400",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "400"
+          },
+          {
+            "assetId": "stock:synthetic.gamma",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-04",
+        "equity": "10781.92",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1981.92",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1981.92"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "400",
+            "sellable": "400",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "400",
+            "sellable": "400",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.gamma",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-05",
+        "equity": "11581.92",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1981.92",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1981.92"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "400",
+            "sellable": "400",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "400",
+            "sellable": "400",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.gamma",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-08",
+        "equity": "11581.92",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1981.92",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1981.92"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "400",
+            "sellable": "400",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "400",
+            "sellable": "400",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.gamma",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      }
+    ],
+    "assumptions": [
+      "cn-stock-demo-fee@1",
+      "cn-stock-one-tick@1",
+      "cn-stock-settlement@1",
+      "cn-stock-report@1",
+      "equal-split@1",
+      "DIVIDEND_TAX_NOT_SIMULATED",
+      "SYNTHETIC_DEMO_ONLY_NOT_LIVE_TRADING"
+    ],
+    "warnings": []
+  },
+  "insufficientCash": {
+    "runDigest": "sha256:0622128801de4cbb6a144b4abb31578acf71da3d6e2c2c3a224617292c8e8ff4",
+    "finalEquity": "2543.99",
+    "metrics": {
+      "cumulativeReturn": "0.017596000000",
+      "maxDrawdown": "0.002404000000",
+      "tradeCount": 1,
+      "winRate": null,
+      "winRateReason": "NO_CLOSED_BATCHES",
+      "excessReturn": "-0.097196000000",
+      "excessReturnReason": null
+    },
+    "fees": {
+      "commission": "5.00",
+      "transferFee": "0.01",
+      "stampDuty": "0.00",
+      "total": "5.01"
+    },
+    "cash": {
+      "available": "1943.99",
+      "reserved": "0.00",
+      "unsettled": "0.00",
+      "receivable": "0.00",
+      "total": "1943.99"
+    },
+    "positions": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "total": "0",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "0"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "total": "100",
+        "sellable": "100",
+        "reserved": "0",
+        "unsettled": "0"
+      }
+    ],
+    "assets": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "fillCount": 0,
+        "fees": {
+          "commission": "0.00",
+          "transferFee": "0.00",
+          "stampDuty": "0.00",
+          "total": "0.00"
+        },
+        "endingPosition": {
+          "total": "0",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "fillCount": 1,
+        "fees": {
+          "commission": "5.00",
+          "transferFee": "0.01",
+          "stampDuty": "0.00",
+          "total": "5.01"
+        },
+        "endingPosition": {
+          "total": "100",
+          "sellable": "100",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      }
+    ],
+    "buyAndHold": {
+      "finalEquity": "2786.98",
+      "cumulativeReturn": "0.114792000000",
+      "reason": null
+    },
+    "fills": [
+      {
+        "assetId": "stock:synthetic.beta",
+        "date": "2024-01-04",
+        "side": "buy",
+        "price": "5.51",
+        "quantity": "100",
+        "amount": "551.00",
+        "commission": "5.00",
+        "transferFee": "0.01",
+        "stampDuty": "0.00",
+        "fees": "5.01",
+        "cashDelta": "-556.01"
+      }
+    ],
+    "rejections": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-02",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "INSUFFICIENT_CASH"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "INSUFFICIENT_CASH"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-04",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "INSUFFICIENT_CASH"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-05",
+        "side": "buy",
+        "quantity": "0",
+        "status": "rejected",
+        "reason": "INSUFFICIENT_CASH"
+      }
+    ],
+    "daily": [
+      {
+        "date": "2024-01-02",
+        "equity": "2500.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "2500.00",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "2500.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-03",
+        "equity": "2500.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1943.99",
+          "reserved": "556.01",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "2500.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-04",
+        "equity": "2493.99",
+        "drawdown": "0.002404000000",
+        "cash": {
+          "available": "1943.99",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1943.99"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "100",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "100"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-05",
+        "equity": "2543.99",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1943.99",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1943.99"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "100",
+            "sellable": "100",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-08",
+        "equity": "2543.99",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1943.99",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1943.99"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "100",
+            "sellable": "100",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      }
+    ],
+    "assumptions": [
+      "cn-stock-demo-fee@1",
+      "cn-stock-one-tick@1",
+      "cn-stock-settlement@1",
+      "cn-stock-report@1",
+      "first-come-first-served@1",
+      "DIVIDEND_TAX_NOT_SIMULATED",
+      "SYNTHETIC_DEMO_ONLY_NOT_LIVE_TRADING"
+    ],
+    "warnings": []
+  },
+  "positionStopLoss": {
+    "runDigest": "sha256:3b9593189cc691ad3850661e220d65cea95f6ee18db12f567f899a43e834a20b",
+    "finalEquity": "4777.03",
+    "metrics": {
+      "cumulativeReturn": "-0.044594000000",
+      "maxDrawdown": "0.080098517614",
+      "tradeCount": 3,
+      "winRate": "0.000000000000",
+      "winRateReason": null,
+      "excessReturn": "0.010614000000",
+      "excessReturnReason": null
+    },
+    "fees": {
+      "commission": "15.00",
+      "transferFee": "0.07",
+      "stampDuty": "0.90",
+      "total": "15.97"
+    },
+    "cash": {
+      "available": "2137.03",
+      "reserved": "0.00",
+      "unsettled": "0.00",
+      "receivable": "0.00",
+      "total": "2137.03"
+    },
+    "positions": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "total": "300",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "300"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "total": "0",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "0"
+      }
+    ],
+    "assets": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "fillCount": 3,
+        "fees": {
+          "commission": "15.00",
+          "transferFee": "0.07",
+          "stampDuty": "0.90",
+          "total": "15.97"
+        },
+        "endingPosition": {
+          "total": "300",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "300"
+        },
+        "positionStopLossTriggers": 1
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "fillCount": 0,
+        "fees": {
+          "commission": "0.00",
+          "transferFee": "0.00",
+          "stampDuty": "0.00",
+          "total": "0.00"
+        },
+        "endingPosition": {
+          "total": "0",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      }
+    ],
+    "buyAndHold": {
+      "finalEquity": "4723.96",
+      "cumulativeReturn": "-0.055208000000",
+      "reason": null
+    },
+    "fills": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "200",
+        "amount": "2002.00",
+        "commission": "5.00",
+        "transferFee": "0.02",
+        "stampDuty": "0.00",
+        "fees": "5.02",
+        "cashDelta": "-2007.02"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-05",
+        "side": "sell",
+        "price": "8.99",
+        "quantity": "200",
+        "amount": "1798.00",
+        "commission": "5.00",
+        "transferFee": "0.02",
+        "stampDuty": "0.90",
+        "fees": "5.92",
+        "cashDelta": "1792.08"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-08",
+        "side": "buy",
+        "price": "8.81",
+        "quantity": "300",
+        "amount": "2643.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "0.00",
+        "fees": "5.03",
+        "cashDelta": "-2648.03"
+      }
+    ],
+    "rejections": [],
+    "daily": [
+      {
+        "date": "2024-01-02",
+        "equity": "5000.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "2992.98",
+          "reserved": "2007.02",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "5000.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-03",
+        "equity": "5192.98",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "2992.98",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "2992.98"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "200",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "200"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-04",
+        "equity": "4812.98",
+        "drawdown": "0.073175710286",
+        "cash": {
+          "available": "2992.98",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "2992.98"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "200",
+            "sellable": "0",
+            "reserved": "200",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-05",
+        "equity": "4785.06",
+        "drawdown": "0.078552199315",
+        "cash": {
+          "available": "344.95",
+          "reserved": "2648.03",
+          "unsettled": "1792.08",
+          "receivable": "0.00",
+          "total": "4785.06"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-08",
+        "equity": "4777.03",
+        "drawdown": "0.080098517614",
+        "cash": {
+          "available": "2137.03",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "2137.03"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "300"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      }
+    ],
+    "assumptions": [
+      "cn-stock-demo-fee@1",
+      "cn-stock-one-tick@1",
+      "cn-stock-settlement@1",
+      "cn-stock-report@1",
+      "first-come-first-served@1",
+      "DIVIDEND_TAX_NOT_SIMULATED",
+      "SYNTHETIC_DEMO_ONLY_NOT_LIVE_TRADING"
+    ],
+    "warnings": []
+  },
+  "portfolioStop": {
+    "runDigest": "sha256:db733bb33dbd4955075e4deece9a4c095bfd924eab800f2a6a2536e88db0fae0",
+    "finalEquity": "7168.75",
+    "metrics": {
+      "cumulativeReturn": "-0.283125000000",
+      "maxDrawdown": "0.283125000000",
+      "tradeCount": 4,
+      "winRate": "0.000000000000",
+      "winRateReason": null,
+      "excessReturn": "-0.033317000000",
+      "excessReturnReason": null
+    },
+    "fees": {
+      "commission": "20.00",
+      "transferFee": "0.15",
+      "stampDuty": "3.10",
+      "total": "23.25"
+    },
+    "cash": {
+      "available": "7168.75",
+      "reserved": "0.00",
+      "unsettled": "0.00",
+      "receivable": "0.00",
+      "total": "7168.75"
+    },
+    "positions": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "total": "0",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "0"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "total": "0",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "0"
+      }
+    ],
+    "assets": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "fillCount": 2,
+        "fees": {
+          "commission": "10.00",
+          "transferFee": "0.08",
+          "stampDuty": "1.72",
+          "total": "11.80"
+        },
+        "endingPosition": {
+          "total": "0",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 1
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "fillCount": 2,
+        "fees": {
+          "commission": "10.00",
+          "transferFee": "0.07",
+          "stampDuty": "1.38",
+          "total": "11.45"
+        },
+        "endingPosition": {
+          "total": "0",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 1
+      }
+    ],
+    "buyAndHold": {
+      "finalEquity": "7501.92",
+      "cumulativeReturn": "-0.249808000000",
+      "reason": null
+    },
+    "fills": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "500",
+        "amount": "5005.00",
+        "commission": "5.00",
+        "transferFee": "0.05",
+        "stampDuty": "0.00",
+        "fees": "5.05",
+        "cashDelta": "-5010.05"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-05",
+        "side": "sell",
+        "price": "6.89",
+        "quantity": "500",
+        "amount": "3445.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "1.72",
+        "fees": "6.75",
+        "cashDelta": "3438.25"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "400",
+        "amount": "4004.00",
+        "commission": "5.00",
+        "transferFee": "0.04",
+        "stampDuty": "0.00",
+        "fees": "5.04",
+        "cashDelta": "-4009.04"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "date": "2024-01-05",
+        "side": "sell",
+        "price": "6.89",
+        "quantity": "400",
+        "amount": "2756.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "1.38",
+        "fees": "6.41",
+        "cashDelta": "2749.59"
+      }
+    ],
+    "rejections": [],
+    "daily": [
+      {
+        "date": "2024-01-02",
+        "equity": "10000.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "980.91",
+          "reserved": "9019.09",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "10000.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-03",
+        "equity": "9980.91",
+        "drawdown": "0.001909000000",
+        "cash": {
+          "available": "980.91",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "980.91"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "500",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "500"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "400",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "400"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-04",
+        "equity": "7280.91",
+        "drawdown": "0.271909000000",
+        "cash": {
+          "available": "980.91",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "980.91"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "500",
+            "sellable": "0",
+            "reserved": "500",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "400",
+            "sellable": "0",
+            "reserved": "400",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-05",
+        "equity": "7168.75",
+        "drawdown": "0.283125000000",
+        "cash": {
+          "available": "980.91",
+          "reserved": "0.00",
+          "unsettled": "6187.84",
+          "receivable": "0.00",
+          "total": "7168.75"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-08",
+        "equity": "7168.75",
+        "drawdown": "0.283125000000",
+        "cash": {
+          "available": "7168.75",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "7168.75"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      }
+    ],
+    "assumptions": [
+      "cn-stock-demo-fee@1",
+      "cn-stock-one-tick@1",
+      "cn-stock-settlement@1",
+      "cn-stock-report@1",
+      "first-come-first-served@1",
+      "DIVIDEND_TAX_NOT_SIMULATED",
+      "SYNTHETIC_DEMO_ONLY_NOT_LIVE_TRADING"
+    ],
+    "warnings": []
+  },
+  "suspension": {
+    "runDigest": "sha256:9269a8f3cbb2310c86d638e012bd71d2e76960bdcdb09eb0a9870505f07f5cbf",
+    "finalEquity": "12193.51",
+    "metrics": {
+      "cumulativeReturn": "0.219351000000",
+      "maxDrawdown": "0.000000000000",
+      "tradeCount": 3,
+      "winRate": "1.000000000000",
+      "winRateReason": null,
+      "excessReturn": "0.089159000000",
+      "excessReturnReason": null
+    },
+    "fees": {
+      "commission": "15.00",
+      "transferFee": "0.11",
+      "stampDuty": "2.38",
+      "total": "17.49"
+    },
+    "cash": {
+      "available": "3983.94",
+      "reserved": "0.00",
+      "unsettled": "4759.57",
+      "receivable": "0.00",
+      "total": "8743.51"
+    },
+    "positions": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "total": "0",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "0"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "total": "300",
+        "sellable": "300",
+        "reserved": "0",
+        "unsettled": "0"
+      }
+    ],
+    "assets": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "fillCount": 2,
+        "fees": {
+          "commission": "10.00",
+          "transferFee": "0.08",
+          "stampDuty": "2.38",
+          "total": "12.46"
+        },
+        "endingPosition": {
+          "total": "0",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "fillCount": 1,
+        "fees": {
+          "commission": "5.00",
+          "transferFee": "0.03",
+          "stampDuty": "0.00",
+          "total": "5.03"
+        },
+        "endingPosition": {
+          "total": "300",
+          "sellable": "300",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      }
+    ],
+    "buyAndHold": {
+      "finalEquity": "11301.92",
+      "cumulativeReturn": "0.130192000000",
+      "reason": null
+    },
+    "fills": [
+      {
+        "assetId": "stock:synthetic.beta",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "300",
+        "amount": "3003.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "0.00",
+        "fees": "5.03",
+        "cashDelta": "-3008.03"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "300",
+        "amount": "3003.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "0.00",
+        "fees": "5.03",
+        "cashDelta": "-3008.03"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-08",
+        "side": "sell",
+        "price": "15.89",
+        "quantity": "300",
+        "amount": "4767.00",
+        "commission": "5.00",
+        "transferFee": "0.05",
+        "stampDuty": "2.38",
+        "fees": "7.43",
+        "cashDelta": "4759.57"
+      }
+    ],
+    "rejections": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-04",
+        "side": "sell",
+        "quantity": "300",
+        "status": "rejected",
+        "reason": "SUSPENDED"
+      }
+    ],
+    "daily": [
+      {
+        "date": "2024-01-02",
+        "equity": "10000.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "6016.06",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "10000.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-03",
+        "equity": "12083.94",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "3983.94"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "0",
+            "reserved": "300",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "300"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-04",
+        "equity": "12083.94",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "3983.94"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-05",
+        "equity": "12083.94",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "3983.94"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "0",
+            "reserved": "300",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-08",
+        "equity": "12193.51",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "3983.94",
+          "reserved": "0.00",
+          "unsettled": "4759.57",
+          "receivable": "0.00",
+          "total": "8743.51"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      }
+    ],
+    "assumptions": [
+      "cn-stock-demo-fee@1",
+      "cn-stock-one-tick@1",
+      "cn-stock-settlement@1",
+      "cn-stock-report@1",
+      "first-come-first-served@1",
+      "DIVIDEND_TAX_NOT_SIMULATED",
+      "SYNTHETIC_DEMO_ONLY_NOT_LIVE_TRADING"
+    ],
+    "warnings": []
+  },
+  "oddLotExit": {
+    "runDigest": "sha256:1b207066850da0a6c590cc631f934182725b4564a4d51ff0bb47aad14014741e",
+    "finalEquity": "5291.97",
+    "metrics": {
+      "cumulativeReturn": "0.058394000000",
+      "maxDrawdown": "0.000000000000",
+      "tradeCount": 1,
+      "winRate": null,
+      "winRateReason": "NO_CLOSED_BATCHES",
+      "excessReturn": "0.025602000000",
+      "excessReturnReason": null
+    },
+    "fees": {
+      "commission": "5.00",
+      "transferFee": "0.03",
+      "stampDuty": "0.00",
+      "total": "5.03"
+    },
+    "cash": {
+      "available": "1991.97",
+      "reserved": "0.00",
+      "unsettled": "0.00",
+      "receivable": "0.00",
+      "total": "1991.97"
+    },
+    "positions": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "total": "300",
+        "sellable": "300",
+        "reserved": "0",
+        "unsettled": "0"
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "total": "0",
+        "sellable": "0",
+        "reserved": "0",
+        "unsettled": "0"
+      }
+    ],
+    "assets": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "fillCount": 1,
+        "fees": {
+          "commission": "5.00",
+          "transferFee": "0.03",
+          "stampDuty": "0.00",
+          "total": "5.03"
+        },
+        "endingPosition": {
+          "total": "300",
+          "sellable": "300",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      },
+      {
+        "assetId": "stock:synthetic.beta",
+        "fillCount": 0,
+        "fees": {
+          "commission": "0.00",
+          "transferFee": "0.00",
+          "stampDuty": "0.00",
+          "total": "0.00"
+        },
+        "endingPosition": {
+          "total": "0",
+          "sellable": "0",
+          "reserved": "0",
+          "unsettled": "0"
+        },
+        "positionStopLossTriggers": 0
+      }
+    ],
+    "buyAndHold": {
+      "finalEquity": "5163.96",
+      "cumulativeReturn": "0.032792000000",
+      "reason": null
+    },
+    "fills": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "buy",
+        "price": "10.01",
+        "quantity": "300",
+        "amount": "3003.00",
+        "commission": "5.00",
+        "transferFee": "0.03",
+        "stampDuty": "0.00",
+        "fees": "5.03",
+        "cashDelta": "-3008.03"
+      }
+    ],
+    "rejections": [
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-03",
+        "side": "sell",
+        "quantity": "150",
+        "status": "rejected",
+        "reason": "ODD_LOT_NOT_FULL_REMAINDER"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-04",
+        "side": "sell",
+        "quantity": "150",
+        "status": "rejected",
+        "reason": "ODD_LOT_NOT_FULL_REMAINDER"
+      },
+      {
+        "assetId": "stock:synthetic.alpha",
+        "date": "2024-01-05",
+        "side": "sell",
+        "quantity": "150",
+        "status": "rejected",
+        "reason": "ODD_LOT_NOT_FULL_REMAINDER"
+      }
+    ],
+    "daily": [
+      {
+        "date": "2024-01-02",
+        "equity": "5000.00",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1991.97",
+          "reserved": "3008.03",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "5000.00"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-03",
+        "equity": "5291.97",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1991.97",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1991.97"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "300"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-04",
+        "equity": "5291.97",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1991.97",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1991.97"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-05",
+        "equity": "5291.97",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1991.97",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1991.97"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      },
+      {
+        "date": "2024-01-08",
+        "equity": "5291.97",
+        "drawdown": "0.000000000000",
+        "cash": {
+          "available": "1991.97",
+          "reserved": "0.00",
+          "unsettled": "0.00",
+          "receivable": "0.00",
+          "total": "1991.97"
+        },
+        "positions": [
+          {
+            "assetId": "stock:synthetic.alpha",
+            "total": "300",
+            "sellable": "300",
+            "reserved": "0",
+            "unsettled": "0"
+          },
+          {
+            "assetId": "stock:synthetic.beta",
+            "total": "0",
+            "sellable": "0",
+            "reserved": "0",
+            "unsettled": "0"
+          }
+        ]
+      }
+    ],
+    "assumptions": [
+      "cn-stock-demo-fee@1",
+      "cn-stock-one-tick@1",
+      "cn-stock-settlement@1",
+      "cn-stock-report@1",
+      "first-come-first-served@1",
+      "DIVIDEND_TAX_NOT_SIMULATED",
+      "SYNTHETIC_DEMO_ONLY_NOT_LIVE_TRADING"
+    ],
+    "warnings": []
+  }
+}
