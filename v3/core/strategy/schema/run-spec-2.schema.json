@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stock-race.local/schema/run-spec-2.schema.json",
+  "title": "RunSpec2",
+  "description": "Constrained portfolio run spec (S4 supplement chapter 12). Single-asset RunSpec 1.0.0 remains frozen in run-spec.schema.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runSpecVersion", "strategy", "assets", "data", "warmup", "account", "execution", "engine"],
+  "properties": {
+    "runSpecVersion": {"const": "2.0.0"},
+    "strategy": {"type": "object", "additionalProperties": false, "required": ["id", "revision", "digest"], "properties": {"id": {"type": "string"}, "revision": {"type": "integer", "minimum": 1, "maximum": 9007199254740991}, "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}}},
+    "assets": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assetId", "assetType", "executionProfile"],
+        "properties": {
+          "assetId": {"type": "string", "minLength": 1, "maxLength": 256},
+          "assetType": {"const": "stock"},
+          "executionProfile": {"const": "cn-stock@1"}
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshots", "start", "end"],
+      "properties": {
+        "snapshots": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["assetId", "snapshotDigest"],
+            "properties": {
+              "assetId": {"type": "string", "minLength": 1, "maxLength": 256},
+              "snapshotDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+            }
+          }
+        },
+        "start": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "end": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
+      }
+    },
+    "warmup": {"type": "object", "additionalProperties": false, "required": ["extraObservations"], "properties": {"extraObservations": {"$ref": "common.schema.json#/$defs/nonNegativeSafeInteger"}}},
+    "account": {"type": "object", "additionalProperties": false, "required": ["initialCash", "currency"], "properties": {"initialCash": {"$ref": "common.schema.json#/$defs/decimalString"}, "currency": {"const": "CNY"}}},
+    "execution": {"type": "object", "additionalProperties": false, "required": ["feeProfileVersion", "slippageProfileVersion", "visibilityRuleVersion", "settlementProfileVersion", "reportProfileVersion"], "properties": {"feeProfileVersion": {"const": "cn-stock-demo-fee@1"}, "slippageProfileVersion": {"const": "cn-stock-one-tick@1"}, "visibilityRuleVersion": {"const": "asset-default@1"}, "settlementProfileVersion": {"const": "cn-stock-settlement@1"}, "reportProfileVersion": {"const": "cn-stock-report@1"}}},
+    "engine": {"type": "object", "additionalProperties": false, "required": ["engineVersion", "registryVersion", "canonicalizationVersion", "decimalProfileVersion", "roundingProfileVersion", "indicatorArithmeticProfileVersion"], "properties": {"engineVersion": {"const": "2.0.0"}, "registryVersion": {"const": "1.0.0"}, "canonicalizationVersion": {"const": "canonicalization@1"}, "decimalProfileVersion": {"const": "decimal@1"}, "roundingProfileVersion": {"const": "rounding@1"}, "indicatorArithmeticProfileVersion": {"const": "indicator-arithmetic@1"}}}
+  }
+}

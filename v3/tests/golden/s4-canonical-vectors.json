@@ -1,0 +1,185 @@
+[
+  {
+    "caseId": "draft2-fcfs",
+    "kind": "strategy-draft-2",
+    "input": {
+      "schemaVersion": "2.0.0",
+      "name": "S4 two-asset probe",
+      "universe": {
+        "assets": [
+          "stock:synthetic.beta",
+          "stock:synthetic.alpha"
+        ]
+      },
+      "indicators": {
+        "m": {
+          "use": "macd@1",
+          "params": {
+            "fast": 12,
+            "slow": 26,
+            "signal": 9
+          }
+        }
+      },
+      "entry": {
+        "gt": [
+          {
+            "ref": "close"
+          },
+          {
+            "const": "1"
+          }
+        ]
+      },
+      "exits": [
+        {
+          "lt": [
+            {
+              "ref": "close"
+            },
+            {
+              "const": "0.5"
+            }
+          ]
+        }
+      ],
+      "risk": {
+        "positionStopLossFraction": "0.08",
+        "portfolioStopFraction": "0.15"
+      },
+      "allocation": {
+        "template": "first-come-first-served@1",
+        "params": {
+          "maxPerAssetCashFraction": "0.4"
+        }
+      },
+      "position": {
+        "side": "long",
+        "allowAdd": false,
+        "exitSize": {
+          "positionFraction": "1.00"
+        }
+      }
+    },
+    "canonical": "{\"allocation\":{\"params\":{\"maxPerAssetCashFraction\":\"0.400000000000\"},\"template\":\"first-come-first-served@1\"},\"entry\":{\"gt\":[{\"ref\":\"close\"},{\"const\":\"1.000000000000\"}]},\"exits\":[{\"lt\":[{\"ref\":\"close\"},{\"const\":\"0.500000000000\"}]}],\"indicators\":{\"m\":{\"params\":{\"fast\":12,\"signal\":9,\"slow\":26},\"use\":\"macd@1\"}},\"name\":\"S4 two-asset probe\",\"position\":{\"allowAdd\":false,\"exitSize\":{\"positionFraction\":\"1.000000000000\"},\"side\":\"long\"},\"risk\":{\"portfolioStopFraction\":\"0.150000000000\",\"positionStopLossFraction\":\"0.080000000000\"},\"schemaVersion\":\"2.0.0\",\"universe\":{\"assets\":[\"stock:synthetic.beta\",\"stock:synthetic.alpha\"]}}",
+    "digest": "sha256:1087778e8b215fe99e7aa25ff5c973ad645696027abbb19963e2d2ad5e625cfd"
+  },
+  {
+    "caseId": "draft2-equal-split",
+    "kind": "strategy-draft-2",
+    "input": {
+      "schemaVersion": "2.0.0",
+      "name": "Equal split probe",
+      "universe": {
+        "assets": [
+          "stock:synthetic.alpha",
+          "stock:synthetic.gamma"
+        ]
+      },
+      "indicators": {},
+      "entry": {
+        "gt": [
+          {
+            "ref": "close"
+          },
+          {
+            "const": "1"
+          }
+        ]
+      },
+      "exits": [
+        {
+          "lt": [
+            {
+              "ref": "close"
+            },
+            {
+              "const": "0.5"
+            }
+          ]
+        }
+      ],
+      "risk": {
+        "positionStopLossFraction": "0.150",
+        "portfolioStopFraction": "0.2000"
+      },
+      "allocation": {
+        "template": "equal-split@1",
+        "params": {
+          "maxPositions": 3
+        }
+      },
+      "position": {
+        "side": "long",
+        "allowAdd": false,
+        "exitSize": {
+          "positionFraction": "1.0"
+        }
+      }
+    },
+    "canonical": "{\"allocation\":{\"params\":{\"maxPositions\":3},\"template\":\"equal-split@1\"},\"entry\":{\"gt\":[{\"ref\":\"close\"},{\"const\":\"1.000000000000\"}]},\"exits\":[{\"lt\":[{\"ref\":\"close\"},{\"const\":\"0.500000000000\"}]}],\"indicators\":{},\"name\":\"Equal split probe\",\"position\":{\"allowAdd\":false,\"exitSize\":{\"positionFraction\":\"1.000000000000\"},\"side\":\"long\"},\"risk\":{\"portfolioStopFraction\":\"0.200000000000\",\"positionStopLossFraction\":\"0.150000000000\"},\"schemaVersion\":\"2.0.0\",\"universe\":{\"assets\":[\"stock:synthetic.alpha\",\"stock:synthetic.gamma\"]}}",
+    "digest": "sha256:bb5ddd091d9e2c2491ff0dae5f83fb341048f165ff9fc6384f125ead191f8579"
+  },
+  {
+    "caseId": "run-spec-2-sorted-normalization",
+    "kind": "run-spec-2",
+    "input": {
+      "runSpecVersion": "2.0.0",
+      "strategy": {
+        "id": "srv_s4probe",
+        "revision": 1,
+        "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "assets": [
+        {
+          "assetId": "stock:synthetic.beta",
+          "assetType": "stock",
+          "executionProfile": "cn-stock@1"
+        },
+        {
+          "assetId": "stock:synthetic.alpha",
+          "assetType": "stock",
+          "executionProfile": "cn-stock@1"
+        }
+      ],
+      "data": {
+        "snapshots": [
+          {
+            "assetId": "stock:synthetic.beta",
+            "snapshotDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+          },
+          {
+            "assetId": "stock:synthetic.alpha",
+            "snapshotDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          }
+        ],
+        "start": "2024-01-02",
+        "end": "2024-12-31"
+      },
+      "warmup": {
+        "extraObservations": 0
+      },
+      "account": {
+        "initialCash": "100000",
+        "currency": "CNY"
+      },
+      "execution": {
+        "feeProfileVersion": "cn-stock-demo-fee@1",
+        "slippageProfileVersion": "cn-stock-one-tick@1",
+        "visibilityRuleVersion": "asset-default@1",
+        "settlementProfileVersion": "cn-stock-settlement@1",
+        "reportProfileVersion": "cn-stock-report@1"
+      },
+      "engine": {
+        "engineVersion": "2.0.0",
+        "registryVersion": "1.0.0",
+        "canonicalizationVersion": "canonicalization@1",
+        "decimalProfileVersion": "decimal@1",
+        "roundingProfileVersion": "rounding@1",
+        "indicatorArithmeticProfileVersion": "indicator-arithmetic@1"
+      }
+    },
+    "canonical": "{\"account\":{\"currency\":\"CNY\",\"initialCash\":\"100000.00\"},\"assets\":[{\"assetId\":\"stock:synthetic.alpha\",\"assetType\":\"stock\",\"executionProfile\":\"cn-stock@1\"},{\"assetId\":\"stock:synthetic.beta\",\"assetType\":\"stock\",\"executionProfile\":\"cn-stock@1\"}],\"data\":{\"end\":\"2024-12-31\",\"snapshots\":[{\"assetId\":\"stock:synthetic.alpha\",\"snapshotDigest\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\"},{\"assetId\":\"stock:synthetic.beta\",\"snapshotDigest\":\"sha256:2222222222222222222222222222222222222222222222222222222222222222\"}],\"start\":\"2024-01-02\"},\"engine\":{\"canonicalizationVersion\":\"canonicalization@1\",\"decimalProfileVersion\":\"decimal@1\",\"engineVersion\":\"2.0.0\",\"indicatorArithmeticProfileVersion\":\"indicator-arithmetic@1\",\"registryVersion\":\"1.0.0\",\"roundingProfileVersion\":\"rounding@1\"},\"execution\":{\"feeProfileVersion\":\"cn-stock-demo-fee@1\",\"reportProfileVersion\":\"cn-stock-report@1\",\"settlementProfileVersion\":\"cn-stock-settlement@1\",\"slippageProfileVersion\":\"cn-stock-one-tick@1\",\"visibilityRuleVersion\":\"asset-default@1\"},\"runSpecVersion\":\"2.0.0\",\"strategy\":{\"digest\":\"sha256:0000000000000000000000000000000000000000000000000000000000000000\",\"id\":\"srv_s4probe\",\"revision\":1},\"warmup\":{\"extraObservations\":0}}",
+    "digest": "sha256:de18c846c87d5eca49c4aced5b07f9b6222a2317b9c73530b2e53a463f013914"
+  }
+]

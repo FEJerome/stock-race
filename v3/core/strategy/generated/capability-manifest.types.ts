@@ -6,7 +6,7 @@
  */
 
 export interface CapabilityManifest {
-  manifestVersion: "1.0.0";
+  manifestVersion: "1.1.0";
   registryVersion: "1.0.0";
   /**
    * @minItems 1
@@ -15,6 +15,10 @@ export interface CapabilityManifest {
   indicators: Indicator[];
   seriesFunctions: SeriesFunction[];
   contextRefs: ContextRef[];
+  /**
+   * @minItems 1
+   */
+  allocationTemplates: [AllocationTemplate, ...AllocationTemplate[]];
 }
 export interface Indicator {
   key: string;
@@ -73,4 +77,19 @@ export interface ContextRef {
    * @minItems 1
    */
   observationKinds: ["ohlcv" | "nav" | "index", ...("ohlcv" | "nav" | "index")[]];
+}
+export interface AllocationTemplate {
+  key: string;
+  version: number;
+  use: string;
+  paramSchema: {
+    [k: string]: Parameter | DecimalParameter;
+  };
+  description: string;
+}
+export interface DecimalParameter {
+  type: "decimal";
+  minimum: string;
+  maximum: string;
+  description?: string;
 }

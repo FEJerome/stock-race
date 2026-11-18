@@ -929,3 +929,100 @@ v3-data/live/<liveRunId>/
 - profile 参数维度共九项：**交易日历／交易时段（含盘前盘后开关）／结算 T+n／最小交易单位（整股或碎股）／当日买可卖／费用组件表／价格限制规则（涨跌停或熔断）／公司行动处理／货币与精度**。
 - **本版只声明扩展点，不实现美股**（承 2026-10-27 不为未来提前建设的先例）；本节不构成任何美股相关施工授权。
 - 未来新增美股＝新市场 profile 配置＋新数据源适配器＋新交易日历，**内核零改**；任何新 profile 启用前仍须单独授权，并过既有 golden、契约测试与独立复审质量闸。
+
+---
+
+## 12. S4 Supplement: Constrained Portfolio 2.0.0 Schema Family (2026-11-17, pending maintainer final wording review)
+
+This chapter is an **English supplement** to the frozen Chinese canon above. It records the maintainer decisions of 2026-11-17 (S4 product direction, supplement decisions, and PR-0 import rulings) as an incremental contract revision; per the S4 plan resolution T1 (option a), it introduces a **parallel 2.0.0 schema family** for constrained portfolios. **Nothing in Chapters 1–11 is amended or re-opened by this chapter.** This chapter does not authorize implementation beyond the PR-1 scope (schemas, generated types, canonical vectors, and compatibility guard tests); the portfolio engine, interview state machine, and host wiring are later batches under their own authorization.
+
+### 12.1 Freezing and coexistence rules
+
+- The 1.0.0 schema family (`strategy-draft`, `run-spec`, `report`, `run-event`, `readback`), all existing goldens/vectors, and the single-asset engine path are **byte-frozen**. Existing behavior is neither changed nor relaxed.
+- New portfolio capability ships as a parallel **2.0.0 family**: `strategy-draft-2`, `run-spec-2`, `report-2`, plus a new `sensitivity-report` artifact. Engine and application layers dispatch on `schemaVersion` / `runSpecVersion`; the 1.0.0 code paths remain untouched.
+- The `CapabilityManifest` gains an `allocationTemplates` section (additive, minor bump to `manifestVersion` `1.1.0`). Indicators, series functions, context refs, and the registry are unchanged.
+- Run events are **not** version-bumped: asset attribution travels in `inputRefs` (`asset: <assetId>`) and `payload` of the existing `RunEvent` 1.0.0 schema, and one portfolio-level `MarkToMarket` supplements the per-asset marks.
+- All new drafts, run specs, and reports go through the existing chain: JSON parse → JSON Schema (no extra fields) → semantic/registry validation → canonical normalization → digest → authoritative readback → user confirmation. No hidden defaults are introduced anywhere in this chapter; the AI must never pick parameters on behalf of the user.
+
+### 12.2 Four-cell StrategyDraft 2.0.0
+
+`StrategyDraft` 2.0.0 carries the four product cells; **every cell is required and has no factory default**. A draft missing any cell is invalid and cannot be confirmed or run.
+
+```jsonc
+{
+  "schemaVersion": "2.0.0",
+  "name": "…",
+  "universe": { "assets": ["stock:cn-a.sh.600519", "stock:cn-a.sh.601318"] }, // Cell ①, 2–5 assets
+  "indicators": { /* identical semantics to 1.0.0, evaluated per asset */ },
+  "entry": { /* BoolExpr, evaluated per asset */ },
+  "exits": [ /* ordered, identical semantics to 1.0.0 */ ],
+  "risk": {                              // Cell ③ dual stop-loss, both required, no defaults
+    "positionStopLossFraction": "0.08",  // per-asset: close < entryPrice×(1−x) → forced exit of that asset at next open
+    "portfolioStopFraction": "0.15"      // portfolio: equity drawdown from peak ≥ y → sell all sellable positions at next
+                                         // open, record PORTFOLIO_STOP_LOSS, and stop opening new positions afterwards
+  },
+  "allocation": {                        // Cell ④ explicit scheduling, both fields required, no defaults
+    "template": "first-come-first-served@1", // or "equal-split@1"
+    "params": { "maxPerAssetCashFraction": "0.40" } // equal-split@1: { "maxPositions": 3 }
+  },
+  "position": { "side": "long", "allowAdd": false, "exitSize": { "positionFraction": "1.00" } }
+}
+```
+
+- Cell ① `universe.assets`: 2–5 asset ids (schema `minItems: 2`, `maxItems: 5`). The interview narrows a user-given category down to an explicit 2–5 asset list; the engine never selects assets itself. **The authored order of `universe.assets` is digest-significant**: 2.0.0 draft canonicalization intentionally does not sort the universe (only RunSpec `assets`/`snapshots` are sorted, §12.4); reordering the list is a semantic change that produces a different `strategyDigest`.
+- Cells ② (`indicators`/`entry`/`exits`) reuse the 1.0.0 AST semantics unchanged and are evaluated per asset with per-asset context refs; `account.availableCash` refers to the unified portfolio cash pool.
+- Cell ③ dual stop-loss: `positionStopLossFraction` is measured against that asset's cost price; `portfolioStopFraction` is measured against portfolio equity drawdown from its historical peak. Both are decimal-string `Rate` values chosen and owned by the user during the interview; the system ships no default stop-loss.
+- Cell ④ replaces 1.0.0's `position.entrySize.cashFraction`. This is a deliberate breaking change and the reason the major version rises to 2.0.0; 1.0.0 gains no new fields. Exactly two scheduling templates exist in this batch; priority-ordered scheduling is deferred. The engine contains **no** capital-allocation logic outside the declared template + params. The model may only clarify template choices and parameter meanings (neutral options with consequence explanations); it must never recommend an "optimal" allocation, and the interview must not fill any cell on the user's behalf (blank cell ⇒ keep asking; all four cells blank ⇒ no strategy card, no run).
+- `position` keeps `side: "long"` and `allowAdd: false` as consts; only `exitSize` remains.
+
+### 12.3 Interview envelope note on §6.1 (resolution T2, option a)
+
+Section 6.1 states the model port "only returns untrusted StrategyDraft JSON". For the four-cell interview (slot filling) the model must also be allowed to **ask clarifying questions**. Resolution: the adapter's `rawText` carries a JSON envelope `{"kind":"question","text":"…"}` or `{"kind":"draft","draft":{…}}`. The application validates the envelope; only the `draft` branch enters the existing validation chain (schema → semantic → canonical → readback), and question turns never bypass validation. The port signature, provenance, desensitization rules, and the two-round repair budget are unchanged. This note constrains the reading of §6.1 for the interview flow only; single-shot drafting behavior is unaffected.
+
+### 12.4 RunSpec 2.0.0
+
+- `asset` (single object) becomes `assets`: an array of 2–5 objects with the same shape as 1.0.0's `asset` (`assetId`, `assetType: "stock"`, `executionProfile: "cn-stock@1"`).
+- `data.snapshotDigest` becomes `data.snapshots`: `[{ "assetId": "…", "snapshotDigest": "sha256:…" }]` alongside unchanged `start`/`end`. Assets are referenced **only** through frozen snapshot digests — synthetic slice fixtures or real A-share snapshots imported under SR-023 (asset ids of the form `stock:cn-a.<exchange>.<code>`), never live market access.
+- `engine.engineVersion` is pinned to `"2.0.0"`; all other version pins (`registryVersion`, `canonicalizationVersion`, execution profiles, warmup shape, account shape) are unchanged from 1.0.0.
+- Canonical normalization sorts `assets` and `data.snapshots` by `assetId`, so identical semantics always yield an identical `runDigest`. `runDigest = SHA256(canonical(RunSpec))` and idempotent re-run semantics (§2.4, §5.6) are unchanged.
+- The compare gate (§3.7) is extended naturally: engine/registry/canonicalization versions must match, and the **ordered asset set and ordered snapshot set** (after canonical sorting) must be identical, along with range and initial cash. Cross-version (1.0.0 ↔ 2.0.0) comparison is rejected as before.
+
+### 12.5 Real snapshots, warmup prefix, suspension, and point-in-time adjustment
+
+- **Real snapshot references.** Portfolio runs consume immutable `DataSnapshot` files (§3.5) already imported and reconciled under the SR-023 pipeline; the RunSpec only names their digests. Each asset's snapshot individually satisfies the §3.5 hard rules; blocking `qualityIssues` keep a snapshot non-runnable.
+- **Warmup prefix.** Real A-share acceptance snapshots are fetched with a 2023 prefix ahead of a 2024 run window (ruling T-4), so 2024 starts satisfy `INSUFFICIENT_WARMUP` diagnostics (§5.2) instead of failing at the first bar. The warmup recursion itself is unchanged; `warmup.extraObservations` semantics are unchanged.
+- **Suspension.** A session with no bar (suspended) contributes no evaluation and no fills for that asset on that day; the other assets proceed on the union trading calendar. Valuation of a suspended asset may carry the last price only with an explicit stale mark (§5.5); no forward fill, no zero prices.
+- **Point-in-time adjustment (`adjustment-formula@1`).** Signal series use importer-computed point-in-time adjusted prices; fills and the ledger use raw prices and real corporate-action events (§5.2, §7.2.3). With snapshot freeze end `E` and corporate-action set `A`, each ex-date `e` defines a single-day factor `f_e = (C_prev(e) − cashPerShare_e) / C_prev(e) / (1 + ratio_e)`, where `C_prev(e)` is the last **trading** session's raw close before `e` from the frozen raw data (never the source `preclose`), `ratio_e` is the combined bonus/transfer ratio (`0` when none), and a same-day cash+share event merges into one `f_e`. The cumulative factor and signal price at day `d` are `AF(d) = Π { f_e | e ∈ A, d < e ≤ E }` and `signal(d) = round_HALF_UP_6(raw(d) × AF(d))`. Computation uses ≥28-digit decimal precision; intermediate factor-chain values are not quantized — only the final signal value is HALF_UP-quantized to scale 6, matching the TS `rounding@1` financial boundary. Suspended days carry no bar and do not participate in the factor chain. `E` is the frozen data cutoff fixed at import time and never re-anchored during runs; source-end `qfq` series are reconciliation references only and never enter a snapshot. Any change to anchor, rounding, pre-tax basis, or ratio composition rules requires a new formula version string.
+
+### 12.6 Readback and confirmation
+
+- The authoritative readback (§3.3) gains three clause groups for 2.0.0 drafts: `/universe` (managed assets), `/risk` (both stop-loss lines with their meanings), and `/allocation` (template name and every parameter). Each clause keeps an `astPath` back-reference; existing 1.0.0 clause templates are byte-unchanged (readback-v1 golden guard).
+- Confirmation keeps the `expectedDigest` gate and the `ConfirmedRevision{strategyId,revision,digest}` shape unchanged. The user signs the full four-cell card plus the digest; the strategy card button stays disabled until all four cells are filled.
+- `strategyDigest = SHA256(canonical(2.0.0 draft))` covers all four cells; store layout (`v3-data/strategies/<digest>/`) is unchanged.
+
+### 12.7 Report 2.0.0 and the sensitivity (overfitting) gate
+
+- `Report` 2.0.0 preserves every 1.0.0 field semantic. `snapshotDigest` becomes per-asset `snapshots: [{assetId, snapshotDigest}]`, and a new `assets[]` section records per-asset fill counts, per-asset fees, per-asset ending positions, and per-asset stop-loss trigger counts (the fill records themselves live in the top-level `fills[]`, each carrying its asset attribution in `inputRefs`/`payload`). Portfolio-level headline metrics (cumulative return, max drawdown, trade count, excess vs buy-and-hold) keep their 1.0.0 definitions; the buy-and-hold benchmark is computed per asset under the same assumptions and aggregated into the single portfolio-level `buyAndHold` block the schema carries.
+- **Position attribution is explicit, never positional.** Every entry of `daily[].positions[]` and of the top-level `positions[]` carries its own `assetId` field (schema `$defs/assetPosition`); no index- or ordering-based attribution convention exists, and consumers must not infer asset identity from array order. The `assets[]` section keeps `assetId` at entry level, with its `endingPosition` inheriting that attribution.
+- **Sensitivity stays out of the core Report.** A new application use case `analyze-sensitivity` perturbs each numeric parameter of a confirmed strategy by a fixed rule (integer parameters ±1; ratio parameters ±one minimum step; decimal-string preserving), runs each variant as a complete deterministic run with its own `runDigest`, and assembles a standalone `SensitivityReport` artifact (schema 1.0.0) persisted under `v3-data`. The variant count is hard-capped (≤ 8 for this slice).
+- A variant is a **flip** when the cumulative-return sign changes or the excess-vs-buy-hold conclusion reverses relative to the base run. Any flip forces the report verdict to "strategy untrustworthy: small parameter changes swing the outcome", displayed prominently in the review scene; no smoothing or averaging across variants is allowed.
+- Because sensitivity is an analysis artifact, it never enters `reportDigest`/golden semantics of core reports, keeping the report contract stable.
+
+### 12.8 S4 supplement non-goals and guard rails
+
+- This chapter does not implement the portfolio engine, does not modify `core/engine/engine.ts` or any 1.0.0 path, and does not wire UI or hosts.
+- No ETF/fund/index execution, no priority-ordered template, no manager-pool random resumes, no live/real-time semantics are introduced here.
+- Compatibility guard tests must assert that all pre-S4 goldens and vectors remain byte-identical under the new code, and that 1.0.0 draft/confirm/run flows keep their existing digests.
+
+### 12.9 Semantic-stage obligations for the 2.0.0 family (schema cannot express; PR-2/PR-3 acceptance nails)
+
+JSON Schema cannot express uniqueness-by-key, cross-field set equality, or relative numeric bounds. The following obligations therefore belong to the **semantic validation stage** (§3.3 chain: schema → semantic/registry → canonical → digest → readback → confirm), and are registered here as **acceptance nails for PR-2/PR-3**: a 2.0.0 document that is well-formed at the schema stage but violates any item below must be **rejected before canonicalization, digest, readback, or confirmation** — it must never become digestible or signable. A 1.0.0 precedent exists (`semantic-validator.ts`, e.g. `INVALID_POSITION_FRACTION`); the 2.0.0 semantic stage is its portfolio extension, not a new concept.
+
+1. **Per-array `assetId` uniqueness.** Within `RunSpec2.assets` and within `RunSpec2.data.snapshots`, no `assetId` may appear more than once — including the case of the same `assetId` bound to two **different** `snapshotDigest`s (schema `uniqueItems` is deep equality and provably cannot catch this). Reject with an explicit duplicate-asset error naming the array and the assetId.
+2. **1:1 binding between `assets` and `data.snapshots`.** The set of `assetId`s in `assets` must equal the set of `assetId`s in `data.snapshots` exactly: every scheduled asset has exactly one frozen snapshot binding and every snapshot binding refers to a scheduled asset. Mismatch (missing or extra binding) is rejected.
+3. **Numeric domains of the new 2.0.0 fields**, aligned with the bounds the 1.1.0 capability manifest declares to the model:
+   - `risk.positionStopLossFraction` and `risk.portfolioStopFraction`: decimal strings in `(0, 1)` — exclusive zero and exclusive one; a stop-loss line of `0` or `1` is not a meaningful user decision and must not pass.
+   - `allocation` `first-come-first-served@1` `maxPerAssetCashFraction`: decimal string in `[0.01, 1]` per the manifest parameter bounds.
+   - `allocation` `equal-split@1` `maxPositions`: integer in `[2, 5]` per the manifest parameter bounds, and additionally **≤ `len(universe.assets)`** of the confirmed draft (allocating more slots than managed assets is meaningless; schema cannot compare against the draft).
+   - Draft/run-spec consistency: the `assetId` set of `RunSpec2.assets` must equal the `assetId` set of the confirmed draft's `universe.assets` exactly — running a portfolio that is wider or narrower than the signed four-cell card is rejected. (The draft-level cells themselves remain schema-enforced as required fields with no defaults.)
+4. These obligations apply to drafts and run specs alike at their respective semantic stages; the interview/application layers must surface each rejection as a structured `ValidationIssue` (code/path/message), never as a silent clamp or a default-filled value (§12.2 no-hidden-defaults rule).
