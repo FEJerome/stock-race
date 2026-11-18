@@ -29,10 +29,14 @@ describe("S3 hosts/local composition-root boundaries (node:http, zero dependenci
     } finally {
       await handle.close();
     }
-    // Guard: hosts/local sources must not import the deterministic fake implementation
+    // Guard: hosts/local sources must not import the deterministic fake implementation.
+    // Carve-out (Issue #55, maintainer-approved): dev-entry.ts is the local
+    // playground entry; the task contract pins it to the deterministic fake
+    // interview driver, still injected exclusively through testOverrides.
+    const CARVE_OUT = new Set(["dev-entry.ts"]);
     const hostsDir = path.resolve(testRoot, "..", "hosts", "local");
     for (const file of readdirSync(hostsDir)) {
-      if (!file.endsWith(".ts")) continue;
+      if (!file.endsWith(".ts") || CARVE_OUT.has(file)) continue;
       const source = readFileSync(path.join(hostsDir, file), "utf8");
       expect(source.includes("model/deterministic")).toBe(false);
     }

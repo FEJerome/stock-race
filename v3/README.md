@@ -21,6 +21,8 @@ npm test
 
 Other checks: `npm run typecheck` and `npm run check:generated` (verifies the generated contract types are in sync).
 
+Playable local slice (S4): `npm run start:local` serves the interview → confirm → dispatch → watch → review flow at `http://127.0.0.1:4173` on the deterministic fake driver and the hand-authored synthetic snapshot pool — see [hosts/local/README.md](hosts/local/README.md). Browser-level e2e lives in the standalone [`v3-e2e`](../v3-e2e/) package (own dependency manifest, separate CI job).
+
 ## Contract
 
 The behavioral contract for the V3 demo — including the frozen-hash reference — lives in [docs/features/v3-demo-complete-contract.md](../docs/features/v3-demo-complete-contract.md). It is the canonical spec the engine and tests are held against.

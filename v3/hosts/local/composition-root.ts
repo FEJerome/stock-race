@@ -21,14 +21,24 @@ export interface LocalCompositionOptions {
    * Explicit test-wiring switch (contract 6.2): only test code may inject the
    * deterministic fake. The public main-flow construction path accepts no port
    * injection other than this parameter.
+   * The optional interviewPortFactory hands each interview session a fresh port
+   * instance (a scripted fake consumes one scenario per session and must never
+   * be shared across sessions); the style argument carries the interview style
+   * chosen on the landing page ("novice" | "expert") so a scripted driver can
+   * pick the matching scenario. When omitted, modelPort serves interviews too.
    */
-  readonly testOverrides?: { readonly modelPort?: StrategyDraftPort };
+  readonly testOverrides?: {
+    readonly modelPort?: StrategyDraftPort;
+    readonly interviewPortFactory?: (style?: string) => StrategyDraftPort;
+  };
 }
 
 export interface LocalComposition {
   /** Adapter identity visible to the outside (used for the "fake never enters the real main flow" assertion). */
   readonly adapterInfo: { readonly provider: "kimi" | "test-override"; readonly modelId: string };
   readonly modelPort: StrategyDraftPort;
+  /** Fresh port per interview session; defaults to the shared modelPort. */
+  readonly createInterviewPort: (style?: string) => StrategyDraftPort;
   readonly store: StrategyStore;
   readonly dataRoot: string;
 }
@@ -54,19 +64,22 @@ export function createLocalComposition(options: LocalCompositionOptions): LocalC
     return {
       adapterInfo: { provider: "test-override", modelId: "injected-by-test" },
       modelPort: options.testOverrides.modelPort,
+      createInterviewPort: options.testOverrides.interviewPortFactory ?? (() => options.testOverrides!.modelPort!),
       store,
       dataRoot: options.dataRoot,
     };
   }
+  const kimiPort = createKimiAdapter({
+    apiKey: options.kimi.apiKey,
+    modelId: options.kimi.modelId,
+    ...(options.kimi.baseUrl !== undefined ? { baseUrl: options.kimi.baseUrl } : {}),
+    ...(options.kimi.timeoutMs !== undefined ? { timeoutMs: options.kimi.timeoutMs } : {}),
+    ...(metadataSink ? { metadataSink } : {}),
+  });
   return {
     adapterInfo: { provider: "kimi", modelId: options.kimi.modelId },
-    modelPort: createKimiAdapter({
-      apiKey: options.kimi.apiKey,
-      modelId: options.kimi.modelId,
-      ...(options.kimi.baseUrl !== undefined ? { baseUrl: options.kimi.baseUrl } : {}),
-      ...(options.kimi.timeoutMs !== undefined ? { timeoutMs: options.kimi.timeoutMs } : {}),
-      ...(metadataSink ? { metadataSink } : {}),
-    }),
+    modelPort: kimiPort,
+    createInterviewPort: options.testOverrides?.interviewPortFactory ?? (() => kimiPort),
     store,
     dataRoot: options.dataRoot,
   };

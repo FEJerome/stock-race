@@ -9,7 +9,8 @@
     "generate:types": "node scripts/generate-types.mjs",
     "check:generated": "node scripts/generate-types.mjs --check",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "start:local": "node scripts/start-local.mjs"
   },
   "dependencies": {
     "@noble/hashes": "1.8.0",
