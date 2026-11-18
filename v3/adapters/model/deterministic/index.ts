@@ -28,7 +28,13 @@ interface ScenarioFileStep {
 /**
  * Deterministic fake (contract 6.2): scenario-keyed canned output, no keyword
  * understanding; constructing with an unknown scenario throws immediately
- * (misuse guard); an attempt beyond the sequence repeats the last step.
+ * (misuse guard). Stepping modes:
+ * - "per-attempt" (default): the step is selected by request.attempt, so a
+ *   repair sequence stays inside one logical draft round; an attempt beyond
+ *   the sequence repeats the last step.
+ * - "per-call": each draft() call consumes the next step regardless of
+ *   attempt, so a multi-turn interview scenario scripts every call across
+ *   turns (the final step repeats once the script is exhausted).
  * Injectable only by test wiring, never part of the hosts/local public flow.
  * provenance is always deterministic-fake and latencyMs is always 0
  * (deterministic — no wall clock involved).
@@ -36,17 +42,21 @@ interface ScenarioFileStep {
 export function createDeterministicFakeAdapter(options: {
   readonly scenarios: FakeScenarioTable;
   readonly scenario: string;
+  readonly stepping?: "per-attempt" | "per-call";
 }): DeterministicFakeAdapter {
   const steps = options.scenarios[options.scenario];
   if (!steps || steps.length === 0) {
     throw new Error(`Unknown deterministic-fake scenario: ${options.scenario}`);
   }
   const requests: ModelDraftRequest[] = [];
+  let callCount = 0;
   return {
     requests,
     draft(request: ModelDraftRequest): Promise<ModelDraftResponse> {
       requests.push(request);
-      const step = steps[Math.min(request.attempt, steps.length - 1)]!;
+      const index = options.stepping === "per-call" ? callCount : request.attempt;
+      callCount += 1;
+      const step = steps[Math.min(index, steps.length - 1)]!;
       const provenance = {
         provider: "deterministic-fake" as const,
         modelId: "deterministic-fake",
