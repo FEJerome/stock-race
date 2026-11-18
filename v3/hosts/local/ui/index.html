@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Stock-Race · 阿一模拟策略切片</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./charts.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#scene-root">跳到场景内容</a>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-row">
+        <a class="brand" href="#" id="brand-home" aria-label="返回基金公司游戏主页">
+          <img class="brand-logo" src="./ayi-logo.svg" alt="阿一标识">
+          <span class="brand-copy"><strong>STOCK-RACE</strong><span>V3 · 模拟策略研究</span></span>
+        </a>
+        <nav class="stage-nav" aria-label="游戏阶段" id="stage-nav">
+          <button class="stage-tab" type="button" data-stage="interview"><span>1</span>面试</button>
+          <button class="stage-tab" type="button" data-stage="confirm" disabled><span>2</span>确认</button>
+          <button class="stage-tab" type="button" data-stage="dispatch" disabled><span>3</span>派遣</button>
+          <button class="stage-tab" type="button" data-stage="watch" disabled><span>4</span>围观</button>
+          <button class="stage-tab" type="button" data-stage="review" disabled><span>5</span>复盘</button>
+        </nav>
+        <div class="header-actions">
+          <span class="test-badge"><span class="badge-dot"></span><span id="driver-badge">deterministic-fake · 模拟驱动</span></span>
+        </div>
+      </div>
+      <div class="context-row" id="context-row" hidden>
+        <div class="context-item">
+          <span class="context-label">工作策略</span>
+          <strong id="context-strategy">—</strong>
+          <code id="context-digest">—</code>
+          <span class="status-pill drafting" id="context-status">INTERVIEW</span>
+        </div>
+        <div class="context-separator" aria-hidden="true"></div>
+        <div class="context-item run-context">
+          <span class="context-label">选中 Run</span>
+          <strong id="context-run">—</strong>
+          <code id="context-run-digest">—</code>
+        </div>
+        <div class="context-source">hand-authored-synthetic · 本地快照 · 非真实行情</div>
+      </div>
+    </header>
+
+    <main id="scene-root" tabindex="-1">
+      <!-- 阶段 0：招聘首屏 -->
+      <section class="scene active" id="scene-landing" aria-labelledby="landing-title">
+        <div class="manager-hero">
+          <div class="manager-hero-copy">
+            <p class="eyebrow">YOUR FUND. YOUR FIRST HIRE.</p>
+            <h1 id="landing-title">老板，你的基金公司<br>今天开张。</h1>
+            <p class="onboarding-lead">第一个任务：招聘 AI 基金经理，送他回到 2024 年初的市场。</p>
+            <p class="prototype-reality"><span class="badge-dot"></span>手编 synthetic 快照 · deterministic-fake 面试驱动 · 非真实行情 · 非真实模型 · 非收益承诺</p>
+            <div class="manager-hero-actions">
+              <button class="button primary" id="start-novice" type="button">开始面试 · 谨慎梳理 <span aria-hidden="true">→</span></button>
+              <button class="button ghost" id="start-expert" type="button">开始面试 · 指标直达</button>
+            </div>
+            <p class="hero-boundary">不荐股 · 不直接下单 · 四格缺一不签</p>
+          </div>
+          <article class="manager-card" aria-label="AI 股票经理人阿一">
+            <div class="manager-card-top"><span>CANDIDATE · 候选人</span><span class="manager-status"><i></i>待面试</span></div>
+            <div class="manager-identity">
+              <img class="manager-avatar" src="./ayi-logo.svg" alt="阿一的青金 A／一形时间轨迹标识">
+              <div><div class="manager-name-row"><span class="manager-name">阿一</span><span class="badge badge-bronze">铜牌 · 暂未开放</span></div><span class="manager-name-en">A YI</span><p>AI 股票经理人</p></div>
+            </div>
+            <blockquote>“不偷看未来。”</blockquote>
+            <div class="manager-traits">
+              <div><span>管理范围</span><strong>2 ~ 5 只 · 你来圈定</strong></div>
+              <div><span>止损纪律</span><strong>个股 + 组合双止损</strong></div>
+              <div><span>资金调度</span><strong>先到先得 / 均匀分仓</strong></div>
+            </div>
+          </article>
+        </div>
+        <div class="future-shelf" aria-label="暂未开放的概念装饰">
+          <span class="badge badge-gold">荣誉馆 · 暂未开放</span><span class="badge badge-silver">职级体系 · 暂未开放</span><span class="badge badge-bronze">更多经理人 · 暂未开放</span><p>切片只有阿一</p>
+        </div>
+      </section>
+
+      <!-- 阶段 1：面试（四格 slot filling） -->
+      <section class="scene" id="scene-interview" aria-labelledby="interview-title" hidden>
+        <div class="flow-topbar">
+          <button class="button ghost compact" id="interview-home" type="button">← 返回主页</button>
+          <span class="status-pill drafting">INTERVIEW</span>
+          <span class="script-badge" id="interview-driver">deterministic-fake · 模拟面试驱动</span>
+          <span class="turn-counter" id="turn-counter">第 0 / 12 轮</span>
+        </div>
+        <div class="baseline-banner" id="baseline-banner" hidden>
+          <div><strong>基于已确认版本调整</strong><span>旧 Run 保持只读；新语义必须重新确认、重新签字。</span></div>
+          <code id="baseline-digest"></code>
+        </div>
+        <header class="stage-intro">
+          <p class="eyebrow">01 / INTERVIEW</p>
+          <h1 id="interview-title">老板，回答阿一就好。</h1>
+          <p>他把你的话整理成四格策略卡：管哪些股票、什么时候买卖、亏多少收手、钱怎么分。四格缺一，不出卡。</p>
+        </header>
+        <div class="interview-grid">
+          <section class="panel chat-panel" aria-label="阿一面试对话">
+            <div class="dialogue-stream" id="dialogue-stream" aria-live="polite"></div>
+            <div class="model-error" id="model-error" hidden>
+              <strong>模型这一回合失败了。</strong>
+              <p id="model-error-detail"></p>
+              <p>对话与已填的格子都还在。可以重试，不会偷偷换成别的驱动。</p>
+              <button class="button secondary compact" id="model-error-retry" type="button">重试上一句</button>
+            </div>
+            <form class="dialogue-composer" id="dialogue-form">
+              <label class="sr-only" for="dialogue-input">回答阿一</label>
+              <input id="dialogue-input" type="text" autocomplete="off" placeholder="随便说，不用术语……">
+              <button class="button primary" id="dialogue-send" type="submit">发送</button>
+            </form>
+            <div class="dialogue-controls">
+              <span id="interview-status-note">四格齐了才能生成策略卡</span>
+              <button class="text-button" id="restart-interview" type="button">重新面试</button>
+            </div>
+          </section>
+          <aside class="panel slots-panel" aria-label="策略卡四格">
+            <div class="panel-header"><div><span class="region-id">策略卡</span><h2>四格工作手册</h2></div><span class="status-pill pending" id="slots-pill">0 / 4</span></div>
+            <div class="slot-list" id="slot-list">
+              <div class="slot" data-slot="universe">
+                <div class="slot-head"><span class="slot-index">①</span><strong>管理股票范围</strong><span class="slot-state">待明确</span></div>
+                <div class="slot-body"><p class="slot-empty">阿一会带你从池子里挑 2 ~ 5 只。</p></div>
+              </div>
+              <div class="slot" data-slot="rules">
+                <div class="slot-head"><span class="slot-index">②</span><strong>买卖规则</strong><span class="slot-state">待明确</span></div>
+                <div class="slot-body"><p class="slot-empty">什么条件算低、到什么价格愿意买、什么时候卖。</p></div>
+              </div>
+              <div class="slot" data-slot="risk">
+                <div class="slot-head"><span class="slot-index">③</span><strong>亏损额度</strong><span class="slot-state">待明确</span></div>
+                <div class="slot-body"><p class="slot-empty">单票认输出场线 + 组合全部收手线，只能你定。</p></div>
+              </div>
+              <div class="slot" data-slot="allocation">
+                <div class="slot-head"><span class="slot-index">④</span><strong>资金调度</strong><span class="slot-state">待明确</span></div>
+                <div class="slot-body"><p class="slot-empty">先到先得，还是均匀分仓？参数也由你拍板。</p></div>
+              </div>
+            </div>
+            <div class="slots-action">
+              <p class="slots-missing" id="slots-missing">还缺：① ② ③ ④</p>
+              <button class="button primary" id="to-confirm" type="button" disabled>查看策略卡 <span aria-hidden="true">→</span></button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 阶段 2：确认（回读签字） -->
+      <section class="scene" id="scene-confirm" aria-labelledby="confirm-title" hidden>
+        <div class="single-focus-card">
+          <header class="stage-intro">
+            <p class="eyebrow">02 / CONFIRM</p>
+            <h1 id="confirm-title">我听懂的是……</h1>
+            <p>老板，逐条核对这份策略卡。确认的是这份回读与它的 digest——字变一个，digest 就变。</p>
+          </header>
+          <div class="confirm-grid">
+            <div class="panel">
+              <div class="panel-header"><div><span class="region-id">卡</span><h2>策略卡 · 四格</h2></div></div>
+              <div class="card-cells" id="confirm-cells"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><div><span class="region-id">回读</span><h2>权威回读 · 逐条</h2></div><span class="priority">zh-CN</span></div>
+              <ol class="readback-clauses" id="readback-clauses"></ol>
+            </div>
+          </div>
+          <div class="digest-bar">
+            <span>strategyDigest</span>
+            <code id="confirm-digest">—</code>
+            <button class="text-button copy-button" type="button" data-copy-target="confirm-digest">复制</button>
+          </div>
+          <details class="technical-details">
+            <summary>技术细节 · canonical AST</summary>
+            <pre id="confirm-ast"></pre>
+          </details>
+          <div class="confirm-error" id="confirm-error" hidden></div>
+          <div class="focus-action">
+            <button class="button ghost" id="confirm-back" type="button">← 回面试改</button>
+            <span id="confirm-note">确认后生成 strategyId · revision，落盘可复现</span>
+            <button class="button primary" id="confirm-button" type="button">确认策略并签字</button>
+          </div>
+          <div class="confirmed-banner" id="confirmed-banner" hidden>
+            <strong>已签字确认。</strong>
+            <span id="confirmed-ref"></span>
+            <button class="button primary" id="to-dispatch" type="button">去派遣 <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 阶段 3：派遣 -->
+      <section class="scene" id="scene-dispatch" aria-labelledby="dispatch-title" hidden>
+        <div class="single-focus-card">
+          <header class="stage-intro">
+            <p class="eyebrow">03 / DISPATCH</p>
+            <h1 id="dispatch-title">老板，下达派遣指令。</h1>
+            <p>区间与资金由你决定；标的只能是你签字的那份清单。</p>
+          </header>
+          <blockquote class="dispatch-order" id="dispatch-order">“阿一，按我们聊好的策略，去 2024 年初的市场操作。”</blockquote>
+          <div class="dispatch-fields">
+            <fieldset class="asset-fieldset">
+              <legend>标的清单 · 来自第 ① 格（只读）</legend>
+              <div class="asset-list" id="dispatch-assets"></div>
+            </fieldset>
+            <div class="dispatch-row">
+              <label>历史区间</label>
+              <div class="date-range-fields">
+                <input id="dispatch-start" type="date" aria-label="回测开始日期">
+                <span>至</span>
+                <input id="dispatch-end" type="date" aria-label="回测结束日期">
+              </div>
+            </div>
+            <div class="dispatch-row">
+              <label for="dispatch-cash">初始资金 CNY</label>
+              <input id="dispatch-cash" type="text" inputmode="decimal" value="100000.00">
+            </div>
+          </div>
+          <div class="support-message" id="dispatch-message" role="status" hidden></div>
+          <details class="technical-details">
+            <summary>执行假设 · 模型不可写</summary>
+            <p><code>cn-stock-demo-fee@1 · cn-stock-one-tick@1 · cn-stock-settlement@1 · asset-default@1 · cn-stock-report@1</code></p>
+            <p><code>engine 2.0.0 · registry 1.0.0 · canonicalization@1 · decimal@1 · rounding@1 · indicator-arithmetic@1</code></p>
+            <p>warmup：无额外预热观测（池快照 48 个交易日全覆盖回测区间）。</p>
+          </details>
+          <div class="focus-action">
+            <span id="dispatch-note">完整结果一次算定，不伪造逐日过程</span>
+            <button class="button primary" id="dispatch-run" type="button">送阿一出发 <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 阶段 4：围观（剧场） -->
+      <section class="scene" id="scene-watch" aria-labelledby="watch-title" hidden>
+        <div class="run-summary-bar">
+          <div class="run-summary-title">
+            <span class="status-pill completed">COMPLETED</span>
+            <div><p class="eyebrow">04 / WATCH HIM WORK</p><h1 id="watch-title">围观阿一的工作</h1></div>
+          </div>
+          <div class="run-summary-facts" id="watch-facts"></div>
+          <div class="toolbar-actions">
+            <button class="button ghost compact" id="toggle-evidence" type="button" aria-expanded="false">事件证据</button>
+            <button class="button primary compact" id="to-review" type="button">查看穿越成绩单</button>
+          </div>
+        </div>
+        <div class="point-in-time-banner">
+          <span class="point-in-time-icon" aria-hidden="true">◷</span>
+          <div><strong>他只知道那天及之前的事</strong><p>点时数据决定可见范围。移动 cursor 只是围观，不重跑策略，也不改变账本与 digest。</p></div>
+          <code>POINT-IN-TIME</code>
+        </div>
+        <div class="theatre-grid" id="theatre-grid">
+          <div class="theatre-main">
+            <section class="panel" aria-labelledby="equity-title">
+              <div class="panel-header chart-header">
+                <div><span class="region-id">W1</span><h2 id="equity-title">组合净值与回撤</h2><span class="chart-subtitle">统一资金池 · 日频</span></div>
+              </div>
+              <div class="chart-legend" id="equity-legend"></div>
+              <div class="chart-wrap"><div id="equity-chart" class="chart"></div><div class="chart-tooltip" id="equity-tooltip" hidden></div></div>
+              <div class="small-chart-title">回撤 <span>0 为无回撤</span></div>
+              <div class="chart-wrap"><div id="drawdown-chart" class="chart chart-small"></div><div class="chart-tooltip" id="drawdown-tooltip" hidden></div></div>
+              <div class="cursor-account" id="cursor-account"></div>
+            </section>
+            <section class="panel" aria-labelledby="lanes-title">
+              <div class="panel-header chart-header">
+                <div><span class="region-id">W2</span><h2 id="lanes-title">各标的泳道</h2><span class="chart-subtitle">信号 · 意图 · 成交 · 拒单 · 止损</span></div>
+                <div class="event-filters" role="group" aria-label="事件过滤" id="event-filters">
+                  <button class="filter-chip active" type="button" data-filter="all">全部</button>
+                  <button class="filter-chip" type="button" data-filter="fill">成交</button>
+                  <button class="filter-chip" type="button" data-filter="intent">意图</button>
+                  <button class="filter-chip" type="button" data-filter="reject">拒单</button>
+                  <button class="filter-chip" type="button" data-filter="stop">止损</button>
+                </div>
+              </div>
+              <div class="event-lanes" id="event-lanes"></div>
+            </section>
+          </div>
+          <aside class="panel evidence-panel" id="evidence-drawer" hidden aria-labelledby="evidence-title">
+            <div class="panel-header"><div><span class="region-id">W3</span><h2 id="evidence-title">阿一当时的依据</h2></div><span class="priority">P2</span></div>
+            <div class="event-evidence" id="event-evidence"></div>
+          </aside>
+        </div>
+        <section class="timeline-panel" aria-label="共享时间轴">
+          <div class="playback-controls">
+            <button class="play-button" id="play-button" type="button" aria-label="播放"><span aria-hidden="true">▶</span></button>
+            <button class="button ghost compact" id="pause-button" type="button" disabled>暂停</button>
+            <div class="speed-control" role="group" aria-label="播放速度">
+              <button class="active" type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button><button type="button" data-speed="4">4×</button>
+            </div>
+          </div>
+          <div class="timeline-track">
+            <div class="timeline-labels" id="timeline-labels"></div>
+            <input id="timeline-range" type="range" min="0" max="0" value="0" step="1" aria-label="回放日期 cursor">
+          </div>
+          <div class="timeline-status"><strong id="cursor-date">—</strong><span id="cursor-seq">—</span></div>
+          <button class="button secondary compact" id="jump-result" type="button">跳结果</button>
+          <p class="readonly-note"><span class="lock-icon" aria-hidden="true">◇</span>完整结果已算定 · 回放只读 · 不调用模型 · 不改变 hash</p>
+        </section>
+      </section>
+
+      <!-- 阶段 5：复盘（报告 + 敏感性） -->
+      <section class="scene" id="scene-review" aria-labelledby="review-title" hidden>
+        <div class="report-identity-bar">
+          <div class="report-title">
+            <p class="eyebrow">05 / REVIEW</p>
+            <div><h1 id="review-title">阿一的穿越成绩单</h1><span class="status-pill completed">COMPLETED</span></div>
+          </div>
+          <div class="report-digests" id="review-digests"></div>
+          <div class="toolbar-actions">
+            <button class="button ghost compact" id="back-to-watch" type="button">返回剧场</button>
+            <button class="button secondary compact" id="adjust-again" type="button">基于此版本调整</button>
+          </div>
+        </div>
+        <div class="source-ribbon"><span class="badge-dot"></span><strong>hand-authored-synthetic 手编快照</strong><span>非真实行情 · 非收益承诺 · deterministic-fake 面试驱动</span></div>
+
+        <section class="human-report" aria-labelledby="human-report-title">
+          <div class="human-report-heading"><p class="eyebrow">MANAGER'S REVIEW</p><h2 id="human-report-title">这次检验告诉你什么</h2><span>只从这次真实 Run 的账本推导，不构成投资建议</span></div>
+          <div class="human-insights" id="human-insights"></div>
+        </section>
+
+        <section class="metrics-row" aria-label="首屏四指标" id="metrics-row"></section>
+
+        <div class="report-main-grid">
+          <section class="panel" aria-labelledby="review-chart-title">
+            <div class="panel-header chart-header">
+              <div><span class="region-id">R1</span><h2 id="review-chart-title">收益与回撤</h2><span class="chart-subtitle">组合日频权益 · 买入持有期末点</span></div>
+            </div>
+            <div class="chart-legend" id="review-equity-legend"></div>
+            <div class="chart-wrap"><div id="review-equity-chart" class="chart"></div><div class="chart-tooltip" id="review-equity-tooltip" hidden></div></div>
+          </section>
+          <section class="panel" aria-labelledby="assets-title">
+            <div class="panel-header"><div><span class="region-id">R2</span><h2 id="assets-title">分资产明细</h2></div></div>
+            <div class="table-wrap" id="assets-table"></div>
+          </section>
+        </div>
+
+        <section class="panel" aria-labelledby="trades-title">
+          <div class="panel-header"><div><span class="region-id">R3</span><h2 id="trades-title">成交与拒单</h2></div></div>
+          <div class="table-wrap" id="trades-table"></div>
+        </section>
+
+        <section class="panel sensitivity-panel" aria-labelledby="sensitivity-title">
+          <div class="panel-header">
+            <div><span class="region-id">R4</span><h2 id="sensitivity-title">敏感性 · 反过拟合闸</h2></div>
+            <button class="button secondary compact" id="run-sensitivity" type="button">运行敏感性分析</button>
+          </div>
+          <p class="sensitivity-intro">把策略的每个数值参数微动一小步，各跑一次完整回测。任何一个变体让结论翻天，这份策略就不可信。</p>
+          <div class="sensitivity-verdict" id="sensitivity-verdict" hidden></div>
+          <div class="table-wrap" id="sensitivity-table" hidden></div>
+          <div class="sensitivity-empty" id="sensitivity-empty">尚未运行 · 变体数上限 8 · 每个变体都是独立 runDigest</div>
+        </section>
+
+        <details class="evidence-chain" open>
+          <summary class="evidence-chain-heading"><div><span class="region-id">R5</span><h2>可复现证据链</h2></div><p>digest / 快照来源 / 引擎版本</p></summary>
+          <div class="evidence-chain-grid" id="evidence-chain"></div>
+          <div class="version-evidence" id="version-evidence"></div>
+        </details>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span><strong>模拟研究</strong> · 非实盘 / 非荐股 / 非收益承诺</span>
+      <span>hand-authored-synthetic 快照 · deterministic-fake 面试驱动</span>
+      <span>engine 2.0.0 · registry 1.0.0</span>
+    </footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
