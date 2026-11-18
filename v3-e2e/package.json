@@ -1,0 +1,12 @@
+{
+  "name": "stock-race-v3-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Standalone Playwright e2e for the V3 S4 local web slice. Self-contained: does not touch v3's frozen dependency list.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1"
+  }
+}
