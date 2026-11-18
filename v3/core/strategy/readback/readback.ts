@@ -89,3 +89,8 @@ export function createAuthoritativeReadback(
     text: [summary, ...clauses.map((clause) => clause.text)].join("\n"),
   };
 }
+
+// Additive aliases shared with the 2.0.0 readback (readback-2.ts). Exported under
+// explicit names so the core barrel stays unambiguous; the 1.0.0 functions above —
+// and every 1.0.0 clause text — are byte-unchanged (readback-v1 golden guard).
+export { bool as renderReadbackBool, series as renderReadbackSeries };

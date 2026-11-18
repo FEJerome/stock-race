@@ -1,0 +1,88 @@
+{
+  "novice": {
+    "attempts": [
+      {"rawTextFile": "novice-q1.json"},
+      {"rawTextFile": "novice-q2.json"},
+      {"rawTextFile": "novice-q3.json"},
+      {"rawTextFile": "novice-q4.json"},
+      {"rawTextFile": "novice-draft.json"}
+    ]
+  },
+  "expert": {
+    "attempts": [
+      {"rawTextFile": "expert-draft.json"}
+    ]
+  },
+  "missing-slot": {
+    "attempts": [
+      {"rawTextFile": "missing-slot-draft.json"},
+      {"rawTextFile": "missing-slot-question.json"},
+      {"rawTextFile": "novice-draft.json"}
+    ]
+  },
+  "override": {
+    "attempts": [
+      {"rawTextFile": "override-draft-v1.json"},
+      {"rawTextFile": "override-draft-v2.json"}
+    ]
+  },
+  "no-converge": {
+    "attempts": [
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"},
+      {"rawTextFile": "loop-question.json"}
+    ]
+  },
+  "invalid-value": {
+    "attempts": [
+      {"rawTextFile": "invalid-stop-draft.json"},
+      {"rawTextFile": "novice-draft.json"}
+    ]
+  },
+  "stock-pushing": {
+    "attempts": [
+      {"rawTextFile": "pushing-draft.json"},
+      {"rawTextFile": "pushing-question.json"},
+      {"rawTextFile": "novice-draft.json"}
+    ]
+  },
+  "allocation-mismatch": {
+    "attempts": [
+      {"rawTextFile": "mismatch-draft.json"},
+      {"rawTextFile": "mismatch-fixed.json"}
+    ]
+  },
+  "bad-envelope-shapes": {
+    "attempts": [
+      {"rawTextFile": "bad-env-missing-text.json"},
+      {"rawTextFile": "bad-env-kind.json"},
+      {"rawTextFile": "bad-env-extra-key.json"}
+    ]
+  },
+  "envelope-repair": {
+    "attempts": [
+      {"rawTextFile": "bad-env-missing-text.json"},
+      {"rawTextFile": "novice-q1.json"}
+    ]
+  },
+  "repair-no-progress": {
+    "attempts": [
+      {"rawTextFile": "invalid-stop-draft.json"},
+      {"rawTextFile": "invalid-stop-draft.json"}
+    ]
+  },
+  "timeout": {
+    "attempts": [
+      {"error": {"class": "TIMEOUT", "message": "simulated timeout", "retryable": true}}
+    ]
+  }
+}
